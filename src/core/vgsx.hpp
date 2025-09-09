@@ -1,2 +1,0 @@
-// VGS-X Core Module
-
