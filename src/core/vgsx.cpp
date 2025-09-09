@@ -1,5 +1,6 @@
 #include "vgsx.h"
-#include <stdint.h>
+
+VGSX vgsx;
 
 extern "C" uint32_t m68k_read_memory_8(uint32_t address)
 {

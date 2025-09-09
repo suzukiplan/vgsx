@@ -4,3 +4,5 @@
 class VGSX
 {
 };
+
+extern VGSX vgsx;
