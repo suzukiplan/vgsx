@@ -89,7 +89,7 @@ The space between the program and WRAM (0xC00000 ~ 0xEFFFFF = 3MB) constitutes t
 
 | Address             | Size    | Description  |
 |:-------------------:|--------:|:-------------|
-| 0x000000 ~ 0xBFFFFF | 12288KB | [Program](#program) |
+| 0x000000 ~ 0xBFFFFF | 12288KB | [Program (ELF module)](#program) |
 | 0xC00000 ~ 0xCFFFFF |  1024KB | [Name Table](#name-table) |
 | 0xD00000 ~ 0xD0FFFF |    64KB | [OAM](#oam-object-attribute-memory) |
 | 0xD10000 ~ 0xD1FFFF |    64KB | [Palette](#palette) |
