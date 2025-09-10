@@ -58,6 +58,12 @@ make all-target-libgcc -j$(nproc)
 sudo make install-gcc install-target-libgcc
 ```
 
+Add the following line to ~/.zprofile so that the path is set when Terminal launches.
+
+```.zprofile
+export PATH=$PATH:/usr/local/m68k-elf/bin
+```
+
 > We referenced the following article.
 >
 > [https://computeralgebra.hatenablog.com/entry/2025/02/26/233231](https://computeralgebra.hatenablog.com/entry/2025/02/26/233231).
