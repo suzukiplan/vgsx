@@ -75,6 +75,18 @@ cd vgs-x/example/01_hello
 make
 ```
 
+## License
+
+- MC680x0 Emulator Musashi
+  - Copyright © 1998-2001 Karl Stenerud
+  - License: [MIT](./LICENSE-Musashi.txt)
+- FM Sound Chip Emulator ymfm
+  - Copyright (c) 2021, Aaron Giles
+  - License: [3-clause BSD](./LICENSE-ymfm.txt)
+- VGS-X
+  - Copyright (c) 2025 Yoji Suzuki.
+  - License: [MIT](./LICENSE-VGSX.txt)
+
 # Architecture Reference Manual
 
 The following sections provide technical information useful for programming with VGS-X.
@@ -138,7 +150,60 @@ Remarks:
 
 ## Palette
 
+- VGS-X allows up to 16 palettes
+- Each palette can contain 16 colors in RGB555 format
+- For FG and sprites, color number 0 is the transparent color
+
+| Address             | Palette Number | Color Number |
+|:-------------------:|:--------------:|:------------:|
+| 0xD10000 ~ 0xD10001 |        0       |        0     |
+| 0xD10002 ~ 0xD10003 |        0       |        1     |
+| 0xD10004 ~ 0xD10005 |        0       |        2     |
+|          :          |        :       |        :     |
+| 0xD1001A ~ 0xD1001B |        0       |       13     |
+| 0xD1001C ~ 0xD1001D |        0       |       14     |
+| 0xD1001E ~ 0xD1001F |        0       |       15     |
+| 0xD10020 ~ 0xD10021 |        1       |        0     |
+| 0xD10022 ~ 0xD10023 |        1       |        1     |
+| 0xD10024 ~ 0xD10025 |        1       |        2     |
+|          :          |        :       |        :     |
+| 0xD101FA ~ 0xD101FB |       15       |       13     |
+| 0xD101FC ~ 0xD101FD |       15       |       14     |
+| 0xD101FE ~ 0xD101FF |       15       |       15     |
+
+Remarks:
+
+- This table layout is compatible with VGS-Zero.
+- 0xD10200 ~ 0xD1FFFF is a mirror of 0xD10000 ~ 0xD101FF (512 bytes).
+
 ## Name Table
+
+- The Name Table is a 256x256 x 4bytes two-dimensional array. 
+- By setting character patterns and attribute data to it, graphics can be displayed on the background layer.
+- The Name Table has a four-layer structure, with BG1 displayed on top of BG0, BG2 on top of BG1, BG3 on top of BG2, and BG4 on top of BG3.
+- BG1 ~ BG3 display character pattern color number 0 as transparent, while only BG0 draws the color from color number 0.
+
+| Address             | Name Table |
+|:-------------------:|:----------:|
+| 0xC00000 ~ 0xC3FFFF |     BG0    |
+| 0xC40000 ~ 0xC7FFFF |     BG1    |
+| 0xC80000 ~ 0xCBFFFF |     BG2    |
+| 0xCC0000 ~ 0xCFFFFF |     BG3    |
+
+The bit layout for each element (4 bytes) in the Name Table is as follows:
+
+|  Bit  | Mnemonic | Description |
+|:-----:|:--------:|:------------|
+|   0   |   F/H    | Flip Horizontal |
+|   1   |   F/V    | Flip Vertical |
+|  2~7  | reserved | Specify 0 to maintain future compatibility. |
+| 12~15 |   PAL    | [Palette](#palette) Number (0~15) |
+| 16~31 |   PTN    | [Character Pattern](#character-pattern) Number (0~65535) |
+
+> The 256x256 (2048x2048 pixels) size may be slightly excessive for the VGS-X display resolution (320x200 pixels), but using this size enables future support for bitmap format VRAM.
+>
+> - 256x256x4 = 262,144 bytes
+> - 320x200x2 = 128,000 bytes (minimum size required to display Bitmap format)
 
 ## OAM (Object Attribute Memory)
 
