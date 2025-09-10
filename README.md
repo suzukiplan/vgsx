@@ -75,18 +75,6 @@ cd vgs-x/example/01_hello
 make
 ```
 
-## License
-
-- MC680x0 Emulator Musashi
-  - Copyright © 1998-2001 Karl Stenerud
-  - License: [MIT](./LICENSE-Musashi.txt)
-- FM Sound Chip Emulator ymfm
-  - Copyright (c) 2021, Aaron Giles
-  - License: [3-clause BSD](./LICENSE-ymfm.txt)
-- VGS-X
-  - Copyright (c) 2025 Yoji Suzuki.
-  - License: [MIT](./LICENSE-VGSX.txt)
-
 # Architecture Reference Manual
 
 The following sections provide technical information useful for programming with VGS-X.
@@ -216,3 +204,15 @@ The bit layout for each element (4 bytes) in the Name Table is as follows:
 ## Sound Effect
 
 ## Gamepad
+
+# License
+
+- MC680x0 Emulator Musashi
+  - Copyright © 1998-2001 Karl Stenerud
+  - License: [MIT](./LICENSE-Musashi.txt)
+- FM Sound Chip Emulator ymfm
+  - Copyright (c) 2021, Aaron Giles
+  - License: [3-clause BSD](./LICENSE-ymfm.txt)
+- VGS-X
+  - Copyright (c) 2025 Yoji Suzuki.
+  - License: [MIT](./LICENSE-VGSX.txt)
