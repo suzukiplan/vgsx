@@ -31,9 +31,9 @@ sudo apt install build-essential bison flex libgmp-dev libmpc-dev libmpfr-dev te
 
 # Make a work directory for build
 mkdir ~/m68k-work
-cd ~/m68k-work
 
 # Build and Install the binutils for MC68k
+cd ~/m68k-work
 wget https://ftp.gnu.org/gnu/binutils/binutils-2.40.tar.gz
 tar xvf binutils-2.40.tar.gz
 cd binutils-2.40
@@ -45,6 +45,7 @@ sudo make install
 export PATH=$PATH:/usr/local/m68k-elf/bin
 
 # Build and Install GCC for MC68k
+cd ~/m68k-work
 wget https://ftp.gnu.org/gnu/gcc/gcc-12.2.0/gcc-12.2.0.tar.gz
 tar xvf gcc-12.2.0.tar.gz
 cd gcc-12.2.0
