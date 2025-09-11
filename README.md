@@ -113,6 +113,10 @@ The space between the program and WRAM (0xC00000 ~ 0xEFFFFF = 3MB) constitutes t
 | 0xE00000 ~ 0xEFFFFF |  1024KB | [I/O](#io-map) |
 | 0xF00000 ~ 0xFFFFFF |  1024KB | WRAM         |
 
+When accessing the address range 0xC00000 to 0xEFFFFF used as mmap, access must always be 32-bit aligned.
+
+> Since the least significant two bits are always masked when accessing this address space, accesses to 0xC00000, 0xC00001, 0xC00002, and 0xC00003 always behave as if accessing 0xC00000.
+
 [Character patterns](#character-pattern) and Sound data are stored in Read Only Memory, which cannot be directly referenced from the program. Like VGS-Zero, it is specified by pattern number.
 
 ## Program
