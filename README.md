@@ -85,8 +85,8 @@ If you've finished installing `m68k-elf-gcc`, you're now ready to start developi
 The following steps show how to obtain this repository using `git clone` and then run the example that displays “HELLO, WORLD!”.
 
 ```bash
-git clone https://github.com/suzukiplan/vgs-x
-cd vgs-x/example/01_hello
+git clone https://github.com/suzukiplan/vgsx
+cd vgsx/example/01_hello
 make
 ```
 
