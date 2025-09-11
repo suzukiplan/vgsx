@@ -32,16 +32,24 @@ class VGSX
   public:
     struct Context {
         uint8_t ram[0x100000]; // WRAM (1MB)
+        const uint8_t* elf;
+        size_t elfSize;
         const uint8_t* program;
         size_t programSize;
     } context;
-    std::string lastError;
 
     VGSX();
     ~VGSX();
     bool loadProgram(const void* data, size_t size);
+    const char* getLastError() { return this->lastError.c_str(); }
     void reset();
     void tick();
+    uint32_t inPort(uint32_t address);
+    void outPort(uint32_t address, uint32_t value);
+
+  private:
+    bool detectReferVSync;
+    std::string lastError;
 };
 
 extern VGSX vgsx;

@@ -112,6 +112,9 @@ static void loadElfHeader(Elf32_Ehdr* header, const void* prg)
 
 extern "C" uint32_t m68k_read_memory_8(uint32_t address)
 {
+    if (address < 0xC00000) {
+        return address < vgsx.context.programSize ? vgsx.context.program[address] : 0xFF;
+    }
     switch (address & 0xF00000) {
         // Name Table
         case 0xC00000:
@@ -128,11 +131,8 @@ extern "C" uint32_t m68k_read_memory_8(uint32_t address)
         // WRAM: 0xF00000 ~ 0xFFFFFF (1024KB)
         case 0xF00000:
             return vgsx.context.ram[address & 0xFFFFF];
-
-        // PRG: 0x000000 ~ 0xBFFFFF (12MB)
-        default:
-            return 0xFF;
     }
+    return 0xFF;
 }
 
 extern "C" uint32_t m68k_read_memory_16(uint32_t address)
@@ -145,6 +145,9 @@ extern "C" uint32_t m68k_read_memory_16(uint32_t address)
 
 extern "C" uint32_t m68k_read_memory_32(uint32_t address)
 {
+    if (0xE00000 <= address && address < 0xF00000) {
+        return vgsx.inPort(address);
+    }
     uint32_t result = m68k_read_memory_8(address);
     result <<= 8;
     result |= m68k_read_memory_8(address + 1);
@@ -154,6 +157,10 @@ extern "C" uint32_t m68k_read_memory_32(uint32_t address)
     result |= m68k_read_memory_8(address + 3);
     return result;
 }
+
+extern "C" uint32_t m68k_read_disassembler_8(uint32_t address) { return m68k_read_memory_8(address); }
+extern "C" uint32_t m68k_read_disassembler_16(uint32_t address) { return m68k_read_memory_16(address); }
+extern "C" uint32_t m68k_read_disassembler_32(uint32_t address) { return m68k_read_memory_32(address); }
 
 extern "C" void m68k_write_memory_8(uint32_t address, uint32_t value)
 {
@@ -177,17 +184,27 @@ extern "C" void m68k_write_memory_8(uint32_t address, uint32_t value)
 
 extern "C" void m68k_write_memory_16(uint32_t address, uint32_t value)
 {
+    m68k_write_memory_8(address, (value & 0xFF00) >> 8);
+    m68k_write_memory_8(address + 1, value & 0xFF);
 }
 
 extern "C" void m68k_write_memory_32(uint32_t address, uint32_t value)
 {
+    if (0xE00000 <= address && address < 0xF00000) {
+        vgsx.outPort(address, value);
+        return;
+    }
+    m68k_write_memory_8(address, (value & 0xFF000000) >> 24);
+    m68k_write_memory_8(address + 1, (value & 0xFF0000) >> 16);
+    m68k_write_memory_8(address + 2, (value & 0xFF00) >> 8);
+    m68k_write_memory_8(address + 3, value & 0xFF);
 }
 
 VGSX::VGSX()
 {
     m68k_set_cpu_type(M68K_CPU_TYPE_68020);
     m68k_init();
-    m68k_pulse_reset();
+    this->reset();
 }
 
 VGSX::~VGSX()
@@ -238,8 +255,8 @@ bool VGSX::loadProgram(const void* data, size_t size)
         return false;
     }
 
-    this->context.program = (const uint8_t*)data;
-    this->context.programSize = size;
+    this->context.elf = (const uint8_t*)data;
+    this->context.elfSize = size;
     this->reset();
     return true;
 }
@@ -247,19 +264,25 @@ bool VGSX::loadProgram(const void* data, size_t size)
 void VGSX::reset(void)
 {
     m68k_pulse_reset();
+    m68k_set_reg(M68K_REG_SP, 0);
+    this->detectReferVSync = false;
+    this->context.program = NULL;
+    this->context.programSize = 0;
 
-    if (!this->context.program) {
+    if (!this->context.elf) {
         return;
     }
 
     // Load ELF Header
     Elf32_Ehdr eh;
-    loadElfHeader(&eh, this->context.program);
+    loadElfHeader(&eh, this->context.elf);
+    printf("M68K_REG_PC = 0x%06X\n", eh.e_entry);
+    m68k_set_reg(M68K_REG_PC, eh.e_entry);
 
     // Reset Program Counter
     for (uint32_t i = 0, off = eh.e_phoff; i < eh.e_phnum; i++, off += eh.e_phentsize) {
         Elf32_Phdr ph;
-        memcpy(&ph, &context.program[off], eh.e_phentsize);
+        memcpy(&ph, &this->context.elf[off], eh.e_phentsize);
         ph.p_type = b2h32(ph.p_type);
         ph.p_offset = b2h32(ph.p_offset);
         ph.p_vaddr = b2h32(ph.p_vaddr);
@@ -276,44 +299,80 @@ void VGSX::reset(void)
                ph.p_filesz,
                ph.p_memsz,
                ph.p_flags);
-        if (ph.p_type == 1 && (ph.p_flags & 0x01)) {
-            printf("M68K_REG_PC = 0x%06X\n", ph.p_offset);
-            m68k_set_reg(M68K_REG_PC, ph.p_offset);
+        if (ph.p_type == 1) {
+            if (0 == ph.p_paddr && (ph.p_flags & 0x01)) {
+                puts("Detect executable code");
+                this->context.program = &this->context.elf[ph.p_offset];
+                this->context.programSize = ph.p_memsz;
+            }
         }
     }
 
     // Reset RAM
     memset(this->context.ram, 0xFF, sizeof(this->context.ram));
-    if (this->context.program) {
-        // ELF section data relocate to RAM from ROM
-        for (uint32_t i = 0, off = eh.e_shoff; i < eh.e_shnum; i++, off += eh.e_shentsize) {
-            Elf32_Shdr sh;
-            memcpy(&sh, &this->context.program[off], eh.e_shentsize);
-            sh.sh_name = b2h32(sh.sh_name);
-            sh.sh_type = b2h32(sh.sh_type);
-            sh.sh_flags = b2h32(sh.sh_flags);
-            sh.sh_addr = b2h32(sh.sh_addr);
-            sh.sh_offset = b2h32(sh.sh_offset);
-            sh.sh_size = b2h32(sh.sh_size);
-            sh.sh_link = b2h32(sh.sh_link);
-            sh.sh_info = b2h32(sh.sh_info);
-            if (0xF00000 <= sh.sh_addr) {
-                memcpy(&this->context.ram[sh.sh_addr & 0xFFFFF],
-                       &this->context.program[sh.sh_offset],
-                       sh.sh_size);
-            }
-            printf(".section:%X flags=%d, addr=0x%06X, offset=0x%06X, size=%d, link=%d, info=%d\n",
-                   sh.sh_type,
-                   sh.sh_flags,
-                   sh.sh_addr,
-                   sh.sh_offset,
-                   sh.sh_size,
-                   sh.sh_link,
-                   sh.sh_info);
+    // ELF section data relocate to RAM from ROM
+    for (uint32_t i = 0, off = eh.e_shoff; i < eh.e_shnum; i++, off += eh.e_shentsize) {
+        Elf32_Shdr sh;
+        memcpy(&sh, &this->context.elf[off], eh.e_shentsize);
+        sh.sh_name = b2h32(sh.sh_name);
+        sh.sh_type = b2h32(sh.sh_type);
+        sh.sh_flags = b2h32(sh.sh_flags);
+        sh.sh_addr = b2h32(sh.sh_addr);
+        sh.sh_offset = b2h32(sh.sh_offset);
+        sh.sh_size = b2h32(sh.sh_size);
+        sh.sh_link = b2h32(sh.sh_link);
+        sh.sh_info = b2h32(sh.sh_info);
+        if (0xF00000 <= sh.sh_addr) {
+            memcpy(&this->context.ram[sh.sh_addr & 0xFFFFF],
+                   &this->context.elf[sh.sh_offset],
+                   sh.sh_size);
         }
+        printf(".section:%X flags=%d, addr=0x%06X, offset=0x%06X, size=%d, link=%d, info=%d\n",
+               sh.sh_type,
+               sh.sh_flags,
+               sh.sh_addr,
+               sh.sh_offset,
+               sh.sh_size,
+               sh.sh_link,
+               sh.sh_info);
     }
 }
 
 void VGSX::tick(void)
 {
+    static uint32_t prevPC = 0xFFFFFFFF;
+    this->detectReferVSync = false;
+    while (!this->detectReferVSync) {
+        if (prevPC != m68k_get_reg(NULL, M68K_REG_PC)) {
+            // printf("debug: D0 = %08X\n", m68k_get_reg(NULL, M68K_REG_D0));
+            char buf[1024];
+            prevPC = m68k_get_reg(NULL, M68K_REG_PC);
+            if (prevPC == 0xFFFFFFFF) {
+                break;
+            }
+            // m68k_disassemble(buf, prevPC, M68K_CPU_TYPE_68020);
+            // printf("0x%06X: %s\n", prevPC, buf);
+        }
+        m68k_execute(2);
+    }
+}
+
+uint32_t VGSX::inPort(uint32_t address)
+{
+    switch (address) {
+        case 0xE00000: // V-SYNC
+            puts("Detect Refer VSync");
+            this->detectReferVSync = true;
+            return 1;
+    }
+    return 0xFFFFFFFF;
+}
+
+void VGSX::outPort(uint32_t address, uint32_t value)
+{
+    switch (address) {
+        case 0xE00000: // Console Output
+            fputc(value, stdout);
+            return;
+    }
 }

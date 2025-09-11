@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <iostream>
 #include <fstream>
 #include "vgsx.h"
@@ -25,6 +26,35 @@ int main(int argc, char* argv[])
         puts("Load failed!");
     } else {
         puts("Load succeed.");
+    }
+    vgsx.tick();
+
+    printf("\n[RAM DUMP]\n");
+    uint8_t prevbin[16];
+    for (int i = 0; i < sizeof(vgsx.context.ram); i += 16) {
+        if (i != 0) {
+            if (0 == memcmp(prevbin, &vgsx.context.ram[i], 16)) {
+                continue; // skip same data
+            }
+        }
+        memcpy(prevbin, &vgsx.context.ram[i], 16);
+        printf("%06X", 0xF00000 + i);
+        for (int j = 0; j < 16; j++) {
+            if (8 == j) {
+                printf(" - %02X", prevbin[j]);
+            } else {
+                printf(" %02X", prevbin[j]);
+            }
+        }
+        printf("  ");
+        for (int j = 0; j < 16; j++) {
+            if (isprint(prevbin[j])) {
+                putc(prevbin[j], stdout);
+            } else {
+                putc('.', stdout);
+            }
+        }
+        printf("\n");
     }
     return 0;
 }

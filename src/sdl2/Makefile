@@ -4,6 +4,7 @@ OBJECTS = main.o
 OBJECTS += vgsx.o
 OBJECTS += m68kcpu.o
 OBJECTS += m68kops.o
+OBJECTS += m68kdasm.o
 OBJECTS += softfloat.o
 OBJECTS += ymfm_opn.o
 OBJECTS += ymfm_adpcm.o
@@ -27,6 +28,9 @@ m68kcpu.o: ${CORE_PATH}/musashi/m68kcpu.c
 	${CPP} -w $<
 
 m68kops.o: ${CORE_PATH}/musashi/m68kops.c
+	${CPP} -w $<
+
+m68kdasm.o: ${CORE_PATH}/musashi/m68kdasm.c
 	${CPP} -w $<
 
 softfloat.o: ${CORE_PATH}/musashi/softfloat/softfloat.c
