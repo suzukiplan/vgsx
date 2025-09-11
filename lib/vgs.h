@@ -55,6 +55,15 @@ typedef struct {
 #define VGS_VREG_SX3 ((uint16_t*)0xD2000C)
 #define VGS_VREG_SY3 ((uint16_t*)0xD2000E)
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void vgs_vsync(void);
+void vgs_console_print(const char* text);
 void vgs_put_bg0(uint8_t x, uint8_t y, uint32_t data);
 void vgs_print_bg0(uint8_t x, uint8_t y, uint8_t pal, const char* text);
+
+#ifdef __cplusplus
+};
+#endif

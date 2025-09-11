@@ -24,6 +24,7 @@
  */
 #include <vgs.h>
 
+static volatile uint32_t _vsync;
 extern int main(int argc, char* argv[]);
 
 void crt0(void)
@@ -38,6 +39,15 @@ void crt0(void)
 
 void vgs_vsync(void)
 {
+    _vsync = *((uint32_t*)0xE00000);
+}
+
+void vgs_console_print(const char* text)
+{
+    while (*text) {
+        *((uint32_t*)0xE00000) = *text;
+        text++;
+    }
 }
 
 void vgs_put_bg0(uint8_t x, uint8_t y, uint32_t data)
