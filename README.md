@@ -227,13 +227,22 @@ The bit layout for each element (4 bytes) in the Name Table is as follows:
 
 ## OAM (Object Attribute Memory)
 
+(TODO)
+
 ## VDP Register
 
+(TODO)
+
 ## I/O Map
+
+I/O instructions in VGS-X can be executed by performing input/output operations on the memory area from 0xE00000 to 0xEFFFFF.
+
+Note that all addresses and values for I/O instructions must be specified as 32-bit values.
 
 | Address  | In  | Out | Description |
 |:--------:|:---:|:---:|:------------|
 | 0xE00000 |  o  |  -  | [V-SYNC](#0xe00000in---v-sync) |
+| 0xE00000 |  -  |  o  | [Console Output](#0xe00000out---console-output) |
 
 ### 0xE00000[in] - V-SYNC
 
@@ -256,20 +265,38 @@ The `vgs_vsync` function is defined in [vgs.h](./lib/vgs.h).
 
 > __Design Philosophy:__ By adopting this specification, the VGS-X MC68k eliminates the concept of operating clock frequency. VGS-X can execute MC68k code up to the host computer's maximum performance. You (Game Developers) themselves must describe the minimum spec required to run your game to your customers.
 
+### 0xE00000[out] - Console Output
+
+Writing a value to 0xE00000 allows you to output characters to the console.
+
+This feature is intended for use in game log output and similar applications.
+
+```c
+vgs_console_print("Hello, World!\n");
+```
+
+The `vgs_console_print` function is defined in [vgs.h](./lib/vgs.h).
+
 ## Background Music
+
+(TODO)
 
 ## Sound Effect
 
+(TODO)
+
 ## Gamepad
+
+(TODO)
 
 # License
 
-- MC680x0 Emulator Musashi
+- MC680x0 Emulator - Musashi
   - Copyright © 1998-2001 Karl Stenerud
   - License: [MIT](./LICENSE-Musashi.txt)
-- FM Sound Chip Emulator ymfm
+- FM Sound Module Emulator - ymfm
   - Copyright (c) 2021, Aaron Giles
   - License: [3-clause BSD](./LICENSE-ymfm.txt)
-- VGS-X
+- VGS-X Emulator Core Module and Runtime for MC68000
   - Copyright (c) 2025 Yoji Suzuki.
   - License: [MIT](./LICENSE-VGSX.txt)
