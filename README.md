@@ -172,7 +172,7 @@ Remarks:
 
 - VGS-X allows up to 16 palettes
 - Each palette can contain 16 colors in RGB555 format
-- For FG and sprites, color number 0 is the transparent color
+- For BG1 ~ BG3 and sprites, color number 0 is the transparent color
 
 | Address             | Palette Number | Color Number |
 |:-------------------:|:--------------:|:------------:|

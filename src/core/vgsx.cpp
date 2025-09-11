@@ -279,7 +279,7 @@ void VGSX::reset(void)
     printf("M68K_REG_PC = 0x%06X\n", eh.e_entry);
     m68k_set_reg(M68K_REG_PC, eh.e_entry);
 
-    // Reset Program Counter
+    // Search an Executable Code
     for (uint32_t i = 0, off = eh.e_phoff; i < eh.e_phnum; i++, off += eh.e_phentsize) {
         Elf32_Phdr ph;
         memcpy(&ph, &this->context.elf[off], eh.e_phentsize);
@@ -301,7 +301,6 @@ void VGSX::reset(void)
                ph.p_flags);
         if (ph.p_type == 1) {
             if (0 == ph.p_paddr && (ph.p_flags & 0x01)) {
-                puts("Detect executable code");
                 this->context.program = &this->context.elf[ph.p_offset];
                 this->context.programSize = ph.p_memsz;
             }
