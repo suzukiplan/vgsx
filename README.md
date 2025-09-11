@@ -117,11 +117,23 @@ The space between the program and WRAM (0xC00000 ~ 0xEFFFFF = 3MB) constitutes t
 
 ## Program
 
-The program area (0x000000 ~ 0xBFFFFF) contains the ELF _(Executable and Linkable Format)_ binary module.
+The program area (0x000000 ~ 0xBFFFFF) contains the [ELF32 _(Executable and Linkable Format 32bit)_](https://refspecs.linuxfoundation.org/elf/gabi4+/ch4.eheader.html) binary module.
 
-When power is applied to the VGS-X, it begins executing the program from the entry point specified in the ELF header of the program loaded from the ROM cartridge.
+When tune on the VGS-X, it begins executing the program from the entry point specified in the ELF header of the program loaded from the ROM cartridge.
 
-Even if you wish to write your program solely in MC68k assembly language, you must always specify the entry point in the ELF header.
+Note that even if you wish to write your program solely in MC68k assembly language, you must always specify the ELF32 header and Program header that contains valid entry point.
+
+Required ELF header format:
+
+- `e_ident[0]` : 0x7F (eyecatch)
+- `e_ident[1~3]` : `ELF` (eyecatch)
+- `e_ident[4]` : `1` (ELF32)
+- `e_ident[5]` : `2` (Big Endian)
+- `e_type` : `ET_EXEC` (2)
+- `e_machine` : `EM_68K` (4)
+- At least one executable flag must be set in a `PT_LOAD` format program header.
+
+If you write data that should be deployed in RAM (at 0xF00000 or later) into the section header, the VGS-X BIOS program will automatically relocate it when you reset the VGS-X.
 
 ## Character Pattern
 
