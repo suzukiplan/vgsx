@@ -39,13 +39,13 @@ void crt0(void)
 
 void vgs_vsync(void)
 {
-    _vsync = *((uint32_t*)0xE00000);
+    _vsync = *VGS_IN_VSYNC;
 }
 
 void vgs_console_print(const char* text)
 {
     while (*text) {
-        *((uint32_t*)0xE00000) = *text;
+        *VGS_OUT_CONSOLE = *text;
         text++;
     }
 }
