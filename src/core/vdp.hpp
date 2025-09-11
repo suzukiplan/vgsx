@@ -62,5 +62,11 @@ class VDP
 
     void write(uint32_t address, uint32_t value)
     {
+        if (0xC00000 <= address && address < 0xD00000) {
+            uint8_t n = (address & 0x300000) >> 20;
+            uint8_t y = (address & 0x0FF000) >> 12;
+            uint8_t x = (address & 0x000FF0) >> 4;
+            this->context.nametbl[n][y][x] = value;
+        }
     }
 };
