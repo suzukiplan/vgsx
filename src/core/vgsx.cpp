@@ -118,7 +118,7 @@ extern "C" uint32_t m68k_read_memory_8(uint32_t address)
     switch (address & 0xF00000) {
         // Name Table
         case 0xC00000:
-            return 0xFF;
+            return 0xFF; // NOTE: name table access is allows only 32bit
 
         // OAM, Palette, VDP-Register
         case 0xD00000:
@@ -145,6 +145,12 @@ extern "C" uint32_t m68k_read_memory_16(uint32_t address)
 
 extern "C" uint32_t m68k_read_memory_32(uint32_t address)
 {
+    if (0xC00000 <= address && address < 0xD00000) {
+        uint8_t n = (address & 0x300000) >> 20;
+        uint8_t y = (address & 0x0FF000) >> 12;
+        uint8_t x = (address & 0x000FF0) >> 4;
+        return vgsx.vdp.context.nametbl[n][y][x];
+    }
     if (0xE00000 <= address && address < 0xF00000) {
         return vgsx.inPort(address);
     }
@@ -167,6 +173,7 @@ extern "C" void m68k_write_memory_8(uint32_t address, uint32_t value)
     switch (address & 0xF00000) {
         // VRAM: 0xE00000 ~ 0xE3FFFF (256KB)
         case 0xC00000:
+            return; // NOTE: name table access is allows only 32bit
         case 0xD00000:
             // TODO: write VRAM
             return;
@@ -190,6 +197,13 @@ extern "C" void m68k_write_memory_16(uint32_t address, uint32_t value)
 
 extern "C" void m68k_write_memory_32(uint32_t address, uint32_t value)
 {
+    if (0xC00000 <= address && address < 0xD00000) {
+        uint8_t n = (address & 0x300000) >> 20;
+        uint8_t y = (address & 0x0FF000) >> 12;
+        uint8_t x = (address & 0x000FF0) >> 4;
+        vgsx.vdp.context.nametbl[n][y][x] = value;
+        return;
+    }
     if (0xE00000 <= address && address < 0xF00000) {
         vgsx.outPort(address, value);
         return;

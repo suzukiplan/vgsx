@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include "vdp.hpp"
 
 class VGSX
 {
@@ -37,6 +38,8 @@ class VGSX
         const uint8_t* program;
         size_t programSize;
     } context;
+
+    VDP vdp;
 
     VGSX();
     ~VGSX();

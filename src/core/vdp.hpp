@@ -22,3 +22,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+#pragma once
+#include <stdint.h>
+
+class VDP
+{
+  public:
+    struct Context {
+        uint32_t nametbl[4][256][256];
+    } context;
+};
