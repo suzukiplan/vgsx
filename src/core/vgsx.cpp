@@ -30,6 +30,23 @@
 VGSX vgsx;
 
 typedef struct {
+    uint8_t e_ident[16];
+    uint16_t e_type;
+    uint16_t e_machine;
+    uint32_t e_version;
+    uint32_t e_entry;
+    uint32_t e_phoff;
+    uint32_t e_shoff;
+    uint32_t e_flags;
+    uint16_t e_ehsize;
+    uint16_t e_phentsize;
+    uint16_t e_phnum;
+    uint16_t e_shentsize;
+    uint16_t e_shnum;
+    uint16_t e_shstrndx;
+} Elf32_Ehdr;
+
+typedef struct {
     uint32_t p_type;
     uint32_t p_offset;
     uint32_t p_vaddr;
@@ -73,6 +90,24 @@ static uint32_t b2h32(uint32_t n)
     result <<= 8;
     result |= ptr[3];
     return result;
+}
+
+static void loadElfHeader(Elf32_Ehdr* header, const void* prg)
+{
+    memcpy(header, prg, sizeof(Elf32_Ehdr));
+    header->e_type = b2h16(header->e_type);
+    header->e_machine = b2h16(header->e_machine);
+    header->e_version = b2h32(header->e_version);
+    header->e_entry = b2h32(header->e_entry);
+    header->e_phoff = b2h32(header->e_phoff);
+    header->e_shoff = b2h32(header->e_shoff);
+    header->e_flags = b2h32(header->e_flags);
+    header->e_ehsize = b2h16(header->e_ehsize);
+    header->e_phentsize = b2h16(header->e_phentsize);
+    header->e_phnum = b2h16(header->e_phnum);
+    header->e_shentsize = b2h16(header->e_shentsize);
+    header->e_shnum = b2h16(header->e_shnum);
+    header->e_shstrndx = b2h16(header->e_shstrndx);
 }
 
 extern "C" uint32_t m68k_read_memory_8(uint32_t address)
@@ -126,13 +161,17 @@ extern "C" void m68k_write_memory_8(uint32_t address, uint32_t value)
         // VRAM: 0xE00000 ~ 0xE3FFFF (256KB)
         case 0xC00000:
         case 0xD00000:
-        case 0xE00000:
             // TODO: write VRAM
+            return;
+
+        // Out Port
+        case 0xE00000:
             return;
 
         // WRAM: 0xF00000 ~ 0xFFFFFF (1024KB)
         case 0xF00000:
             vgsx.context.ram[address & 0xFFFFF] = value & 0xFF;
+            return;
     }
 }
 
@@ -158,12 +197,13 @@ VGSX::~VGSX()
 bool VGSX::loadProgram(const void* data, size_t size)
 {
     if (size < 0x2000) {
+        this->lastError = "Invalid program size.";
         return false;
     }
 
     // check ELF header
     Elf32_Ehdr header;
-    memcpy(&header, data, sizeof(header));
+    loadElfHeader(&header, data);
 
     // validate ident
     if (header.e_ident[0] != 0x7F ||
@@ -186,21 +226,6 @@ bool VGSX::loadProgram(const void* data, size_t size)
         return false;
     }
 
-    // big to local endian
-    header.e_type = b2h16(header.e_type);
-    header.e_machine = b2h16(header.e_machine);
-    header.e_version = b2h32(header.e_version);
-    header.e_entry = b2h32(header.e_entry);
-    header.e_phoff = b2h32(header.e_phoff);
-    header.e_shoff = b2h32(header.e_shoff);
-    header.e_flags = b2h32(header.e_flags);
-    header.e_ehsize = b2h16(header.e_ehsize);
-    header.e_phentsize = b2h16(header.e_phentsize);
-    header.e_phnum = b2h16(header.e_phnum);
-    header.e_shentsize = b2h16(header.e_shentsize);
-    header.e_shnum = b2h16(header.e_shnum);
-    header.e_shstrndx = b2h16(header.e_shstrndx);
-
     // Check EXEC
     if (header.e_type != 2) {
         this->lastError = "Unsupported execution mode.";
@@ -213,7 +238,6 @@ bool VGSX::loadProgram(const void* data, size_t size)
         return false;
     }
 
-    memcpy(&this->context.programHeader, &header, sizeof(header));
     this->context.program = (const uint8_t*)data;
     this->context.programSize = size;
     this->reset();
@@ -224,10 +248,18 @@ void VGSX::reset(void)
 {
     m68k_pulse_reset();
 
+    if (!this->context.program) {
+        return;
+    }
+
+    // Load ELF Header
+    Elf32_Ehdr eh;
+    loadElfHeader(&eh, this->context.program);
+
     // Reset Program Counter
-    for (uint32_t i = 0, off = this->context.programHeader.e_phoff; i < this->context.programHeader.e_phnum; i++, off += this->context.programHeader.e_phentsize) {
+    for (uint32_t i = 0, off = eh.e_phoff; i < eh.e_phnum; i++, off += eh.e_phentsize) {
         Elf32_Phdr ph;
-        memcpy(&ph, &context.program[off], this->context.programHeader.e_phentsize);
+        memcpy(&ph, &context.program[off], eh.e_phentsize);
         ph.p_type = b2h32(ph.p_type);
         ph.p_offset = b2h32(ph.p_offset);
         ph.p_vaddr = b2h32(ph.p_vaddr);
@@ -254,9 +286,9 @@ void VGSX::reset(void)
     memset(this->context.ram, 0xFF, sizeof(this->context.ram));
     if (this->context.program) {
         // ELF section data relocate to RAM from ROM
-        for (uint32_t i = 0, off = this->context.programHeader.e_shoff; i < this->context.programHeader.e_shnum; i++, off += this->context.programHeader.e_shentsize) {
+        for (uint32_t i = 0, off = eh.e_shoff; i < eh.e_shnum; i++, off += eh.e_shentsize) {
             Elf32_Shdr sh;
-            memcpy(&sh, &this->context.program[off], this->context.programHeader.e_shentsize);
+            memcpy(&sh, &this->context.program[off], eh.e_shentsize);
             sh.sh_name = b2h32(sh.sh_name);
             sh.sh_type = b2h32(sh.sh_type);
             sh.sh_flags = b2h32(sh.sh_flags);
