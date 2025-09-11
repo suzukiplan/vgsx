@@ -175,10 +175,6 @@ extern "C" void m68k_write_memory_32(uint32_t address, uint32_t value)
         vgsx.outPort(address, value);
     } else if (0xC00000 <= address) {
         vgsx.vdp.write(address, value);
-        uint8_t n = (address & 0x300000) >> 20;
-        uint8_t y = (address & 0x0FF000) >> 12;
-        uint8_t x = (address & 0x000FF0) >> 4;
-        vgsx.vdp.context.nametbl[n][y][x] = value;
     }
 }
 
