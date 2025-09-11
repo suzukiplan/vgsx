@@ -173,30 +173,31 @@ Remarks:
 ## Palette
 
 - VGS-X allows up to 16 palettes
-- Each palette can contain 16 colors in RGB555 format
-- For BG1 ~ BG3 and sprites, color number 0 is the transparent color
+- Each palette can contain 16 colors in RGB888 format
+- Color number 0 is the transparent color
 
 | Address             | Palette Number | Color Number |
 |:-------------------:|:--------------:|:------------:|
-| 0xD10000 ~ 0xD10001 |        0       |        0     |
-| 0xD10002 ~ 0xD10003 |        0       |        1     |
-| 0xD10004 ~ 0xD10005 |        0       |        2     |
+| 0xD10000 ~ 0xD10003 |        0       |        0     |
+| 0xD10004 ~ 0xD10007 |        0       |        1     |
+| 0xD10008 ~ 0xD1000B |        0       |        2     |
 |          :          |        :       |        :     |
-| 0xD1001A ~ 0xD1001B |        0       |       13     |
-| 0xD1001C ~ 0xD1001D |        0       |       14     |
-| 0xD1001E ~ 0xD1001F |        0       |       15     |
-| 0xD10020 ~ 0xD10021 |        1       |        0     |
-| 0xD10022 ~ 0xD10023 |        1       |        1     |
-| 0xD10024 ~ 0xD10025 |        1       |        2     |
+| 0xD10034 ~ 0xD10037 |        0       |       13     |
+| 0xD10038 ~ 0xD1003B |        0       |       14     |
+| 0xD1003C ~ 0xD1003E |        0       |       15     |
+| 0xD10040 ~ 0xD10043 |        1       |        0     |
+| 0xD10044 ~ 0xD10047 |        1       |        1     |
+| 0xD10048 ~ 0xD1004B |        1       |        2     |
 |          :          |        :       |        :     |
-| 0xD101FA ~ 0xD101FB |       15       |       13     |
-| 0xD101FC ~ 0xD101FD |       15       |       14     |
-| 0xD101FE ~ 0xD101FF |       15       |       15     |
+| 0xD103F4 ~ 0xD103F7 |       15       |       13     |
+| 0xD103F8 ~ 0xD103FB |       15       |       14     |
+| 0xD103FC ~ 0xD103FF |       15       |       15     |
 
 Remarks:
 
-- This table layout is compatible with VGS-Zero.
-- 0xD10200 ~ 0xD1FFFF is a mirror of 0xD10000 ~ 0xD101FF (512 bytes).
+- Bit Layout: `******** rrrrrrrr gggggggg bbbbbbbb`
+- 0xD10400 ~ 0xD1FFFF is a mirror of 0xD10000 ~ 0xD103FF (1024 bytes).
+
 
 ## Name Table
 
