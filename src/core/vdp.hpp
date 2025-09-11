@@ -29,11 +29,13 @@ class VDP
 {
   public:
     typedef struct {
-        uint32_t skip;       // Skip Render
-        uint32_t spos;       // Sprite Position (0: Between BG0 and BG1 ~ 3)
-        uint32_t scrollX[4]; // Scroll BGs X
-        uint32_t scrollY[4]; // Scroll BGs Y
+        uint32_t skip;          // Skip Render
+        uint32_t spos;          // Sprite Position (0: Between BG0 and BG1 ~ 3)
+        uint32_t scrollX[4];    // Scroll BGs X
+        uint32_t scrollY[4];    // Scroll BGs Y
+        uint32_t reserved[246]; // Reserved
     } Register;
+
     typedef struct {
         uint32_t hidden;      // Hidden (0 or not 0)
         int32_t y;            // Position (Y)
@@ -41,6 +43,7 @@ class VDP
         uint32_t attr;        // Attribute
         uint32_t reserved[4]; // Reserved
     } OAM;
+
     struct Context {
         uint8_t ptn[65536][32];        // Character Pattern (ROM)
         uint32_t nametbl[4][256][256]; // Name Table
@@ -56,6 +59,25 @@ class VDP
             uint8_t y = (address & 0x0FF000) >> 12;
             uint8_t x = (address & 0x000FF0) >> 4;
             return this->context.nametbl[n][y][x];
+        } else {
+            switch (address & 0xFF0000) {
+                case 0xD00000: {
+                    uint8_t index = (address & 0b111111111100000) >> 6;
+                    uint8_t arg = (address & 0b11100) >> 2;
+                    uint32_t* rawOam = (uint32_t*)&this->context.oam[index];
+                    return rawOam[arg];
+                }
+                case 0xD10000: {
+                    uint8_t pn = (address & 0xF00) >> 8;
+                    uint8_t cn = (address & 0x0F0) >> 4;
+                    return this->context.palette[pn][cn];
+                }
+                case 0xD20000: {
+                    uint8_t index = (address & 0xFF0) >> 4;
+                    uint32_t* rawReg = (uint32_t*)&this->context.reg;
+                    return rawReg[index];
+                }
+            }
         }
         return 0xFFFFFFFF;
     }
@@ -67,6 +89,28 @@ class VDP
             uint8_t y = (address & 0x0FF000) >> 12;
             uint8_t x = (address & 0x000FF0) >> 4;
             this->context.nametbl[n][y][x] = value;
+        } else {
+            switch (address & 0xFF0000) {
+                case 0xD00000: {
+                    uint8_t index = (address & 0b111111111100000) >> 6;
+                    uint8_t arg = (address & 0b11100) >> 2;
+                    uint32_t* rawOam = (uint32_t*)&this->context.oam[index];
+                    rawOam[arg] = value;
+                    return;
+                }
+                case 0xD10000: {
+                    uint8_t pn = (address & 0xF00) >> 8;
+                    uint8_t cn = (address & 0x0F0) >> 4;
+                    this->context.palette[pn][cn] = value;
+                    return;
+                }
+                case 0xD20000: {
+                    uint8_t index = (address & 0xFF0) >> 4;
+                    uint32_t* rawReg = (uint32_t*)&this->context.reg;
+                    rawReg[index] = value;
+                    return;
+                }
+            }
         }
     }
 };
