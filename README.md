@@ -163,6 +163,8 @@ Remarks:
 - Character patterns cannot be referenced directly from the program. You can draw the desired character by specifying the pattern number in the name table or OAM.
 - Character pattern number is shared between BGs and Sprites.
 
+> __WIP Note:__ Currently, the character pattern specification assumes that all necessary patterns are loaded at program startup. This means we intend to restrict dynamic pattern rewriting after startup. However, we also believe there is room to consider changing this specification.
+
 ## Palette
 
 - VGS-X allows up to 16 palettes
@@ -198,12 +200,12 @@ Remarks:
 - The Name Table has a four-layer structure, with BG1 displayed on top of BG0, BG2 on top of BG1, BG3 on top of BG2, and BG4 on top of BG3.
 - BG1 ~ BG3 display character pattern color number 0 as transparent, while only BG0 draws the color from color number 0.
 
-| Address             | Name Table |
-|:-------------------:|:----------:|
-| 0xC00000 ~ 0xC3FFFF |     BG0    |
-| 0xC40000 ~ 0xC7FFFF |     BG1    |
-| 0xC80000 ~ 0xCBFFFF |     BG2    |
-| 0xCC0000 ~ 0xCFFFFF |     BG3    |
+| Address             | Size  | Name Table |
+|:-------------------:|:-----:|:----------:|
+| 0xC00000 ~ 0xC3FFFF | 256KB |     BG0    |
+| 0xC40000 ~ 0xC7FFFF | 256KB |     BG1    |
+| 0xC80000 ~ 0xCBFFFF | 256KB |     BG2    |
+| 0xCC0000 ~ 0xCFFFFF | 256KB |     BG3    |
 
 The bit layout for each element (4 bytes) in the Name Table is as follows:
 
