@@ -213,6 +213,10 @@ VGSX::~VGSX()
 
 bool VGSX::loadProgram(const void* data, size_t size)
 {
+    if (!data) {
+        this->lastError = "No data.";
+        return false;
+    }
     if (size < 0x2000) {
         this->lastError = "Invalid program size.";
         return false;
