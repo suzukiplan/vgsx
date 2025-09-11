@@ -179,6 +179,7 @@ Remarks:
 - VGS-X allows up to 16 palettes
 - Each palette can contain 16 colors in RGB888 format
 - Color number 0 is the transparent color
+- Color number 0 in Palette number 0 becomes the backdrop (overall background) color.
 
 | Address             | Palette Number | Color Number |
 |:-------------------:|:--------------:|:------------:|
@@ -202,13 +203,11 @@ Remarks:
 - Bit Layout: `******** rrrrrrrr gggggggg bbbbbbbb`
 - 0xD10400 ~ 0xD1FFFF is a mirror of 0xD10000 ~ 0xD103FF (1024 bytes).
 
-
 ## Name Table
 
-- The Name Table is a 256x256 x 4bytes two-dimensional array. 
+- The Name Table is a 256x256 x 4bytes two-dimensional array of the [attributes](#attribute). 
 - By setting character patterns and attribute data to it, graphics can be displayed on the background layer.
 - The Name Table has a four-layer structure, with BG1 displayed on top of BG0, BG2 on top of BG1, BG3 on top of BG2, and BG4 on top of BG3.
-- BG1 ~ BG3 display character pattern color number 0 as transparent, while only BG0 draws the color from color number 0.
 
 | Address             | Size  | Name Table |
 |:-------------------:|:-----:|:----------:|
@@ -217,7 +216,14 @@ Remarks:
 | 0xC80000 ~ 0xCBFFFF | 256KB |     BG2    |
 | 0xCC0000 ~ 0xCFFFFF | 256KB |     BG3    |
 
-The bit layout for each element (4 bytes) in the Name Table is as follows:
+> The 256x256 (2048x2048 pixels) size may be slightly excessive for the VGS-X display resolution (320x200 pixels), but using this size enables future support for bitmap format VRAM.
+>
+> - 256x256x4 = 262,144 bytes
+> - 320x200x2 = 128,000 bytes (minimum size required to display Bitmap format)
+
+## Attribute
+
+The Bit-Layout of the Name Table and OAM's attribute are as follows:
 
 |  Bit  | Mnemonic | Description |
 |:-----:|:--------:|:------------|
@@ -226,11 +232,6 @@ The bit layout for each element (4 bytes) in the Name Table is as follows:
 |  2~7  | reserved | Specify 0 to maintain future compatibility. |
 | 12~15 |   PAL    | [Palette](#palette) Number (0~15) |
 | 16~31 |   PTN    | [Character Pattern](#character-pattern) Number (0~65535) |
-
-> The 256x256 (2048x2048 pixels) size may be slightly excessive for the VGS-X display resolution (320x200 pixels), but using this size enables future support for bitmap format VRAM.
->
-> - 256x256x4 = 262,144 bytes
-> - 320x200x2 = 128,000 bytes (minimum size required to display Bitmap format)
 
 ## OAM (Object Attribute Memory)
 
