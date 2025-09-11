@@ -1,24 +1,139 @@
+/**
+ * VGS-X Emulator Core Module
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2025 Yoji Suzuki.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
+#include <string.h>
 #include "vgsx.h"
+#include "m68k.h"
 
 VGSX vgsx;
 
+typedef struct {
+    uint32_t p_type;
+    uint32_t p_offset;
+    uint32_t p_vaddr;
+    uint32_t p_paddr;
+    uint32_t p_filesz;
+    uint32_t p_memsz;
+    uint32_t p_flags;
+    uint32_t p_align;
+} Elf32_Phdr;
+
+typedef struct {
+    uint32_t sh_name;
+    uint32_t sh_type;
+    uint32_t sh_flags;
+    uint32_t sh_addr;
+    uint32_t sh_offset;
+    uint32_t sh_size;
+    uint32_t sh_link;
+    uint32_t sh_info;
+    uint32_t sh_addralign;
+    uint32_t sh_entsize;
+} Elf32_Shdr;
+
+static uint16_t b2h16(uint16_t n)
+{
+    uint8_t* ptr = (uint8_t*)&n;
+    uint16_t result = ptr[0];
+    result <<= 8;
+    result |= ptr[1];
+    return result;
+}
+
+static uint32_t b2h32(uint32_t n)
+{
+    uint8_t* ptr = (uint8_t*)&n;
+    uint32_t result = ptr[0];
+    result <<= 8;
+    result |= ptr[1];
+    result <<= 8;
+    result |= ptr[2];
+    result <<= 8;
+    result |= ptr[3];
+    return result;
+}
+
 extern "C" uint32_t m68k_read_memory_8(uint32_t address)
 {
-    return 0;
+    switch (address & 0xF00000) {
+        // Name Table
+        case 0xC00000:
+            return 0xFF;
+
+        // OAM, Palette, VDP-Register
+        case 0xD00000:
+            return 0xFF;
+
+        // I/O
+        case 0xE00000:
+            return 0xFF;
+
+        // WRAM: 0xF00000 ~ 0xFFFFFF (1024KB)
+        case 0xF00000:
+            return vgsx.context.ram[address & 0xFFFFF];
+
+        // PRG: 0x000000 ~ 0xBFFFFF (12MB)
+        default:
+            return 0xFF;
+    }
 }
 
 extern "C" uint32_t m68k_read_memory_16(uint32_t address)
 {
-    return 0;
+    uint16_t result = m68k_read_memory_8(address);
+    result <<= 8;
+    result |= m68k_read_memory_8(address + 1);
+    return result;
 }
 
 extern "C" uint32_t m68k_read_memory_32(uint32_t address)
 {
-    return 0;
+    uint32_t result = m68k_read_memory_8(address);
+    result <<= 8;
+    result |= m68k_read_memory_8(address + 1);
+    result <<= 8;
+    result |= m68k_read_memory_8(address + 2);
+    result <<= 8;
+    result |= m68k_read_memory_8(address + 3);
+    return result;
 }
 
 extern "C" void m68k_write_memory_8(uint32_t address, uint32_t value)
 {
+    switch (address & 0xF00000) {
+        // VRAM: 0xE00000 ~ 0xE3FFFF (256KB)
+        case 0xC00000:
+        case 0xD00000:
+        case 0xE00000:
+            // TODO: write VRAM
+            return;
+
+        // WRAM: 0xF00000 ~ 0xFFFFFF (1024KB)
+        case 0xF00000:
+            vgsx.context.ram[address & 0xFFFFF] = value & 0xFF;
+    }
 }
 
 extern "C" void m68k_write_memory_16(uint32_t address, uint32_t value)
@@ -26,5 +141,147 @@ extern "C" void m68k_write_memory_16(uint32_t address, uint32_t value)
 }
 
 extern "C" void m68k_write_memory_32(uint32_t address, uint32_t value)
+{
+}
+
+VGSX::VGSX()
+{
+    m68k_set_cpu_type(M68K_CPU_TYPE_68020);
+    m68k_init();
+    m68k_pulse_reset();
+}
+
+VGSX::~VGSX()
+{
+}
+
+bool VGSX::loadProgram(const void* data, size_t size)
+{
+    if (size < 0x2000) {
+        return false;
+    }
+
+    // check ELF header
+    Elf32_Ehdr header;
+    memcpy(&header, data, sizeof(header));
+
+    // validate ident
+    if (header.e_ident[0] != 0x7F ||
+        header.e_ident[1] != 'E' ||
+        header.e_ident[2] != 'L' ||
+        header.e_ident[3] != 'F') {
+        this->lastError = "Invalid ELF header.";
+        return false;
+    }
+
+    // Check ELF32
+    if (header.e_ident[4] != 1) {
+        this->lastError = "Unsupported ELF type.";
+        return false;
+    }
+
+    // Check Endian (Big)
+    if (header.e_ident[5] != 2) {
+        this->lastError = "Unsupported endian model.";
+        return false;
+    }
+
+    // big to local endian
+    header.e_type = b2h16(header.e_type);
+    header.e_machine = b2h16(header.e_machine);
+    header.e_version = b2h32(header.e_version);
+    header.e_entry = b2h32(header.e_entry);
+    header.e_phoff = b2h32(header.e_phoff);
+    header.e_shoff = b2h32(header.e_shoff);
+    header.e_flags = b2h32(header.e_flags);
+    header.e_ehsize = b2h16(header.e_ehsize);
+    header.e_phentsize = b2h16(header.e_phentsize);
+    header.e_phnum = b2h16(header.e_phnum);
+    header.e_shentsize = b2h16(header.e_shentsize);
+    header.e_shnum = b2h16(header.e_shnum);
+    header.e_shstrndx = b2h16(header.e_shstrndx);
+
+    // Check EXEC
+    if (header.e_type != 2) {
+        this->lastError = "Unsupported execution mode.";
+        return false;
+    }
+
+    // Check MC68000
+    if (header.e_machine != 0x0004) {
+        this->lastError = "Unsupported machine model.";
+        return false;
+    }
+
+    memcpy(&this->context.programHeader, &header, sizeof(header));
+    this->context.program = (const uint8_t*)data;
+    this->context.programSize = size;
+    this->reset();
+    return true;
+}
+
+void VGSX::reset(void)
+{
+    m68k_pulse_reset();
+
+    // Reset Program Counter
+    for (uint32_t i = 0, off = this->context.programHeader.e_phoff; i < this->context.programHeader.e_phnum; i++, off += this->context.programHeader.e_phentsize) {
+        Elf32_Phdr ph;
+        memcpy(&ph, &context.program[off], this->context.programHeader.e_phentsize);
+        ph.p_type = b2h32(ph.p_type);
+        ph.p_offset = b2h32(ph.p_offset);
+        ph.p_vaddr = b2h32(ph.p_vaddr);
+        ph.p_paddr = b2h32(ph.p_paddr);
+        ph.p_filesz = b2h32(ph.p_filesz);
+        ph.p_memsz = b2h32(ph.p_memsz);
+        ph.p_flags = b2h32(ph.p_flags);
+        ph.p_align = b2h32(ph.p_align);
+        printf(".program:%X offset=%d, va=0x%06X, pa=0x%06X, fs=%d, ms=%d, flg=%d\n",
+               ph.p_type,
+               ph.p_offset,
+               ph.p_vaddr,
+               ph.p_paddr,
+               ph.p_filesz,
+               ph.p_memsz,
+               ph.p_flags);
+        if (ph.p_type == 1 && (ph.p_flags & 0x01)) {
+            printf("M68K_REG_PC = 0x%06X\n", ph.p_offset);
+            m68k_set_reg(M68K_REG_PC, ph.p_offset);
+        }
+    }
+
+    // Reset RAM
+    memset(this->context.ram, 0xFF, sizeof(this->context.ram));
+    if (this->context.program) {
+        // ELF section data relocate to RAM from ROM
+        for (uint32_t i = 0, off = this->context.programHeader.e_shoff; i < this->context.programHeader.e_shnum; i++, off += this->context.programHeader.e_shentsize) {
+            Elf32_Shdr sh;
+            memcpy(&sh, &this->context.program[off], this->context.programHeader.e_shentsize);
+            sh.sh_name = b2h32(sh.sh_name);
+            sh.sh_type = b2h32(sh.sh_type);
+            sh.sh_flags = b2h32(sh.sh_flags);
+            sh.sh_addr = b2h32(sh.sh_addr);
+            sh.sh_offset = b2h32(sh.sh_offset);
+            sh.sh_size = b2h32(sh.sh_size);
+            sh.sh_link = b2h32(sh.sh_link);
+            sh.sh_info = b2h32(sh.sh_info);
+            if (0xF00000 <= sh.sh_addr) {
+                memcpy(&this->context.ram[sh.sh_addr & 0xFFFFF],
+                       &this->context.program[sh.sh_offset],
+                       sh.sh_size);
+            }
+            printf(".section:%X flags=%d, addr=0x%06X, offset=0x%06X, size=%d, link=%d, info=%d\n",
+                   sh.sh_type,
+                   sh.sh_flags,
+                   sh.sh_addr,
+                   sh.sh_offset,
+                   sh.sh_size,
+                   sh.sh_link,
+                   sh.sh_info);
+        }
+    }
+}
+
+void VGSX::tick(void)
 {
 }

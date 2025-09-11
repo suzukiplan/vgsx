@@ -1,5 +1,5 @@
-CPP = g++ -O2 -c
 CORE_PATH = ../core
+CPP = g++ -O2 -I${CORE_PATH} -I${CORE_PATH}/musashi -I${CORE_PATH}/ymfm/src -c
 OBJECTS = main.o
 OBJECTS += vgsx.o
 OBJECTS += m68kcpu.o
