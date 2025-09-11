@@ -228,6 +228,31 @@ The bit layout for each element (4 bytes) in the Name Table is as follows:
 
 ## I/O Map
 
+| Address  | In  | Out | Description |
+|:--------:|:---:|:---:|:------------|
+| 0xE00000 |  o  |  -  | [V-SYNC](#0xe00000in---v-sync) |
+
+### 0xE00000[in] - V-SYNC
+
+VGS-Zero employed the typical drawing method of the CRT era, namely drawing line by line. However, VGS-X differs significantly from this approach.
+
+When an MC68k program inputs V-SYNC (0xE00000), VGS-X references the VRAM at that point to draw BG0 through BG3 and sprites. It then synchronizes at 60fps before returning a response to the MC68k.
+
+```c
+// Execute the process to update the VRAM
+drawProc();
+
+// Waiting for vertical sync (Internally executes the InPort at 0xE00000)
+vgs_vsync();
+
+// Below processing will be executed after synchronization is complete.
+afterDrawProc();
+```
+
+The `vgs_vsync` function is defined in [vgs.h](./lib/vgs.h).
+
+> __Design Philosophy:__ By adopting this specification, the VGS-X MC68k eliminates the concept of operating clock frequency. VGS-X can execute MC68k code up to the host computer's maximum performance. You (Game Developers) themselves must describe the minimum spec required to run your game to your customers.
+
 ## Background Music
 
 ## Sound Effect
