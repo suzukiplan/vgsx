@@ -2,7 +2,7 @@
 
 ## WIP
 
-This project is still in the WIP; We are In Progress phase.
+This project is still in the WIP; _Work In Progress_ phase.
 
 Please note that the current specifications are subject to frequent, casual breaking changes.
 
