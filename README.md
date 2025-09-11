@@ -1,5 +1,13 @@
 # VGS-X
 
+## WIP
+
+This project is still in the WIP; We are In Progress phase.
+
+Please note that the current specifications are subject to frequent, casual breaking changes.
+
+Once this project reaches a stable phase, version 1.0.0 is scheduled for release.
+
 ## About VGS-X
 
 - A 16-bit game console featuring an MC68000 compatible CPU and a proprietary VDP.
