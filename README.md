@@ -121,19 +121,22 @@ The program area (0x000000 ~ 0xBFFFFF) contains the [ELF32 _(Executable and Link
 
 When tune on the VGS-X, it begins executing the program from the entry point specified in the ELF header of the program loaded from the ROM cartridge.
 
-Note that even if you wish to write your program solely in MC68k assembly language, you must always specify the ELF32 header and Program header that contains valid entry point.
+Note that even if you wish to write your program solely in MC68k assembly language, you must always specify the ELF32 header and Program header that contains valid entry point and executable text.
 
-Required ELF header format:
+> However, since there is no advantage to writing high-performance programs in assembly language on the VGS-X, we generally do not recommend writing programs entirely in assembly language.
 
-- `e_ident[0]` : 0x7F (eyecatch)
-- `e_ident[1~3]` : `ELF` (eyecatch)
-- `e_ident[4]` : `ELF32` (1)
-- `e_ident[5]` : `Big Endian` (2)
-- `e_type` : `ET_EXEC` (2)
-- `e_machine` : `EM_68K` (4)
-- At least one executable flag must be set in a `PT_LOAD` format program header.
+The following command line the compilation options that must be specified when outputting programs that can run on VGS-X using m68k-elf-gcc.
 
-If you write data that should be deployed in RAM (at 0xF00000 or later) into the section header, the VGS-X BIOS program will automatically relocate it when you reset the VGS-X.
+```
+m68k-elf-gcc
+    -I${VGSX_ROOT}/lib           ... Specify the VGS-X API header path using the -I option
+    -o program                   
+    program.c                    
+    -L${VGSX_ROOT}/lib           ... Specify the VGS-X API archive path using the -L option
+    -T${VGSX_ROOT}/lib/linker.ld ... Specify the linker.ld file describing the VGS-X memory map using the -T option.
+    -Wl,-ecrt0                   ... Specify crt0 as the entry point when using the VGS-X runtime
+```
+
 
 ## Character Pattern
 
