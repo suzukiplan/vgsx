@@ -127,8 +127,8 @@ Required ELF header format:
 
 - `e_ident[0]` : 0x7F (eyecatch)
 - `e_ident[1~3]` : `ELF` (eyecatch)
-- `e_ident[4]` : `1` (ELF32)
-- `e_ident[5]` : `2` (Big Endian)
+- `e_ident[4]` : `ELF32` (1)
+- `e_ident[5]` : `Big Endian` (2)
 - `e_type` : `ET_EXEC` (2)
 - `e_machine` : `EM_68K` (4)
 - At least one executable flag must be set in a `PT_LOAD` format program header.
