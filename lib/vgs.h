@@ -26,8 +26,14 @@
 #include <stdint.h>
 
 typedef struct {
-
+    uint32_t hidden;      // Hidden (0 or not 0)
+    int32_t y;            // Position (Y)
+    int32_t x;            // Position (X)
+    uint32_t attr;        // Attribute
+    uint32_t reserved[4]; // Reserved
 } VGS_Oam;
+
+#define VGS_MAX_SPRITE 1024
 
 // Name table (256x256)
 // Bit Layout:
@@ -43,7 +49,7 @@ typedef struct {
 
 // Palette Table
 // 16 x 16 x 2bits
-#define VGS_PALETTE ((uint16_t*)0xD10000)
+#define VGS_PALETTE ((uint32_t*)0xD10000)
 
 // Scroll Register
 #define VGS_VREG_SX0 ((uint16_t*)0xD20000)

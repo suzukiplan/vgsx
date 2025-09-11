@@ -114,23 +114,8 @@ extern "C" uint32_t m68k_read_memory_8(uint32_t address)
 {
     if (address < 0xC00000) {
         return address < vgsx.context.programSize ? vgsx.context.program[address] : 0xFF;
-    }
-    switch (address & 0xF00000) {
-        // Name Table
-        case 0xC00000:
-            return 0xFF; // NOTE: name table access is allows only 32bit
-
-        // OAM, Palette, VDP-Register
-        case 0xD00000:
-            return 0xFF;
-
-        // I/O
-        case 0xE00000:
-            return 0xFF;
-
-        // WRAM: 0xF00000 ~ 0xFFFFFF (1024KB)
-        case 0xF00000:
-            return vgsx.context.ram[address & 0xFFFFF];
+    } else if (0xF00000 <= address) {
+        return vgsx.context.ram[address & 0xFFFFF];
     }
     return 0xFF;
 }
@@ -145,23 +130,21 @@ extern "C" uint32_t m68k_read_memory_16(uint32_t address)
 
 extern "C" uint32_t m68k_read_memory_32(uint32_t address)
 {
-    if (0xC00000 <= address && address < 0xD00000) {
-        uint8_t n = (address & 0x300000) >> 20;
-        uint8_t y = (address & 0x0FF000) >> 12;
-        uint8_t x = (address & 0x000FF0) >> 4;
-        return vgsx.vdp.context.nametbl[n][y][x];
-    }
-    if (0xE00000 <= address && address < 0xF00000) {
+    if (0xC00000 <= address && address < 0xE00000) {
+        return vgsx.vdp.read(address);
+    } else if (0xF00000 <= address || address < 0xC00000) {
+        uint32_t result = m68k_read_memory_8(address);
+        result <<= 8;
+        result |= m68k_read_memory_8(address + 1);
+        result <<= 8;
+        result |= m68k_read_memory_8(address + 2);
+        result <<= 8;
+        result |= m68k_read_memory_8(address + 3);
+        return result;
+    } else if (0xE00000 <= address) {
         return vgsx.inPort(address);
     }
-    uint32_t result = m68k_read_memory_8(address);
-    result <<= 8;
-    result |= m68k_read_memory_8(address + 1);
-    result <<= 8;
-    result |= m68k_read_memory_8(address + 2);
-    result <<= 8;
-    result |= m68k_read_memory_8(address + 3);
-    return result;
+    return 0xFFFFFFFF;
 }
 
 extern "C" uint32_t m68k_read_disassembler_8(uint32_t address) { return m68k_read_memory_8(address); }
@@ -170,22 +153,8 @@ extern "C" uint32_t m68k_read_disassembler_32(uint32_t address) { return m68k_re
 
 extern "C" void m68k_write_memory_8(uint32_t address, uint32_t value)
 {
-    switch (address & 0xF00000) {
-        // VRAM: 0xE00000 ~ 0xE3FFFF (256KB)
-        case 0xC00000:
-            return; // NOTE: name table access is allows only 32bit
-        case 0xD00000:
-            // TODO: write VRAM
-            return;
-
-        // Out Port
-        case 0xE00000:
-            return;
-
-        // WRAM: 0xF00000 ~ 0xFFFFFF (1024KB)
-        case 0xF00000:
-            vgsx.context.ram[address & 0xFFFFF] = value & 0xFF;
-            return;
+    if (0xF00000 <= address) {
+        vgsx.context.ram[address & 0xFFFFF] = value & 0xFF;
     }
 }
 
@@ -197,21 +166,20 @@ extern "C" void m68k_write_memory_16(uint32_t address, uint32_t value)
 
 extern "C" void m68k_write_memory_32(uint32_t address, uint32_t value)
 {
-    if (0xC00000 <= address && address < 0xD00000) {
+    if (0xF00000 <= address) {
+        m68k_write_memory_8(address, (value & 0xFF000000) >> 24);
+        m68k_write_memory_8(address + 1, (value & 0xFF0000) >> 16);
+        m68k_write_memory_8(address + 2, (value & 0xFF00) >> 8);
+        m68k_write_memory_8(address + 3, value & 0xFF);
+    } else if (0xE00000 <= address) {
+        vgsx.outPort(address, value);
+    } else if (0xC00000 <= address) {
+        vgsx.vdp.write(address, value);
         uint8_t n = (address & 0x300000) >> 20;
         uint8_t y = (address & 0x0FF000) >> 12;
         uint8_t x = (address & 0x000FF0) >> 4;
         vgsx.vdp.context.nametbl[n][y][x] = value;
-        return;
     }
-    if (0xE00000 <= address && address < 0xF00000) {
-        vgsx.outPort(address, value);
-        return;
-    }
-    m68k_write_memory_8(address, (value & 0xFF000000) >> 24);
-    m68k_write_memory_8(address + 1, (value & 0xFF0000) >> 16);
-    m68k_write_memory_8(address + 2, (value & 0xFF00) >> 8);
-    m68k_write_memory_8(address + 3, value & 0xFF);
 }
 
 VGSX::VGSX()

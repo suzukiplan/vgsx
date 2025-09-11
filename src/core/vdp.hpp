@@ -28,7 +28,39 @@
 class VDP
 {
   public:
+    typedef struct {
+        uint32_t skip;       // Skip Render
+        uint32_t spos;       // Sprite Position (0: Between BG0 and BG1 ~ 3)
+        uint32_t scrollX[4]; // Scroll BGs X
+        uint32_t scrollY[4]; // Scroll BGs Y
+    } Register;
+    typedef struct {
+        uint32_t hidden;      // Hidden (0 or not 0)
+        int32_t y;            // Position (Y)
+        int32_t x;            // Position (X)
+        uint32_t attr;        // Attribute
+        uint32_t reserved[4]; // Reserved
+    } OAM;
     struct Context {
-        uint32_t nametbl[4][256][256];
+        uint8_t ptn[65536][32];        // Character Pattern (ROM)
+        uint32_t nametbl[4][256][256]; // Name Table
+        OAM oam[1024];                 // OAM
+        uint32_t palette[16][16];      // Palette
+        Register reg;                  // Register
     } context;
+
+    uint32_t read(uint32_t address)
+    {
+        if (0xC00000 <= address && address < 0xD00000) {
+            uint8_t n = (address & 0x300000) >> 20;
+            uint8_t y = (address & 0x0FF000) >> 12;
+            uint8_t x = (address & 0x000FF0) >> 4;
+            return this->context.nametbl[n][y][x];
+        }
+        return 0xFFFFFFFF;
+    }
+
+    void write(uint32_t address, uint32_t value)
+    {
+    }
 };
