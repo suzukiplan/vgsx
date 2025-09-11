@@ -1,4 +1,6 @@
 *.o
 m68kmake
 src/sdl2/vgsx
+example/01_hello/program
+
 
