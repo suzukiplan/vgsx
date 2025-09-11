@@ -129,6 +129,8 @@ The following command line the compilation options that must be specified when o
 
 ```
 m68k-elf-gcc
+    -mc68030                     ... Compile as MC68030 binary
+    -O2                          ... Optimize the Runtime Speed
     -I${VGSX_ROOT}/lib           ... Specify the VGS-X API header path using the -I option
     -o program                   
     program.c                    

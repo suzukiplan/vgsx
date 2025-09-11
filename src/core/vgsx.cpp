@@ -202,7 +202,7 @@ extern "C" void m68k_write_memory_32(uint32_t address, uint32_t value)
 
 VGSX::VGSX()
 {
-    m68k_set_cpu_type(M68K_CPU_TYPE_68020);
+    m68k_set_cpu_type(M68K_CPU_TYPE_68030);
     m68k_init();
     this->reset();
 }
@@ -361,7 +361,7 @@ void VGSX::tick(void)
             if (prevPC == 0xFFFFFFFF) {
                 break;
             }
-            // m68k_disassemble(buf, prevPC, M68K_CPU_TYPE_68020);
+            // m68k_disassemble(buf, prevPC, M68K_CPU_TYPE_68030);
             // printf("0x%06X: %s\n", prevPC, buf);
         }
         m68k_execute(4);
