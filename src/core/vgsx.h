@@ -25,7 +25,7 @@
 #pragma once
 #include <stdio.h>
 #include <stdint.h>
-#include <string>
+#include <string.h>
 
 class VGSX
 {
@@ -41,15 +41,16 @@ class VGSX
     VGSX();
     ~VGSX();
     bool loadProgram(const void* data, size_t size);
-    const char* getLastError() { return this->lastError.c_str(); }
+    const char* getLastError() { return this->lastError; }
     void reset();
     void tick();
     uint32_t inPort(uint32_t address);
     void outPort(uint32_t address, uint32_t value);
 
   private:
+    char lastError[256];
+    void setLastError(const char* format, ...);
     bool detectReferVSync;
-    std::string lastError;
 };
 
 extern VGSX vgsx;

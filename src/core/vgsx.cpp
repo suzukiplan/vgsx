@@ -23,7 +23,7 @@
  * THE SOFTWARE.
  */
 
-#include <string.h>
+#include <stdarg.h>
 #include "vgsx.h"
 #include "m68k.h"
 
@@ -211,14 +211,22 @@ VGSX::~VGSX()
 {
 }
 
+void VGSX::setLastError(const char* format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    vsnprintf(this->lastError, sizeof(this->lastError), format, args);
+    va_end(args);
+}
+
 bool VGSX::loadProgram(const void* data, size_t size)
 {
     if (!data) {
-        this->lastError = "No data.";
+        this->setLastError("No data.");
         return false;
     }
     if (size < 0x2000) {
-        this->lastError = "Invalid program size.";
+        this->setLastError("Invalid program size.");
         return false;
     }
 
@@ -231,31 +239,31 @@ bool VGSX::loadProgram(const void* data, size_t size)
         header.e_ident[1] != 'E' ||
         header.e_ident[2] != 'L' ||
         header.e_ident[3] != 'F') {
-        this->lastError = "Invalid ELF header.";
+        this->setLastError("Invalid ELF header.");
         return false;
     }
 
     // Check ELF32
     if (header.e_ident[4] != 1) {
-        this->lastError = "Unsupported ELF type.";
+        this->setLastError("Unsupported ELF type.");
         return false;
     }
 
     // Check Endian (Big)
     if (header.e_ident[5] != 2) {
-        this->lastError = "Unsupported endian model.";
+        this->setLastError("Unsupported endian model.");
         return false;
     }
 
     // Check EXEC
     if (header.e_type != 2) {
-        this->lastError = "Unsupported execution mode.";
+        this->setLastError("Unsupported execution mode.");
         return false;
     }
 
     // Check MC68000
     if (header.e_machine != 0x0004) {
-        this->lastError = "Unsupported machine model.";
+        this->setLastError("Unsupported machine model.");
         return false;
     }
 
