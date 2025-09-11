@@ -364,7 +364,7 @@ void VGSX::tick(void)
             // m68k_disassemble(buf, prevPC, M68K_CPU_TYPE_68020);
             // printf("0x%06X: %s\n", prevPC, buf);
         }
-        m68k_execute(2);
+        m68k_execute(4);
     }
 }
 
