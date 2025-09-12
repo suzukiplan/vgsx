@@ -94,7 +94,6 @@ class VDP
             uint8_t n = (address & 0xC0000) >> 18;
             uint8_t y = (address & 0x3FC00) >> 10;
             uint8_t x = (address & 0x003FC) >> 2;
-            printf("nametbl[%d][%d][%d]=%u\n", n, y, x, value);
             this->context.nametbl[n][y][x] = value;
         } else {
             switch (address & 0xFF0000) {
