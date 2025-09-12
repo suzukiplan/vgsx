@@ -149,9 +149,9 @@ class VDP
     {
         int dptr = 0;
         for (int dy = 0; dy < VDP_HEIGHT; dy++) {
-            auto wy = dy + this->context.reg.scrollY[n];
+            auto wy = (dy + this->context.reg.scrollY[n]) & 0x7FF;
             for (int dx = 0; dx < VDP_WIDTH; dx++) {
-                auto wx = dx + this->context.reg.scrollX[n];
+                auto wx = (dx + this->context.reg.scrollX[n]) & 0x7FF;
                 auto attr = this->context.nametbl[n][(wy >> 3) & 0xFF][(wx >> 3) & 0xFF];
                 bool flipH = (attr & 0x80000000) ? true : false;
                 bool flipV = (attr & 0x40000000) ? true : false;
