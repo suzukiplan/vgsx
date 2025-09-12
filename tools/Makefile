@@ -1,2 +1,3 @@
 all:
-	@echo todo
+	cd bmp2chr && make
+	cd bmp2pal && make
