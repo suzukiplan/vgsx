@@ -34,12 +34,13 @@ class VDP
 {
   public:
     typedef struct {
-        uint32_t skip;                // Skip Render
-        uint32_t spos;                // Sprite Position (0: Between BG0 and BG1 ~ 3)
-        uint32_t scrollX[VDP_BG_NUM]; // Scroll BGs X
-        uint32_t scrollY[VDP_BG_NUM]; // Scroll BGs Y
-        uint32_t bmp[VDP_BG_NUM];     // BGs Bitmap Mode
-        uint32_t reserved[242];       // Reserved
+        uint32_t skip;                // R0: Skip Render
+        uint32_t spos;                // R1: Sprite Position (0: Between BG0 and BG1 ~ 3)
+        uint32_t scrollX[VDP_BG_NUM]; // R2-5: Scroll BGs X
+        uint32_t scrollY[VDP_BG_NUM]; // R6-9: Scroll BGs Y
+        uint32_t bmp[VDP_BG_NUM];     // R10-13: BGs Bitmap Mode
+        uint32_t cls[VDP_BG_NUM + 1]; // R14-18: Clear Screen
+        uint32_t reserved[237];       // Reserved
     } Register;
 
     typedef struct {
@@ -121,6 +122,13 @@ class VDP
                     uint8_t index = (address & 0x3FC) >> 2;
                     uint32_t* rawReg = (uint32_t*)&this->context.reg;
                     rawReg[index] = value;
+                    switch (index) {
+                        case 14: this->cls(value); break;
+                        case 15: this->cls(0, value); break;
+                        case 16: this->cls(1, value); break;
+                        case 17: this->cls(2, value); break;
+                        case 18: this->cls(3, value); break;
+                    }
                     return;
                 }
             }
@@ -144,7 +152,27 @@ class VDP
     }
 
   private:
-    void renderBG(int n)
+    inline void cls(uint32_t value)
+    {
+        for (int i = 0; i < 4; i++) {
+            this->cls(i, value);
+        }
+    }
+
+    inline void cls(int n, uint32_t value)
+    {
+        n &= 3;
+        uint8_t* cp = (uint8_t*)&value;
+        if (cp[0] == cp[1] && cp[1] == cp[2] && cp[2] == cp[3]) {
+            memset(this->context.nametbl[n], *cp, 0x40000);
+        } else {
+            for (int i = 0; i < 0x10000; i++) {
+                this->context.nametbl[n][i] = value;
+            }
+        }
+    }
+
+    inline void renderBG(int n)
     {
         if (this->context.reg.bmp[n]) {
             // Bitmap Mode
@@ -201,7 +229,7 @@ class VDP
         }
     }
 
-    void renderSprites()
+    inline void renderSprites()
     {
         // TODO
     }

@@ -75,3 +75,13 @@ void vgs_print_bg(uint8_t n, uint8_t x, uint8_t y, uint8_t pal, const char* text
         text++;
     }
 }
+
+void vgs_cls_bg_all(uint32_t value)
+{
+    *VGS_VREG_CLSA = value;
+}
+
+void vgs_cls_bg(uint8_t n, uint32_t value)
+{
+    VGS_VREG_CLS0[n & 3] = value;
+}

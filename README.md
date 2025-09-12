@@ -270,6 +270,11 @@ The Bit-Layout of the Name Table and OAM's attribute are as follows:
 |0xD2002C | BMP1     | [Bitmap Mode of BG1](#0xd20028-0xd20034-bitmap-mode) |
 |0xD20030 | BMP2     | [Bitmap Mode of BG2](#0xd20028-0xd20034-bitmap-mode) |
 |0xD20034 | BMP3     | [Bitmap Mode of BG3](#0xd20028-0xd20034-bitmap-mode) |
+|0xD20038 | CLSA     | [Clear Screen of All BGs](#0xd20038-0xd20048-clear-screen) |
+|0xD2003C | CLS0     | [Clear Screen of BG0](#0xd20038-0xd20048-clear-screen) |
+|0xD20040 | CLS1     | [Clear Screen of BG1](#0xd20038-0xd20048-clear-screen) |
+|0xD20044 | CLS2     | [Clear Screen of BG2](#0xd20038-0xd20048-clear-screen) |
+|0xD20048 | CLS3     | [Clear Screen of BG3](#0xd20038-0xd20048-clear-screen) |
 
 Please note that access to the VDP register must always be 4-byte aligned.
 
@@ -301,6 +306,12 @@ When set to Bitmap mode, the name table corresponds to the pixels on the screen 
 Each pixel is set in RGB888 format.
 
 > Note that [hardware scrolling](#0xd20008-0xd20024-hardware-scroll) is not available when in Bitmap mode.
+
+### 0xD20038-0xD20048: Clear Screen
+
+You can delete all BGs or specific BGs in bulk.
+
+> Note that when the value to be cleared in bulk is 0, the process is faster compared to non-zero values.
 
 ## I/O Map
 
