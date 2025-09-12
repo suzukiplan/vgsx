@@ -62,6 +62,10 @@ typedef struct {
 #define VGS_VREG_SY1 ((uint32_t*)0xD2001C)
 #define VGS_VREG_SY2 ((uint32_t*)0xD20020)
 #define VGS_VREG_SY3 ((uint32_t*)0xD20024)
+#define VGS_VREG_BMP0 ((uint32_t*)0xD20028)
+#define VGS_VREG_BMP1 ((uint32_t*)0xD2002C)
+#define VGS_VREG_BMP2 ((uint32_t*)0xD20030)
+#define VGS_VREG_BMP3 ((uint32_t*)0xD20034)
 
 // I/O
 #define VGS_IN_VSYNC ((uint32_t*)0xE00000)
@@ -73,8 +77,8 @@ extern "C" {
 
 void vgs_vsync(void);
 void vgs_console_print(const char* text);
-void vgs_put_bg0(uint8_t x, uint8_t y, uint32_t data);
-void vgs_print_bg0(uint8_t x, uint8_t y, uint8_t pal, const char* text);
+void vgs_put_bg(uint8_t n, uint8_t x, uint8_t y, uint32_t data);
+void vgs_print_bg(uint8_t n, uint8_t x, uint8_t y, uint8_t pal, const char* text);
 
 #ifdef __cplusplus
 };

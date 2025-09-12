@@ -25,6 +25,11 @@
 #include <vgs.h>
 
 static volatile uint32_t _vsync;
+static uint32_t* _bg[4] = {
+    VGS_VRAM_BG0,
+    VGS_VRAM_BG1,
+    VGS_VRAM_BG2,
+    VGS_VRAM_BG3};
 extern int main(int argc, char* argv[]);
 
 void crt0(void)
@@ -50,15 +55,15 @@ void vgs_console_print(const char* text)
     }
 }
 
-void vgs_put_bg0(uint8_t x, uint8_t y, uint32_t data)
+void vgs_put_bg(uint8_t n, uint8_t x, uint8_t y, uint32_t data)
 {
     uint16_t ptr = y;
     ptr <<= 8;
     ptr |= x;
-    VGS_VRAM_BG0[ptr] = data;
+    _bg[n & 3][ptr] = data;
 }
 
-void vgs_print_bg0(uint8_t x, uint8_t y, uint8_t pal, const char* text)
+void vgs_print_bg(uint8_t n, uint8_t x, uint8_t y, uint8_t pal, const char* text)
 {
     uint32_t attr;
     attr = pal;
@@ -66,7 +71,7 @@ void vgs_print_bg0(uint8_t x, uint8_t y, uint8_t pal, const char* text)
     while (*text) {
         attr &= 0xFFFF0000;
         attr |= *text;
-        vgs_put_bg0(x++, y, attr);
+        vgs_put_bg(n, x++, y, attr);
         text++;
     }
 }
