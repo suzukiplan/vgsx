@@ -101,6 +101,9 @@ class VDP
                 case 0xD20000: {
                     uint8_t index = (address & 0x3FC) >> 2;
                     uint32_t* rawReg = (uint32_t*)&this->context.reg;
+                    switch (index) {
+                        case 26: return this->readPixel();
+                    }
                     return rawReg[index];
                 }
             }
@@ -194,6 +197,18 @@ class VDP
         }
     }
 
+    inline uint32_t readPixel()
+    {
+        int bg = this->context.reg.g_bg & 3;
+        int x1 = (int)this->context.reg.g_x1;
+        int y1 = (int)this->context.reg.g_y1;
+        if (x1 < 0 || VDP_WIDTH <= x1 || y1 < 0 || VDP_HEIGHT <= y1) {
+            return 0;
+        } else {
+            return this->context.nametbl[bg][y1 * VDP_WIDTH + x1];
+        }
+    }
+
     inline void renderBG(int n)
     {
         if (this->context.reg.bmp[n]) {
@@ -263,8 +278,8 @@ static void graphicDrawPixel(VDP* vdp)
     int32_t x1 = (int32_t)vdp->context.reg.g_x1;
     int32_t y1 = (int32_t)vdp->context.reg.g_y1;
     uint32_t col = vdp->context.reg.g_col;
-    if (x1 < 0 || 320 <= x1 || y1 < 0 || 200 <= y1) {
+    if (x1 < 0 || VDP_WIDTH <= x1 || y1 < 0 || VDP_HEIGHT <= y1) {
         return;
     }
-    vdp->context.nametbl[bg][y1 * 320 + x1] = col;
+    vdp->context.nametbl[bg][y1 * VDP_WIDTH + x1] = col;
 }

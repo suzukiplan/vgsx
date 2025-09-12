@@ -331,6 +331,8 @@ Drawing processing is executed when the execution identifier is written to G_EXE
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-|
 |o|o|o|-|-|o|-| `0` | Draw Pixel |
 
+> Reading `G_EXE` allows you to read the color of the pixel drawn at the (`G_X1`, `G_Y1`) position on the background plane specified by `G_BG`.
+
 ## I/O Map
 
 I/O instructions in VGS-X can be executed by performing input/output operations on the memory area from 0xE00000 to 0xEFFFFF.
