@@ -10,9 +10,15 @@ Once this project reaches a stable phase, version 1.0.0 is scheduled for release
 
 ## About VGS-X
 
-- A 16-bit game console featuring an MC68000 compatible CPU and a proprietary VDP.
-- Games can be developed using the Programming Language C.
-- Supported development environment operating systems are **Ubuntu Linux** or **macOS**. _(Please use the WSL2 if you need Windows development environment.)_
+The VGS-X is a 16-bit game console featuring an MC68030 processor, an FM sound chip (YM2612), and a proprietary VDP optimized for MC68k architecture.
+
+Games can be developed using the Programming Language C.
+
+Supported development environment operating systems are **Ubuntu Linux** or **macOS**. _(If you want to use Windows as a development machine, please use WSL2.)_
+
+The runtime environment supports the all of PC operating systems (Windows, macOS, and Linux) that supported by Steam Client.
+
+In the future, we also plan to provide runtimes capable of running on Nintendo Switch and PlayStation 4/5. (However, due to NDA restrictions, we cannot disclose details publicly.)
 
 ## Setup Build Environment
 
