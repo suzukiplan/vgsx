@@ -304,6 +304,7 @@ void VGSX::reset(void)
     this->detectReferVSync = false;
     this->context.program = NULL;
     this->context.programSize = 0;
+    this->vdp.reset();
 
     if (!this->context.elf) {
         return;

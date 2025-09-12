@@ -58,6 +58,14 @@ class VDP
         Register reg;                             // Register
     } context;
 
+    void reset()
+    {
+        memset(this->context.display, 0, sizeof(this->context.display));
+        memset(this->context.nametbl, 0, sizeof(this->context.nametbl));
+        memset(this->context.oam, 0, sizeof(this->context.oam));
+        memset(&this->context.reg, 0, sizeof(Register));
+    }
+
     uint32_t read(uint32_t address)
     {
         if (0xC00000 <= address && address < 0xD00000) {
@@ -122,6 +130,9 @@ class VDP
 
     void render()
     {
+        if (this->context.reg.skip) {
+            return;
+        }
         for (int i = 0; i < VDP_WIDTH * VDP_HEIGHT; i++) {
             this->context.display[i] = this->context.palette[0][0];
         }
