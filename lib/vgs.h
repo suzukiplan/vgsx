@@ -95,6 +95,7 @@ extern "C" {
 void vgs_vsync(void);
 void vgs_srand(uint16_t seed);
 uint16_t vgs_rand(void);
+uint32_t vgs_rand32(void);
 void vgs_console_print(const char* text);
 void vgs_put_bg(uint8_t n, uint8_t x, uint8_t y, uint32_t data);
 void vgs_print_bg(uint8_t n, uint8_t x, uint8_t y, uint8_t pal, const char* text);

@@ -25,6 +25,7 @@
 #include <vgs.h>
 
 static volatile uint32_t _vsync;
+static volatile uint32_t _random;
 static uint32_t* _bg[4] = {
     VGS_VRAM_BG0,
     VGS_VRAM_BG1,
@@ -54,7 +55,16 @@ void vgs_srand(uint16_t seed)
 
 uint16_t vgs_rand(void)
 {
-    return *VGS_IO_RANDOM;
+    _random = *VGS_IO_RANDOM;
+    return _random;
+}
+
+uint32_t vgs_rand32(void)
+{
+    uint32_t result = vgs_rand();
+    result <<= 16;
+    result |= vgs_rand();
+    return result;
 }
 
 void vgs_console_print(const char* text)

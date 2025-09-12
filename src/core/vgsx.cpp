@@ -28,7 +28,10 @@
 #include "m68k.h"
 
 VGSX vgsx;
+
+extern "C" {
 extern const unsigned short vgs0_rand16[65536];
+};
 
 typedef struct {
     uint8_t e_ident[16];

@@ -15,5 +15,12 @@ int main(int argc, char* argv[])
         }
         col++;
     }
+
+    *VGS_VREG_BMP2 = 1;
+    while (1) {
+        vgs_draw_pixel(2, vgs_rand() % 320, vgs_rand() % 200, vgs_rand32());
+        vgs_vsync();
+    }
+
     return 0;
 }
