@@ -1,5 +1,11 @@
 CORE_PATH = ../core
-CPP = g++ -O2 -I${CORE_PATH} -I${CORE_PATH}/musashi -I${CORE_PATH}/ymfm/src -c
+CPP = g++
+CPP += -O2
+CPP += `sdl2-config --cflags`
+CPP += -I${CORE_PATH}
+CPP += -I${CORE_PATH}/musashi
+CPP += -I${CORE_PATH}/ymfm/src
+CPP += -c
 OBJECTS = main.o
 OBJECTS += vgsx.o
 OBJECTS += m68kcpu.o
@@ -16,7 +22,7 @@ clean:
 	rm -f ${OBJECTS}
 
 vgsx: ${OBJECTS}
-	g++ -o $@ ${OBJECTS}
+	g++ -o $@ ${OBJECTS} `sdl2-config --libs`
 
 main.o: main.cpp
 	${CPP} $<

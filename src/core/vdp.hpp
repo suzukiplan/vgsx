@@ -24,16 +24,21 @@
  */
 #pragma once
 #include <stdint.h>
+#include <string.h>
+
+#define VDP_BG_NUM 4   /* Number of the BG plan */
+#define VDP_WIDTH 320  /* Width of the Screen */
+#define VDP_HEIGHT 200 /* Height of the Screen */
 
 class VDP
 {
   public:
     typedef struct {
-        uint32_t skip;          // Skip Render
-        uint32_t spos;          // Sprite Position (0: Between BG0 and BG1 ~ 3)
-        uint32_t scrollX[4];    // Scroll BGs X
-        uint32_t scrollY[4];    // Scroll BGs Y
-        uint32_t reserved[246]; // Reserved
+        uint32_t skip;                // Skip Render
+        uint32_t spos;                // Sprite Position (0: Between BG0 and BG1 ~ 3)
+        uint32_t scrollX[VDP_BG_NUM]; // Scroll BGs X
+        uint32_t scrollY[VDP_BG_NUM]; // Scroll BGs Y
+        uint32_t reserved[246];       // Reserved
     } Register;
 
     typedef struct {
@@ -45,11 +50,12 @@ class VDP
     } OAM;
 
     struct Context {
-        uint8_t ptn[65536][32];        // Character Pattern (ROM)
-        uint32_t nametbl[4][256][256]; // Name Table
-        OAM oam[1024];                 // OAM
-        uint32_t palette[16][16];      // Palette
-        Register reg;                  // Register
+        uint32_t display[VDP_WIDTH * VDP_HEIGHT]; // Virtual Display
+        uint8_t ptn[65536][32];                   // Character Pattern (ROM)
+        uint32_t nametbl[VDP_BG_NUM][256][256];   // Name Table
+        OAM oam[1024];                            // OAM
+        uint32_t palette[16][16];                 // Palette
+        Register reg;                             // Register
     } context;
 
     uint32_t read(uint32_t address)
@@ -112,5 +118,58 @@ class VDP
                 }
             }
         }
+    }
+
+    void render()
+    {
+        memset(this->context.display, 0, sizeof(this->context.display));
+        for (int i = 0; i < VDP_BG_NUM; i++) {
+            this->renderBG(i);
+            if (i == this->context.reg.spos) {
+                this->renderSprites();
+            }
+        }
+    }
+
+  private:
+    void renderBG(int n)
+    {
+        int dptr = 0;
+        for (int dy = 0, fy = this->context.reg.scrollY[n]; dy < VDP_HEIGHT; dy++, fy++) {
+            for (int dx = 0, fx = this->context.reg.scrollX[n]; dx < VDP_WIDTH; dx++, fx++) {
+                auto wx = dx + fx;
+                auto wy = dy + fy;
+                auto attr = this->context.nametbl[n][(wy >> 3) & 0xFF][(wx >> 3) & 0xFF];
+                bool flipH = (attr & 0x80000000) ? true : false;
+                bool flipV = (attr & 0x40000000) ? true : false;
+                uint8_t pal = (attr & 0xF0000) >> 16;
+                uint8_t* ptn = this->context.ptn[attr & 0xFFFF];
+                if (flipV) {
+                    ptn += (7 - (wy & 0b111)) << 2;
+                } else {
+                    ptn += (wy & 0b111) << 2;
+                }
+                if (flipH) {
+                    ptn += (7 - (wx & 0b111)) >> 1;
+                } else {
+                    ptn += (wx & 0b111) >> 1;
+                }
+                uint8_t col = *ptn;
+                if ((wx & 1) && !flipH) {
+                    col &= 0x0F;
+                } else {
+                    col &= 0xF0;
+                    col >>= 4;
+                }
+                if (col) {
+                    this->context.display[dptr++] = this->context.palette[pal][col];
+                }
+            }
+        }
+    }
+
+    void renderSprites()
+    {
+        // TODO
     }
 };

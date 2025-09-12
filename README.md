@@ -30,10 +30,11 @@ On macOS, it can be easily installed via Homebrew. However, since no apt package
 
 ### Setup Build Environment: macOS
 
-Please install `m68k-elf-gcc` in an environment where Xcode and Homebrew are installed.
+Please install `m68k-elf-gcc` and `SDL2` in an environment where Xcode and Homebrew are installed.
 
 ```bash
 brew install m68k-elf-gcc
+brew install sdl2
 ```
 
 ### Setup Build Environment: Ubuntu Linux
@@ -45,7 +46,10 @@ Below are the installation steps required for game development for the VGS-X.
 sudo apt update
 sudo apt install build-essential bison flex libgmp-dev libmpc-dev libmpfr-dev texinfo libncurses5-dev
 
-# Make a work directory for build
+# Install SDL2
+sudo apt install build-essential libsdl2-dev libasound2 libasound2-dev
+
+# Make a work directory for build m68k-elf
 mkdir ~/m68k-work
 
 # Build and Install the binutils for MC68k

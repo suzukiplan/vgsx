@@ -344,13 +344,13 @@ void VGSX::tick(void)
         }
         m68k_execute(4);
     }
+    this->vdp.render();
 }
 
 uint32_t VGSX::inPort(uint32_t address)
 {
     switch (address) {
         case 0xE00000: // V-SYNC
-            puts("Detect Refer VSync");
             this->detectReferVSync = true;
             return 1;
     }

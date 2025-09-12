@@ -47,6 +47,9 @@ class VGSX
     const char* getLastError() { return this->lastError; }
     void reset();
     void tick();
+    inline uint32_t* getDisplay() { return this->vdp.context.display; }
+    inline int getDisplayWidth() { return VDP_WIDTH; }
+    inline int getDisplayHeight() { return VDP_HEIGHT; }
     uint32_t inPort(uint32_t address);
     void outPort(uint32_t address, uint32_t value);
 
