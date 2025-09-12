@@ -85,3 +85,12 @@ void vgs_cls_bg(uint8_t n, uint32_t value)
 {
     VGS_VREG_CLS0[n & 3] = value;
 }
+
+void vgs_draw_pixel(uint8_t n, int32_t x, int32_t y, uint32_t col)
+{
+    *VGS_VREG_G_BG = n;
+    *VGS_VREG_G_X1 = (uint32_t)x;
+    *VGS_VREG_G_Y1 = (uint32_t)y;
+    *VGS_VREG_G_COL = col;
+    *VGS_VREG_G_EXE = VGS_DRAW_PIXEL;
+}

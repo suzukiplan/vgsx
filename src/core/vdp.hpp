@@ -30,6 +30,9 @@
 #define VDP_WIDTH 320  /* Width of the Screen */
 #define VDP_HEIGHT 200 /* Height of the Screen */
 
+class VDP;
+static void graphicDrawPixel(VDP* vdp);
+
 class VDP
 {
   public:
@@ -40,7 +43,15 @@ class VDP
         uint32_t scrollY[VDP_BG_NUM]; // R6-9: Scroll BGs Y
         uint32_t bmp[VDP_BG_NUM];     // R10-13: BGs Bitmap Mode
         uint32_t cls[VDP_BG_NUM + 1]; // R14-18: Clear Screen
-        uint32_t reserved[237];       // Reserved
+        uint32_t g_bg;                // R19: Graphic Draw - BG number
+        uint32_t g_x1;                // R20: Graphic Draw - X1
+        uint32_t g_y1;                // R21: Graphic Draw - Y1
+        uint32_t g_x2;                // R22: Graphic Draw - X2
+        uint32_t g_y2;                // R23: Graphic Draw - Y2
+        uint32_t g_col;               // R24: Graphic Draw - Color (RGB888)
+        uint32_t g_opt;               // R25: Graphic Draw - Option
+        uint32_t g_exe;               // R26: Graphic Draw - Execute
+        uint32_t reserved[229];       // Reserved
     } Register;
 
     typedef struct {
@@ -128,6 +139,7 @@ class VDP
                         case 16: this->cls(1, value); break;
                         case 17: this->cls(2, value); break;
                         case 18: this->cls(3, value); break;
+                        case 26: this->graphicDraw(value); break;
                     }
                     return;
                 }
@@ -169,6 +181,16 @@ class VDP
             for (int i = 0; i < 0x10000; i++) {
                 this->context.nametbl[n][i] = value;
             }
+        }
+    }
+
+    inline void graphicDraw(uint32_t op)
+    {
+        static void (*func[])(VDP*) = {
+            graphicDrawPixel,
+        };
+        if (op < 1) {
+            func[op](this);
         }
     }
 
@@ -234,3 +256,15 @@ class VDP
         // TODO
     }
 };
+
+static void graphicDrawPixel(VDP* vdp)
+{
+    int bg = (int)vdp->context.reg.g_bg & 3;
+    int32_t x1 = (int32_t)vdp->context.reg.g_x1;
+    int32_t y1 = (int32_t)vdp->context.reg.g_y1;
+    uint32_t col = vdp->context.reg.g_col;
+    if (x1 < 0 || 320 <= x1 || y1 < 0 || 200 <= y1) {
+        return;
+    }
+    vdp->context.nametbl[bg][y1 * 320 + x1] = col;
+}

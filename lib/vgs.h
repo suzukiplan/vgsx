@@ -71,6 +71,17 @@ typedef struct {
 #define VGS_VREG_CLS1 ((uint32_t*)0xD20040)
 #define VGS_VREG_CLS2 ((uint32_t*)0xD20044)
 #define VGS_VREG_CLS3 ((uint32_t*)0xD20048)
+#define VGS_VREG_G_BG ((uint32_t*)0xD2004C)
+#define VGS_VREG_G_X1 ((uint32_t*)0xD20050)
+#define VGS_VREG_G_Y1 ((uint32_t*)0xD20054)
+#define VGS_VREG_G_X2 ((uint32_t*)0xD20058)
+#define VGS_VREG_G_Y2 ((uint32_t*)0xD2005C)
+#define VGS_VREG_G_COL ((uint32_t*)0xD20060)
+#define VGS_VREG_G_OPT ((uint32_t*)0xD20064)
+#define VGS_VREG_G_EXE ((uint32_t*)0xD20068)
+
+// Graphic Draw Function Identifer
+#define VGS_DRAW_PIXEL 0
 
 // I/O
 #define VGS_IN_VSYNC ((uint32_t*)0xE00000)
@@ -86,6 +97,7 @@ void vgs_put_bg(uint8_t n, uint8_t x, uint8_t y, uint32_t data);
 void vgs_print_bg(uint8_t n, uint8_t x, uint8_t y, uint8_t pal, const char* text);
 void vgs_cls_bg_all(uint32_t value);
 void vgs_cls_bg(uint8_t n, uint32_t value);
+void vgs_draw_pixel(uint8_t n, int32_t x, int32_t y, uint32_t col);
 
 #ifdef __cplusplus
 };
