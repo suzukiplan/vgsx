@@ -133,7 +133,7 @@ When accessing the address range 0xC00000 to 0xEFFFFF used as mmap, access must 
 
 ## Program
 
-The program area (0x000000 ~ 0xBFFFFF) contains the [ELF32 _(Executable and Linkable Format 32bit)_](https://refspecs.linuxfoundation.org/elf/gabi4+/ch4.eheader.html) binary module.
+The program area (0x000000 ~ 0xBFFFFF) contains the [ELF32 _(Executable and Linkable Format 32bit)_](https://refspecs.linuxfoundation.org/elf/gabi4+/ch4.intro.html) binary module.
 
 When tune on the VGS-X, it begins executing the program from the entry point specified in the ELF header of the program loaded from the ROM cartridge.
 
