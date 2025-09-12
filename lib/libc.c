@@ -47,6 +47,16 @@ void vgs_vsync(void)
     _vsync = *VGS_IN_VSYNC;
 }
 
+void vgs_srand(uint16_t seed)
+{
+    *VGS_IO_RANDOM = seed;
+}
+
+uint16_t vgs_rand(void)
+{
+    return *VGS_IO_RANDOM;
+}
+
 void vgs_console_print(const char* text)
 {
     while (*text) {

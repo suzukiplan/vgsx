@@ -37,6 +37,7 @@ class VGSX
         size_t elfSize;
         const uint8_t* program;
         size_t programSize;
+        int randomIndex;
     } context;
 
     VDP vdp;

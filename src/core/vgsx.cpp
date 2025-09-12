@@ -28,6 +28,7 @@
 #include "m68k.h"
 
 VGSX vgsx;
+extern const unsigned short vgs0_rand16[65536];
 
 typedef struct {
     uint8_t e_ident[16];
@@ -304,6 +305,7 @@ void VGSX::reset(void)
     this->detectReferVSync = false;
     this->context.program = NULL;
     this->context.programSize = 0;
+    this->context.randomIndex = 0;
     this->vdp.reset();
 
     if (!this->context.elf) {
@@ -389,6 +391,10 @@ uint32_t VGSX::inPort(uint32_t address)
         case 0xE00000: // V-SYNC
             this->detectReferVSync = true;
             return 1;
+        case 0xE00004: // Random
+            this->context.randomIndex++;
+            this->context.randomIndex &= 0xFFFF;
+            return vgs0_rand16[this->context.randomIndex];
     }
     return 0xFFFFFFFF;
 }
@@ -398,6 +404,9 @@ void VGSX::outPort(uint32_t address, uint32_t value)
     switch (address) {
         case 0xE00000: // Console Output
             fputc(value, stdout);
+            return;
+        case 0xE00004: // Setup Random
+            this->context.randomIndex = (int)value;
             return;
     }
 }

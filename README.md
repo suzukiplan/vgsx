@@ -343,6 +343,7 @@ Note that all addresses and values for I/O instructions must be specified as 32-
 |:--------:|:---:|:---:|:------------|
 | 0xE00000 |  o  |  -  | [V-SYNC](#0xe00000in---v-sync) |
 | 0xE00000 |  -  |  o  | [Console Output](#0xe00000out---console-output) |
+| 0xE00004 |  o  |  o  | [Random](#0xe00004io---random) | 
 
 ### 0xE00000[in] - V-SYNC
 
@@ -376,6 +377,12 @@ vgs_console_print("Hello, World!\n");
 ```
 
 The `vgs_console_print` function is defined in [vgs.h](./lib/vgs.h).
+
+### 0xE00004[i/o] - Random
+
+- You can set the seed for random numbers by writing a value to 0xE00004.
+- Reading 0xE00004 allows you to obtain a random number (0 to 65535).
+- The random number generation in VGS-X guarantees that calling it 65,536 times will return each number from 0 to 65,535 exactly once.
 
 ## Background Music
 
