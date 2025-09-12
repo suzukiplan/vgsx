@@ -1,5 +1,5 @@
 /**
- * VGS-X Runtime Library for MC68000
+ * VGS-X Runtime Library for MC68030
  * The MIT License (MIT)
  *
  * Copyright (c) 2025 Yoji Suzuki.
@@ -60,4 +60,13 @@ void vgs_put_bg0(uint8_t x, uint8_t y, uint32_t data)
 
 void vgs_print_bg0(uint8_t x, uint8_t y, uint8_t pal, const char* text)
 {
+    uint32_t attr;
+    attr = pal;
+    attr <<= 16;
+    while (*text) {
+        attr &= 0xFFFF0000;
+        attr |= *text;
+        vgs_put_bg0(x++, y, attr);
+        text++;
+    }
 }

@@ -197,6 +197,52 @@ void VGSX::setLastError(const char* format, ...)
     va_end(args);
 }
 
+bool VGSX::loadPattern(uint16_t index, const void* data, size_t size)
+{
+    if (!data) {
+        this->setLastError("No data.");
+        return false;
+    }
+    if (size < 32 || (size & 0x1F)) {
+        this->setLastError("Invalid data size.");
+        return false;
+    }
+    const uint8_t* ptr = (const uint8_t*)data;
+    while (0 < size) {
+        memcpy(&this->vdp.context.ptn[index++], ptr, 32);
+        ptr += 32;
+        size -= 32;
+    }
+    return true;
+}
+
+bool VGSX::loadPalette(const void* data, size_t size)
+{
+    if (!data) {
+        this->setLastError("No data.");
+        return false;
+    }
+    if (size < 4 || 1024 < size || (size & 3)) {
+        this->setLastError("Invalid data size.");
+        return false;
+    }
+    int pindex = 0;
+    int cindex = 0;
+    const uint8_t* ptr = (const uint8_t*)data;
+    while (0 < size) {
+        memcpy(&this->vdp.context.palette[pindex][cindex], ptr, 4);
+        cindex++;
+        cindex &= 0x0F;
+        if (0 == cindex) {
+            pindex++;
+            pindex &= 0x0F;
+        }
+        ptr += 4;
+        size -= 4;
+    }
+    return true;
+}
+
 bool VGSX::loadProgram(const void* data, size_t size)
 {
     if (!data) {
@@ -329,19 +375,8 @@ void VGSX::reset(void)
 
 void VGSX::tick(void)
 {
-    static uint32_t prevPC = 0xFFFFFFFF;
     this->detectReferVSync = false;
     while (!this->detectReferVSync) {
-        if (prevPC != m68k_get_reg(NULL, M68K_REG_PC)) {
-            // printf("debug: D0 = %08X\n", m68k_get_reg(NULL, M68K_REG_D0));
-            char buf[1024];
-            prevPC = m68k_get_reg(NULL, M68K_REG_PC);
-            if (prevPC == 0xFFFFFFFF) {
-                break;
-            }
-            // m68k_disassemble(buf, prevPC, M68K_CPU_TYPE_68030);
-            // printf("0x%06X: %s\n", prevPC, buf);
-        }
         m68k_execute(4);
     }
     this->vdp.render();

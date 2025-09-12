@@ -24,7 +24,7 @@ VGS-X aims to provide game developers and publishers with an environment that en
 
 ## Setup Build Environment
 
-Since VGS-X can execute MC68000 ELF format modules, you must install `m68k-elf-gcc` to develop games for VGS-X.
+Since VGS-X can execute MC68030 ELF format modules, you must install `m68k-elf-gcc` to develop games for VGS-X.
 
 On macOS, it can be easily installed via Homebrew. However, since no apt package is provided for Ubuntu Linux, you will need to build it yourself.
 
@@ -108,7 +108,7 @@ The following sections provide technical information useful for programming with
 
 ## Memory Map
 
-In VGS-X, the first 12MB (0x000000 ~ 0xBFFFFF) of the MC68000's 24-bit (16MB) address space is allocated for programs.
+In VGS-X, the first 12MB (0x000000 ~ 0xBFFFFF) of the MC68030's 24-bit (16MB) address space is allocated for programs.
 
 The final 1MB (0xF00000 ~ 0xFFFFFF) constitutes the WRAM; _Work RAM area_.
 
@@ -317,6 +317,6 @@ The `vgs_console_print` function is defined in [vgs.h](./lib/vgs.h).
 - FM Sound Module Emulator - ymfm
   - Copyright (c) 2021, Aaron Giles
   - License: [3-clause BSD](./LICENSE-ymfm.txt)
-- VGS-X Emulator Core Module and Runtime for MC68000
+- VGS-X Emulator Core Module and Runtime for MC68030
   - Copyright (c) 2025 Yoji Suzuki.
   - License: [MIT](./LICENSE-VGSX.txt)

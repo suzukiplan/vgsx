@@ -61,9 +61,9 @@ class VDP
     uint32_t read(uint32_t address)
     {
         if (0xC00000 <= address && address < 0xD00000) {
-            uint8_t n = (address & 0x300000) >> 20;
-            uint8_t y = (address & 0x0FF000) >> 12;
-            uint8_t x = (address & 0x000FF0) >> 4;
+            uint8_t n = (address & 0xC0000) >> 18;
+            uint8_t y = (address & 0x3FC00) >> 10;
+            uint8_t x = (address & 0x003FC) >> 2;
             return this->context.nametbl[n][y][x];
         } else {
             switch (address & 0xFF0000) {
@@ -91,9 +91,10 @@ class VDP
     void write(uint32_t address, uint32_t value)
     {
         if (0xC00000 <= address && address < 0xD00000) {
-            uint8_t n = (address & 0x300000) >> 20;
-            uint8_t y = (address & 0x0FF000) >> 12;
-            uint8_t x = (address & 0x000FF0) >> 4;
+            uint8_t n = (address & 0xC0000) >> 18;
+            uint8_t y = (address & 0x3FC00) >> 10;
+            uint8_t x = (address & 0x003FC) >> 2;
+            printf("nametbl[%d][%d][%d]=%u\n", n, y, x, value);
             this->context.nametbl[n][y][x] = value;
         } else {
             switch (address & 0xFF0000) {
@@ -122,7 +123,9 @@ class VDP
 
     void render()
     {
-        memset(this->context.display, 0, sizeof(this->context.display));
+        for (int i = 0; i < VDP_WIDTH * VDP_HEIGHT; i++) {
+            this->context.display[i] = this->context.palette[0][0];
+        }
         for (int i = 0; i < VDP_BG_NUM; i++) {
             this->renderBG(i);
             if (i == this->context.reg.spos) {
@@ -135,10 +138,10 @@ class VDP
     void renderBG(int n)
     {
         int dptr = 0;
-        for (int dy = 0, fy = this->context.reg.scrollY[n]; dy < VDP_HEIGHT; dy++, fy++) {
-            for (int dx = 0, fx = this->context.reg.scrollX[n]; dx < VDP_WIDTH; dx++, fx++) {
-                auto wx = dx + fx;
-                auto wy = dy + fy;
+        for (int dy = 0; dy < VDP_HEIGHT; dy++) {
+            auto wy = dy + this->context.reg.scrollY[n];
+            for (int dx = 0; dx < VDP_WIDTH; dx++) {
+                auto wx = dx + this->context.reg.scrollX[n];
                 auto attr = this->context.nametbl[n][(wy >> 3) & 0xFF][(wx >> 3) & 0xFF];
                 bool flipH = (attr & 0x80000000) ? true : false;
                 bool flipV = (attr & 0x40000000) ? true : false;
@@ -155,15 +158,25 @@ class VDP
                     ptn += (wx & 0b111) >> 1;
                 }
                 uint8_t col = *ptn;
-                if ((wx & 1) && !flipH) {
-                    col &= 0x0F;
+                if (flipH) {
+                    if (wx & 1) {
+                        col &= 0xF0;
+                        col >>= 4;
+                    } else {
+                        col &= 0x0F;
+                    }
                 } else {
-                    col &= 0xF0;
-                    col >>= 4;
+                    if (wx & 1) {
+                        col &= 0x0F;
+                    } else {
+                        col &= 0xF0;
+                        col >>= 4;
+                    }
                 }
                 if (col) {
-                    this->context.display[dptr++] = this->context.palette[pal][col];
+                    this->context.display[dptr] = this->context.palette[pal][col];
                 }
+                dptr++;
             }
         }
     }

@@ -44,6 +44,8 @@ class VGSX
     VGSX();
     ~VGSX();
     bool loadProgram(const void* data, size_t size);
+    bool loadPattern(uint16_t index, const void* data, size_t size);
+    bool loadPalette(const void* data, size_t size);
     const char* getLastError() { return this->lastError; }
     void reset();
     void tick();
@@ -56,7 +58,7 @@ class VGSX
   private:
     char lastError[256];
     void setLastError(const char* format, ...);
-    bool detectReferVSync;
+    volatile bool detectReferVSync;
 };
 
 extern VGSX vgsx;

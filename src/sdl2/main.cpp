@@ -1,4 +1,5 @@
 #include <SDL.h>
+#include <unistd.h>
 #include <ctype.h>
 #include <iostream>
 #include <fstream>
@@ -20,14 +21,80 @@ static uint8_t* loadBinary(const char* path, int* size)
     }
 }
 
+void put_usage()
+{
+    puts("usage: vgsx [-g /path/to/pattern.chr]");
+    puts("            [-c /path/to/palette.bin]");
+    puts("                /path/to/program.elf");
+}
+
 int main(int argc, char* argv[])
 {
-    if (argc < 2) {
+    const char* programPath = nullptr;
+    uint8_t pindex = 0;
+    for (int i = 1; i < argc; i++) {
+        if ('-' == argv[i][0]) {
+            switch (tolower(argv[i][1])) {
+                case 'g': {
+                    if (argc <= i + 1) {
+                        put_usage();
+                        return 1;
+                    }
+                    i++;
+                    int size;
+                    void* data;
+                    data = loadBinary(argv[i], &size);
+                    if (!vgsx.loadPattern(pindex, data, size)) {
+                        exit(255);
+                    } else {
+                        if (32 < size) {
+                            printf("Loaded character patterns: %d to %d (%s)\n", pindex, pindex + size / 32 - 1, argv[i]);
+                        } else {
+                            printf("Loaded character pattern: %d\n", pindex);
+                        }
+                    }
+                    free(data);
+                    pindex += size / 32;
+                    break;
+                }
+                case 'c': {
+                    if (argc <= i + 1) {
+                        put_usage();
+                        return 1;
+                    }
+                    i++;
+                    int size;
+                    void* data;
+                    data = loadBinary(argv[i], &size);
+                    if (!vgsx.loadPalette(data, size)) {
+                        exit(255);
+                    } else {
+                        printf("Loaded default palette: %s\n", argv[i]);
+                    }
+                    free(data);
+                    break;
+                }
+                default:
+                    put_usage();
+                    return 1;
+            }
+        } else {
+            if (programPath) {
+                put_usage();
+                return 1;
+            }
+            programPath = argv[i];
+        }
+    }
+
+    if (!programPath) {
+        put_usage();
         return 1;
     }
+
     uint8_t* program;
     int programSize;
-    program = loadBinary(argv[1], &programSize);
+    program = loadBinary(programPath, &programSize);
     if (!vgsx.loadProgram(program, programSize)) {
         printf("Load failed: %s\n", vgsx.getLastError());
         exit(255);
@@ -65,6 +132,7 @@ int main(int argc, char* argv[])
     unsigned int loopCount = 0;
     const int waitFps60[3] = {17000, 17000, 16000};
     bool quit = false;
+    bool stabled = true;
     while (!quit) {
         loopCount++;
         auto start = std::chrono::system_clock::now();
@@ -87,13 +155,29 @@ int main(int argc, char* argv[])
             pcDisplay += offsetY;
             for (int y = 0; y < vgsx.getDisplayHeight(); y++) {
                 for (int x = 0; x < vgsx.getDisplayWidth(); x++) {
-                    uint32_t rgb888 = *vgsDisplay++;
+                    uint32_t rgb888 = *vgsDisplay;
                     pcDisplay[offsetX + x * 2] = rgb888;
                     pcDisplay[offsetX + x * 2 + 1] = rgb888;
                     pcDisplay[offsetX + pitch + x * 2] = rgb888;
                     pcDisplay[offsetX + pitch + x * 2 + 1] = rgb888;
+                    vgsDisplay++;
                 }
                 pcDisplay += pitch * 2;
+            }
+            SDL_UpdateWindowSurface(window);
+            // sync 60fps
+            std::chrono::duration<double> diff = std::chrono::system_clock::now() - start;
+            int us = (int)(diff.count() * 1000000);
+            int wait = waitFps60[loopCount % 3];
+            if (us < wait) {
+                usleep(wait - us);
+                if (!stabled) {
+                    stabled = true;
+                    printf("Frame rate stabilized at 60 fps (%dus per frame)\n", us);
+                }
+            } else if (stabled) {
+                stabled = false;
+                printf("warning: Frame rate is lagging (%dus per frame)\n", us);
             }
         }
     }
