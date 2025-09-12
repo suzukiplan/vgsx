@@ -266,6 +266,10 @@ The Bit-Layout of the Name Table and OAM's attribute are as follows:
 |0xD2001C | SY1      | [Scroll Y of BG1](#0xd20008-0xd20024-hardware-scroll) |
 |0xD20020 | SY2      | [Scroll Y of BG2](#0xd20008-0xd20024-hardware-scroll) |
 |0xD20024 | SY3      | [Scroll Y of BG3](#0xd20008-0xd20024-hardware-scroll) |
+|0xD20028 | BMP0     | [Bitmap Mode of BG0](#0xd20028-0xd20034-bitmap-mode) |
+|0xD2002C | BMP1     | [Bitmap Mode of BG1](#0xd20028-0xd20034-bitmap-mode) |
+|0xD20030 | BMP2     | [Bitmap Mode of BG2](#0xd20028-0xd20034-bitmap-mode) |
+|0xD20034 | BMP3     | [Bitmap Mode of BG3](#0xd20028-0xd20034-bitmap-mode) |
 
 Please note that access to the VDP register must always be 4-byte aligned.
 
@@ -287,6 +291,16 @@ Specify the BG layer on which to display the sprite, within the range of 0 to 3.
 The VGS-X has a virtual display of 2048x2048 pixels for each BG plane.
 
 For each BG plane, the SX and SY coordinates can be specified within the range 0 to 2047 to define the display origin at the top-left corner.
+
+### 0xD20028-0xD20034: Bitmap Mode
+
+The VGS-X's display mode defaults to character pattern mode, but can be switched to bitmap mode by setting the BMP register.
+
+When set to Bitmap mode, the name table corresponds to the pixels on the screen (320x200).
+
+Each pixel is set in RGB888 format.
+
+> Note that [hardware scrolling](#0xd20008-0xd20024-hardware-scroll) is not available when in Bitmap mode.
 
 ## I/O Map
 
