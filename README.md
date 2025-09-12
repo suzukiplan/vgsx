@@ -275,14 +275,14 @@ The Bit-Layout of the Name Table and OAM's attribute are as follows:
 |0xD20040 | CLS1     | [Clear Screen of BG1](#0xd20038-0xd20048-clear-screen) |
 |0xD20044 | CLS2     | [Clear Screen of BG2](#0xd20038-0xd20048-clear-screen) |
 |0xD20048 | CLS3     | [Clear Screen of BG3](#0xd20038-0xd20048-clear-screen) |
-|0xD2004C | G_BG     | [Bitmap Graphic Draw]() |
-|0xD20050 | G_X1     | [Bitmap Graphic Draw]() |
-|0xD20054 | G_Y1     | [Bitmap Graphic Draw]() |
-|0xD20058 | G_X2     | [Bitmap Graphic Draw]() |
-|0xD2005C | G_Y2     | [Bitmap Graphic Draw]() |
-|0xD20060 | G_COL    | [Bitmap Graphic Draw]() |
-|0xD20064 | G_OPT    | [Bitmap Graphic Draw]() |
-|0xD20068 | G_EXE    | [Bitmap Graphic Draw]() |
+|0xD2004C | G_BG     | [Bitmap Graphic Draw](#0xd2004c-0xd20068-bitmap-graphic-draw) |
+|0xD20050 | G_X1     | [Bitmap Graphic Draw](#0xd2004c-0xd20068-bitmap-graphic-draw) |
+|0xD20054 | G_Y1     | [Bitmap Graphic Draw](#0xd2004c-0xd20068-bitmap-graphic-draw) |
+|0xD20058 | G_X2     | [Bitmap Graphic Draw](#0xd2004c-0xd20068-bitmap-graphic-draw) |
+|0xD2005C | G_Y2     | [Bitmap Graphic Draw](#0xd2004c-0xd20068-bitmap-graphic-draw) |
+|0xD20060 | G_COL    | [Bitmap Graphic Draw](#0xd2004c-0xd20068-bitmap-graphic-draw) |
+|0xD20064 | G_OPT    | [Bitmap Graphic Draw](#0xd2004c-0xd20068-bitmap-graphic-draw) |
+|0xD20068 | G_EXE    | [Bitmap Graphic Draw](#0xd2004c-0xd20068-bitmap-graphic-draw) |
 
 Please note that access to the VDP register must always be 4-byte aligned.
 
