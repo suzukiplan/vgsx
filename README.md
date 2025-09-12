@@ -214,6 +214,7 @@ Remarks:
 
 - Bit Layout: `******** rrrrrrrr gggggggg bbbbbbbb`
 - 0xD10400 ~ 0xD1FFFF is a mirror of 0xD10000 ~ 0xD103FF (1024 bytes).
+- Please note that access to the palette table must always be 4-byte aligned.
 
 ## Name Table
 
@@ -231,7 +232,9 @@ Remarks:
 > The 256x256 (2048x2048 pixels) size may be slightly excessive for the VGS-X display resolution (320x200 pixels), but using this size enables future support for bitmap format VRAM.
 >
 > - 256x256x4 = 262,144 bytes
-> - 320x200x2 = 128,000 bytes (minimum size required to display Bitmap format)
+> - 320x200x4 = 256,000 bytes (minimum size required to display Bitmap format)
+
+Please note that access to the name table must always be 4-byte aligned.
 
 ## Attribute
 
@@ -251,7 +254,39 @@ The Bit-Layout of the Name Table and OAM's attribute are as follows:
 
 ## VDP Register
 
-(TODO)
+| Address | Mnemonic | Description |
+|:-------:|:--------:|:------------|
+|0xD20000 | SKIP     | [Skip Screen Update](#0xd20000-skip-screen-update) |
+|0xD20004 | SPOS     | [Sprites Position](#0xd20004-sprite-position) |
+|0xD20008 | SX0      | [Scroll X of BG0](#0xd20008-0xd20024-hardware-scroll) |
+|0xD2000C | SX1      | [Scroll X of BG1](#0xd20008-0xd20024-hardware-scroll) |
+|0xD20010 | SX2      | [Scroll X of BG2](#0xd20008-0xd20024-hardware-scroll) |
+|0xD20014 | SX3      | [Scroll X of BG3](#0xd20008-0xd20024-hardware-scroll) |
+|0xD20018 | SY0      | [Scroll Y of BG0](#0xd20008-0xd20024-hardware-scroll) |
+|0xD2001C | SY1      | [Scroll Y of BG1](#0xd20008-0xd20024-hardware-scroll) |
+|0xD20020 | SY2      | [Scroll Y of BG2](#0xd20008-0xd20024-hardware-scroll) |
+|0xD20024 | SY3      | [Scroll Y of BG3](#0xd20008-0xd20024-hardware-scroll) |
+
+Please note that access to the VDP register must always be 4-byte aligned.
+
+### 0xD20000: Skip Screen Update
+
+Setting a value other than zero to this register will skip the screen update every frame (60fps).
+
+### 0xD20004: Sprite Position
+
+Specify the BG layer on which to display the sprite, within the range of 0 to 3.
+
+- 0: Sprites are displayed above BG0 and below BG1 through BG3.
+- 1: Sprites are displayed above BG1 and below BG2 through BG3.
+- 2: Sprites are displayed above BG2 and below BG3.
+- 3: Sprites are displayed above BG3
+
+### 0xD20008-0xD20024: Hardware Scroll
+
+The VGS-X has a virtual display of 2048x2048 pixels for each BG plane.
+
+For each BG plane, the SX and SY coordinates can be specified within the range 0 to 2047 to define the display origin at the top-left corner.
 
 ## I/O Map
 
