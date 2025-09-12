@@ -18,7 +18,9 @@ Supported development environment operating systems are **Ubuntu Linux** or **ma
 
 The runtime environment supports the all of PC operating systems (Windows, macOS, and Linux) that supported by Steam Client.
 
-In the future, we also plan to provide runtimes capable of running on Nintendo Switch and PlayStation 4/5. (However, due to NDA restrictions, we cannot disclose details publicly.)
+In the future, we also plan to provide runtimes capable of running on Nintendo Switch and PlayStation 4/5. Due to an NDA, we cannot disclose details, but we will be confirmed that the [core](./src/core) modules can be built and run using the SDKs for those game consoles.
+
+VGS-X aims to provide game developers and publishers with an environment that enables them to deliver games that are fully compatible across any computer with certain performance specifications.
 
 ## Setup Build Environment
 
