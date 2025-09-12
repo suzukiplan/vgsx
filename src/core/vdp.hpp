@@ -82,12 +82,12 @@ class VDP
                     return rawOam[arg];
                 }
                 case 0xD10000: {
-                    uint8_t pn = (address & 0xF00) >> 8;
-                    uint8_t cn = (address & 0x0F0) >> 4;
+                    uint8_t pn = (address & 0x3C0) >> 6;
+                    uint8_t cn = (address & 0x03C) >> 2;
                     return this->context.palette[pn][cn];
                 }
                 case 0xD20000: {
-                    uint8_t index = (address & 0xFF0) >> 4;
+                    uint8_t index = (address & 0x3FC) >> 2;
                     uint32_t* rawReg = (uint32_t*)&this->context.reg;
                     return rawReg[index];
                 }
@@ -113,13 +113,13 @@ class VDP
                     return;
                 }
                 case 0xD10000: {
-                    uint8_t pn = (address & 0xF00) >> 8;
-                    uint8_t cn = (address & 0x0F0) >> 4;
+                    uint8_t pn = (address & 0x3C0) >> 6;
+                    uint8_t cn = (address & 0x03C) >> 2;
                     this->context.palette[pn][cn] = value;
                     return;
                 }
                 case 0xD20000: {
-                    uint8_t index = (address & 0xFF0) >> 4;
+                    uint8_t index = (address & 0x3FC) >> 2;
                     uint32_t* rawReg = (uint32_t*)&this->context.reg;
                     rawReg[index] = value;
                     return;
