@@ -52,16 +52,16 @@ typedef struct {
 #define VGS_PALETTE ((uint32_t*)0xD10000)
 
 // VDP Register
-#define VGS_VREG_SKIP ((uint16_t*)0xD20000)
-#define VGS_VREG_SPOS ((uint16_t*)0xD20004)
-#define VGS_VREG_SX0 ((uint16_t*)0xD20008)
-#define VGS_VREG_SX1 ((uint16_t*)0xD2000C)
-#define VGS_VREG_SX2 ((uint16_t*)0xD20010)
-#define VGS_VREG_SX3 ((uint16_t*)0xD20014)
-#define VGS_VREG_SY0 ((uint16_t*)0xD20018)
-#define VGS_VREG_SY1 ((uint16_t*)0xD2001C)
-#define VGS_VREG_SY2 ((uint16_t*)0xD20020)
-#define VGS_VREG_SY3 ((uint16_t*)0xD20024)
+#define VGS_VREG_SKIP ((uint32_t*)0xD20000)
+#define VGS_VREG_SPOS ((uint32_t*)0xD20004)
+#define VGS_VREG_SX0 ((uint32_t*)0xD20008)
+#define VGS_VREG_SX1 ((uint32_t*)0xD2000C)
+#define VGS_VREG_SX2 ((uint32_t*)0xD20010)
+#define VGS_VREG_SX3 ((uint32_t*)0xD20014)
+#define VGS_VREG_SY0 ((uint32_t*)0xD20018)
+#define VGS_VREG_SY1 ((uint32_t*)0xD2001C)
+#define VGS_VREG_SY2 ((uint32_t*)0xD20020)
+#define VGS_VREG_SY3 ((uint32_t*)0xD20024)
 
 // I/O
 #define VGS_IN_VSYNC ((uint32_t*)0xE00000)
