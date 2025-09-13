@@ -342,6 +342,7 @@ Drawing processing is executed when the execution identifier is written to G_EXE
 |o|o|o|-|-|o|-| `0` | Pixel |
 |o|o|o|o|o|o|-| `1` | Line |
 |o|o|o|o|o|o|-| `2` | Box |
+|o|o|o|o|o|o|-| `3` | Box Fill |
 
 > Reading `G_EXE` allows you to read the color of the pixel drawn at the (`G_X1`, `G_Y1`) position on the background plane specified by `G_BG`.
 

@@ -34,6 +34,7 @@ class VDP;
 static inline void graphicDrawPixel(VDP* vdp);
 static inline void graphicDrawLine(VDP* vdp);
 static inline void graphicDrawBox(VDP* vdp);
+static inline void graphicDrawBoxFill(VDP* vdp);
 
 class VDP
 {
@@ -203,8 +204,9 @@ class VDP
             graphicDrawPixel,
             graphicDrawLine,
             graphicDrawBox,
+            graphicDrawBoxFill,
         };
-        if (op < 3) {
+        if (op < 4) {
             func[op](this);
         }
     }
@@ -440,4 +442,22 @@ static inline void graphicDrawBox(VDP* vdp)
     drawLine(vram, fx, fy, fx, ty, col);
     drawLine(vram, tx, ty, tx, fy, col);
     drawLine(vram, tx, ty, fx, ty, col);
+}
+
+static inline void graphicDrawBoxFill(VDP* vdp)
+{
+    uint32_t* vram = vdp->context.nametbl[vdp->context.reg.g_bg & 3];
+    int32_t fx = (int32_t)vdp->context.reg.g_x1;
+    int32_t fy = (int32_t)vdp->context.reg.g_y1;
+    int32_t tx = (int32_t)vdp->context.reg.g_x2;
+    int32_t ty = (int32_t)vdp->context.reg.g_y2;
+    uint32_t col = vdp->context.reg.g_col;
+    if (ty < fy) {
+        int w = fy;
+        fy = ty;
+        ty = w;
+    }
+    for (int32_t y = fy; y < ty; y++) {
+        drawLine(vram, tx, y, fx, y, col);
+    }
 }

@@ -84,6 +84,7 @@ typedef struct {
 #define VGS_DRAW_PIXEL 0
 #define VGS_DRAW_LINE 1
 #define VGS_DRAW_BOX 2
+#define VGS_DRAW_BOXF 3
 
 // I/O
 #define VGS_IN_VSYNC ((uint32_t*)0xE00000)
@@ -106,6 +107,7 @@ void vgs_cls_bg(uint8_t n, uint32_t value);
 void vgs_draw_pixel(uint8_t n, int32_t x, int32_t y, uint32_t col);
 void vgs_draw_line(uint8_t n, int32_t x1, int32_t y1, int32_t x2, int32_t y2, uint32_t col);
 void vgs_draw_box(uint8_t n, int32_t x1, int32_t y1, int32_t x2, int32_t y2, uint32_t col);
+void vgs_draw_boxf(uint8_t n, int32_t x1, int32_t y1, int32_t x2, int32_t y2, uint32_t col);
 
 #ifdef __cplusplus
 };

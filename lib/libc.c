@@ -136,3 +136,14 @@ void vgs_draw_box(uint8_t n, int32_t x1, int32_t y1, int32_t x2, int32_t y2, uin
     *VGS_VREG_G_COL = col;
     *VGS_VREG_G_EXE = VGS_DRAW_BOX;
 }
+
+void vgs_draw_boxf(uint8_t n, int32_t x1, int32_t y1, int32_t x2, int32_t y2, uint32_t col)
+{
+    *VGS_VREG_G_BG = n;
+    *VGS_VREG_G_X1 = (uint32_t)x1;
+    *VGS_VREG_G_Y1 = (uint32_t)y1;
+    *VGS_VREG_G_X2 = (uint32_t)x2;
+    *VGS_VREG_G_Y2 = (uint32_t)y2;
+    *VGS_VREG_G_COL = col;
+    *VGS_VREG_G_EXE = VGS_DRAW_BOXF;
+}
