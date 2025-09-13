@@ -113,6 +113,8 @@ The following sections provide technical information useful for programming with
 - Each BGs has two modes: [Character Pattern Mode](#character-pattern) and [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode).
 - Sprites can display up to 1024.
 
+> _The screen resolution of VGS-X (320x200) is designed to enable full-screen display on the SteamDeck (1280x800)._
+
 ## Memory Map
 
 In VGS-X, the first 12MB (0x000000 ~ 0xBFFFFF) of the MC68030's 24-bit (16MB) address space is allocated for programs.
