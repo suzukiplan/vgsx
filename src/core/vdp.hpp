@@ -31,7 +31,8 @@
 #define VDP_HEIGHT 200 /* Height of the Screen */
 
 class VDP;
-static void graphicDrawPixel(VDP* vdp);
+static inline void graphicDrawPixel(VDP* vdp);
+static inline void graphicDrawLine(VDP* vdp);
 
 class VDP
 {
@@ -191,8 +192,9 @@ class VDP
     {
         static void (*func[])(VDP*) = {
             graphicDrawPixel,
+            graphicDrawLine,
         };
-        if (op < 1) {
+        if (op < 2) {
             func[op](this);
         }
     }
@@ -272,14 +274,86 @@ class VDP
     }
 };
 
-static void graphicDrawPixel(VDP* vdp)
+static inline int abs(int value) { return value < 0 ? -value : value; }
+static inline int sgn(int value) { return value < 0 ? -1 : 1; }
+
+static inline void drawPixel(uint32_t* vram, int32_t x1, int32_t y1, uint32_t col)
 {
-    int bg = (int)vdp->context.reg.g_bg & 3;
-    int32_t x1 = (int32_t)vdp->context.reg.g_x1;
-    int32_t y1 = (int32_t)vdp->context.reg.g_y1;
-    uint32_t col = vdp->context.reg.g_col;
     if (x1 < 0 || VDP_WIDTH <= x1 || y1 < 0 || VDP_HEIGHT <= y1) {
         return;
     }
-    vdp->context.nametbl[bg][y1 * VDP_WIDTH + x1] = col;
+    vram[y1 * VDP_WIDTH + x1] = col;
+}
+
+static inline void graphicDrawPixel(VDP* vdp)
+{
+    drawPixel(vdp->context.nametbl[vdp->context.reg.g_bg & 3],
+              (int32_t)vdp->context.reg.g_x1,
+              (int32_t)vdp->context.reg.g_y1,
+              vdp->context.reg.g_col);
+}
+
+static inline void graphicDrawLine(VDP* vdp)
+{
+    uint32_t* vram = vdp->context.nametbl[vdp->context.reg.g_bg & 3];
+    int32_t fx = (int32_t)vdp->context.reg.g_x1;
+    int32_t fy = (int32_t)vdp->context.reg.g_y1;
+    int32_t tx = (int32_t)vdp->context.reg.g_x2;
+    int32_t ty = (int32_t)vdp->context.reg.g_y2;
+    uint32_t col = vdp->context.reg.g_col;
+    int idx, idy;
+    int ia, ib, ie;
+    int w;
+    idx = tx - fx;
+    idy = ty - fy;
+    if (!idx || !idy) {
+        if (tx < fx) {
+            w = fx;
+            fx = tx;
+            tx = w;
+        }
+        if (ty < fy) {
+            w = fy;
+            fy = ty;
+            ty = w;
+        }
+        if (0 == idy) {
+            for (; fx <= tx; fx++) {
+                drawPixel(vram, fx, fy, col);
+            }
+        } else {
+            for (; fy <= ty; fy++) {
+                drawPixel(vram, fx, fy, col);
+            }
+        }
+        return;
+    }
+    w = 1;
+    ia = abs(idx);
+    ib = abs(idy);
+    if (ia >= ib) {
+        ie = -abs(idy);
+        while (w) {
+            drawPixel(vram, fx, fy, col);
+            if (fx == tx) break;
+            fx += sgn(idx);
+            ie += 2 * ib;
+            if (ie >= 0) {
+                fy += sgn(idy);
+                ie -= 2 * ia;
+            }
+        }
+    } else {
+        ie = -abs(idx);
+        while (w) {
+            drawPixel(vram, fx, fy, col);
+            if (fy == ty) break;
+            fy += sgn(idy);
+            ie += 2 * ia;
+            if (ie >= 0) {
+                fx += sgn(idx);
+                ie -= 2 * ib;
+            }
+        }
+    }
 }

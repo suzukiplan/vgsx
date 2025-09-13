@@ -10,11 +10,14 @@ int main(int argc, char* argv[])
     uint32_t col = 1;
     int ptr = 0;
     for (int y = 0; y < 200; y++) {
-        for (int x = 0; x < 320; x++) {
-            VGS_VRAM_BG0[ptr++] = col;
-        }
-        col++;
+        vgs_draw_line(0, 0, y, 319, y, col++);
     }
+
+    vgs_draw_line(0, 159, 10, 149, 30, 0xF0F000);
+    vgs_draw_line(0, 159, 10, 169, 30, 0xF0F000);
+    vgs_draw_line(0, 169, 17, 149, 30, 0xF0F000);
+    vgs_draw_line(0, 149, 17, 169, 30, 0xF0F000);
+    vgs_draw_line(0, 149, 17, 169, 17, 0xF0F000);
 
     *VGS_VREG_BMP2 = 1;
     while (1) {
