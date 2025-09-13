@@ -22,7 +22,7 @@ typedef struct BitmapHeader_ {
 
 static void screenShot()
 {
-    static unsigned char buf[14 + 40 + 640 * 400 * 4];
+    static unsigned char buf[14 + 40 + VDP_WIDTH * 2 * VDP_HEIGHT * 2 * 4];
     int iSize = (int)sizeof(buf);
     memset(buf, 0, sizeof(buf));
     int ptr = 0;
@@ -36,8 +36,8 @@ static void screenShot()
     ptr += 4;
     BitmapHeader header;
     header.isize = 40;
-    header.width = 640;
-    header.height = 400;
+    header.width = VDP_WIDTH * 2;
+    header.height = VDP_HEIGHT * 2;
     header.planes = 1;
     header.bits = 32;
     header.ctype = 0;
@@ -49,16 +49,16 @@ static void screenShot()
     memcpy(&buf[ptr], &header, sizeof(header));
     ptr += sizeof(header);
     uint32_t* display = vgsx.getDisplay();
-    for (int y = 0; y < 200; y++) {
-        for (int x = 0; x < 320; x++) {
-            auto rgb888 = display[(199 - y) * 320 + x];
-            memcpy(&buf[ptr + 320 * 8], &rgb888, 4);
-            memcpy(&buf[ptr + 320 * 8 + 4], &rgb888, 4);
+    for (int y = 0; y < VDP_HEIGHT; y++) {
+        for (int x = 0; x < VDP_WIDTH; x++) {
+            auto rgb888 = display[(VDP_HEIGHT - 1 - y) * VDP_WIDTH + x];
+            memcpy(&buf[ptr + VDP_WIDTH * 8], &rgb888, 4);
+            memcpy(&buf[ptr + VDP_WIDTH * 8 + 4], &rgb888, 4);
             memcpy(&buf[ptr], &rgb888, 4);
             memcpy(&buf[ptr + 4], &rgb888, 4);
             ptr += 8;
         }
-        ptr += 320 * 8;
+        ptr += VDP_WIDTH * 8;
     }
     FILE* fp = fopen("screen.bmp", "wb");
     if (fp) {
