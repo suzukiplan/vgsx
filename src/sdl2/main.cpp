@@ -196,6 +196,8 @@ int main(int argc, char* argv[])
     const int waitFps60[3] = {17000, 17000, 16000};
     bool quit = false;
     bool stabled = true;
+    double totalClocks = 0.0;
+    uint32_t maxClocks = 0;
     while (!quit) {
         loopCount++;
         auto start = std::chrono::system_clock::now();
@@ -211,6 +213,11 @@ int main(int argc, char* argv[])
         }
         if (!quit) {
             vgsx.tick();
+            totalClocks += vgsx.context.frameClocks;
+            if (maxClocks < vgsx.context.frameClocks) {
+                maxClocks = vgsx.context.frameClocks;
+                printf("Update the peak CPU clock rate: %dHz\n", maxClocks);
+            }
             auto vgsDisplay = vgsx.getDisplay();
             auto pcDisplay = (unsigned int*)windowSurface->pixels;
             auto pitch = windowSurface->pitch / windowSurface->format->BytesPerPixel;
@@ -248,6 +255,7 @@ int main(int argc, char* argv[])
 
     printf("\n[RAM DUMP]\n");
     uint8_t prevbin[16];
+    uint32_t ramUsage = 0;
     for (int i = 0; i < sizeof(vgsx.context.ram); i += 16) {
         if (i != 0) {
             if (0 == memcmp(prevbin, &vgsx.context.ram[i], 16)) {
@@ -272,6 +280,19 @@ int main(int argc, char* argv[])
             }
         }
         printf("\n");
+        ramUsage += 16;
     }
+
+    if (0 < loopCount) {
+        totalClocks /= loopCount;
+        if (totalClocks < 1000) {
+            printf("\nAverage CPU Clocks: %.1fHz\n", totalClocks);
+        } else if (totalClocks < 1000000) {
+            printf("\nAverage CPU Clocks: %.1fkHz\n", totalClocks / 1000);
+        } else {
+            printf("\nAverage CPU Clocks: %.1fMHz\n", totalClocks / 1000000);
+        }
+    }
+    printf("RAM usage: %d/%d (%d%%)\n", ramUsage, 1024 * 1024, ramUsage * 100 / 1024 / 1024);
     return 0;
 }
