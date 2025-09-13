@@ -2,3 +2,5 @@ program
 program.o
 font.chr
 font.pal
+screen.bmp
+

@@ -6,6 +6,69 @@
 #include <chrono>
 #include "vgsx.h"
 
+typedef struct BitmapHeader_ {
+    int isize;             /* 情報ヘッダサイズ */
+    int width;             /* 幅 */
+    int height;            /* 高さ */
+    unsigned short planes; /* プレーン数 */
+    unsigned short bits;   /* 色ビット数 */
+    unsigned int ctype;    /* 圧縮形式 */
+    unsigned int gsize;    /* 画像データサイズ */
+    int xppm;              /* X方向解像度 */
+    int yppm;              /* Y方向解像度 */
+    unsigned int cnum;     /* 使用色数 */
+    unsigned int inum;     /* 重要色数 */
+} BitmapHeader;
+
+static void screenShot()
+{
+    static unsigned char buf[14 + 40 + 640 * 400 * 4];
+    int iSize = (int)sizeof(buf);
+    memset(buf, 0, sizeof(buf));
+    int ptr = 0;
+    buf[ptr++] = 'B';
+    buf[ptr++] = 'M';
+    memcpy(&buf[ptr], &iSize, 4);
+    ptr += 4;
+    ptr += 4;
+    iSize = 14 + 40;
+    memcpy(&buf[ptr], &iSize, 4);
+    ptr += 4;
+    BitmapHeader header;
+    header.isize = 40;
+    header.width = 640;
+    header.height = 400;
+    header.planes = 1;
+    header.bits = 32;
+    header.ctype = 0;
+    header.gsize = header.width * header.height * (header.bits / 8);
+    header.xppm = 1;
+    header.yppm = 1;
+    header.cnum = 0;
+    header.inum = 0;
+    memcpy(&buf[ptr], &header, sizeof(header));
+    ptr += sizeof(header);
+    uint32_t* display = vgsx.getDisplay();
+    for (int y = 0; y < 200; y++) {
+        for (int x = 0; x < 320; x++) {
+            auto rgb888 = display[(199 - y) * 320 + x];
+            memcpy(&buf[ptr + 320 * 8], &rgb888, 4);
+            memcpy(&buf[ptr + 320 * 8 + 4], &rgb888, 4);
+            memcpy(&buf[ptr], &rgb888, 4);
+            memcpy(&buf[ptr + 4], &rgb888, 4);
+            ptr += 8;
+        }
+        ptr += 320 * 8;
+    }
+    FILE* fp = fopen("screen.bmp", "wb");
+    if (fp) {
+        fwrite(buf, 1, sizeof(buf), fp);
+        fclose(fp);
+        puts("Capture screen.bmp");
+    }
+    return;
+}
+
 static uint8_t* loadBinary(const char* path, int* size)
 {
     try {
@@ -21,7 +84,7 @@ static uint8_t* loadBinary(const char* path, int* size)
     }
 }
 
-void put_usage()
+static void put_usage()
 {
     puts("usage: vgsx [-g /path/to/pattern.chr]");
     puts("            [-c /path/to/palette.bin]");
@@ -142,6 +205,7 @@ int main(int argc, char* argv[])
             } else if (event.type == SDL_KEYDOWN) {
                 switch (event.key.keysym.sym) {
                     case SDLK_q: quit = true; break;
+                    case SDLK_s: screenShot(); break;
                 }
             }
         }
