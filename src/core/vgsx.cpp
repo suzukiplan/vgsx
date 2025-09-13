@@ -309,6 +309,7 @@ void VGSX::reset(void)
     this->context.program = NULL;
     this->context.programSize = 0;
     this->context.randomIndex = 0;
+    this->context.frameClocks = 0;
     this->vdp.reset();
 
     if (!this->context.elf) {
@@ -382,8 +383,10 @@ void VGSX::reset(void)
 void VGSX::tick(void)
 {
     this->detectReferVSync = false;
+    this->context.frameClocks = 0;
     while (!this->detectReferVSync) {
         m68k_execute(4);
+        this->context.frameClocks += 4;
     }
     this->vdp.render();
 }

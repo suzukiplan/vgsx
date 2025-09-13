@@ -38,6 +38,7 @@ class VGSX
         const uint8_t* program;
         size_t programSize;
         int randomIndex;
+        uint32_t frameClocks;
     } context;
 
     VDP vdp;
