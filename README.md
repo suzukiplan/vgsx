@@ -337,10 +337,11 @@ You can draw various types of shapes in bitmap mode.
 
 Drawing processing is executed when the execution identifier is written to G_EXE.
 
-| `G_BG` | `G_X1` | `G_Y1` | `G_X2` | `G_Y2` | `G_COL` | `G_OPT` | `G_EXE` | Operation |
+| `G_BG` | `G_X1` | `G_Y1` | `G_X2` | `G_Y2` | `G_COL` | `G_OPT` | `G_EXE` | Shape |
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-|
-|o|o|o|-|-|o|-| `0` | Draw Pixel |
-|o|o|o|o|o|o|-| `1` | Draw Line |
+|o|o|o|-|-|o|-| `0` | Pixel |
+|o|o|o|o|o|o|-| `1` | Line |
+|o|o|o|o|o|o|-| `2` | Box |
 
 > Reading `G_EXE` allows you to read the color of the pixel drawn at the (`G_X1`, `G_Y1`) position on the background plane specified by `G_BG`.
 
