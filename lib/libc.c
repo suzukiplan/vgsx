@@ -147,3 +147,13 @@ void vgs_draw_boxf(uint8_t n, int32_t x1, int32_t y1, int32_t x2, int32_t y2, ui
     *VGS_VREG_G_COL = col;
     *VGS_VREG_G_EXE = VGS_DRAW_BOXF;
 }
+
+void vgs_draw_character(uint8_t n, int32_t x, int32_t y, int draw0, uint8_t pal, uint16_t ptn)
+{
+    *VGS_VREG_G_BG = n;
+    *VGS_VREG_G_X1 = (uint32_t)x;
+    *VGS_VREG_G_Y1 = (uint32_t)y;
+    *VGS_VREG_G_OPT = (uint32_t)ptn;
+    *VGS_VREG_G_COL = ((uint32_t)pal) | (draw0 ? 0x80000000 : 0);
+    *VGS_VREG_G_EXE = VGS_DRAW_CHR;
+}

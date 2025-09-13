@@ -42,6 +42,7 @@ int main(int argc, char* argv[])
     vgs_draw_boxf(2, 11 * 8 - 8 + 1, 12 * 8 - 8 + 1, 11 * 8 + 19 * 8 - 1, 12 * 8 + 16 - 1, 0x102040);
     vgs_draw_box(2, 11 * 8 - 8 - 2, 12 * 8 - 8 - 2, 11 * 8 + 19 * 8 + 2, 12 * 8 + 16 + 2, 0xCFCF00);
     vgs_draw_box(2, 11 * 8 - 8 - 4, 12 * 8 - 8 - 4, 11 * 8 + 19 * 8 + 4, 12 * 8 + 16 + 4, 0x7F7F00);
+    vgs_draw_boxf(2, 0, 0, 319, 7, 0x00010101);
 
     for (int y = 0; y < 200; y++) {
         vgs_draw_pixel(1, vgs_rand() % 320, y, vgs_rand32());
@@ -51,6 +52,7 @@ int main(int argc, char* argv[])
         vgs_vsync();
         *VGS_VREG_SY1 = 1;
         vgs_draw_pixel(1, vgs_rand() % 320, 0, vgs_rand32());
+        vgs_draw_character(1, vgs_rand() % 320 - 4, 0, 0, 0, 0x20 + (vgs_rand() % 0x3F));
     }
 
     return 0;

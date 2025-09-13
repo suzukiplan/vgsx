@@ -240,10 +240,7 @@ Remarks:
 | 0xC80000 ~ 0xCBFFFF | 256KB |     BG2    |
 | 0xCC0000 ~ 0xCFFFFF | 256KB |     BG3    |
 
-> The 256x256 (2048x2048 pixels) size may be slightly excessive for the VGS-X display resolution (320x200 pixels), but using this size enables future support for bitmap format VRAM.
->
-> - 256x256x4 = 262,144 bytes
-> - 320x200x4 = 256,000 bytes (minimum size required to display Bitmap format)
+In [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode), these areas corresponds to 320x200 pixels.
 
 Please note that access to the name table must always be 4-byte aligned.
 
@@ -330,7 +327,10 @@ For each BG plane, the SX and SY coordinates can be specified within the range 0
 
 ### 0xD20028-0xD20034: Bitmap Mode
 
-The VGS-X's display mode defaults to character pattern mode, but can be switched to bitmap mode by setting the BMP register.
+The VGS-X's display mode defaults to character pattern mode, but can be switched to bitmap mode by setting the BMP register (0xD20028-0xD20034).
+
+- 0: Character Pattern Mode (default)
+- 1: Bitmap Mode
 
 When set to Bitmap mode, the name table corresponds to the pixels on the screen (320x200).
 
@@ -344,18 +344,24 @@ You can delete all BGs or specific BGs in bulk.
 
 ### 0xD2004C-0xD20068: Bitmap Graphic Draw
 
-You can draw various types of shapes in bitmap mode.
+You can draw various types of shapes to the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode).
 
-Drawing processing is executed when the execution identifier is written to G_EXE.
+Drawing processing is executed when the execution identifier is written to `G_EXE`.
 
 | `G_BG` | `G_X1` | `G_Y1` | `G_X2` | `G_Y2` | `G_COL` | `G_OPT` | `G_EXE` | Shape |
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-|
-|o|o|o|-|-|o|-| `0` | Pixel |
-|o|o|o|o|o|o|-| `1` | Line |
-|o|o|o|o|o|o|-| `2` | Box |
-|o|o|o|o|o|o|-| `3` | Box Fill |
+|☑︎|☑︎|☑︎|-|-|☑︎|-| `0` | Pixel <sup>*1</sup> |
+|☑︎|☑︎|☑︎|☑︎|☑︎|☑︎|-| `1` | Line |
+|☑︎|☑︎|☑︎|☑︎|☑︎|☑︎|-| `2` | Box |
+|☑︎|☑︎|☑︎|☑︎|☑︎|☑︎|-| `3` | Box Fill |
+|☑︎|☑︎|☑︎|-|-|☑︎|☑︎| `4` | Character <sup>*2</sup> |
 
-> Reading `G_EXE` allows you to read the color of the pixel drawn at the (`G_X1`, `G_Y1`) position on the background plane specified by `G_BG`.
+Remarks:
+
+1. Reading `G_EXE` allows you to read the color of the pixel drawn at the (`G_X1`, `G_Y1`) position on the background plane specified by `G_BG`.
+2. When drawing a character, specify the palette number (0 to 15) in `G_COL` and the pattern number (0 to 65535) in `G_OPT`. Additionally, setting the most significant bit of `G_COL (0x80000000)` draws the transparent color, while resetting it skips drawing the transparent color.
+
+> Please note that character drawing performance is not as good as in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode).
 
 ## I/O Map
 

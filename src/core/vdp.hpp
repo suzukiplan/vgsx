@@ -35,6 +35,7 @@ static inline void graphicDrawPixel(VDP* vdp);
 static inline void graphicDrawLine(VDP* vdp);
 static inline void graphicDrawBox(VDP* vdp);
 static inline void graphicDrawBoxFill(VDP* vdp);
+static inline void graphicDrawCharacter(VDP* vdp);
 
 class VDP
 {
@@ -205,8 +206,9 @@ class VDP
             graphicDrawLine,
             graphicDrawBox,
             graphicDrawBoxFill,
+            graphicDrawCharacter,
         };
-        if (op < 4) {
+        if (op < 5) {
             func[op](this);
         }
     }
@@ -459,5 +461,44 @@ static inline void graphicDrawBoxFill(VDP* vdp)
     }
     for (int32_t y = fy; y < ty; y++) {
         drawLine(vram, tx, y, fx, y, col);
+    }
+}
+
+static inline void graphicDrawCharacter(VDP* vdp)
+{
+    uint32_t* vram = vdp->context.nametbl[vdp->context.reg.g_bg & 3];
+    int32_t x = (int32_t)vdp->context.reg.g_x1;
+    int32_t y = (int32_t)vdp->context.reg.g_y1;
+    uint8_t pal = (int32_t)vdp->context.reg.g_col & 0x0F;
+    uint8_t* ptn = vdp->context.ptn[vdp->context.reg.g_opt & 0xFFFF];
+    bool drawZero = vdp->context.reg.g_col & 0x80000000 ? true : false;
+
+    if (x < -8 || y < -8 || 320 <= x || 200 <= y) {
+        return;
+    }
+    for (int i = 0; i < 8; i++) {
+        if (y + i < 0 || 200 <= y + i) {
+            continue;
+        }
+        for (int j = 0; j < 4; j++) {
+            int p0 = (ptn[i * 4 + j] & 0xF0) >> 4;
+            int p1 = ptn[i * 4 + j] & 0x0F;
+            uint32_t c0 = vdp->context.palette[pal][p0];
+            uint32_t c1 = vdp->context.palette[pal][p1];
+            if (0 <= x + j * 2 && x + j * 2 < 320) {
+                if (drawZero || p0) {
+                    vram[(y + i) * 320 + x + j * 2] = c0;
+                } else {
+                    vram[(y + i) * 320 + x + j * 2] = 0;
+                }
+            }
+            if (0 <= x + j * 2 + 1 && x + j * 2 + 1 < 320) {
+                if (drawZero || p1) {
+                    vram[(y + i) * 320 + x + j * 2 + 1] = c1;
+                } else {
+                    vram[(y + i) * 320 + x + j * 2 + 1] = 0;
+                }
+            }
+        }
     }
 }
