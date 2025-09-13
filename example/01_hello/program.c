@@ -1,5 +1,14 @@
 #include <vgs.h>
 
+void draw_star(int x, int y)
+{
+    vgs_draw_line(0, x, y, x - 10, y + 20, 0xF0F000);
+    vgs_draw_line(0, x, y, x + 10, y + 20, 0xF0F000);
+    vgs_draw_line(0, x + 10, y + 7, x - 10, y + 20, 0xF0F000);
+    vgs_draw_line(0, x - 10, y + 7, x + 10, y + 20, 0xF0F000);
+    vgs_draw_line(0, x - 10, y + 7, x + 10, y + 7, 0xF0F000);
+}
+
 int main(int argc, char* argv[])
 {
     vgs_console_print("Hello, World!\n\0");
@@ -15,11 +24,10 @@ int main(int argc, char* argv[])
         vgs_draw_line(0, 0, y, 319, y, col++);
     }
 
-    vgs_draw_line(0, 159, 10, 149, 30, 0xF0F000);
-    vgs_draw_line(0, 159, 10, 169, 30, 0xF0F000);
-    vgs_draw_line(0, 169, 17, 149, 30, 0xF0F000);
-    vgs_draw_line(0, 149, 17, 169, 30, 0xF0F000);
-    vgs_draw_line(0, 149, 17, 169, 17, 0xF0F000);
+    for (int x = -1; x < 320; x += 32) {
+        draw_star(x, 50);
+        draw_star(x + 5, 120);
+    }
 
     while (1) {
         vgs_draw_pixel(1, vgs_rand() % 320, vgs_rand() % 200, vgs_rand32());
