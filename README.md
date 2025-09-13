@@ -102,6 +102,8 @@ cd vgsx/example/01_hello
 make
 ```
 
+![screen shot](./example/01_hello/screen.png)
+
 # Architecture Reference Manual
 
 The following sections provide technical information useful for programming with VGS-X.
