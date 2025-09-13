@@ -254,35 +254,35 @@ The Bit-Layout of the Name Table and OAM's attribute are as follows:
 
 ## VDP Register
 
-| Address | Mnemonic | Description |
-|:-------:|:--------:|:------------|
-|0xD20000 | SKIP     | [Skip Screen Update](#0xd20000-skip-screen-update) |
-|0xD20004 | SPOS     | [Sprites Position](#0xd20004-sprite-position) |
-|0xD20008 | SX0      | [Scroll X of BG0](#0xd20008-0xd20024-hardware-scroll) |
-|0xD2000C | SX1      | [Scroll X of BG1](#0xd20008-0xd20024-hardware-scroll) |
-|0xD20010 | SX2      | [Scroll X of BG2](#0xd20008-0xd20024-hardware-scroll) |
-|0xD20014 | SX3      | [Scroll X of BG3](#0xd20008-0xd20024-hardware-scroll) |
-|0xD20018 | SY0      | [Scroll Y of BG0](#0xd20008-0xd20024-hardware-scroll) |
-|0xD2001C | SY1      | [Scroll Y of BG1](#0xd20008-0xd20024-hardware-scroll) |
-|0xD20020 | SY2      | [Scroll Y of BG2](#0xd20008-0xd20024-hardware-scroll) |
-|0xD20024 | SY3      | [Scroll Y of BG3](#0xd20008-0xd20024-hardware-scroll) |
-|0xD20028 | BMP0     | [Bitmap Mode of BG0](#0xd20028-0xd20034-bitmap-mode) |
-|0xD2002C | BMP1     | [Bitmap Mode of BG1](#0xd20028-0xd20034-bitmap-mode) |
-|0xD20030 | BMP2     | [Bitmap Mode of BG2](#0xd20028-0xd20034-bitmap-mode) |
-|0xD20034 | BMP3     | [Bitmap Mode of BG3](#0xd20028-0xd20034-bitmap-mode) |
-|0xD20038 | CLSA     | [Clear Screen of All BGs](#0xd20038-0xd20048-clear-screen) |
-|0xD2003C | CLS0     | [Clear Screen of BG0](#0xd20038-0xd20048-clear-screen) |
-|0xD20040 | CLS1     | [Clear Screen of BG1](#0xd20038-0xd20048-clear-screen) |
-|0xD20044 | CLS2     | [Clear Screen of BG2](#0xd20038-0xd20048-clear-screen) |
-|0xD20048 | CLS3     | [Clear Screen of BG3](#0xd20038-0xd20048-clear-screen) |
-|0xD2004C | G_BG     | [Bitmap Graphic Draw](#0xd2004c-0xd20068-bitmap-graphic-draw) |
-|0xD20050 | G_X1     | [Bitmap Graphic Draw](#0xd2004c-0xd20068-bitmap-graphic-draw) |
-|0xD20054 | G_Y1     | [Bitmap Graphic Draw](#0xd2004c-0xd20068-bitmap-graphic-draw) |
-|0xD20058 | G_X2     | [Bitmap Graphic Draw](#0xd2004c-0xd20068-bitmap-graphic-draw) |
-|0xD2005C | G_Y2     | [Bitmap Graphic Draw](#0xd2004c-0xd20068-bitmap-graphic-draw) |
-|0xD20060 | G_COL    | [Bitmap Graphic Draw](#0xd2004c-0xd20068-bitmap-graphic-draw) |
-|0xD20064 | G_OPT    | [Bitmap Graphic Draw](#0xd2004c-0xd20068-bitmap-graphic-draw) |
-|0xD20068 | G_EXE    | [Bitmap Graphic Draw](#0xd2004c-0xd20068-bitmap-graphic-draw) |
+| Address | Name | Mnemonic | Description |
+|:-------:|:----:|:--------:|:------------|
+|0xD20000 |  R0  | SKIP     | [Skip Screen Update](#0xd20000-skip-screen-update) |
+|0xD20004 |  R1  | SPOS     | [Sprites Position](#0xd20004-sprite-position) |
+|0xD20008 |  R2  | SX0      | [Scroll X of BG0](#0xd20008-0xd20024-hardware-scroll) |
+|0xD2000C |  R3  | SX1      | [Scroll X of BG1](#0xd20008-0xd20024-hardware-scroll) |
+|0xD20010 |  R4  | SX2      | [Scroll X of BG2](#0xd20008-0xd20024-hardware-scroll) |
+|0xD20014 |  R5  | SX3      | [Scroll X of BG3](#0xd20008-0xd20024-hardware-scroll) |
+|0xD20018 |  R6  | SY0      | [Scroll Y of BG0](#0xd20008-0xd20024-hardware-scroll) |
+|0xD2001C |  R7  | SY1      | [Scroll Y of BG1](#0xd20008-0xd20024-hardware-scroll) |
+|0xD20020 |  R8  | SY2      | [Scroll Y of BG2](#0xd20008-0xd20024-hardware-scroll) |
+|0xD20024 |  R9  | SY3      | [Scroll Y of BG3](#0xd20008-0xd20024-hardware-scroll) |
+|0xD20028 |  R10 | BMP0     | [Bitmap Mode of BG0](#0xd20028-0xd20034-bitmap-mode) |
+|0xD2002C |  R11 | BMP1     | [Bitmap Mode of BG1](#0xd20028-0xd20034-bitmap-mode) |
+|0xD20030 |  R12 | BMP2     | [Bitmap Mode of BG2](#0xd20028-0xd20034-bitmap-mode) |
+|0xD20034 |  R13 | BMP3     | [Bitmap Mode of BG3](#0xd20028-0xd20034-bitmap-mode) |
+|0xD20038 |  R14 | CLSA     | [Clear Screen of All BGs](#0xd20038-0xd20048-clear-screen) |
+|0xD2003C |  R15 | CLS0     | [Clear Screen of BG0](#0xd20038-0xd20048-clear-screen) |
+|0xD20040 |  R16 | CLS1     | [Clear Screen of BG1](#0xd20038-0xd20048-clear-screen) |
+|0xD20044 |  R17 | CLS2     | [Clear Screen of BG2](#0xd20038-0xd20048-clear-screen) |
+|0xD20048 |  R18 | CLS3     | [Clear Screen of BG3](#0xd20038-0xd20048-clear-screen) |
+|0xD2004C |  R19 | G_BG     | [Bitmap Graphic Draw](#0xd2004c-0xd20068-bitmap-graphic-draw) |
+|0xD20050 |  R20 | G_X1     | [Bitmap Graphic Draw](#0xd2004c-0xd20068-bitmap-graphic-draw) |
+|0xD20054 |  R21 | G_Y1     | [Bitmap Graphic Draw](#0xd2004c-0xd20068-bitmap-graphic-draw) |
+|0xD20058 |  R22 | G_X2     | [Bitmap Graphic Draw](#0xd2004c-0xd20068-bitmap-graphic-draw) |
+|0xD2005C |  R23 | G_Y2     | [Bitmap Graphic Draw](#0xd2004c-0xd20068-bitmap-graphic-draw) |
+|0xD20060 |  R24 | G_COL    | [Bitmap Graphic Draw](#0xd2004c-0xd20068-bitmap-graphic-draw) |
+|0xD20064 |  R25 | G_OPT    | [Bitmap Graphic Draw](#0xd2004c-0xd20068-bitmap-graphic-draw) |
+|0xD20068 |  R26 | G_EXE    | [Bitmap Graphic Draw](#0xd2004c-0xd20068-bitmap-graphic-draw) |
 
 Please note that access to the VDP register must always be 4-byte aligned.
 
