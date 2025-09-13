@@ -138,6 +138,14 @@ class VDP
                     uint32_t* rawReg = (uint32_t*)&this->context.reg;
                     rawReg[index] = value;
                     switch (index) {
+                        case 2: this->bitmapScrollX(0, (int)value); break;
+                        case 3: this->bitmapScrollX(1, (int)value); break;
+                        case 4: this->bitmapScrollX(2, (int)value); break;
+                        case 5: this->bitmapScrollX(3, (int)value); break;
+                        case 6: this->bitmapScrollY(0, (int)value); break;
+                        case 7: this->bitmapScrollY(1, (int)value); break;
+                        case 8: this->bitmapScrollY(2, (int)value); break;
+                        case 9: this->bitmapScrollY(3, (int)value); break;
                         case 14: this->cls(value); break;
                         case 15: this->cls(0, value); break;
                         case 16: this->cls(1, value); break;
@@ -208,6 +216,62 @@ class VDP
             return 0;
         } else {
             return this->context.nametbl[bg][y1 * VDP_WIDTH + x1];
+        }
+    }
+
+    inline void bitmapScrollX(int bg, int vector)
+    {
+        if (!this->context.reg.bmp[bg]) {
+            return; // Not Bitmap Mode
+        }
+        if (0 == vector) {
+            return;
+        }
+        if (VDP_WIDTH <= vector || vector <= -VDP_WIDTH) {
+            this->cls(bg, 0);
+            return;
+        }
+        uint32_t* vram = this->context.nametbl[bg];
+        if (vector < 0) {
+            // left scroll
+            vector = -vector;
+            for (int i = 0; i < VDP_HEIGHT; i++) {
+                memmove(vram, &vram[vector], (VDP_WIDTH - vector) * 4);
+                memset(&vram[VDP_WIDTH - vector], 0, vector * 4);
+                vram += VDP_WIDTH;
+            }
+        } else {
+            // right scroll
+            for (int i = 0; i < VDP_HEIGHT; i++) {
+                memmove(&vram[vector], vram, (VDP_WIDTH - vector) * 4);
+                memset(vram, 0, vector * 4);
+                vram += VDP_WIDTH;
+            }
+        }
+    }
+
+    inline void bitmapScrollY(int bg, int vector)
+    {
+        if (!this->context.reg.bmp[bg]) {
+            return; // Not Bitmap Mode
+        }
+        if (0 == vector) {
+            return;
+        }
+        if (VDP_HEIGHT <= vector || vector <= -VDP_HEIGHT) {
+            this->cls(bg, 0);
+            return;
+        }
+        uint32_t* vram = this->context.nametbl[bg];
+        if (vector < 0) {
+            // upward scroll
+            vector = -vector;
+            memmove(vram, &vram[vector * VDP_WIDTH], (VDP_HEIGHT - vector) * VDP_WIDTH * 4);
+            memset(&vram[(VDP_HEIGHT - vector) * VDP_WIDTH], 0, vector * VDP_WIDTH * 4);
+        } else {
+            // down scroll
+            memmove(&vram[vector * VDP_WIDTH], vram, (VDP_HEIGHT - vector) * VDP_WIDTH * 4);
+            memset(vram, 0, vector * VDP_WIDTH * 4);
         }
     }
 

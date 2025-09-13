@@ -29,9 +29,14 @@ int main(int argc, char* argv[])
         draw_star(x + 5, 120);
     }
 
+    for (int y = 0; y < 200; y++) {
+        vgs_draw_pixel(1, vgs_rand() % 320, y, vgs_rand32());
+    }
+
     while (1) {
-        vgs_draw_pixel(1, vgs_rand() % 320, vgs_rand() % 200, vgs_rand32());
         vgs_vsync();
+        *VGS_VREG_SY1 = 1;
+        vgs_draw_pixel(1, vgs_rand() % 320, 0, vgs_rand32());
     }
 
     return 0;

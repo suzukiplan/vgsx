@@ -301,9 +301,21 @@ Specify the BG layer on which to display the sprite, within the range of 0 to 3.
 
 ### 0xD20008-0xD20024: Hardware Scroll
 
+The hardware scroll register behaves differently in Character Pattern Mode and Bitmap Mode.
+
+#### (for Character Pattern Mode)
+
 The VGS-X has a virtual display of 2048x2048 pixels for each BG plane.
 
 For each BG plane, the SX and SY coordinates can be specified within the range 0 to 2047 to define the display origin at the top-left corner.
+
+#### (for Bitmap Mode)
+
+- Writing a positive number to `SX` scrolls the screen **right** by the specified number of pixels.
+- Writing a negative number to `SX` scrolls the screen **left** by the specified number of pixels.
+- Writing a positive number to `SY` scrolls the screen **down** by the specified number of pixels.
+- Writing a negative number to `SY` scrolls the screen **upward** by the specified number of pixels.
+- The area after scrolling will be cleared to zero.
 
 ### 0xD20028-0xD20034: Bitmap Mode
 
@@ -312,8 +324,6 @@ The VGS-X's display mode defaults to character pattern mode, but can be switched
 When set to Bitmap mode, the name table corresponds to the pixels on the screen (320x200).
 
 Each pixel is set in RGB888 format.
-
-> Note that [hardware scrolling](#0xd20008-0xd20024-hardware-scroll) is not available when in Bitmap mode.
 
 ### 0xD20038-0xD20048: Clear Screen
 
