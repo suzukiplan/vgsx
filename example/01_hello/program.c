@@ -52,7 +52,7 @@ int main(int argc, char* argv[])
         vgs_vsync();
         *VGS_VREG_SY1 = 1;
         vgs_draw_pixel(1, vgs_rand() % 320, 0, vgs_rand32());
-        vgs_draw_character(1, vgs_rand() % 320 - 4, 0, 0, 0, 0x20 + (vgs_rand() % 0x3F));
+        vgs_draw_character(1, vgs_rand() % 320 - 4, 0, 0, 0, 0x20 + (vgs_rand() & 0x3F));
     }
 
     return 0;
