@@ -59,11 +59,12 @@ class VDP
     } Register;
 
     typedef struct {
-        uint32_t hidden;      // Hidden (0 or not 0)
-        int32_t y;            // Position (Y)
-        int32_t x;            // Position (X)
-        uint32_t attr;        // Attribute
-        uint32_t reserved[4]; // Reserved
+        uint32_t visible;      // Visible (0 or not 0)
+        int32_t y;             // Position (Y)
+        int32_t x;             // Position (X)
+        uint32_t attr;         // Attribute
+        uint32_t size;         // Size (0: 8x8, 1: 16x16, 2: 24x24, 3: 32x32 ... 31: 256x256)
+        uint32_t reserved[11]; // Reserved
     } OAM;
 
     struct Context {
@@ -92,8 +93,8 @@ class VDP
         } else {
             switch (address & 0xFF0000) {
                 case 0xD00000: {
-                    uint8_t index = (address & 0b111111111100000) >> 6;
-                    uint8_t arg = (address & 0b11100) >> 2;
+                    uint16_t index = (address & 0xFFC0) >> 6;
+                    uint8_t arg = (address & 0x003C) >> 2;
                     uint32_t* rawOam = (uint32_t*)&this->context.oam[index];
                     return rawOam[arg];
                 }
@@ -124,8 +125,8 @@ class VDP
         } else {
             switch (address & 0xFF0000) {
                 case 0xD00000: {
-                    uint8_t index = (address & 0b111111111100000) >> 6;
-                    uint8_t arg = (address & 0b11100) >> 2;
+                    uint16_t index = (address & 0xFFC0) >> 6;
+                    uint8_t arg = (address & 0x003C) >> 2;
                     uint32_t* rawOam = (uint32_t*)&this->context.oam[index];
                     rawOam[arg] = value;
                     return;
@@ -340,7 +341,52 @@ class VDP
 
     inline void renderSprites()
     {
-        // TODO
+        for (int i = 1023; 0 <= i; i--) {
+            if (this->context.oam[i].visible) {
+                renderSprite(&this->context.oam[i]);
+            }
+        }
+    }
+
+    inline void renderSprite(OAM* oam)
+    {
+        int psize = (oam->size & 0x1F) + 1; // 1 ~ 32
+        int size = psize << 3;              // 8 ~ 256
+        int ptn = oam->attr & 0xFFFF;
+        int pal = (oam->attr & 0xF0000) >> 16;
+        bool flipH = (oam->attr & 0x80000000) ? true : false;
+        bool flipV = (oam->attr & 0x40000000) ? true : false;
+        for (int dy = oam->y, py = 0; dy < oam->y + size; dy++, py++) {
+            if (dy < 0) {
+                continue; // Out of screen top (check next line)
+            }
+            if (VDP_HEIGHT <= dy) {
+                break; // Out of screen bottom (end of rendering a sprite)
+            }
+            int wy = flipV ? size - py - 1 : py;
+            for (int dx = oam->x, px = 0; dx < oam->x + size; dx++, px++) {
+                if (dx < 0) {
+                    continue; // Out of screen left (check next pixel)
+                }
+                if (VDP_WIDTH <= dx) {
+                    break; // Out of screen right (end of rendering a line)
+                }
+                // Render Pixel
+                int wx = flipH ? size - px - 1 : px;
+                uint8_t* ptnptr = this->context.ptn[(ptn + wx / 8 + (wy / 8) * psize) & 0xFFFF];
+                ptnptr += (wy & 0b0111) << 2;
+                ptnptr += (wx & 0b0110) >> 1;
+                int col;
+                if (wx & 1) {
+                    col = (*ptnptr) & 0x0F;
+                } else {
+                    col = ((*ptnptr) & 0xF0) >> 4;
+                }
+                if (col) {
+                    this->context.display[dy * VDP_WIDTH + dx] = this->context.palette[pal][col];
+                }
+            }
+        }
     }
 };
 

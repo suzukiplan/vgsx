@@ -26,14 +26,13 @@
 #include <stdint.h>
 
 typedef struct {
-    uint32_t hidden;      // Hidden (0 or not 0)
-    int32_t y;            // Position (Y)
-    int32_t x;            // Position (X)
-    uint32_t attr;        // Attribute
-    uint32_t reserved[4]; // Reserved
-} VGS_Oam;
-
-#define VGS_MAX_SPRITE 1024
+    uint32_t visible;      // Visible (0 or not 0)
+    int32_t y;             // Position (Y)
+    int32_t x;             // Position (X)
+    uint32_t attr;         // Attribute
+    uint32_t size;         // Size (0: 8x8, 1: 16x16, 2: 24x24, 3: 32x32 ... 31: 256x256)
+    uint32_t reserved[11]; // Reserved
+} OAM;
 
 // Name table (256x256)
 // Bit Layout:
@@ -46,6 +45,10 @@ typedef struct {
 #define VGS_VRAM_BG1 ((uint32_t*)0xC40000)
 #define VGS_VRAM_BG2 ((uint32_t*)0xC80000)
 #define VGS_VRAM_BG3 ((uint32_t*)0xCC0000)
+
+// Sprites
+#define VGS_OAM_MAX 1024
+#define VGS_OAM ((OAM*)0xD00000)
 
 // Palette Table
 // 16 x 16 x 2bits
@@ -92,6 +95,9 @@ typedef struct {
 #define VGS_OUT_CONSOLE ((uint32_t*)0xE00000)
 #define VGS_IO_RANDOM ((uint32_t*)0xE00004)
 
+#define TRUE 1
+#define FALSE 0
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -110,6 +116,13 @@ void vgs_draw_line(uint8_t n, int32_t x1, int32_t y1, int32_t x2, int32_t y2, ui
 void vgs_draw_box(uint8_t n, int32_t x1, int32_t y1, int32_t x2, int32_t y2, uint32_t col);
 void vgs_draw_boxf(uint8_t n, int32_t x1, int32_t y1, int32_t x2, int32_t y2, uint32_t col);
 void vgs_draw_character(uint8_t n, int32_t x, int32_t y, int draw0, uint8_t pal, uint16_t ptn);
+void vgs_sprite(uint16_t n, uint8_t visible, int16_t x, int16_t y, uint8_t size, uint8_t pal, uint16_t ptn);
+void vgs_sprite_visible(uint16_t n, uint8_t visible);
+void vgs_sprite_position(uint16_t n, int16_t x, int16_t y);
+void vgs_sprite_palette(uint16_t n, uint8_t size);
+void vgs_sprite_palette(uint16_t n, uint8_t pal);
+void vgs_sprite_pattern(uint16_t n, uint16_t ptn);
+void vgs_sprite_flip(uint16_t n, int8_t h, int8_t v);
 
 #ifdef __cplusplus
 };

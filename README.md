@@ -258,7 +258,56 @@ The Bit-Layout of the Name Table and OAM's attribute are as follows:
 
 ## OAM (Object Attribute Memory)
 
-(TODO)
+OAM is a structure with the following attributes.
+
+```c
+typedef struct {
+    uint32_t visible;      // Visible (0 or not 0)
+    int32_t y;             // Position (Y)
+    int32_t x;             // Position (X)
+    uint32_t attr;         // Attribute
+    uint32_t size;         // Size (0: 8x8, 1: 16x16, 2: 24x24, 3: 32x32 ... 31: 256x256)
+    uint32_t reserved[11]; // Reserved
+} OAM;
+```
+
+The specifications for each attribute are shown in the table below.
+
+| Name    | Valid Range | Description |
+|:--------|:-----------:|:------------|
+| visible | 0 or 1      | Sprites with this attribute value set to zero will not be displayed. |
+| y       | -32768 ~ 32767 |　Sprite display coordinates |
+| x       | -32768 ~ 32767 |　Sprite display coordinates |
+| attr    | 32bit          | [Attribute](#attribute) |
+| size    | 0 ~ 31         | [Size of Sprite](#size-of-sprite) |
+| reserved| -              | Do not set a value other than zero. |
+
+### (Size of Sprite)
+
+Sprites are displayed as squares measuring `(size + 1) * 8` pixels.
+
+For example, when size is set to 3 (32x32 pixels), the sprite is displayed using `16 = (size + 1) ^ 2` patterns. The layout of the pattern numbers at that time is as follows:
+
+```
+Size 3 Pattern Number Layout
++--------+--------+--------+--------+
+|        |        |        |        |
+| ptn+0  | ptn+1  | ptn+2  | ptn+3  |
+|        |        |        |        |
++--------+--------+--------+--------+
+|        |        |        |        |
+| ptn+4  | ptn+5  | ptn+6  | ptn+7  |
+|        |        |        |        |
++--------+--------+--------+--------+
+|        |        |        |        |
+| ptn+8  | ptn+9  | ptn+10 | ptn+11 |
+|        |        |        |        |
++--------+--------+--------+--------+
+|        |        |        |        |
+| ptn+12 | ptn+13 | ptn+14 | ptn+15 |
+|        |        |        |        |
++--------+--------+--------+--------+
+```
 
 ## VDP Register
 

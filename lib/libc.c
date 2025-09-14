@@ -157,3 +157,57 @@ void vgs_draw_character(uint8_t n, int32_t x, int32_t y, int draw0, uint8_t pal,
     *VGS_VREG_G_COL = ((uint32_t)pal) | (draw0 ? 0x80000000 : 0);
     *VGS_VREG_G_EXE = VGS_DRAW_CHR;
 }
+
+void vgs_sprite(uint16_t n, uint8_t visible, int16_t x, int16_t y, uint8_t size, uint8_t pal, uint16_t ptn)
+{
+    n &= 0x3FF;
+    VGS_OAM[n].visible = visible;
+    VGS_OAM[n].x = x;
+    VGS_OAM[n].y = y;
+    VGS_OAM[n].size = size;
+    VGS_OAM[n].attr = pal & 0x0F;
+    VGS_OAM[n].attr <<= 16;
+    VGS_OAM[n].attr |= ptn;
+}
+
+void vgs_sprite_visible(uint16_t n, uint8_t visible)
+{
+    n &= 0x3FF;
+    VGS_OAM[n].visible = visible;
+}
+
+void vgs_sprite_position(uint16_t n, int16_t x, int16_t y)
+{
+    n &= 0x3FF;
+    VGS_OAM[n].x = x;
+    VGS_OAM[n].y = y;
+}
+
+void vgs_sprite_size(uint16_t n, int8_t size)
+{
+    n &= 0x3FF;
+    VGS_OAM[n].size = size;
+}
+
+void vgs_sprite_palette(uint16_t n, uint8_t pal)
+{
+    n &= 0x3FF;
+    VGS_OAM[n].attr &= 0xFFF0FFFF;
+    uint32_t w = pal;
+    w &= 0x0F;
+    w <<= 16;
+    VGS_OAM[n].attr = w;
+}
+
+void vgs_sprite_pattern(uint16_t n, uint16_t ptn)
+{
+    VGS_OAM[n].attr &= 0xFFFF0000;
+    VGS_OAM[n].attr |= ptn;
+}
+
+void vgs_sprite_flip(uint16_t n, int8_t h, int8_t v)
+{
+    VGS_OAM[n].attr &= 0x3FFFFFFF;
+    VGS_OAM[n].attr |= h ? 0x80000000 : 0;
+    VGS_OAM[n].attr |= v ? 0x40000000 : 0;
+}
