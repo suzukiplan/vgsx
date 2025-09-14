@@ -168,6 +168,7 @@ void vgs_sprite(uint16_t n, uint8_t visible, int16_t x, int16_t y, uint8_t size,
     VGS_OAM[n].attr = pal & 0x0F;
     VGS_OAM[n].attr <<= 16;
     VGS_OAM[n].attr |= ptn;
+    VGS_OAM[n].rotate = 0;
 }
 
 void vgs_sprite_visible(uint16_t n, uint8_t visible)

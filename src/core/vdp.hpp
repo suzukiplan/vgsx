@@ -25,6 +25,7 @@
 #pragma once
 #include <stdint.h>
 #include <string.h>
+#include <math.h>
 
 #define VDP_BG_NUM 4   /* Number of the BG plan */
 #define VDP_WIDTH 320  /* Width of the Screen */
@@ -64,7 +65,8 @@ class VDP
         int32_t x;             // Position (X)
         uint32_t attr;         // Attribute
         uint32_t size;         // Size (0: 8x8, 1: 16x16, 2: 24x24, 3: 32x32 ... 31: 256x256)
-        uint32_t reserved[11]; // Reserved
+        int32_t rotate;        // Rotate (-360 ~ 360)
+        uint32_t reserved[10]; // Reserved
     } OAM;
 
     struct Context {
@@ -356,34 +358,73 @@ class VDP
         int pal = (oam->attr & 0xF0000) >> 16;
         bool flipH = (oam->attr & 0x80000000) ? true : false;
         bool flipV = (oam->attr & 0x40000000) ? true : false;
-        for (int dy = oam->y, py = 0; dy < oam->y + size; dy++, py++) {
-            if (dy < 0) {
-                continue; // Out of screen top (check next line)
+        int32_t angle = 90 - oam->rotate;
+        angle %= 360;
+        if (angle < 0) {
+            angle += 360;
+        }
+        if (90 == angle) {
+            // None-rotate
+            for (int dy = oam->y, py = 0; dy < oam->y + size; dy++, py++) {
+                if (dy < 0) {
+                    continue; // Out of screen top (check next line)
+                }
+                if (VDP_HEIGHT <= dy) {
+                    break; // Out of screen bottom (end of rendering a sprite)
+                }
+                int wy = flipV ? size - py - 1 : py;
+                for (int dx = oam->x, px = 0; dx < oam->x + size; dx++, px++) {
+                    if (dx < 0) {
+                        continue; // Out of screen left (check next pixel)
+                    }
+                    if (VDP_WIDTH <= dx) {
+                        break; // Out of screen right (end of rendering a line)
+                    }
+                    // Render Pixel
+                    int wx = flipH ? size - px - 1 : px;
+                    uint8_t* ptnptr = this->context.ptn[(ptn + wx / 8 + (wy / 8) * psize) & 0xFFFF];
+                    ptnptr += (wy & 0b0111) << 2;
+                    ptnptr += (wx & 0b0110) >> 1;
+                    int col;
+                    if (wx & 1) {
+                        col = (*ptnptr) & 0x0F;
+                    } else {
+                        col = ((*ptnptr) & 0xF0) >> 4;
+                    }
+                    if (col) {
+                        this->context.display[dy * VDP_WIDTH + dx] = this->context.palette[pal][col];
+                    }
+                }
             }
-            if (VDP_HEIGHT <= dy) {
-                break; // Out of screen bottom (end of rendering a sprite)
-            }
-            int wy = flipV ? size - py - 1 : py;
-            for (int dx = oam->x, px = 0; dx < oam->x + size; dx++, px++) {
-                if (dx < 0) {
-                    continue; // Out of screen left (check next pixel)
-                }
-                if (VDP_WIDTH <= dx) {
-                    break; // Out of screen right (end of rendering a line)
-                }
-                // Render Pixel
-                int wx = flipH ? size - px - 1 : px;
-                uint8_t* ptnptr = this->context.ptn[(ptn + wx / 8 + (wy / 8) * psize) & 0xFFFF];
-                ptnptr += (wy & 0b0111) << 2;
-                ptnptr += (wx & 0b0110) >> 1;
-                int col;
-                if (wx & 1) {
-                    col = (*ptnptr) & 0x0F;
-                } else {
-                    col = ((*ptnptr) & 0xF0) >> 4;
-                }
-                if (col) {
-                    this->context.display[dy * VDP_WIDTH + dx] = this->context.palette[pal][col];
+        } else {
+            // Rotate
+            int halfSize = size / 2;
+            double rad = angle * M_PI / 180.0;
+            for (int py = 0; py < size; py++) {
+                int wy = flipV ? size - py - 1 : py;
+                for (int px = 0; px < size; px++) {
+                    int dy = oam->y + (py - halfSize) * sin(rad) + (px - halfSize) * cos(rad) + halfSize;
+                    if (dy < 0 || VDP_HEIGHT <= dy) {
+                        continue; // Out of screen top (check next line)
+                    }
+                    int dx = oam->x + (px - halfSize) * sin(rad) - (py - halfSize) * cos(rad) + halfSize;
+                    if (dx < 0 || VDP_WIDTH <= dx) {
+                        continue; // Out of screen left (check next pixel)
+                    }
+                    // Render Pixel
+                    int wx = flipH ? size - px - 1 : px;
+                    uint8_t* ptnptr = this->context.ptn[(ptn + wx / 8 + (wy / 8) * psize) & 0xFFFF];
+                    ptnptr += (wy & 0b0111) << 2;
+                    ptnptr += (wx & 0b0110) >> 1;
+                    int col;
+                    if (wx & 1) {
+                        col = (*ptnptr) & 0x0F;
+                    } else {
+                        col = ((*ptnptr) & 0xF0) >> 4;
+                    }
+                    if (col) {
+                        this->context.display[dy * VDP_WIDTH + dx] = this->context.palette[pal][col];
+                    }
                 }
             }
         }

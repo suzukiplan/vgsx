@@ -267,7 +267,8 @@ typedef struct {
     int32_t x;             // Position (X)
     uint32_t attr;         // Attribute
     uint32_t size;         // Size (0: 8x8, 1: 16x16, 2: 24x24, 3: 32x32 ... 31: 256x256)
-    uint32_t reserved[11]; // Reserved
+    int32_t rotate;        // Rotate (-360 ~ 360)
+    uint32_t reserved[10]; // Reserved
 } OAM;
 ```
 
@@ -279,7 +280,8 @@ The specifications for each attribute are shown in the table below.
 | y       | -32768 ~ 32767 | Sprite display coordinates |
 | x       | -32768 ~ 32767 | Sprite display coordinates |
 | attr    | 32bit          | [Attribute](#attribute) |
-| size    | 0 ~ 31         | [Size of Sprite](#size-of-sprite) |
+| size    | 0 ~ 31         | [Size](#size-of-sprite) |
+| rotate  | -360 ~ 360     | [Rotate](#rotate-of-sprite) |
 | reserved| -              | Do not set a value other than zero. |
 
 ### (Size of Sprite)
@@ -308,6 +310,14 @@ Size 3 Pattern Number Layout
 |        |        |        |        |
 +--------+--------+--------+--------+
 ```
+
+### (Rotate of Sprite)
+
+By specifying an angle (-360 to 360) for `rotate`, you can draw a rotated sprite.
+
+Note that setting `rotate` to a non-zero value increases the sprite's drawing overhead.
+
+Additionally, when rotating by 90, 180, or 270 degrees, using the `F/H` and `F/V` [attributes](#attribute) provides faster rendering.
 
 ## VDP Register
 

@@ -31,7 +31,8 @@ typedef struct {
     int32_t x;             // Position (X)
     uint32_t attr;         // Attribute
     uint32_t size;         // Size (0: 8x8, 1: 16x16, 2: 24x24, 3: 32x32 ... 31: 256x256)
-    uint32_t reserved[11]; // Reserved
+    int32_t rotate;        // Rotate (-360 ~ 360)
+    uint32_t reserved[10]; // Reserved
 } OAM;
 
 // Name table (256x256)
