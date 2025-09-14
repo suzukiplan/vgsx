@@ -19,7 +19,6 @@ int main(int argc, char* argv[])
     *VGS_VREG_SPOS = 3; // Sprite: Displayed on top of BG3
     vgs_print_bg(3, 11, 12, 0, "HELLO VGS-X WORLD!");
 
-    vgs_vsync();
     uint32_t col = 1;
     int ptr = 0;
     for (int y = 0; y < 200; y++) {
@@ -53,6 +52,8 @@ int main(int argc, char* argv[])
     vgs_sprite(0, TRUE, 20, 90, 2, 0, '1');
     vgs_draw_box(2, 320 - 20 - 32, 86, 320 - 20 - 32 + 31, 86 + 31, 0xF02020);
     vgs_sprite(1, TRUE, 320 - 20 - 32, 86, 3, 0, 'A');
+    VGS_OAM[1].scale = 10;
+    int sa1 = 10;
 
     while (1) {
         vgs_vsync();
@@ -60,7 +61,12 @@ int main(int argc, char* argv[])
         vgs_draw_pixel(1, vgs_rand() % 320, 0, vgs_rand32());
         // vgs_draw_character(1, vgs_rand() % 320 - 4, 0, 0, 0, 0x20 + (vgs_rand() & 0x3F));
         VGS_OAM[0].rotate += 3;
-        VGS_OAM[1].rotate -= 5;
+        VGS_OAM[1].scale += sa1;
+        if (400 < VGS_OAM[1].scale && 0 < sa1) {
+            sa1 = -10;
+        } else if (VGS_OAM[1].scale < 20 && sa1 < 0) {
+            sa1 = 10;
+        }
     }
 
     return 0;

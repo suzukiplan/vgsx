@@ -60,13 +60,14 @@ class VDP
     } Register;
 
     typedef struct {
-        uint32_t visible;      // Visible (0 or not 0)
-        int32_t y;             // Position (Y)
-        int32_t x;             // Position (X)
-        uint32_t attr;         // Attribute
-        uint32_t size;         // Size (0: 8x8, 1: 16x16, 2: 24x24, 3: 32x32 ... 31: 256x256)
-        int32_t rotate;        // Rotate (-360 ~ 360)
-        uint32_t reserved[10]; // Reserved
+        uint32_t visible;     // Visible (0 or not 0)
+        int32_t y;            // Position (Y)
+        int32_t x;            // Position (X)
+        uint32_t attr;        // Attribute
+        uint32_t size;        // Size (0: 8x8, 1: 16x16, 2: 24x24, 3: 32x32 ... 31: 256x256)
+        int32_t rotate;       // Rotate (-360 ~ 360)
+        uint32_t scale;       // Scale (0: disabled or 1 ~ 400 percent)
+        uint32_t reserved[9]; // Reserved
     } OAM;
 
     struct Context {
@@ -359,12 +360,13 @@ class VDP
         bool flipH = (oam->attr & 0x80000000) ? true : false;
         bool flipV = (oam->attr & 0x40000000) ? true : false;
         int32_t angle = 90 - oam->rotate;
+        int scale = oam->scale < 400 ? oam->scale : 400;
         angle %= 360;
         if (angle < 0) {
             angle += 360;
         }
-        if (90 == angle) {
-            // None-rotate
+        if (90 == angle && (0 == scale || 100 == scale)) {
+            // None-rotate & None-scale
             for (int dy = oam->y, py = 0; dy < oam->y + size; dy++, py++) {
                 if (dy < 0) {
                     continue; // Out of screen top (check next line)
@@ -382,6 +384,46 @@ class VDP
                     }
                     // Render Pixel
                     int wx = flipH ? size - px - 1 : px;
+                    uint8_t* ptnptr = this->context.ptn[(ptn + wx / 8 + (wy / 8) * psize) & 0xFFFF];
+                    ptnptr += (wy & 0b0111) << 2;
+                    ptnptr += (wx & 0b0110) >> 1;
+                    int col;
+                    if (wx & 1) {
+                        col = (*ptnptr) & 0x0F;
+                    } else {
+                        col = ((*ptnptr) & 0xF0) >> 4;
+                    }
+                    if (col) {
+                        this->context.display[dy * VDP_WIDTH + dx] = this->context.palette[pal][col];
+                    }
+                }
+            }
+        } else if (scale) {
+            // Scale
+            int scaledSize = size * scale / 100;
+            double ratio = size;
+            ratio /= scaledSize;
+            int offset = (size - scaledSize) / 2;
+            for (int dy = oam->y + offset, by = 0; by < scaledSize; dy++, by++) {
+                if (dy < 0) {
+                    continue; // Out of screen top (check next line)
+                }
+                if (VDP_HEIGHT <= dy) {
+                    break; // Out of screen bottom (end of rendering a sprite)
+                }
+                int py = (int)(by * ratio);
+                int wy = flipH ? size - py - 1 : py;
+                for (int dx = oam->x + offset, bx = 0; bx < scaledSize; dx++, bx++) {
+                    if (dx < 0) {
+                        continue; // Out of screen left (check next pixel)
+                    }
+                    if (VDP_WIDTH <= dx) {
+                        break; // Out of screen right (end of rendering a line)
+                    }
+                    // this->context.display[dy * VDP_WIDTH + dx] = 0xFF0000;
+                    int px = (int)(bx * ratio);
+                    int wx = flipH ? size - px - 1 : px;
+                    // Render Pixel
                     uint8_t* ptnptr = this->context.ptn[(ptn + wx / 8 + (wy / 8) * psize) & 0xFFFF];
                     ptnptr += (wy & 0b0111) << 2;
                     ptnptr += (wx & 0b0110) >> 1;

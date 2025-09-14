@@ -277,7 +277,8 @@ typedef struct {
     uint32_t attr;         // Attribute
     uint32_t size;         // Size (0: 8x8, 1: 16x16, 2: 24x24, 3: 32x32 ... 31: 256x256)
     int32_t rotate;        // Rotate (-360 ~ 360)
-    uint32_t reserved[10]; // Reserved
+    uint32_t scale;        // Scale (0: disabled or 1 ~ 400 percent)
+    uint32_t reserved[9];  // Reserved
 } OAM;
 ```
 
@@ -291,6 +292,7 @@ The specifications for each attribute are shown in the table below.
 | attr    | 32bit          | [Attribute](#attribute) |
 | size    | 0 ~ 31         | [Size](#size-of-sprite) |
 | rotate  | -360 ~ 360     | [Rotate](#rotate-of-sprite) |
+| scale   | 0 ~ 400        | [Scale](#scale-of-sprite) |
 | reserved| -              | Do not set a value other than zero. |
 
 ### (Size of Sprite)
@@ -325,6 +327,16 @@ Size 3 Pattern Number Layout
 By specifying an angle (-360 to 360) for `rotate`, you can draw a rotated sprite.
 
 Note that setting `rotate` to a non-zero value increases the sprite's drawing overhead.
+
+> WIP: Currently, `rotate` and `scale` cannot be specified simultaneously.
+> This specification may be finalized.
+
+### (Scale of Sprite)
+
+You can specify the magnification rate as a percentage on the `scale`, either 0 (disabled) or within the range of 1 to 400.
+
+> WIP: Currently, `rotate` and `scale` cannot be specified simultaneously.
+> This specification may be finalized.
 
 ## VDP Register
 
