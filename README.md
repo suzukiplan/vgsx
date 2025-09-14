@@ -8,6 +8,15 @@ Please note that the current specifications are subject to frequent, casual brea
 
 Once this project reaches a stable phase, version 1.0.0 is scheduled for release.
 
+Status
+
+- [x] Execute MC680x0 ELF32 module
+- [x] Implement VDP
+- [ ] Implement Background Music function
+- [ ] Implement Sound Effect function
+- [ ] Implement Gamepad function
+- [ ] Implement High-speed Arithmetic for Game (HAGe)
+
 ## About VGS-X
 
 The VGS-X is a 16-bit game console featuring an MC68030 processor, an FM sound chip (YM2612), and a proprietary VDP optimized for MC68k architecture.
