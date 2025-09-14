@@ -326,8 +326,6 @@ By specifying an angle (-360 to 360) for `rotate`, you can draw a rotated sprite
 
 Note that setting `rotate` to a non-zero value increases the sprite's drawing overhead.
 
-Additionally, when rotating by 90, 180, or 270 degrees, using the `F/H` and/or `F/V` [attributes](#attribute) provides faster rendering.
-
 ## VDP Register
 
 | Address | Name | Mnemonic | Description |
