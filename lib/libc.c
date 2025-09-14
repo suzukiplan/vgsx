@@ -89,9 +89,7 @@ void vgs_print_bg(uint8_t n, uint8_t x, uint8_t y, uint8_t pal, const char* text
     attr = pal;
     attr <<= 16;
     while (*text) {
-        attr &= 0xFFFF0000;
-        attr |= *text;
-        vgs_put_bg(n, x++, y, attr);
+        vgs_put_bg(n, x++, y, attr | *text);
         text++;
     }
 }
