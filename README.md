@@ -276,8 +276,8 @@ The specifications for each attribute are shown in the table below.
 | Name    | Valid Range | Description |
 |:--------|:-----------:|:------------|
 | visible | 0 or 1      | Display sprite with a non-zero setting. |
-| y       | -32768 ~ 32767 |　Sprite display coordinates |
-| x       | -32768 ~ 32767 |　Sprite display coordinates |
+| y       | -32768 ~ 32767 | Sprite display coordinates |
+| x       | -32768 ~ 32767 | Sprite display coordinates |
 | attr    | 32bit          | [Attribute](#attribute) |
 | size    | 0 ~ 31         | [Size of Sprite](#size-of-sprite) |
 | reserved| -              | Do not set a value other than zero. |
