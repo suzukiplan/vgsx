@@ -398,8 +398,8 @@ class VDP
                     }
                 }
             }
-        } else if (scale) {
-            // Scale
+        } else if (90 == angle && 0 != scale && 100 != scale) {
+            // Scale & None-rotate
             int scaledSize = size * scale / 100;
             double ratio = size;
             ratio /= scaledSize;
@@ -438,8 +438,8 @@ class VDP
                     }
                 }
             }
-        } else {
-            // Rotate
+        } else if (0 == scale || 100 == scale) {
+            // Rotate & None-scale
             int halfSize = size / 2;
             double rad = angle * M_PI / 180.0;
             for (int py = 0; py < size; py++) {
@@ -466,6 +466,55 @@ class VDP
                     }
                     if (col) {
                         this->context.display[dy * VDP_WIDTH + dx] = this->context.palette[pal][col];
+                    }
+                }
+            }
+        } else {
+            // Scale & Rotate
+            int scaledSize = size * scale / 100;
+            double ratio = size;
+            ratio /= scaledSize;
+            int offset = (size - scaledSize) / 2;
+            int halfSize = scaledSize / 2;
+            double rad = angle * M_PI / 180.0;
+            for (int dy = oam->y + offset, by = 0; by < scaledSize; dy++, by++) {
+                int py = (int)(by * ratio);
+                int wy = flipH ? size - py - 1 : py;
+                for (int dx = oam->x + offset, bx = 0; bx < scaledSize; dx++, bx++) {
+                    // this->context.display[dy * VDP_WIDTH + dx] = 0xFF0000;
+                    int px = (int)(bx * ratio);
+                    int wx = flipH ? size - px - 1 : px;
+                    int ddy = (by - halfSize) * sin(rad) + (bx - halfSize) * cos(rad) + halfSize;
+                    ddy += oam->y + offset;
+                    if (ddy < 0 || VDP_HEIGHT <= ddy) {
+                        continue; // Out of screen top (check next line)
+                    }
+                    int ddx = (bx - halfSize) * sin(rad) - (by - halfSize) * cos(rad) + halfSize;
+                    ddx += oam->x + offset;
+                    if (ddx < 0 || VDP_WIDTH <= ddx) {
+                        continue; // Out of screen left (check next pixel)
+                    }
+                    // Render Pixel
+                    uint8_t* ptnptr = this->context.ptn[(ptn + wx / 8 + (wy / 8) * psize) & 0xFFFF];
+                    ptnptr += (wy & 0b0111) << 2;
+                    ptnptr += (wx & 0b0110) >> 1;
+                    int col;
+                    if (wx & 1) {
+                        col = (*ptnptr) & 0x0F;
+                    } else {
+                        col = ((*ptnptr) & 0xF0) >> 4;
+                    }
+                    if (col) {
+                        this->context.display[ddy * VDP_WIDTH + ddx] = this->context.palette[pal][col];
+                        if (ddy < 199) {
+                            this->context.display[(ddy + 1) * VDP_WIDTH + ddx] = this->context.palette[pal][col];
+                        }
+                        if (ddx < 319) {
+                            this->context.display[ddy * VDP_WIDTH + ddx + 1] = this->context.palette[pal][col];
+                        }
+                        if (ddy < 199 && ddx < 319) {
+                            this->context.display[(ddy + 1) * VDP_WIDTH + ddx + 1] = this->context.palette[pal][col];
+                        }
                     }
                 }
             }

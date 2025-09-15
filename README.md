@@ -328,15 +328,9 @@ By specifying an angle (-360 to 360) for `rotate`, you can draw a rotated sprite
 
 Note that setting `rotate` to a non-zero value increases the sprite's drawing overhead.
 
-> WIP: Currently, `rotate` and `scale` cannot be specified simultaneously.
-> This specification may be finalized.
-
 ### (Scale of Sprite)
 
 You can specify the magnification rate as a percentage on the `scale`, either 0 (disabled) or within the range of 1 to 400.
-
-> WIP: Currently, `rotate` and `scale` cannot be specified simultaneously.
-> This specification may be finalized.
 
 ## VDP Register
 

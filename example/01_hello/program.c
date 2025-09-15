@@ -53,7 +53,18 @@ int main(int argc, char* argv[])
     vgs_draw_box(2, 320 - 20 - 32, 86, 320 - 20 - 32 + 31, 86 + 31, 0xF02020);
     vgs_sprite(1, TRUE, 320 - 20 - 32, 86, 3, 0, 'A');
     VGS_OAM[1].scale = 10;
-    int sa1 = 10;
+
+    vgs_sprite(2, TRUE, 160 - 32 - 8, 20, 0, 0, 'V');
+    vgs_sprite(3, TRUE, 160 - 4, 20, 0, 0, 'G');
+    vgs_sprite(4, TRUE, 160 + 32, 20, 0, 0, 'S');
+    VGS_OAM[2].scale = 300;
+    VGS_OAM[2].rotate = 90;
+    VGS_OAM[3].scale = 200;
+    VGS_OAM[3].rotate = 120;
+    VGS_OAM[4].scale = 100;
+    VGS_OAM[4].rotate = 150;
+
+    int sa[4] = {10, 10, 10, 10};
 
     while (1) {
         vgs_vsync();
@@ -61,11 +72,17 @@ int main(int argc, char* argv[])
         vgs_draw_pixel(1, vgs_rand() % 320, 0, vgs_rand32());
         // vgs_draw_character(1, vgs_rand() % 320 - 4, 0, 0, 0, 0x20 + (vgs_rand() & 0x3F));
         VGS_OAM[0].rotate += 3;
-        VGS_OAM[1].scale += sa1;
-        if (400 < VGS_OAM[1].scale && 0 < sa1) {
-            sa1 = -10;
-        } else if (VGS_OAM[1].scale < 20 && sa1 < 0) {
-            sa1 = 10;
+
+        for (int i = 0; i < 4; i++) {
+            VGS_OAM[i + 1].scale += sa[i];
+            if (400 < VGS_OAM[i + 1].scale && 0 < sa[i]) {
+                sa[i] = -10;
+            } else if (VGS_OAM[i + 1].scale < 20 && sa[i] < 0) {
+                sa[i] = 10;
+            }
+            if (i) {
+                VGS_OAM[i + 1].rotate += i * 3;
+            }
         }
     }
 
