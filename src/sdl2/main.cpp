@@ -287,20 +287,20 @@ int main(int argc, char* argv[])
         totalClocks /= loopCount;
         totalClocks *= 1000.0 / 60.0;
         if (totalClocks < 1000) {
-            printf("\nAverage CPU Clocks: %.1fHz per second.\n", totalClocks);
+            printf("\nAverage MC68030 Clocks: %.1fHz per second.\n", totalClocks);
         } else if (totalClocks < 1000000) {
-            printf("\nAverage CPU Clocks: %.1fkHz per second.\n", totalClocks / 1000);
+            printf("\nAverage MC68030 Clocks: %.1fkHz per second.\n", totalClocks / 1000);
         } else {
-            printf("\nAverage CPU Clocks: %.1fMHz per second.\n", totalClocks / 1000000);
+            printf("\nAverage MC68030 Clocks: %.1fMHz per second.\n", totalClocks / 1000000);
         }
     }
     maxClocks *= 1000.0 / 60.0;
     if (maxClocks < 1000) {
-        printf("Maximum CPU Clocks: %dHz per second.\n", maxClocks);
+        printf("Maximum MC68030 Clocks: %dHz per second.\n", maxClocks);
     } else if (maxClocks < 1000000) {
-        printf("Maximum CPU Clocks: %d.%dkHz per second.\n", maxClocks / 1000, maxClocks % 1000 / 100);
+        printf("Maximum MC68030 Clocks: %d.%dkHz per second.\n", maxClocks / 1000, maxClocks % 1000 / 100);
     } else {
-        printf("Maximum CPU Clocks: %d.%dMHz per second.\n", maxClocks / 1000000, maxClocks % 1000000 / 100000);
+        printf("Maximum MC68030 Clocks: %d.%dMHz per second.\n", maxClocks / 1000000, maxClocks % 1000000 / 100000);
     }
     printf("RAM usage: %d/%d (%d%%)\n", ramUsage, 1024 * 1024, ramUsage * 100 / 1024 / 1024);
     return 0;
