@@ -26,6 +26,7 @@
 #include <stdarg.h>
 #include "vgsx.h"
 #include "m68k.h"
+#include "vgmrender.hpp"
 
 VGSX vgsx;
 
@@ -191,6 +192,9 @@ VGSX::VGSX()
 
 VGSX::~VGSX()
 {
+    if (this->vgmHelper) {
+        delete (VgmHelper*)this->vgmHelper;
+    }
 }
 
 void VGSX::setLastError(const char* format, ...)
@@ -301,6 +305,13 @@ bool VGSX::loadProgram(const void* data, size_t size)
     return true;
 }
 
+bool VGSX::loadVgm(uint16_t index, const void* data, size_t size)
+{
+    this->context.vgmData[index].data = (const uint8_t*)data;
+    this->context.vgmData[index].size = size;
+    return true;
+}
+
 void VGSX::reset(void)
 {
     m68k_pulse_reset();
@@ -311,6 +322,10 @@ void VGSX::reset(void)
     this->context.randomIndex = 0;
     this->context.frameClocks = 0;
     this->vdp.reset();
+    if (this->vgmHelper) {
+        delete (VgmHelper*)this->vgmHelper;
+        this->vgmHelper = nullptr;
+    }
 
     if (!this->context.elf) {
         return;
@@ -391,6 +406,15 @@ void VGSX::tick(void)
     this->vdp.render();
 }
 
+void VGSX::tickSound(int16_t* buf, int samples)
+{
+    memset(buf, 0, samples / 2);
+    auto helper = (VgmHelper*)this->vgmHelper;
+    if (helper) {
+        helper->render(buf, samples);
+    }
+}
+
 uint32_t VGSX::inPort(uint32_t address)
 {
     switch (address) {
@@ -413,6 +437,18 @@ void VGSX::outPort(uint32_t address, uint32_t value)
             return;
         case 0xE00004: // Setup Random
             this->context.randomIndex = (int)value;
+            return;
+        case 0xE00008: // Play VGM
+            value &= 0xFFFF;
+            if (this->context.vgmData[value].data) {
+                printf("Play VGM #%d\n", value);
+                auto helper = (VgmHelper*)this->vgmHelper;
+                if (helper) {
+                    delete helper;
+                }
+                helper = new VgmHelper(this->context.vgmData[value].data, this->context.vgmData[value].size);
+                this->vgmHelper = helper;
+            }
             return;
     }
 }

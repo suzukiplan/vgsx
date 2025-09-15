@@ -66,6 +66,7 @@ int main(int argc, char* argv[])
 
     int sa[4] = {10, 10, 10, 10};
 
+    vgs_music_play(0);
     while (1) {
         vgs_vsync();
         *VGS_VREG_SY1 = 1;

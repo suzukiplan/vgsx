@@ -211,3 +211,8 @@ void vgs_sprite_flip(uint16_t n, int8_t h, int8_t v)
     VGS_OAM[n].attr |= h ? 0x80000000 : 0;
     VGS_OAM[n].attr |= v ? 0x40000000 : 0;
 }
+
+void vgs_music_play(uint16_t n)
+{
+    *VGS_OUT_VGM_PLAY = n;
+}

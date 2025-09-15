@@ -12,7 +12,7 @@ Status
 
 - [x] Execute MC680x0 ELF32 module
 - [x] Implement VDP
-- [ ] Implement Background Music function
+- [ ] Implement Background Music function **(*cuurent in-progress)**
 - [ ] Implement Sound Effect function
 - [ ] Implement Gamepad function
 - [ ] Implement High-speed Arithmetic for Game (HAGe)
@@ -21,13 +21,13 @@ Status
 
 The VGS-X is a 16-bit game console featuring an MC68030 processor, an FM sound chip (YM2612), and a proprietary VDP optimized for MC68k architecture.
 
-Games can be developed using the Programming Language C.
+Games can be developed using the GCC; _GNU Compiler Collection_ for MC68k.
 
 Supported development environment operating systems are **Ubuntu Linux** or **macOS**. _(If you want to use Windows as a development machine, please use WSL2.)_
 
 The runtime environment supports the all of PC operating systems (Windows, macOS, and Linux) that supported by Steam Client.
 
-In the future, we also plan to provide runtimes capable of running on Nintendo Switch and PlayStation 4/5. Due to an NDA, we cannot disclose details, but we will be confirmed that the [core](./src/core) modules can be built and run using the SDKs for those game consoles.
+In the future, we also plan to provide runtimes capable of running on Nintendo Switch 1/2 and PlayStation 4/5. Due to an NDA, we cannot disclose details, but we will be confirmed that the [core](./src/core) modules can be built and run using the SDKs for those game consoles.
 
 VGS-X aims to provide game developers and publishers with an environment that enables them to deliver games that are fully compatible across any computer with certain performance specifications.
 
@@ -446,6 +446,7 @@ Note that all addresses and values for I/O instructions must be specified as 32-
 | 0xE00000 |  o  |  -  | [V-SYNC](#0xe00000in---v-sync) |
 | 0xE00000 |  -  |  o  | [Console Output](#0xe00000out---console-output) |
 | 0xE00004 |  o  |  o  | [Random](#0xe00004io---random) | 
+| 0xE00008 |  -  |  o  | [Play VGM](#0xe00008o---play-vgm) |
 
 ### 0xE00000[in] - V-SYNC
 
@@ -486,9 +487,27 @@ The `vgs_console_print` function is defined in [vgs.h](./lib/vgs.h).
 - Reading 0xE00004 allows you to obtain a random number (0 to 65535).
 - The random number generation in VGS-X guarantees that calling it 65,536 times will return each number from 0 to 65,535 exactly once.
 
+### 0xE00008[o] - Play VGM
+
+Plays the VGM loaded at the index corresponding to the output value.
+
+> For details on the corresponding VGM, refer to the [“Background Music”](#background-music) chapter.
+
 ## Background Music
 
-(TODO)
+VGS-X can play VGM data compatible with the following chips (OPN, OPM and SSG) as BGM:
+
+- YM2149 (SSG)
+- YM2151 (OPM)
+- YM2203 (OPN)
+- YM2608 (OPNA) <sup>*1</sup>
+- YM2610 (OPNB/OPT)
+- YM2612 (OPN2) <sup>*2</sup>
+
+Notes:
+
+1. OPNA (YM2608) rhythm sound playback is not supported.
+2. DCSG (TI76489) playback is not supported.
 
 ## Sound Effect
 

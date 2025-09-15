@@ -96,6 +96,7 @@ typedef struct {
 #define VGS_IN_VSYNC ((uint32_t*)0xE00000)
 #define VGS_OUT_CONSOLE ((uint32_t*)0xE00000)
 #define VGS_IO_RANDOM ((uint32_t*)0xE00004)
+#define VGS_OUT_VGM_PLAY ((uint32_t*)0xE00008)
 
 #define TRUE 1
 #define FALSE 0
@@ -125,6 +126,7 @@ void vgs_sprite_palette(uint16_t n, uint8_t size);
 void vgs_sprite_palette(uint16_t n, uint8_t pal);
 void vgs_sprite_pattern(uint16_t n, uint16_t ptn);
 void vgs_sprite_flip(uint16_t n, int8_t h, int8_t v);
+void vgs_music_play(uint16_t n);
 
 #ifdef __cplusplus
 };

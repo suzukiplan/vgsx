@@ -31,8 +31,14 @@
 class VGSX
 {
   public:
+    typedef struct {
+        const uint8_t* data;
+        size_t size;
+    } Binary;
+
     struct Context {
         uint8_t ram[0x100000]; // WRAM (1MB)
+        Binary vgmData[0x10000];
         const uint8_t* elf;
         size_t elfSize;
         const uint8_t* program;
@@ -42,15 +48,18 @@ class VGSX
     } context;
 
     VDP vdp;
+    void* vgmHelper;
 
     VGSX();
     ~VGSX();
     bool loadProgram(const void* data, size_t size);
     bool loadPattern(uint16_t index, const void* data, size_t size);
     bool loadPalette(const void* data, size_t size);
+    bool loadVgm(uint16_t index, const void* data, size_t size);
     const char* getLastError() { return this->lastError; }
     void reset();
     void tick();
+    void tickSound(int16_t* buf, int samples);
     inline uint32_t* getDisplay() { return this->vdp.context.display; }
     inline int getDisplayWidth() { return VDP_WIDTH; }
     inline int getDisplayHeight() { return VDP_HEIGHT; }

@@ -1,3 +1,4 @@
+#include <pthread.h>
 #include <SDL.h>
 #include <unistd.h>
 #include <ctype.h>
@@ -5,6 +6,8 @@
 #include <fstream>
 #include <chrono>
 #include "vgsx.h"
+
+static pthread_mutex_t soundMutex = PTHREAD_MUTEX_INITIALIZER;
 
 typedef struct BitmapHeader_ {
     int isize;             /* 情報ヘッダサイズ */
@@ -88,13 +91,23 @@ static void put_usage()
 {
     puts("usage: vgsx [-g /path/to/pattern.chr]");
     puts("            [-c /path/to/palette.bin]");
+    puts("            [-b /path/to/bgm.vgm]");
     puts("                /path/to/program.elf");
+}
+
+static void audioCallback(void* userdata, Uint8* stream, int len)
+{
+    memset(stream, 0, len);
+    pthread_mutex_lock(&soundMutex);
+    vgsx.tickSound((int16_t*)stream, len / 2);
+    pthread_mutex_unlock(&soundMutex);
 }
 
 int main(int argc, char* argv[])
 {
     const char* programPath = nullptr;
     uint8_t pindex = 0;
+    uint16_t bindex = 0;
     for (int i = 1; i < argc; i++) {
         if ('-' == argv[i][0]) {
             switch (tolower(argv[i][1])) {
@@ -137,6 +150,24 @@ int main(int argc, char* argv[])
                     free(data);
                     break;
                 }
+                case 'b': {
+                    if (argc <= i + 1) {
+                        put_usage();
+                        return 1;
+                    }
+                    i++;
+                    int size;
+                    void* data;
+                    data = loadBinary(argv[i], &size);
+                    if (!vgsx.loadVgm(bindex, data, size)) {
+                        puts(vgsx.getLastError());
+                        exit(255);
+                    } else {
+                        printf("Loaded VGM #%d: %s (%d bytes)\n", bindex, argv[i], size);
+                        bindex++;
+                    }
+                    break;
+                }
                 default:
                     put_usage();
                     return 1;
@@ -172,6 +203,26 @@ int main(int argc, char* argv[])
         printf("SDL_Init failed: %s\n", SDL_GetError());
         exit(-1);
     }
+
+    puts("Initializing AudioDriver");
+    SDL_AudioSpec desired;
+    SDL_AudioSpec obtained;
+    desired.freq = 44100;
+    desired.format = AUDIO_S16LSB;
+    desired.channels = 2;
+    desired.samples = 1470 * 2;
+    desired.callback = audioCallback;
+    desired.userdata = &vgsx;
+    auto audioDeviceId = SDL_OpenAudioDevice(nullptr, 0, &desired, &obtained, 0);
+    if (0 == audioDeviceId) {
+        printf(" ... SDL_OpenAudioDevice failed: %s\n", SDL_GetError());
+        exit(-1);
+    }
+    printf("- obtained.freq = %d\n", obtained.freq);
+    printf("- obtained.format = %X\n", obtained.format);
+    printf("- obtained.channels = %d\n", obtained.channels);
+    printf("- obtained.samples = %d\n", obtained.samples);
+
     auto window = SDL_CreateWindow(
         "VGS-X for SDL2",
         SDL_WINDOWPOS_UNDEFINED,
@@ -198,6 +249,7 @@ int main(int argc, char* argv[])
     bool stabled = true;
     double totalClocks = 0.0;
     uint32_t maxClocks = 0;
+    SDL_PauseAudioDevice(audioDeviceId, 0);
     while (!quit) {
         loopCount++;
         auto start = std::chrono::system_clock::now();
@@ -212,7 +264,9 @@ int main(int argc, char* argv[])
             }
         }
         if (!quit) {
+            pthread_mutex_lock(&soundMutex);
             vgsx.tick();
+            pthread_mutex_unlock(&soundMutex);
             totalClocks += vgsx.context.frameClocks;
             if (maxClocks < vgsx.context.frameClocks) {
                 maxClocks = vgsx.context.frameClocks;
@@ -303,5 +357,6 @@ int main(int argc, char* argv[])
         printf("Maximum MC68030 Clocks: %d.%dMHz per second.\n", maxClocks / 1000000, maxClocks % 1000000 / 100000);
     }
     printf("RAM usage: %d/%d (%d%%)\n", ramUsage, 1024 * 1024, ramUsage * 100 / 1024 / 1024);
+    SDL_Quit();
     return 0;
 }
