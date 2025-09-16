@@ -36,9 +36,17 @@ class VGSX
         size_t size;
     } Binary;
 
+    typedef struct {
+        const int16_t* data;
+        size_t count;
+        bool play;
+        size_t index;
+    } SfxData;
+
     struct Context {
         uint8_t ram[0x100000]; // WRAM (1MB)
         Binary vgmData[0x10000];
+        SfxData sfxData[0x100];
         const uint8_t* elf;
         size_t elfSize;
         const uint8_t* program;
@@ -56,6 +64,7 @@ class VGSX
     bool loadPattern(uint16_t index, const void* data, size_t size);
     bool loadPalette(const void* data, size_t size);
     bool loadVgm(uint16_t index, const void* data, size_t size);
+    bool loadWav(uint8_t index, const void* data, size_t size);
     const char* getLastError() { return this->lastError; }
     void reset();
     void tick();

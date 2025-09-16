@@ -66,7 +66,7 @@ int main(int argc, char* argv[])
 
     int sa[4] = {10, 10, 10, 10};
 
-    vgs_music_play(0);
+    vgs_bgm_play(0);
     while (1) {
         vgs_vsync();
         *VGS_VREG_SY1 = 1;
@@ -78,6 +78,9 @@ int main(int argc, char* argv[])
             VGS_OAM[i + 1].scale += sa[i];
             if (400 < VGS_OAM[i + 1].scale && 0 < sa[i]) {
                 sa[i] = -10;
+                if (i == 0) {
+                    vgs_sfx_play(0);
+                }
             } else if (VGS_OAM[i + 1].scale < 20 && sa[i] < 0) {
                 sa[i] = 10;
             }

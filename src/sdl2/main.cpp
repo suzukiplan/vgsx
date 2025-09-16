@@ -92,6 +92,7 @@ static void put_usage()
     puts("usage: vgsx [-g /path/to/pattern.chr]");
     puts("            [-c /path/to/palette.bin]");
     puts("            [-b /path/to/bgm.vgm]");
+    puts("            [-s /path/to/sfx.wav]");
     puts("                /path/to/program.elf");
 }
 
@@ -108,6 +109,7 @@ int main(int argc, char* argv[])
     const char* programPath = nullptr;
     uint8_t pindex = 0;
     uint16_t bindex = 0;
+    uint8_t sindex = 0;
     for (int i = 1; i < argc; i++) {
         if ('-' == argv[i][0]) {
             switch (tolower(argv[i][1])) {
@@ -165,6 +167,24 @@ int main(int argc, char* argv[])
                     } else {
                         printf("Loaded VGM #%d: %s (%d bytes)\n", bindex, argv[i], size);
                         bindex++;
+                    }
+                    break;
+                }
+                case 's': {
+                    if (argc <= i + 1) {
+                        put_usage();
+                        return 1;
+                    }
+                    i++;
+                    int size;
+                    void* data;
+                    data = loadBinary(argv[i], &size);
+                    printf("Loading SFX #%d: %s (%d bytes)\n", sindex, argv[i], size);
+                    if (!vgsx.loadWav(sindex, data, size)) {
+                        puts(vgsx.getLastError());
+                        exit(255);
+                    } else {
+                        sindex++;
                     }
                     break;
                 }

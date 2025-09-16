@@ -446,7 +446,8 @@ Note that all addresses and values for I/O instructions must be specified as 32-
 | 0xE00000 |  o  |  -  | [V-SYNC](#0xe00000in---v-sync) |
 | 0xE00000 |  -  |  o  | [Console Output](#0xe00000out---console-output) |
 | 0xE00004 |  o  |  o  | [Random](#0xe00004io---random) | 
-| 0xE00008 |  -  |  o  | [Play VGM](#0xe00008o---play-vgm) |
+| 0xE01000 |  -  |  o  | [Play VGM](#0xe01000o---play-vgm) |
+| 0xE01100 |  -  |  o  | [Play SFX](#0xe01100o---play-sfx) |
 
 ### 0xE00000[in] - V-SYNC
 
@@ -487,11 +488,17 @@ The `vgs_console_print` function is defined in [vgs.h](./lib/vgs.h).
 - Reading 0xE00004 allows you to obtain a random number (0 to 65535).
 - The random number generation in VGS-X guarantees that calling it 65,536 times will return each number from 0 to 65,535 exactly once.
 
-### 0xE00008[o] - Play VGM
+### 0xE01000[o] - Play VGM
 
 Plays the VGM loaded at the index corresponding to the output value.
 
 > For details on the corresponding VGM, refer to the [“Background Music”](#background-music) chapter.
+
+### 0xE01100[o] - Play SFX
+
+Plays the SFX loaded at the index corresponding to the output value.
+
+> For details on the corresponding SFX, refer to the [Sound Effect”](#sound-effect) chapter.
 
 ## Background Music
 
@@ -513,7 +520,19 @@ We recommend using [Furnace Tracker](https://github.com/tildearrow/furnace) to c
 
 ## Sound Effect
 
-(TODO)
+The VGS-X ROM cartridge can hold up to 256 .wav files in the following formats.
+
+- Sampling Rate: 44100Hz
+- Bit Rate: 16bits
+- Number of Channels: 2 (Stereo)
+
+> Please note that while the sound effect functionality is nearly identical to VGS-Zero, the **Number of Channels** differs. (VGS-Zero: 1ch, VGS-X: 2ch)
+
+You can encode to the .wav format compatible with VGS-X by specifying the following options in the `ffmpeg` command:
+
+```bash
+ffmpeg -i input.mp3 -acodec pcm_s16le -ar 44100 -ac 2 sfx.wav
+```
 
 ## Gamepad
 

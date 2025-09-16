@@ -185,6 +185,7 @@ extern "C" void m68k_write_memory_32(uint32_t address, uint32_t value)
 
 VGSX::VGSX()
 {
+    memset(&this->context, 0, sizeof(this->context));
     m68k_set_cpu_type(M68K_CPU_TYPE_68030);
     m68k_init();
     this->reset();
@@ -312,6 +313,117 @@ bool VGSX::loadVgm(uint16_t index, const void* data, size_t size)
     return true;
 }
 
+bool VGSX::loadWav(uint8_t index, const void* data, size_t size)
+{
+    const uint8_t* wav = (const uint8_t*)data;
+    int n;
+    unsigned short s;
+
+    if (0 != memcmp(wav, "RIFF", 4)) {
+        this->setLastError("Invalid wav format: RIFF not exist");
+        return false;
+    }
+    wav += 4;
+    size -= 4;
+
+    memcpy(&n, wav, 4);
+    if (n != size - 4) {
+        this->setLastError("Invalid wav format: SIZE");
+        return false;
+    }
+    wav += 4;
+    size -= 4;
+
+    if (0 != memcmp(wav, "WAVE", 4)) {
+        this->setLastError("Invalid wav format: not WAVE format");
+        return false;
+    }
+    wav += 4;
+    size -= 4;
+
+    short ch = 0;
+    int rate = 0;
+    int bps = 0;
+    short bs = 0;
+    short bits = 0;
+
+    // parse and check the chunks
+    while (1) {
+        if (0 == memcmp(wav, "fmt ", 4)) {
+            wav += 4;
+            size -= 4;
+            memcpy(&n, wav, 4);
+            if (n != 16) {
+                this->setLastError("Invalid wav format: Unsupported format (%d)", n);
+                return false;
+            }
+            wav += 4;
+            size -= 4;
+
+            memcpy(&s, wav, 2);
+            if (s != 0x0001) {
+                this->setLastError("Invalid wav format: Unsupported compress type (%d)", s);
+                return false;
+            }
+            wav += 2;
+            size -= 2;
+
+            memcpy(&ch, wav, 2);
+            wav += 2;
+            size -= 2;
+
+            memcpy(&rate, wav, 4);
+            wav += 4;
+            size -= 4;
+
+            memcpy(&bps, wav, 4);
+            wav += 4;
+            size -= 4;
+
+            memcpy(&bs, wav, 2);
+            wav += 2;
+            size -= 2;
+
+            memcpy(&bits, wav, 2);
+            wav += 2;
+            size -= 2;
+        } else if (0 == memcmp(wav, "LIST", 4)) {
+            wav += 4;
+            size -= 4;
+            memcpy(&n, wav, 4);
+            wav += 4 + n;
+            size -= 4 + n;
+        } else if (0 == memcmp(wav, "data", 4)) {
+            wav += 4;
+            size -= 4;
+            break;
+        } else {
+            this->setLastError("Invalid wav format: Unsupported chunk: %c%c%c%c", wav[0], wav[1], wav[2], wav[3]);
+            return false;
+        }
+    }
+
+    printf("- PCM Format: %dHz %dbits %dch (%d bytes/sec, %d bytes/sample)\n", rate, bits, ch, bps, bs);
+    if (0 == rate) {
+        this->setLastError("Invalid wav format: fmt chunk not found");
+        return false;
+    } else if (rate != 44100 || bits != 16 || ch != 2) {
+        this->setLastError("Invalid wav format: Unsupported sampling format (44100Hz/16bits/2ch only)");
+        return false;
+    }
+
+    // validate data chunk size
+    memcpy(&n, wav, 4);
+    if (n != size - 4) {
+        this->setLastError("Invalid wav format: invalid sub chunk size");
+        return false;
+    }
+    size -= 4;
+    this->context.sfxData[index].data = (const int16_t*)wav;
+    this->context.sfxData[index].count = size / 2;
+    return true;
+}
+
 void VGSX::reset(void)
 {
     m68k_pulse_reset();
@@ -326,7 +438,9 @@ void VGSX::reset(void)
         delete (VgmHelper*)this->vgmHelper;
         this->vgmHelper = nullptr;
     }
-
+    for (int i = 0; i < 0x100; i++) {
+        this->context.sfxData[i].play = false;
+    }
     if (!this->context.elf) {
         return;
     }
@@ -413,6 +527,26 @@ void VGSX::tickSound(int16_t* buf, int samples)
     if (helper) {
         helper->render(buf, samples);
     }
+    for (int i = 0; i < 0x100; i++) {
+        if (this->context.sfxData[i].play) {
+            for (int j = 0; j < samples; j++) {
+                if (this->context.sfxData[i].index < this->context.sfxData[i].count) {
+                    int w = buf[j];
+                    w += this->context.sfxData[i].data[this->context.sfxData[i].index];
+                    if (32767 < w) {
+                        w = 32767;
+                    } else if (w < -32768) {
+                        w = -32768;
+                    }
+                    buf[j] = w;
+                    this->context.sfxData[i].index++;
+                } else {
+                    this->context.sfxData[i].play = false;
+                    break;
+                }
+            }
+        }
+    }
 }
 
 uint32_t VGSX::inPort(uint32_t address)
@@ -438,16 +572,22 @@ void VGSX::outPort(uint32_t address, uint32_t value)
         case 0xE00004: // Setup Random
             this->context.randomIndex = (int)value;
             return;
-        case 0xE00008: // Play VGM
+        case 0xE01000: // Play VGM
             value &= 0xFFFF;
             if (this->context.vgmData[value].data) {
-                printf("Play VGM #%d\n", value);
                 auto helper = (VgmHelper*)this->vgmHelper;
                 if (helper) {
                     delete helper;
                 }
                 helper = new VgmHelper(this->context.vgmData[value].data, this->context.vgmData[value].size);
                 this->vgmHelper = helper;
+            }
+            return;
+        case 0xE01100: // Play SFX
+            value &= 0xFF;
+            if (this->context.sfxData[value].data) {
+                this->context.sfxData[value].index = 0;
+                this->context.sfxData[value].play = true;
             }
             return;
     }
