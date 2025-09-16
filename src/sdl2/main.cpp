@@ -210,7 +210,7 @@ int main(int argc, char* argv[])
     desired.freq = 44100;
     desired.format = AUDIO_S16LSB;
     desired.channels = 2;
-    desired.samples = 1470 * 2;
+    desired.samples = 2048;
     desired.callback = audioCallback;
     desired.userdata = &vgsx;
     auto audioDeviceId = SDL_OpenAudioDevice(nullptr, 0, &desired, &obtained, 0);
