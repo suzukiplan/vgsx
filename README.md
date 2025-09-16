@@ -10,12 +10,13 @@ Once this project reaches a stable phase, version 1.0.0 is scheduled for release
 
 Status
 
-- [x] Execute MC680x0 ELF32 module
-- [x] Implement VDP
-- [ ] Implement Background Music function **(*cuurent in-progress)**
-- [ ] Implement Sound Effect function
-- [ ] Implement Gamepad function
-- [ ] Implement High-speed Arithmetic for Game (HAGe)
+1. [x] Execute MC680x0 ELF32 module
+2. [x] Implement VDP
+3. [x] Implement Background Music function
+4. [x] Implement Sound Effect function
+5. [ ] Implement Gamepad function **(*cuurent in-progress)**
+6. [ ] Release beta 0.1.0
+7. [ ] Make launch title for VGS-X
 
 ## About VGS-X
 
