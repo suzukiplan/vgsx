@@ -426,7 +426,7 @@ Drawing processing is executed when the execution identifier is written to `G_EX
 |☑︎|☑︎|☑︎|☑︎|☑︎|☑︎|-| `1` | Line |
 |☑︎|☑︎|☑︎|☑︎|☑︎|☑︎|-| `2` | Box |
 |☑︎|☑︎|☑︎|☑︎|☑︎|☑︎|-| `3` | Box Fill |
-|☑︎|☑︎|☑︎|-|-|☑︎|☑︎| `4` | Character <sup>*2</sup> |
+|☑︎|☑︎|☑︎|-|-|☑︎|☑︎| `4` | CHR <sup>*2</sup> |
 
 Remarks:
 
