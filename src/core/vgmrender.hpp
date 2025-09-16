@@ -246,6 +246,7 @@ class VgmHelper
     uint32_t offset;
     uint32_t data_start;
     uint32_t extra_header;
+    uint32_t loop_offset;
 
     uint32_t parse_uint32()
     {
@@ -301,6 +302,7 @@ class VgmHelper
     {
         // +00: already checked the ID
         this->offset = 4;
+        this->loop_offset = 0;
 
         // +04: parse the size
         uint32_t size = parse_uint32();
@@ -330,7 +332,10 @@ class VgmHelper
         offset += 4;
 
         // +1C: Loop offset
-        offset += 4;
+        loop_offset = parse_uint32();
+        if (loop_offset) {
+            loop_offset += offset - 4;
+        }
 
         // +20: Loop # samples
         offset += 4;
@@ -837,13 +842,6 @@ class VgmHelper
                     offset += 2;
                     break;
 
-                // YM3526, write value dd to register aa
-                case 0x5b:
-                case 0xab:
-                    write_chip(CHIP_YM3526, cmd >> 7, buffer[offset], buffer[offset + 1]);
-                    offset += 2;
-                    break;
-
                 // Wait n samples, n can range from 0 to 65535 (approx 1.49 seconds)
                 case 0x61:
                     wait = buffer[offset] | (buffer[offset + 1] << 8);
@@ -862,7 +860,11 @@ class VgmHelper
 
                 // end of sound data
                 case 0x66:
-                    done = true;
+                    if (loop_offset) {
+                        offset = loop_offset;
+                    } else {
+                        done = true;
+                    }
                     break;
 
                 // data block
