@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
     /* 引数チェック */
     rc++;
     if (argc < 3) {
-        fprintf(stderr, "usage: bmp2chr input.bmp output.chr [palette.c]\n");
+        fprintf(stderr, "usage: bmp2chr input.bmp output.chr\n");
         goto ENDPROC;
     }
 

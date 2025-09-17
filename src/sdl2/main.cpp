@@ -93,7 +93,7 @@ static void put_usage()
     puts("            [-c /path/to/palette.bin]");
     puts("            [-b /path/to/bgm.vgm]");
     puts("            [-s /path/to/sfx.wav]");
-    puts("                /path/to/program.elf");
+    puts("            { /path/to/program.elf | /path/to/program.rom }");
 }
 
 static void audioCallback(void* userdata, Uint8* stream, int len)

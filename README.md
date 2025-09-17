@@ -561,6 +561,69 @@ The following table shows the button assignments for a typical gamepad:
 | `Y` | `S` | `X` | `Triangle` |
 | `Start` | `Space` | `Plus` | `Options` |
 
+# Toolchain
+
+| Path | Description |
+|:-----|:------------|
+| [./src/sdl2](./src/sdl2/) | VGS-X Emulator for Debug |
+| [./tools/bmp2chr](./tools/bmp2chr/) | Make [CHR](#character-pattern) data from .bmp file |
+| [./tools/bmp2pal](./tools/bmp2pal/) | Make initial [palette](#palette) from .bmp file |
+| [./tools/makerom](./tools/makerom/) | Make ROM file from Program and Assets |
+
+## VGS-X Emulator for Debug
+
+This is a VGS-X emulator built using SDL2.
+
+It is primarily provided for debugging purposes during game development.
+
+```
+usage: vgsx [-g /path/to/pattern.chr]
+            [-c /path/to/palette.bin]
+            [-b /path/to/bgm.vgm]
+            [-s /path/to/sfx.wav]
+            { /path/to/program.elf | /path/to/program.rom }
+```
+
+## bmp2chr
+
+Generates VGS-X [Character Pattern](#character-pattern) data from 256-color .bmp (Windows Bitmap) file.
+
+```
+usage: bmp2chr input.bmp output.chr
+```
+
+Remarks:
+
+- The height and width of the image must be 8 or more and a multiple of 8.
+- Read the character pattern in 8x8-pixel blocks from top-left to bottom-right.
+
+## bmp2pal
+
+Generates initial [Palette](#palette) data for VGS-X from 256-color .bmp (Windows Bitmap) file.
+
+```
+usage: bmp2pal input.bmp palette.dat
+```
+
+## makerom
+
+Generates a ROM file that combines the program and assets into a single file.
+
+```
+usage: makerom  -o /path/to/output.rom
+                -e /path/to/program.elf
+               [-g /path/to/pattern.chr]
+               [-c /path/to/palette.bin]
+               [-b /path/to/bgm.vgm]
+               [-s /path/to/sfx.wav]
+```
+
+Remarks:
+
+- The `-g`, `-b`, and `-s` options can be specified multiple times.
+- Files are read sequentially from the specified file.
+- The character pattern specified with the first `-g` option is loaded at index 0, and the index of the pattern specified with the second `-g` option is the next one.
+
 # License
 
 - MC680x0 Emulator - [Musashi](https://github.com/kstenerud/Musashi)
