@@ -15,8 +15,10 @@ Status
 3. [x] Implement Background Music function
 4. [x] Implement Sound Effect function
 5. [x] Implement Gamepad function
-6. [ ] Release beta 0.1.0
+6. [x] Release beta 0.1.0
 7. [ ] Make launch title for VGS-X
+
+Changes after Version 0.1.0 can be found in [CHANGES.md](./CHANGES.md).
 
 ## About VGS-X
 
