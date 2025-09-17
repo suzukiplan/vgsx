@@ -98,6 +98,17 @@ typedef struct {
 #define VGS_IO_RANDOM ((uint32_t*)0xE00004)
 #define VGS_OUT_VGM_PLAY ((uint32_t*)0xE01000)
 #define VGS_OUT_SFX_PLAY ((uint32_t*)0xE01100)
+#define VGS_KEY_UP *((uint32_t*)0xE20000)
+#define VGS_KEY_DOWN *((uint32_t*)0xE20004)
+#define VGS_KEY_LEFT *((uint32_t*)0xE20008)
+#define VGS_KEY_RIGHT *((uint32_t*)0xE2000C)
+#define VGS_KEY_A *((uint32_t*)0xE20010)
+#define VGS_KEY_B *((uint32_t*)0xE20014)
+#define VGS_KEY_X *((uint32_t*)0xE20018)
+#define VGS_KEY_Y *((uint32_t*)0xE2001C)
+#define VGS_KEY_START *((uint32_t*)0xE20020)
+#define VGS_KEY_AXIS_X (int8_t)(*((uint32_t*)0xE20024))
+#define VGS_KEY_AXIS_Y (int8_t)(*((uint32_t*)0xE20028))
 
 #define TRUE 1
 #define FALSE 0

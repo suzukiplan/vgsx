@@ -63,8 +63,18 @@ int main(int argc, char* argv[])
     VGS_OAM[3].rotate = 120;
     VGS_OAM[4].scale = 100;
     VGS_OAM[4].rotate = 150;
-
     int sa[4] = {10, 10, 10, 10};
+
+    vgs_sprite(5, TRUE, 120, 140, 9, 0, 256);                   // gamepad
+    vgs_sprite(6, FALSE, 120 + 14, 140 + 31, 0, 0, 256 + 101);  // up button
+    vgs_sprite(7, FALSE, 120 + 14, 140 + 43, 0, 0, 256 + 101);  // down button
+    vgs_sprite(8, FALSE, 120 + 7, 140 + 38, 0, 0, 256 + 100);   // left button
+    vgs_sprite(9, FALSE, 120 + 19, 140 + 38, 0, 0, 256 + 100);  // right button
+    vgs_sprite(10, FALSE, 120 + 33, 140 + 48, 1, 0, 256 + 102); // start button
+    vgs_sprite(11, FALSE, 120 + 61, 140 + 44, 0, 0, 256 + 106); // A button
+    vgs_sprite(12, FALSE, 120 + 68, 140 + 36, 0, 0, 256 + 106); // B button
+    vgs_sprite(13, FALSE, 120 + 54, 140 + 36, 0, 0, 256 + 106); // X button
+    vgs_sprite(14, FALSE, 120 + 61, 140 + 28, 0, 0, 256 + 106); // Y button
 
     vgs_bgm_play(0);
     while (1) {
@@ -88,6 +98,15 @@ int main(int argc, char* argv[])
                 VGS_OAM[i + 1].rotate += i * 3;
             }
         }
+        VGS_OAM[6].visible = VGS_KEY_UP;
+        VGS_OAM[7].visible = VGS_KEY_DOWN;
+        VGS_OAM[8].visible = VGS_KEY_LEFT;
+        VGS_OAM[9].visible = VGS_KEY_RIGHT;
+        VGS_OAM[10].visible = VGS_KEY_START;
+        VGS_OAM[11].visible = VGS_KEY_A;
+        VGS_OAM[12].visible = VGS_KEY_B;
+        VGS_OAM[13].visible = VGS_KEY_X;
+        VGS_OAM[14].visible = VGS_KEY_Y;
     }
 
     return 0;

@@ -14,7 +14,7 @@ Status
 2. [x] Implement VDP
 3. [x] Implement Background Music function
 4. [x] Implement Sound Effect function
-5. [ ] Implement Gamepad function **(*cuurent in-progress)**
+5. [x] Implement Gamepad function
 6. [ ] Release beta 0.1.0
 7. [ ] Make launch title for VGS-X
 
@@ -449,6 +449,15 @@ Note that all addresses and values for I/O instructions must be specified as 32-
 | 0xE00004 |  o  |  o  | [Random](#0xe00004io---random) | 
 | 0xE01000 |  -  |  o  | [Play VGM](#0xe01000o---play-vgm) |
 | 0xE01100 |  -  |  o  | [Play SFX](#0xe01100o---play-sfx) |
+| 0xE02000 |  o  |  -  | [Gamepad: D-pad - Up](#0xe200xxi---gamepad) |
+| 0xE02004 |  o  |  -  | [Gamepad: D-pad - Down](#0xe200xxi---gamepad) |
+| 0xE02008 |  o  |  -  | [Gamepad: D-pad - Left](#0xe200xxi---gamepad) |
+| 0xE0200C |  o  |  -  | [Gamepad: D-pad - Right](#0xe200xxi---gamepad) |
+| 0xE02010 |  o  |  -  | [Gamepad: A button](#0xe200xxi---gamepad) |
+| 0xE02014 |  o  |  -  | [Gamepad: B button](#0xe200xxi---gamepad) |
+| 0xE02018 |  o  |  -  | [Gamepad: X button](#0xe200xxi---gamepad) |
+| 0xE0201C |  o  |  -  | [Gamepad: Y button](#0xe200xxi---gamepad) |
+| 0xE02020 |  o  |  -  | [Gamepad: Start button](#0xe200xxi---gamepad) |
 
 ### 0xE00000[in] - V-SYNC
 
@@ -493,16 +502,6 @@ The `vgs_console_print` function is defined in [vgs.h](./lib/vgs.h).
 
 Plays the VGM loaded at the index corresponding to the output value.
 
-> For details on the corresponding VGM, refer to the [“Background Music”](#background-music) chapter.
-
-### 0xE01100[o] - Play SFX
-
-Plays the SFX loaded at the index corresponding to the output value.
-
-> For details on the corresponding SFX, refer to the [Sound Effect”](#sound-effect) chapter.
-
-## Background Music
-
 VGS-X can play VGM data compatible with the following chips (OPN, OPM and SSG) as BGM:
 
 - YM2149 (SSG)
@@ -519,7 +518,9 @@ Notes:
 
 We recommend using [Furnace Tracker](https://github.com/tildearrow/furnace) to create VGM data compatible with these FM sound chips.
 
-## Sound Effect
+### 0xE01100[o] - Play SFX
+
+Plays the SFX loaded at the index corresponding to the output value.
 
 The VGS-X ROM cartridge can hold up to 256 .wav files in the following formats.
 
@@ -535,18 +536,39 @@ You can encode to the .wav format compatible with VGS-X by specifying the follow
 ffmpeg -i input.mp3 -acodec pcm_s16le -ar 44100 -ac 2 sfx.wav
 ```
 
-## Gamepad
+### 0xE200xx[i] - Gamepad
 
-(TODO)
+The VGS-X can capture button inputs from the `D-pad`, `ABXY` buttons, and `Start` button as shown in the diagram below.
+
+![gamepad.png](./gamepad.png)
+
+- When  buttons are pressed, the corresponding input result for 0xE020xx becomes non-zero.
+- The cursor keys and left stick are always linked.
+- Use the `A` button for confirmation operations.
+- Use the `B` button for cancel operations.
+- The `X` button is intended for use in operations requiring rapid button presses (e.g., as an attack button in shoot 'em ups).
+- The `Y` button is intended for use in auxiliary operations.
+- The `Start` button is intended for opening menus or starting games.
+
+The following table shows the button assignments for a typical gamepad:
+
+| VGS-X and XBOX | PC Keybord | Switch | PlayStation | 
+|:-:|:-:|:-:|:-:|
+|D-pad| Cursor | D-pad | D-pad |
+| `A` | `Z` | `B` | `Cross` |
+| `B` | `X` | `A` | `Circle` |
+| `X` | `A` | `Y` | `Rectangle` |
+| `Y` | `S` | `X` | `Triangle` |
+| `Start` | `Space` | `Plus` | `Options` |
 
 # License
 
-- MC680x0 Emulator - Musashi
+- MC680x0 Emulator - [Musashi](https://github.com/kstenerud/Musashi)
   - Copyright © 1998-2001 Karl Stenerud
   - License: [MIT](./LICENSE-Musashi.txt)
-- FM Sound Module Emulator - ymfm
+- FM Sound Chip Emulator - [ymfm](https://github.com/aaronsgiles/ymfm)
   - Copyright (c) 2021, Aaron Giles
   - License: [3-clause BSD](./LICENSE-ymfm.txt)
-- VGS-X Emulator Core Module and Runtime for MC68030
+- [VGS-X](https://github.com/suzukiplan/vgsx)
   - Copyright (c) 2025 Yoji Suzuki.
   - License: [MIT](./LICENSE-VGSX.txt)

@@ -186,6 +186,7 @@ extern "C" void m68k_write_memory_32(uint32_t address, uint32_t value)
 VGSX::VGSX()
 {
     memset(&this->context, 0, sizeof(this->context));
+    memset(&this->key, 0, sizeof(this->key));
     m68k_set_cpu_type(M68K_CPU_TYPE_68030);
     m68k_init();
     this->reset();
@@ -559,6 +560,17 @@ uint32_t VGSX::inPort(uint32_t address)
             this->context.randomIndex++;
             this->context.randomIndex &= 0xFFFF;
             return vgs0_rand16[this->context.randomIndex];
+        case 0xE20000: return this->key.up;
+        case 0xE20004: return this->key.down;
+        case 0xE20008: return this->key.left;
+        case 0xE2000C: return this->key.right;
+        case 0xE20010: return this->key.a;
+        case 0xE20014: return this->key.b;
+        case 0xE20018: return this->key.x;
+        case 0xE2001C: return this->key.y;
+        case 0xE20020: return this->key.start;
+        case 0xE20024: return this->key.axisX;
+        case 0xE20028: return this->key.axisY;
     }
     return 0xFFFFFFFF;
 }

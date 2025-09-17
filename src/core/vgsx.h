@@ -55,6 +55,20 @@ class VGSX
         uint32_t frameClocks;
     } context;
 
+    struct KeyStatus {
+        uint8_t up;
+        uint8_t down;
+        uint8_t left;
+        uint8_t right;
+        uint8_t a;
+        uint8_t b;
+        uint8_t x;
+        uint8_t y;
+        uint8_t start;
+        int8_t axisX;
+        int8_t axisY;
+    } key;
+
     VDP vdp;
     void* vgmHelper;
 

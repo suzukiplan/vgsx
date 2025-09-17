@@ -107,7 +107,7 @@ static void audioCallback(void* userdata, Uint8* stream, int len)
 int main(int argc, char* argv[])
 {
     const char* programPath = nullptr;
-    uint8_t pindex = 0;
+    uint16_t pindex = 0;
     uint16_t bindex = 0;
     uint8_t sindex = 0;
     for (int i = 1; i < argc; i++) {
@@ -278,8 +278,29 @@ int main(int argc, char* argv[])
                 quit = true;
             } else if (event.type == SDL_KEYDOWN) {
                 switch (event.key.keysym.sym) {
+                    case SDLK_UP: vgsx.key.up = 1; break;
+                    case SDLK_DOWN: vgsx.key.down = 1; break;
+                    case SDLK_LEFT: vgsx.key.left = 1; break;
+                    case SDLK_RIGHT: vgsx.key.right = 1; break;
+                    case SDLK_z: vgsx.key.a = 1; break;
+                    case SDLK_x: vgsx.key.b = 1; break;
+                    case SDLK_a: vgsx.key.x = 1; break;
+                    case SDLK_s: vgsx.key.y = 1; break;
+                    case SDLK_SPACE: vgsx.key.start = 1; break;
                     case SDLK_q: quit = true; break;
-                    case SDLK_s: screenShot(); break;
+                    case SDLK_c: screenShot(); break;
+                }
+            } else if (event.type == SDL_KEYUP) {
+                switch (event.key.keysym.sym) {
+                    case SDLK_UP: vgsx.key.up = 0; break;
+                    case SDLK_DOWN: vgsx.key.down = 0; break;
+                    case SDLK_LEFT: vgsx.key.left = 0; break;
+                    case SDLK_RIGHT: vgsx.key.right = 0; break;
+                    case SDLK_z: vgsx.key.a = 0; break;
+                    case SDLK_x: vgsx.key.b = 0; break;
+                    case SDLK_a: vgsx.key.x = 0; break;
+                    case SDLK_s: vgsx.key.y = 0; break;
+                    case SDLK_SPACE: vgsx.key.start = 0; break;
                 }
             }
         }
