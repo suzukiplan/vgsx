@@ -1,5 +1,5 @@
 /**
- * VGS-X Runtime Library for MC68030
+ * VGS Standard Library for MC68030
  * The MIT License (MIT)
  *
  * Copyright (c) 2025 Yoji Suzuki.
