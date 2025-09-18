@@ -577,16 +577,16 @@ In the [Emulator for Debug (SDL2)](#vgs-x-emulator-for-debug), the value written
 
 # VGS Standard Library
 
-| Library | Desctiption |
-|:--------|:------------|
-| [libc.a](#libca---basic-function) | Basic Function |
-| [liblog.a](#libloga) | Logging Function |
+| Library | Header File | Desctiption |
+|:--------|:--------|:------------|
+| [libc.a](#libca---basic-function) (`-lc`) | [vgs.h](./lib/vgs.h) | Basic Function |
+| [liblog.a](#libloga) (`-llog`) | [log.h](./lib/log.h) | Logging Function |
 
 ## libc.a - Basic Function
 
 `libc.a` is a C library that defines APIs to help develop games on VGS-X.
 
-This library is always linked implicitly, so you do not need to specify it with the linker's `-l` option.
+This library is always linked implicitly (`-lc`), so you do not need to specify it with the linker's `-l` option.
 
 ```c
 #include <vgs.h>
