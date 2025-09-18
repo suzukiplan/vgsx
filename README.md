@@ -515,8 +515,8 @@ VGS-X can play VGM data compatible with the following chips (OPN, OPM and SSG) a
 
 Notes:
 
-1. OPNA (YM2608) rhythm sound playback is not supported.
-2. DCSG (TI76489) playback is not supported.
+1. YM2608 (OPNA) rhythm sound playback is not supported.
+2. SN76489 (DCSG) playback is not supported.
 
 We recommend using [Furnace Tracker](https://github.com/tildearrow/furnace) to create VGM data compatible with these FM sound chips.
 
