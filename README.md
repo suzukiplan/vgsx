@@ -577,10 +577,12 @@ In the [Emulator for Debug (SDL2)](#vgs-x-emulator-for-debug), the value written
 
 # VGS Standard Library
 
+All hardware functions of the VGS-X specified in this README.md can be utilized from game programs written in C language through the C library defined in this chapter.
+
 | Library | Header File | Desctiption |
 |:--------|:--------|:------------|
 | [libc.a](#libca---basic-function) (`-lc`) | [vgs.h](./lib/vgs.h) | Basic Function |
-| [liblog.a](#libloga) (`-llog`) | [log.h](./lib/log.h) | Logging Function |
+| [liblog.a](#libloga---logging-function) (`-llog`) | [log.h](./lib/log.h) | Logging Function |
 
 ## libc.a - Basic Function
 
@@ -594,16 +596,16 @@ This library is always linked implicitly (`-lc`), so you do not need to specify 
 
 | Function | Description |
 |:---------|:------------|
-| `vgs_vsync` | Synchronize the screen output with 60fps |
-| `vgs_srand` | Set the random number seed |
-| `vgs_rand` | Obtain a 16-bit random value |
-| `vgs_rand32` | Obtain a 32-bit random value |
+| `vgs_vsync` | Synchronize the [V-SYNC](#0xe00000in---v-sync) (screen output with 60fps) |
+| `vgs_srand` | Set the [random number](#0xe00004io---random) seed |
+| `vgs_rand` | Obtain a 16-bit [random](#0xe00004io---random) value |
+| `vgs_rand32` | Obtain a 32-bit [random](#0xe00004io---random) value |
 | `vgs_d32str` | Convert a 32-bit signed integer to a string |
 | `vgs_u32str` | Convert a 32-bit unsigned integer to a string |
-| `vgs_put_bg` | Display a character on the BG in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode) |
-| `vgs_put_bg` | Display a string on the BG in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode) |
-| `vgs_cls_bg_all` | Clear all BGs |
-| `vgs_cls_bg` | Clear a specific BG |
+| `vgs_put_bg` | Display a character on the [BG](#name-table) in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode) |
+| `vgs_put_bg` | Display a string on the [BG](#name-table) in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode) |
+| `vgs_cls_bg_all` | [Clear](#0xd20038-0xd20048-clear-screen) all BGs |
+| `vgs_cls_bg` | [Clear](#0xd20038-0xd20048-clear-screen) a specific BG |
 | `vgs_draw_pixel` | Draw a [pixel](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
 | `vgs_draw_line` | Draw a [line](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
 | `vgs_draw_box` | Draw a [rectangle](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
@@ -612,7 +614,7 @@ This library is always linked implicitly (`-lc`), so you do not need to specify 
 | `vgs_sprite` | Set [OAM](#oam-object-attribute-memory) attribute values in bulk |
 | `vgs_bgm_play` | Play [background music](#0xe01000o---play-vgm) |
 | `vgs_sfx_play` | Play [sound effect](#0xe01100o---play-sfx) |
-| `vgs_exit` | Exit process |
+| `vgs_exit` | [Exit](#0xe7fffcout---exit) process |
 
 For detailed specifications, please refer to [./lib/vgs.h](./lib/vgs.h).
 
@@ -630,9 +632,9 @@ To use this library, you must specify the `-llog` option at link time.
 
 | Function | Description |
 |:---------|:------------|
-| `vgs_print` | Output text to the debug console (no line breaks) |
-| `vgs_println` | Output text to the debug console (with line breaks) |
-| `vgs_putlog` | Output formatted string logs to the debug console. |
+| `vgs_print` | Output text to the [console](#0xe00000out---console-output) (no line breaks) |
+| `vgs_println` | Output text to the [console](#0xe00000out---console-output) (with line breaks) |
+| `vgs_putlog` | Output formatted string logs to the [console](#0xe00000out---console-output). |
 
 `vgs_putlog` can display embedded characters using `%d`, `%u`, and `%s`.
 
