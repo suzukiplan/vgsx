@@ -88,8 +88,12 @@ class VGSX
     inline int getDisplayHeight() { return VDP_HEIGHT; }
     uint32_t inPort(uint32_t address);
     void outPort(uint32_t address, uint32_t value);
+    inline bool isExit() { return this->exitFlag; }
+    int32_t getExitCode() { return this->exitCode; }
 
   private:
+    bool exitFlag;
+    int32_t exitCode;
     char lastError[256];
     void setLastError(const char* format, ...);
     volatile bool detectReferVSync;

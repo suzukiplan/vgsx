@@ -107,6 +107,7 @@ typedef struct {
 #define VGS_KEY_X *((uint32_t*)0xE20018)
 #define VGS_KEY_Y *((uint32_t*)0xE2001C)
 #define VGS_KEY_START *((uint32_t*)0xE20020)
+#define VGS_OUT_EXIT *((int32_t*)0xE7FFFC)
 
 #define TRUE 1
 #define FALSE 0
@@ -138,6 +139,7 @@ void vgs_sprite_pattern(uint16_t n, uint16_t ptn);
 void vgs_sprite_flip(uint16_t n, int8_t h, int8_t v);
 void vgs_bgm_play(uint16_t n);
 void vgs_sfx_play(uint8_t n);
+void vgs_exit(int32_t code);
 
 #ifdef __cplusplus
 };

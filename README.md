@@ -460,6 +460,7 @@ Note that all addresses and values for I/O instructions must be specified as 32-
 | 0xE02018 |  o  |  -  | [Gamepad: X button](#0xe200xxi---gamepad) |
 | 0xE0201C |  o  |  -  | [Gamepad: Y button](#0xe200xxi---gamepad) |
 | 0xE02020 |  o  |  -  | [Gamepad: Start button](#0xe200xxi---gamepad) |
+| 0xE7FFFC |  -  |  o  | [Exit](#0xe7fffcout---exit) |
 
 ### 0xE00000[in] - V-SYNC
 
@@ -563,6 +564,12 @@ The following table shows the button assignments for a typical gamepad:
 | `Y` | `S` | `X` | `Triangle` |
 | `Start` | `Space` | `Plus` | `Options` |
 
+### 0xE7FFFC[out] - Exit
+
+Issuing an exit request for VGS-X.
+
+In the [Emulator for Debug (SDL2)](#vgs-x-emulator-for-debug), the value written here becomes the process exit code.
+
 # Toolchain
 
 | Path | Description |
@@ -583,8 +590,13 @@ usage: vgsx [-g /path/to/pattern.chr]
             [-c /path/to/palette.bin]
             [-b /path/to/bgm.vgm]
             [-s /path/to/sfx.wav]
+            [-x expected_exit_code]
             { /path/to/program.elf | /path/to/program.rom }
 ```
+
+- The `-g`, `-b`, and `-s` options can be specified multiple times.
+- Program file (`.elf`) or ROM file (`rom`) are automatically identified based on the header information in the file header.
+- The `-x` option is intended for use in testing environments such as CI. If the exit code specified by the user program matches the expected value, the process exits with 0; otherwise, it exits with -1. When this option is specified, SDL video and audio output is skipped.
 
 ## bmp2chr
 

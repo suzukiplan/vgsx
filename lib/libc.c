@@ -35,9 +35,10 @@ extern int main(int argc, char* argv[]);
 
 void crt0(void)
 {
-    main(0, (char**)0);
+    vgs_exit(main(0, (char**)0));
 
-    // Hang-up after return
+    // Hang-up after exit
+    vgs_console_print("HANG UP\n");
     while (1) {
         vgs_vsync();
     }
@@ -225,4 +226,9 @@ void vgs_bgm_play(uint16_t n)
 void vgs_sfx_play(uint8_t n)
 {
     VGS_OUT_SFX_PLAY = n;
+}
+
+void vgs_exit(int32_t code)
+{
+    VGS_OUT_EXIT = code;
 }

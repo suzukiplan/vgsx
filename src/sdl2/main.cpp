@@ -93,6 +93,7 @@ static void put_usage()
     puts("            [-c /path/to/palette.bin]");
     puts("            [-b /path/to/bgm.vgm]");
     puts("            [-s /path/to/sfx.wav]");
+    puts("            [-x expected_exit_code]");
     puts("            { /path/to/program.elf | /path/to/program.rom }");
 }
 
@@ -110,9 +111,21 @@ int main(int argc, char* argv[])
     uint16_t pindex = 0;
     uint16_t bindex = 0;
     uint8_t sindex = 0;
+    bool consoleMode = false;
+    int32_t expectedExitCode = 0;
     for (int i = 1; i < argc; i++) {
         if ('-' == argv[i][0]) {
             switch (tolower(argv[i][1])) {
+                case 'x': {
+                    if (argc <= i + 1) {
+                        put_usage();
+                        return 1;
+                    }
+                    i++;
+                    expectedExitCode = atoi(argv[i]);
+                    consoleMode = true;
+                    break;
+                }
                 case 'g': {
                     if (argc <= i + 1) {
                         put_usage();
@@ -282,50 +295,56 @@ int main(int argc, char* argv[])
         }
     }
 
-    SDL_version sdlVersion;
-    SDL_GetVersion(&sdlVersion);
-    printf("SDL version: %d.%d.%d\n", sdlVersion.major, sdlVersion.minor, sdlVersion.patch);
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS)) {
-        printf("SDL_Init failed: %s\n", SDL_GetError());
-        exit(-1);
-    }
+    SDL_AudioDeviceID audioDeviceId = 0;
+    SDL_Window* window = nullptr;
+    SDL_Surface* windowSurface = nullptr;
 
-    puts("Initializing AudioDriver");
-    SDL_AudioSpec desired;
-    SDL_AudioSpec obtained;
-    desired.freq = 44100;
-    desired.format = AUDIO_S16LSB;
-    desired.channels = 2;
-    desired.samples = 2048;
-    desired.callback = audioCallback;
-    desired.userdata = &vgsx;
-    auto audioDeviceId = SDL_OpenAudioDevice(nullptr, 0, &desired, &obtained, 0);
-    if (0 == audioDeviceId) {
-        printf(" ... SDL_OpenAudioDevice failed: %s\n", SDL_GetError());
-        exit(-1);
-    }
-    printf("- obtained.freq = %d\n", obtained.freq);
-    printf("- obtained.format = %X\n", obtained.format);
-    printf("- obtained.channels = %d\n", obtained.channels);
-    printf("- obtained.samples = %d\n", obtained.samples);
+    if (!consoleMode) {
+        SDL_version sdlVersion;
+        SDL_GetVersion(&sdlVersion);
+        printf("SDL version: %d.%d.%d\n", sdlVersion.major, sdlVersion.minor, sdlVersion.patch);
+        if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS)) {
+            printf("SDL_Init failed: %s\n", SDL_GetError());
+            exit(-1);
+        }
 
-    auto window = SDL_CreateWindow(
-        "VGS-X for SDL2",
-        SDL_WINDOWPOS_UNDEFINED,
-        SDL_WINDOWPOS_UNDEFINED,
-        640,
-        400,
-        0);
-    auto windowSurface = SDL_GetWindowSurface(window);
-    if (!windowSurface) {
-        printf("SDL_GetWindowSurface failed: %s\n", SDL_GetError());
-        exit(-1);
+        puts("Initializing AudioDriver");
+        SDL_AudioSpec desired;
+        SDL_AudioSpec obtained;
+        desired.freq = 44100;
+        desired.format = AUDIO_S16LSB;
+        desired.channels = 2;
+        desired.samples = 2048;
+        desired.callback = audioCallback;
+        desired.userdata = &vgsx;
+        audioDeviceId = SDL_OpenAudioDevice(nullptr, 0, &desired, &obtained, 0);
+        if (0 == audioDeviceId) {
+            printf(" ... SDL_OpenAudioDevice failed: %s\n", SDL_GetError());
+            exit(-1);
+        }
+        printf("- obtained.freq = %d\n", obtained.freq);
+        printf("- obtained.format = %X\n", obtained.format);
+        printf("- obtained.channels = %d\n", obtained.channels);
+        printf("- obtained.samples = %d\n", obtained.samples);
+
+        window = SDL_CreateWindow(
+            "VGS-X for SDL2",
+            SDL_WINDOWPOS_UNDEFINED,
+            SDL_WINDOWPOS_UNDEFINED,
+            640,
+            400,
+            0);
+        windowSurface = SDL_GetWindowSurface(window);
+        if (!windowSurface) {
+            printf("SDL_GetWindowSurface failed: %s\n", SDL_GetError());
+            exit(-1);
+        }
+        if (4 != windowSurface->format->BytesPerPixel) {
+            printf("unsupported pixel format (support only 4 bytes / pixel)\n");
+            exit(-1);
+        }
+        SDL_UpdateWindowSurface(window);
     }
-    if (4 != windowSurface->format->BytesPerPixel) {
-        printf("unsupported pixel format (support only 4 bytes / pixel)\n");
-        exit(-1);
-    }
-    SDL_UpdateWindowSurface(window);
 
     printf("Start main loop.\n");
     SDL_Event event;
@@ -335,11 +354,13 @@ int main(int argc, char* argv[])
     bool stabled = true;
     double totalClocks = 0.0;
     uint32_t maxClocks = 0;
-    SDL_PauseAudioDevice(audioDeviceId, 0);
-    while (!quit) {
+    if (!consoleMode) {
+        SDL_PauseAudioDevice(audioDeviceId, 0);
+    }
+    while (!quit && !vgsx.isExit()) {
         loopCount++;
         auto start = std::chrono::system_clock::now();
-        while (SDL_PollEvent(&event)) {
+        while (!consoleMode && SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 quit = true;
             } else if (event.type == SDL_KEYDOWN) {
@@ -379,24 +400,26 @@ int main(int argc, char* argv[])
                 maxClocks = vgsx.context.frameClocks;
                 printf("Update the peak CPU clock rate: %dHz per frame.\n", maxClocks);
             }
-            auto vgsDisplay = vgsx.getDisplay();
-            auto pcDisplay = (unsigned int*)windowSurface->pixels;
-            auto pitch = windowSurface->pitch / windowSurface->format->BytesPerPixel;
-            const int offsetX = 0;
-            const int offsetY = 0;
-            pcDisplay += offsetY;
-            for (int y = 0; y < vgsx.getDisplayHeight(); y++) {
-                for (int x = 0; x < vgsx.getDisplayWidth(); x++) {
-                    uint32_t rgb888 = *vgsDisplay;
-                    pcDisplay[offsetX + x * 2] = rgb888;
-                    pcDisplay[offsetX + x * 2 + 1] = rgb888;
-                    pcDisplay[offsetX + pitch + x * 2] = rgb888;
-                    pcDisplay[offsetX + pitch + x * 2 + 1] = rgb888;
-                    vgsDisplay++;
+            if (!consoleMode) {
+                auto vgsDisplay = vgsx.getDisplay();
+                auto pcDisplay = (unsigned int*)windowSurface->pixels;
+                auto pitch = windowSurface->pitch / windowSurface->format->BytesPerPixel;
+                const int offsetX = 0;
+                const int offsetY = 0;
+                pcDisplay += offsetY;
+                for (int y = 0; y < vgsx.getDisplayHeight(); y++) {
+                    for (int x = 0; x < vgsx.getDisplayWidth(); x++) {
+                        uint32_t rgb888 = *vgsDisplay;
+                        pcDisplay[offsetX + x * 2] = rgb888;
+                        pcDisplay[offsetX + x * 2 + 1] = rgb888;
+                        pcDisplay[offsetX + pitch + x * 2] = rgb888;
+                        pcDisplay[offsetX + pitch + x * 2 + 1] = rgb888;
+                        vgsDisplay++;
+                    }
+                    pcDisplay += pitch * 2;
                 }
-                pcDisplay += pitch * 2;
+                SDL_UpdateWindowSurface(window);
             }
-            SDL_UpdateWindowSurface(window);
             // sync 60fps
             std::chrono::duration<double> diff = std::chrono::system_clock::now() - start;
             int us = (int)(diff.count() * 1000000);
@@ -465,5 +488,21 @@ int main(int argc, char* argv[])
     }
     printf("RAM usage: %d/%d (%d%%)\n", ramUsage, 1024 * 1024, ramUsage * 100 / 1024 / 1024);
     SDL_Quit();
+
+    if (vgsx.isExit()) {
+        auto exitCode = vgsx.getExitCode();
+        printf("Detect exit: code=%d\n", exitCode);
+        if (consoleMode) {
+            if (expectedExitCode == exitCode) {
+                puts("Excpected!");
+                return 0;
+            } else {
+                puts("Unexpected!");
+                return -1;
+            }
+        } else {
+            return exitCode;
+        }
+    }
     return 0;
 }

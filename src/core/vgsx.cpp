@@ -430,6 +430,8 @@ void VGSX::reset(void)
     m68k_pulse_reset();
     m68k_set_reg(M68K_REG_SP, 0);
     this->detectReferVSync = false;
+    this->exitFlag = false;
+    this->exitCode = 0;
     this->context.program = NULL;
     this->context.programSize = 0;
     this->context.randomIndex = 0;
@@ -514,7 +516,7 @@ void VGSX::tick(void)
 {
     this->detectReferVSync = false;
     this->context.frameClocks = 0;
-    while (!this->detectReferVSync) {
+    while (!this->detectReferVSync && !this->exitFlag) {
         m68k_execute(4);
         this->context.frameClocks += 4;
     }
@@ -601,6 +603,10 @@ void VGSX::outPort(uint32_t address, uint32_t value)
                 this->context.sfxData[value].index = 0;
                 this->context.sfxData[value].play = true;
             }
+            return;
+        case 0xE7FFFC: // Exit
+            this->exitFlag = true;
+            this->exitCode = (int32_t)value;
             return;
     }
 }
