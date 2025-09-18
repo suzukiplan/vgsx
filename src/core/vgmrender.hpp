@@ -77,6 +77,7 @@ class vgm_chip_base
     }
 
     // simple getters
+    const char* name() { return m_name.c_str(); }
     chip_type type() const { return m_type; }
     virtual uint32_t sample_rate() const = 0;
 
@@ -224,6 +225,15 @@ class VgmHelper
         this->wait = 0;
         this->done = false;
         parse_header();
+    }
+
+    ~VgmHelper()
+    {
+        for (auto& chip : active_chips) {
+            // printf("ymfm: Release %s\n", chip.get()->name());
+            delete chip.release();
+        }
+        active_chips.clear();
     }
 
     void render(int16_t* buf, int samples)
