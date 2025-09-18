@@ -180,6 +180,8 @@ m68k-elf-gcc
 
 Note that VGS-X does not provide the C standard library, but it does provide the [Runtime Library for VGS-X](#runtime-library-for-vgs-x).
 
+> As an exception, you can use the `stdarg.h` provided by GCC.
+
 ## Character Pattern
 
 VGS-X can use 65,536 character patterns.
