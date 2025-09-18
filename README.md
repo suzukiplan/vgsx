@@ -22,7 +22,7 @@ Changes after Version 0.1.0 can be found in [CHANGES.md](./CHANGES.md).
 
 ## About VGS-X
 
-The VGS-X is a 16-bit game console featuring an MC68030 processor, an FM sound chip (YM2612), and a proprietary VDP optimized for MC68k architecture.
+The VGS-X is a 16-bit game console featuring an MC68030 processor, the FM sound chips, and a proprietary VDP optimized for MC68k architecture.
 
 Games can be developed using the GCC; _GNU Compiler Collection_ for MC68k.
 
