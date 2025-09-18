@@ -5,9 +5,8 @@
 - Core: Fixed an issue where audio noise might be played.
 - Core: Fixed memory leak during VGM playback.
 - MC68k C Runtime: Changed specification to omit pointer operators for integer register access. **(Breaking)**
-- Changed directory structure:
-  - Moved `src/sdl2` to `tools/sdl2`
-  - Moved `src/core/*` to `src/*`
+- Changed directory structure: `src/sdl2` -> `tools/sdl2` and `src/core/*` -> `src/*`
+- Add the tools: `bin2var`, `vgmplay`
 
 ## Version 0.1.0
 
