@@ -575,9 +575,11 @@ In the [Emulator for Debug (SDL2)](#vgs-x-emulator-for-debug), the value written
 | Name | Description |
 |:-----|:------------|
 | [vgsx](#vgs-x-emulator-for-debug) | VGS-X Emulator for Debug |
+| [bin2var](#bin2var) | Convert binary files to C language code |
 | [bmp2chr](#bmp2chr) | Make [CHR](#character-pattern) data from .bmp file |
 | [bmp2pal](#bmp2pal) | Make initial [palette](#palette) from .bmp file |
 | [makerom](#makerom) | Make ROM file from Program and Assets |
+| [vgmplay](#vgmplay) | Play a .vgm file from the command line |
 
 ## VGS-X Emulator for Debug
 
@@ -599,6 +601,18 @@ usage: vgsx [-g /path/to/pattern.chr]
 - The `-g`, `-b`, and `-s` options can be specified multiple times.
 - Program file (`.elf`) or ROM file (`rom`) are automatically identified based on the header information in the file header.
 - The `-x` option is intended for use in testing environments such as CI. If the exit code specified by the user program matches the expected value, the process exits with 0; otherwise, it exits with -1. When this option is specified, SDL video and audio output is skipped.
+
+## bin2var
+
+Path: [./tools/bin2var](./tools/bin2var/)
+
+Converts a binary file into program code for a const uint8_t array in C language.
+
+For example, it comes in handy when you want to use files such as stage map data, scenario scripts and text, or proprietary image formats within your program.
+
+```
+bin2var /path/to/binary.rom
+```
 
 ## bmp2chr
 
@@ -645,6 +659,14 @@ Remarks:
 - The `-g`, `-b`, and `-s` options can be specified multiple times.
 - Files are read sequentially from the specified file.
 - The character pattern specified with the first `-g` option is loaded at index 0, and the index of the pattern specified with the second `-g` option is the next one.
+
+## vgmplay
+
+Play a .vgm file from the command line.
+
+```
+usage: vgmplay /path/to/bgm.vgm
+```
 
 # License
 
