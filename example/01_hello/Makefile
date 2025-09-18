@@ -1,15 +1,14 @@
 VGSX_ROOT = ../..
 
 all:
-	cd ${VGSX_ROOT}/src/sdl2 && make
 	cd ${VGSX_ROOT}/tools && make
 	make execute
 
 clean:
-	rm -f program.rom program font.chr palette.bin 
+	rm -f program.rom program.elf font.chr palette.bin 
 
 execute: program.rom
-	${VGSX_ROOT}/src/sdl2/vgsx program.rom
+	${VGSX_ROOT}/tools/sdl2/vgsx program.rom
 
 program.rom: program.elf font.chr gamepad.chr palette.bin
 	${VGSX_ROOT}/tools/makerom/makerom \

@@ -22,7 +22,7 @@ Changes after Version 0.1.0 can be found in [CHANGES.md](./CHANGES.md).
 
 ## About VGS-X
 
-The VGS-X is a 16-bit game console featuring an MC68030 processor, an FM sound chip (YM2612), and a proprietary VDP optimized for MC68k architecture.
+The VGS-X is a 16-bit game console featuring an MC68030 processor, the FM sound chips, and a proprietary VDP optimized for MC68k architecture.
 
 Games can be developed using the GCC; _GNU Compiler Collection_ for MC68k.
 
@@ -178,6 +178,7 @@ m68k-elf-gcc
     -Wl,-ecrt0                   ... Specify crt0 as the entry point when using the VGS-X runtime
 ```
 
+Note that VGS-X does not provide the C standard library, but it does provide the [Runtime Library for VGS-X](#runtime-library-for-vgs-x).
 
 ## Character Pattern
 
@@ -411,6 +412,8 @@ When set to Bitmap mode, the name table corresponds to the pixels on the screen 
 
 Each pixel is set in RGB888 format.
 
+When the pixel color is 0x00000000, it becomes transparent.
+
 ### 0xD20038-0xD20048: Clear Screen
 
 You can delete all BGs or specific BGs in bulk.
@@ -460,6 +463,7 @@ Note that all addresses and values for I/O instructions must be specified as 32-
 | 0xE02018 |  o  |  -  | [Gamepad: X button](#0xe200xxi---gamepad) |
 | 0xE0201C |  o  |  -  | [Gamepad: Y button](#0xe200xxi---gamepad) |
 | 0xE02020 |  o  |  -  | [Gamepad: Start button](#0xe200xxi---gamepad) |
+| 0xE7FFFC |  -  |  o  | [Exit](#0xe7fffcout---exit) |
 
 ### 0xE00000[in] - V-SYNC
 
@@ -515,8 +519,8 @@ VGS-X can play VGM data compatible with the following chips (OPN, OPM and SSG) a
 
 Notes:
 
-1. OPNA (YM2608) rhythm sound playback is not supported.
-2. DCSG (TI76489) playback is not supported.
+1. YM2608 (OPNA) rhythm sound playback is not supported.
+2. SN76489 (DCSG) playback is not supported.
 
 We recommend using [Furnace Tracker](https://github.com/tildearrow/furnace) to create VGM data compatible with these FM sound chips.
 
@@ -563,16 +567,56 @@ The following table shows the button assignments for a typical gamepad:
 | `Y` | `S` | `X` | `Triangle` |
 | `Start` | `Space` | `Plus` | `Options` |
 
+### 0xE7FFFC[out] - Exit
+
+Issuing an exit request for VGS-X.
+
+In the [Emulator for Debug (SDL2)](#vgs-x-emulator-for-debug), the value written here becomes the process exit code.
+
+# Runtime Library for VGS-X
+
+| Function | Description |
+|:---------|:------------|
+| `vgs_vsync` | Synchronize the screen output with 60fps |
+| `vgs_srand` | Set the random number seed |
+| `vgs_rand` | Obtain a 16-bit random value |
+| `vgs_rand32` | Obtain a 32-bit random value |
+| `vgs_console_print` | Output text to the debug console (no line breaks) |
+| `vgs_console_println` | Output text to the debug console (with line breaks) |
+| `vgs_d32str` | Convert a 32-bit signed integer to a string |
+| `vgs_u32str` | Convert a 32-bit unsigned integer to a string |
+| `vgs_put_bg` | Display a character on the BG in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode) |
+| `vgs_put_bg` | Display a string on the BG in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode) |
+| `vgs_cls_bg_all` | Clear all BGs |
+| `vgs_cls_bg` | Clear a specific BG |
+| `vgs_draw_pixel` | Draw a [pixel](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
+| `vgs_draw_line` | Draw a [line](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
+| `vgs_draw_box` | Draw a [rectangle](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
+| `vgs_draw_boxf` | Draw a [filled-rectangle](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
+| `vgs_draw_character` | Draw a [character-pattern](#character-pattern) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
+| `vgs_sprite` | Set [OAM](#oam-object-attribute-memory) attribute values in bulk |
+| `vgs_bgm_play` | Play [background music](#0xe01000o---play-vgm) |
+| `vgs_sfx_play` | Play [sound effect](#0xe01100o---play-sfx) |
+| `vgs_exit` | Exit process |
+
+For detailed specifications, please refer to [./lib/vgs.h](./lib/vgs.h).
+
+Since each function specification is documented in Doxygen format within [./lib/vgs.h](./lib/vgs.h), entering the function name in a code editor like Visual Studio Code with a properly configured C/C++ plugin will trigger appropriate specification suggestions.
+
 # Toolchain
 
-| Path | Description |
+| Name | Description |
 |:-----|:------------|
-| [./src/sdl2](./src/sdl2/) | VGS-X Emulator for Debug |
-| [./tools/bmp2chr](./tools/bmp2chr/) | Make [CHR](#character-pattern) data from .bmp file |
-| [./tools/bmp2pal](./tools/bmp2pal/) | Make initial [palette](#palette) from .bmp file |
-| [./tools/makerom](./tools/makerom/) | Make ROM file from Program and Assets |
+| [vgsx](#vgs-x-emulator-for-debug) | VGS-X Emulator for Debug |
+| [bin2var](#bin2var) | Convert binary files to C language code |
+| [bmp2chr](#bmp2chr) | Make [CHR](#character-pattern) data from .bmp file |
+| [bmp2pal](#bmp2pal) | Make initial [palette](#palette) from .bmp file |
+| [makerom](#makerom) | Make ROM file from Program and Assets |
+| [vgmplay](#vgmplay) | Play a .vgm file from the command line |
 
 ## VGS-X Emulator for Debug
+
+Path: [./tools/sdl2/](./tools/sdl2/)
 
 This is a VGS-X emulator built using SDL2.
 
@@ -583,10 +627,29 @@ usage: vgsx [-g /path/to/pattern.chr]
             [-c /path/to/palette.bin]
             [-b /path/to/bgm.vgm]
             [-s /path/to/sfx.wav]
+            [-x expected_exit_code]
             { /path/to/program.elf | /path/to/program.rom }
 ```
 
+- The `-g`, `-b`, and `-s` options can be specified multiple times.
+- Program file (`.elf`) or ROM file (`rom`) are automatically identified based on the header information in the file header.
+- The `-x` option is intended for use in testing environments such as CI. If the exit code specified by the user program matches the expected value, the process exits with 0; otherwise, it exits with -1. When this option is specified, SDL video and audio output is skipped.
+
+## bin2var
+
+Path: [./tools/bin2var](./tools/bin2var/)
+
+Converts a binary file into program code for a const uint8_t array in C language.
+
+For example, it comes in handy when you want to use files such as stage map data, scenario scripts and text, or proprietary image formats within your program.
+
+```
+bin2var /path/to/binary.rom
+```
+
 ## bmp2chr
+
+Path: [./tools/bmp2chr](./tools/bmp2chr/)
 
 Generates VGS-X [Character Pattern](#character-pattern) data from 256-color .bmp (Windows Bitmap) file.
 
@@ -601,6 +664,8 @@ Remarks:
 
 ## bmp2pal
 
+Path: [./tools/bmp2pal](./tools/bmp2pal/)
+
 Generates initial [Palette](#palette) data for VGS-X from 256-color .bmp (Windows Bitmap) file.
 
 ```
@@ -608,6 +673,8 @@ usage: bmp2pal input.bmp palette.dat
 ```
 
 ## makerom
+
+Path: [./tools/makerom](./tools/makerom/)
 
 Generates a ROM file that combines the program and assets into a single file.
 
@@ -625,6 +692,14 @@ Remarks:
 - The `-g`, `-b`, and `-s` options can be specified multiple times.
 - Files are read sequentially from the specified file.
 - The character pattern specified with the first `-g` option is loaded at index 0, and the index of the pattern specified with the second `-g` option is the next one.
+
+## vgmplay
+
+Play a .vgm file from the command line.
+
+```
+usage: vgmplay /path/to/bgm.vgm
+```
 
 # License
 

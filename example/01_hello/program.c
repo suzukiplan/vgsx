@@ -12,11 +12,11 @@ void draw_star(int x, int y)
 int main(int argc, char* argv[])
 {
     vgs_console_print("Hello, World!\n\0");
-    *VGS_VREG_BMP0 = 1; // BG0: Bitmap Mode
-    *VGS_VREG_BMP1 = 1; // BG1: Bitmap Mode
-    *VGS_VREG_BMP2 = 1; // BG2: Bitmap Mode
-    *VGS_VREG_BMP3 = 0; // BG3: Character Pattern Mode
-    *VGS_VREG_SPOS = 3; // Sprite: Displayed on top of BG3
+    VGS_VREG_BMP0 = 1; // BG0: Bitmap Mode
+    VGS_VREG_BMP1 = 1; // BG1: Bitmap Mode
+    VGS_VREG_BMP2 = 1; // BG2: Bitmap Mode
+    VGS_VREG_BMP3 = 0; // BG3: Character Pattern Mode
+    VGS_VREG_SPOS = 3; // Sprite: Displayed on top of BG3
     vgs_print_bg(3, 11, 12, 0, "HELLO VGS-X WORLD!");
 
     uint32_t col = 1;
@@ -52,17 +52,17 @@ int main(int argc, char* argv[])
     vgs_sprite(0, TRUE, 20, 90, 2, 0, '1');
     vgs_draw_box(2, 320 - 20 - 32, 86, 320 - 20 - 32 + 31, 86 + 31, 0xF02020);
     vgs_sprite(1, TRUE, 320 - 20 - 32, 86, 3, 0, 'A');
-    VGS_OAM[1].scale = 10;
+    OAM[1].scale = 10;
 
     vgs_sprite(2, TRUE, 160 - 32 - 8, 20, 0, 0, 'V');
     vgs_sprite(3, TRUE, 160 - 4, 20, 0, 0, 'G');
     vgs_sprite(4, TRUE, 160 + 32, 20, 0, 0, 'S');
-    VGS_OAM[2].scale = 300;
-    VGS_OAM[2].rotate = 90;
-    VGS_OAM[3].scale = 200;
-    VGS_OAM[3].rotate = 120;
-    VGS_OAM[4].scale = 100;
-    VGS_OAM[4].rotate = 150;
+    OAM[2].scale = 300;
+    OAM[2].rotate = 90;
+    OAM[3].scale = 200;
+    OAM[3].rotate = 120;
+    OAM[4].scale = 100;
+    OAM[4].rotate = 150;
     int sa[4] = {10, 10, 10, 10};
 
     vgs_sprite(5, TRUE, 120, 140, 9, 0, 256);                   // gamepad
@@ -79,34 +79,34 @@ int main(int argc, char* argv[])
     vgs_bgm_play(0);
     while (1) {
         vgs_vsync();
-        *VGS_VREG_SY1 = 1;
+        VGS_VREG_SY1 = 1;
         vgs_draw_pixel(1, vgs_rand() % 320, 0, vgs_rand32());
-        // vgs_draw_character(1, vgs_rand() % 320 - 4, 0, 0, 0, 0x20 + (vgs_rand() & 0x3F));
-        VGS_OAM[0].rotate += 3;
+        // vgs_draw_character(1, vgs_rand() % 320 - 4, 0, FALSE, 0, 0x20 + (vgs_rand() & 0x3F));
+        OAM[0].rotate += 3;
 
         for (int i = 0; i < 4; i++) {
-            VGS_OAM[i + 1].scale += sa[i];
-            if (400 < VGS_OAM[i + 1].scale && 0 < sa[i]) {
+            OAM[i + 1].scale += sa[i];
+            if (400 < OAM[i + 1].scale && 0 < sa[i]) {
                 sa[i] = -10;
                 if (i == 0) {
                     vgs_sfx_play(0);
                 }
-            } else if (VGS_OAM[i + 1].scale < 20 && sa[i] < 0) {
+            } else if (OAM[i + 1].scale < 20 && sa[i] < 0) {
                 sa[i] = 10;
             }
             if (i) {
-                VGS_OAM[i + 1].rotate += i * 3;
+                OAM[i + 1].rotate += i * 3;
             }
         }
-        VGS_OAM[6].visible = VGS_KEY_UP;
-        VGS_OAM[7].visible = VGS_KEY_DOWN;
-        VGS_OAM[8].visible = VGS_KEY_LEFT;
-        VGS_OAM[9].visible = VGS_KEY_RIGHT;
-        VGS_OAM[10].visible = VGS_KEY_START;
-        VGS_OAM[11].visible = VGS_KEY_A;
-        VGS_OAM[12].visible = VGS_KEY_B;
-        VGS_OAM[13].visible = VGS_KEY_X;
-        VGS_OAM[14].visible = VGS_KEY_Y;
+        OAM[6].visible = VGS_KEY_UP;
+        OAM[7].visible = VGS_KEY_DOWN;
+        OAM[8].visible = VGS_KEY_LEFT;
+        OAM[9].visible = VGS_KEY_RIGHT;
+        OAM[10].visible = VGS_KEY_START;
+        OAM[11].visible = VGS_KEY_A;
+        OAM[12].visible = VGS_KEY_B;
+        OAM[13].visible = VGS_KEY_X;
+        OAM[14].visible = VGS_KEY_Y;
     }
 
     return 0;

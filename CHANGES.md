@@ -1,5 +1,14 @@
 # Changes
 
+## Version 0.2.0
+
+- Core: Fixed an issue where audio noise might be played.
+- Core: Fixed memory leak during VGM playback.
+- MC68k C Runtime: Changed specification to omit pointer operators for integer register access. **(Disruptive)**
+- Changed directory structure: `src/sdl2` -> `tools/sdl2` and `src/core/*` -> `src/*`
+- Add the tools: `bin2var`, `vgmplay`
+- Creation and review of CRT specification documents **(Disruptive)**
+
 ## Version 0.1.0
 
 - First beta version.

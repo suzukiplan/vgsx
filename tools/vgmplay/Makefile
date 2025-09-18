@@ -1,4 +1,4 @@
-CORE_PATH = ../core
+CORE_PATH = ../../src
 CPP = g++
 CPP += -O2
 CPP += -std=gnu++17
@@ -7,7 +7,8 @@ CPP += -I${CORE_PATH}
 CPP += -I${CORE_PATH}/musashi
 CPP += -I${CORE_PATH}/ymfm/src
 CPP += -c
-OBJECTS = main.o
+OBJECTS = vgmplay.o
+OBJECTS += vgmplay_elf.o
 OBJECTS += vgsx.o
 OBJECTS += vgs0math.o
 OBJECTS += m68kcpu.o
@@ -20,16 +21,19 @@ OBJECTS += ymfm_misc.o
 OBJECTS += ymfm_adpcm.o
 OBJECTS += ymfm_ssg.o
 
-all: vgsx
+all: vgmplay
 
 clean:
 	rm -f ${OBJECTS}
 
-vgsx: ${OBJECTS}
+vgmplay: ${OBJECTS}
 	g++ -o $@ ${OBJECTS} `sdl2-config --libs`
 
-main.o: main.cpp ${CORE_PATH}/vgsx.h ${CORE_PATH}/vdp.hpp ${CORE_PATH}/vgmrender.hpp
+vgmplay.o: vgmplay.cpp ${CORE_PATH}/vgsx.h ${CORE_PATH}/vdp.hpp ${CORE_PATH}/vgmrender.hpp
 	${CPP} $<
+
+vgmplay_elf.o: vgmplay_elf.c
+	gcc -c $<
 
 vgsx.o: ${CORE_PATH}/vgsx.cpp ${CORE_PATH}/vgsx.h ${CORE_PATH}/vdp.hpp ${CORE_PATH}/vgmrender.hpp
 	${CPP} $<

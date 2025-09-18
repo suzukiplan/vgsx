@@ -43,47 +43,48 @@ typedef struct {
 //   - F/V: Flip Vertical
 // - palette (4bit)
 // - pattern number (16bit)
-#define VGS_VRAM_BG0 ((uint32_t*)0xC00000)
-#define VGS_VRAM_BG1 ((uint32_t*)0xC40000)
-#define VGS_VRAM_BG2 ((uint32_t*)0xC80000)
-#define VGS_VRAM_BG3 ((uint32_t*)0xCC0000)
+#define BG0 ((uint32_t*)0xC00000)
+#define BG1 ((uint32_t*)0xC40000)
+#define BG2 ((uint32_t*)0xC80000)
+#define BG3 ((uint32_t*)0xCC0000)
 
 // Sprites
-#define VGS_OAM_MAX 1024
-#define VGS_OAM ((OAM*)0xD00000)
+#define OAM_MAX 1024
+#define OAM ((OAM*)0xD00000)
 
 // Palette Table
 // 16 x 16 x 2bits
-#define VGS_PALETTE ((uint32_t*)0xD10000)
+#define PALETTE ((uint32_t*)0xD10000)
 
 // VDP Register
-#define VGS_VREG_SKIP ((uint32_t*)0xD20000)
-#define VGS_VREG_SPOS ((uint32_t*)0xD20004)
-#define VGS_VREG_SX0 ((uint32_t*)0xD20008)
-#define VGS_VREG_SX1 ((uint32_t*)0xD2000C)
-#define VGS_VREG_SX2 ((uint32_t*)0xD20010)
-#define VGS_VREG_SX3 ((uint32_t*)0xD20014)
-#define VGS_VREG_SY0 ((uint32_t*)0xD20018)
-#define VGS_VREG_SY1 ((uint32_t*)0xD2001C)
-#define VGS_VREG_SY2 ((uint32_t*)0xD20020)
-#define VGS_VREG_SY3 ((uint32_t*)0xD20024)
-#define VGS_VREG_BMP0 ((uint32_t*)0xD20028)
-#define VGS_VREG_BMP1 ((uint32_t*)0xD2002C)
-#define VGS_VREG_BMP2 ((uint32_t*)0xD20030)
-#define VGS_VREG_BMP3 ((uint32_t*)0xD20034)
-#define VGS_VREG_CLSA ((uint32_t*)0xD20038)
-#define VGS_VREG_CLS0 ((uint32_t*)0xD2003C)
-#define VGS_VREG_CLS1 ((uint32_t*)0xD20040)
-#define VGS_VREG_CLS2 ((uint32_t*)0xD20044)
-#define VGS_VREG_CLS3 ((uint32_t*)0xD20048)
-#define VGS_VREG_G_BG ((uint32_t*)0xD2004C)
-#define VGS_VREG_G_X1 ((uint32_t*)0xD20050)
-#define VGS_VREG_G_Y1 ((uint32_t*)0xD20054)
-#define VGS_VREG_G_X2 ((uint32_t*)0xD20058)
-#define VGS_VREG_G_Y2 ((uint32_t*)0xD2005C)
-#define VGS_VREG_G_COL ((uint32_t*)0xD20060)
-#define VGS_VREG_G_OPT ((uint32_t*)0xD20064)
-#define VGS_VREG_G_EXE ((uint32_t*)0xD20068)
+#define VGS_VREG_SKIP *((uint32_t*)0xD20000)
+#define VGS_VREG_SPOS *((uint32_t*)0xD20004)
+#define VGS_VREG_SX0 *((uint32_t*)0xD20008)
+#define VGS_VREG_SX1 *((uint32_t*)0xD2000C)
+#define VGS_VREG_SX2 *((uint32_t*)0xD20010)
+#define VGS_VREG_SX3 *((uint32_t*)0xD20014)
+#define VGS_VREG_SY0 *((uint32_t*)0xD20018)
+#define VGS_VREG_SY1 *((uint32_t*)0xD2001C)
+#define VGS_VREG_SY2 *((uint32_t*)0xD20020)
+#define VGS_VREG_SY3 *((uint32_t*)0xD20024)
+#define VGS_VREG_BMP0 *((uint32_t*)0xD20028)
+#define VGS_VREG_BMP1 *((uint32_t*)0xD2002C)
+#define VGS_VREG_BMP2 *((uint32_t*)0xD20030)
+#define VGS_VREG_BMP3 *((uint32_t*)0xD20034)
+#define VGS_VREG_CLSA *((uint32_t*)0xD20038)
+#define VGS_VREG_CLS ((uint32_t*)0xD2003C)
+#define VGS_VREG_CLS0 *((uint32_t*)0xD2003C)
+#define VGS_VREG_CLS1 *((uint32_t*)0xD20040)
+#define VGS_VREG_CLS2 *((uint32_t*)0xD20044)
+#define VGS_VREG_CLS3 *((uint32_t*)0xD20048)
+#define VGS_VREG_G_BG *((uint32_t*)0xD2004C)
+#define VGS_VREG_G_X1 *((uint32_t*)0xD20050)
+#define VGS_VREG_G_Y1 *((uint32_t*)0xD20054)
+#define VGS_VREG_G_X2 *((uint32_t*)0xD20058)
+#define VGS_VREG_G_Y2 *((uint32_t*)0xD2005C)
+#define VGS_VREG_G_COL *((uint32_t*)0xD20060)
+#define VGS_VREG_G_OPT *((uint32_t*)0xD20064)
+#define VGS_VREG_G_EXE *((uint32_t*)0xD20068)
 
 // Graphic Draw Function Identifer
 #define VGS_DRAW_PIXEL 0
@@ -93,11 +94,11 @@ typedef struct {
 #define VGS_DRAW_CHR 4
 
 // I/O
-#define VGS_IN_VSYNC ((uint32_t*)0xE00000)
-#define VGS_OUT_CONSOLE ((uint32_t*)0xE00000)
-#define VGS_IO_RANDOM ((uint32_t*)0xE00004)
-#define VGS_OUT_VGM_PLAY ((uint32_t*)0xE01000)
-#define VGS_OUT_SFX_PLAY ((uint32_t*)0xE01100)
+#define VGS_IN_VSYNC *((uint32_t*)0xE00000)
+#define VGS_OUT_CONSOLE *((uint32_t*)0xE00000)
+#define VGS_IO_RANDOM *((uint32_t*)0xE00004)
+#define VGS_OUT_VGM_PLAY *((uint32_t*)0xE01000)
+#define VGS_OUT_SFX_PLAY *((uint32_t*)0xE01100)
 #define VGS_KEY_UP *((uint32_t*)0xE20000)
 #define VGS_KEY_DOWN *((uint32_t*)0xE20004)
 #define VGS_KEY_LEFT *((uint32_t*)0xE20008)
@@ -107,9 +108,9 @@ typedef struct {
 #define VGS_KEY_X *((uint32_t*)0xE20018)
 #define VGS_KEY_Y *((uint32_t*)0xE2001C)
 #define VGS_KEY_START *((uint32_t*)0xE20020)
-#define VGS_KEY_AXIS_X (int8_t)(*((uint32_t*)0xE20024))
-#define VGS_KEY_AXIS_Y (int8_t)(*((uint32_t*)0xE20028))
+#define VGS_OUT_EXIT *((int32_t*)0xE7FFFC)
 
+typedef int BOOL;
 #define TRUE 1
 #define FALSE 0
 
@@ -117,29 +118,180 @@ typedef struct {
 extern "C" {
 #endif
 
+/**
+ * @brief Synchronize the screen output with 60fps.
+ */
 void vgs_vsync(void);
+
+/**
+ * @brief Set the random number seed.
+ * @param seed Random number seed (0-65535)
+ */
 void vgs_srand(uint16_t seed);
+
+/**
+ * @brief Obtain a 16-bit random value.
+ * @return Random value (0-65535)
+ */
 uint16_t vgs_rand(void);
+
+/**
+ * @brief Obtain a 32-bit random value.
+ * @return Random value (0-4294967295)
+ * @remark This function calls vgs_rand twice, returns the result of the logical OR operation between the first value (shifted 16 bits to the left) and the second value.
+ */
 uint32_t vgs_rand32(void);
+
+/**
+ * @brief Output text to the debug console (no line breaks)
+ * @param text Buffer pointer pointing to the beginning of a buffer containing text terminated by a null character
+ */
 void vgs_console_print(const char* text);
-void vgs_put_bg(uint8_t n, uint8_t x, uint8_t y, uint32_t data);
+
+/**
+ * @brief Output text to the debug console (with line breaks)
+ * @param text Buffer pointer pointing to the beginning of a buffer containing text terminated by a null character
+ */
+void vgs_console_println(const char* text);
+
+/**
+ * @brief Convert a 32-bit signed integer to a string
+ * @param buf12 Pointer to the beginning of a buffer allocated with 12 bytes or more
+ * @param n Numbers converted to strings
+ */
+void vgs_d32str(char* buf12, int32_t n);
+
+/**
+ * @brief Convert a 32-bit unsigned integer to a string
+ * @param buf11 Pointer to the beginning of a buffer allocated with 11 bytes or more
+ * @param n Numbers converted to strings
+ */
+void vgs_u32str(char* buf11, uint32_t n);
+
+/**
+ * @brief Display a character on the BG in Character Pattern Mode
+ * @param n Number of BG (0 to 3)
+ * @param x X-coordinate of nametable (0 to 255)
+ * @param y Y-coordinate of nametable (0 to 255)
+ * @param attr Attribute
+ */
+void vgs_put_bg(uint8_t n, uint8_t x, uint8_t y, uint32_t attr);
+
+/**
+ * @brief Display string on the BG in Character Pattern Mode
+ * @param n Number of BG (0 to 3)
+ * @param x X-coordinate of nametable (0 to 255)
+ * @param y Y-coordinate of nametable (0 to 255)
+ * @param pal Palette number
+ * @param text Buffer pointer pointing to the beginning of a buffer containing text terminated by a null character
+ */
 void vgs_print_bg(uint8_t n, uint8_t x, uint8_t y, uint8_t pal, const char* text);
+
+/**
+ * @brief Clear all BGs
+ * @param value It will be cleared with the value specified by this parameter.
+ * @remark If the value is 0, a fast clear is performed.
+ */
 void vgs_cls_bg_all(uint32_t value);
+
+/**
+ * @brief Clear a specific BG
+ * @param n Number of BG (0 to 3)
+ * @param value It will be cleared with the value specified by this parameter.
+ * @remark If the value is 0, a fast clear is performed.
+ */
 void vgs_cls_bg(uint8_t n, uint32_t value);
+
+/**
+ * @brief Draw a pixel on the BG in Bitmap Mode
+ * @param n Number of BG (0 to 3)
+ * @param x X-coordinate of VRAM (0 to 319)
+ * @param y Y-coordinate of VRAM (0 to 199)
+ * @param col RGB888 color format
+ * @remark Drawing outside the screen area will be skipped.
+ */
 void vgs_draw_pixel(uint8_t n, int32_t x, int32_t y, uint32_t col);
+
+/**
+ * @brief Draw a line on the BG in Bitmap Mode
+ * @param n Number of BG (0 to 3)
+ * @param x1 X-coordinate of VRAM (0 to 319)
+ * @param y1 Y-coordinate of VRAM (0 to 199)
+ * @param x2 X-coordinate of VRAM (0 to 319)
+ * @param y2 Y-coordinate of VRAM (0 to 199)
+ * @param col RGB888 color format
+ * @remark Drawing outside the screen area will be skipped.
+ */
 void vgs_draw_line(uint8_t n, int32_t x1, int32_t y1, int32_t x2, int32_t y2, uint32_t col);
+
+/**
+ * @brief Draw a rectangle on the BG in Bitmap Mode
+ * @param n Number of BG (0 to 3)
+ * @param x1 X-coordinate of VRAM (0 to 319)
+ * @param y1 Y-coordinate of VRAM (0 to 199)
+ * @param x2 X-coordinate of VRAM (0 to 319)
+ * @param y2 Y-coordinate of VRAM (0 to 199)
+ * @param col RGB888 color format
+ * @remark Drawing outside the screen area will be skipped.
+ */
 void vgs_draw_box(uint8_t n, int32_t x1, int32_t y1, int32_t x2, int32_t y2, uint32_t col);
+
+/**
+ * @brief Draw a filled-rectangle on the BG in Bitmap Mode
+ * @param n Number of BG (0 to 3)
+ * @param x1 X-coordinate of VRAM (0 to 319)
+ * @param y1 Y-coordinate of VRAM (0 to 199)
+ * @param x2 X-coordinate of VRAM (0 to 319)
+ * @param y2 Y-coordinate of VRAM (0 to 199)
+ * @param col RGB888 color format
+ * @remark Drawing outside the screen area will be skipped.
+ */
 void vgs_draw_boxf(uint8_t n, int32_t x1, int32_t y1, int32_t x2, int32_t y2, uint32_t col);
-void vgs_draw_character(uint8_t n, int32_t x, int32_t y, int draw0, uint8_t pal, uint16_t ptn);
-void vgs_sprite(uint16_t n, uint8_t visible, int16_t x, int16_t y, uint8_t size, uint8_t pal, uint16_t ptn);
-void vgs_sprite_visible(uint16_t n, uint8_t visible);
-void vgs_sprite_position(uint16_t n, int16_t x, int16_t y);
-void vgs_sprite_palette(uint16_t n, uint8_t size);
-void vgs_sprite_palette(uint16_t n, uint8_t pal);
-void vgs_sprite_pattern(uint16_t n, uint16_t ptn);
-void vgs_sprite_flip(uint16_t n, int8_t h, int8_t v);
+
+/**
+ * @brief Draw a character-pattern on the BG in Bitmap Mode
+ * @param n Number of BG (0 to 3)
+ * @param x X-coordinate of VRAM (0 to 319)
+ * @param y Y-coordinate of VRAM (0 to 199)
+ * @param draw0 TRUE: Draw color number 0, FLASE: Skip color number 0
+ * @param pal Palette number (0 to 15)
+ * @param ptn Character pattern number (0 to 65535)
+ * @remark Drawing outside the screen area will be skipped.
+ */
+void vgs_draw_character(uint8_t n, int32_t x, int32_t y, BOOL draw0, uint8_t pal, uint16_t ptn);
+
+/**
+ * @brief Set OAM attribute values in bulk
+ * @param n Sprite number (0 to 1023)
+ * @param visible TRUE: Visible, FALSE: Hidden
+ * @param x X-coordinate of VRAM (0 to 319)
+ * @param y Y-coordinate of VRAM (0 to 199)
+ * @param size Sprite size (0: 8x8, 1: 16x16, 2: 24x24 ... 15: 256x256)
+ * @param pal Palette number (0 to 15)
+ * @param ptn Character pattern number (0 to 65535)
+ * @remark Scale and rotation are reset to disabled (0).
+ * @remark Drawing outside the screen area will be skipped.
+ * @remark Individual parameters can be referenced and/or updated via OAM[n].
+ */
+void vgs_sprite(uint16_t n, BOOL visible, int16_t x, int16_t y, uint8_t size, uint8_t pal, uint16_t ptn);
+
+/**
+ * @brief Play background music
+ * @param n Number of Music (0 to 255)
+ */
 void vgs_bgm_play(uint16_t n);
+
+/**
+ * @brief Play sound effect
+ * @param n Number of SFX (0 to 255)
+ */
 void vgs_sfx_play(uint8_t n);
+
+/**
+ * @brief Exit processs
+ * @param code Exit code
+ */
+void vgs_exit(int32_t code);
 
 #ifdef __cplusplus
 };
