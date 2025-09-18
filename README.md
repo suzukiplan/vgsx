@@ -495,10 +495,10 @@ Writing a value to 0xE00000 allows you to output characters to the console.
 This feature is intended for use in game log output and similar applications.
 
 ```c
-vgs_console_print("Hello, World!\n");
+vgs_print("Hello, World!\n");
 ```
 
-The `vgs_console_print` function is defined in [vgs.h](./lib/vgs.h).
+The `vgs_print` function is defined in [log.h](./lib/log.h).
 
 ### 0xE00004[i/o] - Random
 
