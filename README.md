@@ -178,6 +178,7 @@ m68k-elf-gcc
     -Wl,-ecrt0                   ... Specify crt0 as the entry point when using the VGS-X runtime
 ```
 
+Note that VGS-X does not provide the C standard library, but it does provide the [Runtime Library for VGS-X](#runtime-library-for-vgs-x).
 
 ## Character Pattern
 
@@ -411,6 +412,8 @@ When set to Bitmap mode, the name table corresponds to the pixels on the screen 
 
 Each pixel is set in RGB888 format.
 
+When the pixel color is 0x00000000, it becomes transparent.
+
 ### 0xD20038-0xD20048: Clear Screen
 
 You can delete all BGs or specific BGs in bulk.
@@ -569,6 +572,36 @@ The following table shows the button assignments for a typical gamepad:
 Issuing an exit request for VGS-X.
 
 In the [Emulator for Debug (SDL2)](#vgs-x-emulator-for-debug), the value written here becomes the process exit code.
+
+# Runtime Library for VGS-X
+
+| Function | Description |
+|:---------|:------------|
+| `vgs_vsync` | Synchronize the screen output with 60fps |
+| `vgs_srand` | Set the random number seed |
+| `vgs_rand` | Obtain a 16-bit random value |
+| `vgs_rand32` | Obtain a 32-bit random value |
+| `vgs_console_print` | Output text to the debug console (no line breaks) |
+| `vgs_console_println` | Output text to the debug console (with line breaks) |
+| `vgs_d32str` | Convert a 32-bit signed integer to a string |
+| `vgs_u32str` | Convert a 32-bit unsigned integer to a string |
+| `vgs_put_bg` | Display a character on the BG in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode) |
+| `vgs_put_bg` | Display a string on the BG in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode) |
+| `vgs_cls_bg_all` | Clear all BGs |
+| `vgs_cls_bg` | Clear a specific BG |
+| `vgs_draw_pixel` | Draw a [pixel](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
+| `vgs_draw_line` | Draw a [line](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
+| `vgs_draw_box` | Draw a [rectangle](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
+| `vgs_draw_boxf` | Draw a [filled-rectangle](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
+| `vgs_draw_character` | Draw a [character-pattern](#character-pattern) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
+| `vgs_sprite` | Set [OAM](#oam-object-attribute-memory) attribute values in bulk |
+| `vgs_bgm_play` | Play [background music](#0xe01000o---play-vgm) |
+| `vgs_sfx_play` | Play [sound effect](#0xe01100o---play-sfx) |
+| `vgs_exit` | Exit process |
+
+For detailed specifications, please refer to [./lib/vgs.h](./lib/vgs.h).
+
+Since each function specification is documented in Doxygen format within [./lib/vgs.h](./lib/vgs.h), entering the function name in a code editor like Visual Studio Code with a properly configured C/C++ plugin will trigger appropriate specification suggestions.
 
 # Toolchain
 

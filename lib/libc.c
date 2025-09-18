@@ -27,10 +27,10 @@
 static volatile uint32_t _vsync;
 static volatile uint32_t _random;
 static uint32_t* _bg[4] = {
-    VGS_VRAM_BG0,
-    VGS_VRAM_BG1,
-    VGS_VRAM_BG2,
-    VGS_VRAM_BG3};
+    BG0,
+    BG1,
+    BG2,
+    BG3};
 extern int main(int argc, char* argv[]);
 
 void crt0(void)
@@ -108,12 +108,7 @@ void vgs_cls_bg_all(uint32_t value)
 
 void vgs_cls_bg(uint8_t n, uint32_t value)
 {
-    switch (n & 3) {
-        case 0: VGS_VREG_CLS0 = value; break;
-        case 1: VGS_VREG_CLS1 = value; break;
-        case 2: VGS_VREG_CLS2 = value; break;
-        case 3: VGS_VREG_CLS3 = value; break;
-    }
+    VGS_VREG_CLS[n & 3] = value;
 }
 
 void vgs_draw_pixel(uint8_t n, int32_t x, int32_t y, uint32_t col)
@@ -158,7 +153,7 @@ void vgs_draw_boxf(uint8_t n, int32_t x1, int32_t y1, int32_t x2, int32_t y2, ui
     VGS_VREG_G_EXE = VGS_DRAW_BOXF;
 }
 
-void vgs_draw_character(uint8_t n, int32_t x, int32_t y, int draw0, uint8_t pal, uint16_t ptn)
+void vgs_draw_character(uint8_t n, int32_t x, int32_t y, BOOL draw0, uint8_t pal, uint16_t ptn)
 {
     VGS_VREG_G_BG = n;
     VGS_VREG_G_X1 = (uint32_t)x;
@@ -168,60 +163,18 @@ void vgs_draw_character(uint8_t n, int32_t x, int32_t y, int draw0, uint8_t pal,
     VGS_VREG_G_EXE = VGS_DRAW_CHR;
 }
 
-void vgs_sprite(uint16_t n, uint8_t visible, int16_t x, int16_t y, uint8_t size, uint8_t pal, uint16_t ptn)
+void vgs_sprite(uint16_t n, BOOL visible, int16_t x, int16_t y, uint8_t size, uint8_t pal, uint16_t ptn)
 {
     n &= 0x3FF;
-    VGS_OAM[n].visible = visible;
-    VGS_OAM[n].x = x;
-    VGS_OAM[n].y = y;
-    VGS_OAM[n].size = size;
-    VGS_OAM[n].attr = pal & 0x0F;
-    VGS_OAM[n].attr <<= 16;
-    VGS_OAM[n].attr |= ptn;
-    VGS_OAM[n].rotate = 0;
-    VGS_OAM[n].scale = 0;
-}
-
-void vgs_sprite_visible(uint16_t n, uint8_t visible)
-{
-    n &= 0x3FF;
-    VGS_OAM[n].visible = visible;
-}
-
-void vgs_sprite_position(uint16_t n, int16_t x, int16_t y)
-{
-    n &= 0x3FF;
-    VGS_OAM[n].x = x;
-    VGS_OAM[n].y = y;
-}
-
-void vgs_sprite_size(uint16_t n, int8_t size)
-{
-    n &= 0x3FF;
-    VGS_OAM[n].size = size;
-}
-
-void vgs_sprite_palette(uint16_t n, uint8_t pal)
-{
-    n &= 0x3FF;
-    VGS_OAM[n].attr &= 0xFFF0FFFF;
-    uint32_t w = pal;
-    w &= 0x0F;
-    w <<= 16;
-    VGS_OAM[n].attr = w;
-}
-
-void vgs_sprite_pattern(uint16_t n, uint16_t ptn)
-{
-    VGS_OAM[n].attr &= 0xFFFF0000;
-    VGS_OAM[n].attr |= ptn;
-}
-
-void vgs_sprite_flip(uint16_t n, int8_t h, int8_t v)
-{
-    VGS_OAM[n].attr &= 0x3FFFFFFF;
-    VGS_OAM[n].attr |= h ? 0x80000000 : 0;
-    VGS_OAM[n].attr |= v ? 0x40000000 : 0;
+    OAM[n].visible = visible;
+    OAM[n].x = x;
+    OAM[n].y = y;
+    OAM[n].size = size;
+    OAM[n].attr = pal & 0x0F;
+    OAM[n].attr <<= 16;
+    OAM[n].attr |= ptn;
+    OAM[n].rotate = 0;
+    OAM[n].scale = 0;
 }
 
 void vgs_bgm_play(uint16_t n)
