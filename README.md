@@ -572,14 +572,16 @@ In the [Emulator for Debug (SDL2)](#vgs-x-emulator-for-debug), the value written
 
 # Toolchain
 
-| Path | Description |
+| Name | Description |
 |:-----|:------------|
-| [./src/sdl2](./src/sdl2/) | VGS-X Emulator for Debug |
-| [./tools/bmp2chr](./tools/bmp2chr/) | Make [CHR](#character-pattern) data from .bmp file |
-| [./tools/bmp2pal](./tools/bmp2pal/) | Make initial [palette](#palette) from .bmp file |
-| [./tools/makerom](./tools/makerom/) | Make ROM file from Program and Assets |
+| [vgsx](#vgs-x-emulator-for-debug) | VGS-X Emulator for Debug |
+| [bmp2chr](#bmp2chr) | Make [CHR](#character-pattern) data from .bmp file |
+| [bmp2pal](#bmp2pal) | Make initial [palette](#palette) from .bmp file |
+| [makerom](#makerom) | Make ROM file from Program and Assets |
 
 ## VGS-X Emulator for Debug
+
+Path: [./tools/sdl2/](./tools/sdl2/)
 
 This is a VGS-X emulator built using SDL2.
 
@@ -600,6 +602,8 @@ usage: vgsx [-g /path/to/pattern.chr]
 
 ## bmp2chr
 
+Path: [./tools/bmp2chr](./tools/bmp2chr/)
+
 Generates VGS-X [Character Pattern](#character-pattern) data from 256-color .bmp (Windows Bitmap) file.
 
 ```
@@ -613,6 +617,8 @@ Remarks:
 
 ## bmp2pal
 
+Path: [./tools/bmp2pal](./tools/bmp2pal/)
+
 Generates initial [Palette](#palette) data for VGS-X from 256-color .bmp (Windows Bitmap) file.
 
 ```
@@ -620,6 +626,8 @@ usage: bmp2pal input.bmp palette.dat
 ```
 
 ## makerom
+
+Path: [./tools/makerom](./tools/makerom/)
 
 Generates a ROM file that combines the program and assets into a single file.
 

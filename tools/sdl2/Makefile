@@ -1,4 +1,4 @@
-CORE_PATH = ../core
+CORE_PATH = ../../src
 CPP = g++
 CPP += -O2
 CPP += -std=gnu++17
