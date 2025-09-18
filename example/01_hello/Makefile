@@ -6,7 +6,7 @@ all:
 	make execute
 
 clean:
-	rm -f program.rom program font.chr palette.bin 
+	rm -f program.rom program.elf font.chr palette.bin 
 
 execute: program.rom
 	${VGSX_ROOT}/src/sdl2/vgsx program.rom
