@@ -3,3 +3,5 @@ all:
 	cd bmp2chr && make
 	cd bmp2pal && make
 	cd makerom && make
+	cd bin2var && make
+	cd vgmplay && make
