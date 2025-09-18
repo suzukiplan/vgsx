@@ -1,5 +1,9 @@
 # Changes
 
+## Version 0.3.0
+
+- CRT: Separate log-related APIs from libc.a to liblog.a **(Disruptive)**
+
 ## Version 0.2.0
 
 - Core: Fixed an issue where audio noise might be played.

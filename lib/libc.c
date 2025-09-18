@@ -38,7 +38,6 @@ void crt0(void)
     vgs_exit(main(0, (char**)0));
 
     // Hang-up after exit
-    vgs_console_print("HANG UP\n");
     while (1) {
         vgs_vsync();
     }
@@ -66,20 +65,6 @@ uint32_t vgs_rand32(void)
     result <<= 16;
     result |= vgs_rand();
     return result;
-}
-
-void vgs_console_print(const char* text)
-{
-    while (*text) {
-        VGS_OUT_CONSOLE = *text;
-        text++;
-    }
-}
-
-void vgs_console_println(const char* text)
-{
-    vgs_console_print(text);
-    VGS_OUT_CONSOLE = '\n';
 }
 
 void vgs_put_bg(uint8_t n, uint8_t x, uint8_t y, uint32_t data)

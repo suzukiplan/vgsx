@@ -143,18 +143,6 @@ uint16_t vgs_rand(void);
 uint32_t vgs_rand32(void);
 
 /**
- * @brief Output text to the debug console (no line breaks)
- * @param text Buffer pointer pointing to the beginning of a buffer containing text terminated by a null character
- */
-void vgs_console_print(const char* text);
-
-/**
- * @brief Output text to the debug console (with line breaks)
- * @param text Buffer pointer pointing to the beginning of a buffer containing text terminated by a null character
- */
-void vgs_console_println(const char* text);
-
-/**
  * @brief Convert a 32-bit signed integer to a string
  * @param buf12 Pointer to the beginning of a buffer allocated with 12 bytes or more
  * @param n Numbers converted to strings

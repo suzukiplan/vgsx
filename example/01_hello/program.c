@@ -11,7 +11,6 @@ void draw_star(int x, int y)
 
 int main(int argc, char* argv[])
 {
-    vgs_console_print("Hello, World!\n\0");
     VGS_VREG_BMP0 = 1; // BG0: Bitmap Mode
     VGS_VREG_BMP1 = 1; // BG1: Bitmap Mode
     VGS_VREG_BMP2 = 1; // BG2: Bitmap Mode

@@ -178,7 +178,7 @@ m68k-elf-gcc
     -Wl,-ecrt0                   ... Specify crt0 as the entry point when using the VGS-X runtime
 ```
 
-Note that VGS-X does not provide the C standard library, but it does provide the [Runtime Library for VGS-X](#runtime-library-for-vgs-x).
+Note that VGS-X does not provide the C standard library, but it does provide the [VGS Standard Library](#vgs-standard-library).
 
 > As an exception, you can use the `stdarg.h` provided by GCC.
 
@@ -575,7 +575,22 @@ Issuing an exit request for VGS-X.
 
 In the [Emulator for Debug (SDL2)](#vgs-x-emulator-for-debug), the value written here becomes the process exit code.
 
-# Runtime Library for VGS-X
+# VGS Standard Library
+
+| Library | Desctiption |
+|:--------|:------------|
+| [libc.a](#libca---basic-function) | Basic Function |
+| [liblog.a](#libloga) | Logging Function |
+
+## libc.a - Basic Function
+
+`libc.a` is a C library that defines APIs to help develop games on VGS-X.
+
+This library is always linked implicitly, so you do not need to specify it with the linker's `-l` option.
+
+```c
+#include <vgs.h>
+```
 
 | Function | Description |
 |:---------|:------------|
@@ -583,8 +598,6 @@ In the [Emulator for Debug (SDL2)](#vgs-x-emulator-for-debug), the value written
 | `vgs_srand` | Set the random number seed |
 | `vgs_rand` | Obtain a 16-bit random value |
 | `vgs_rand32` | Obtain a 32-bit random value |
-| `vgs_console_print` | Output text to the debug console (no line breaks) |
-| `vgs_console_println` | Output text to the debug console (with line breaks) |
 | `vgs_d32str` | Convert a 32-bit signed integer to a string |
 | `vgs_u32str` | Convert a 32-bit unsigned integer to a string |
 | `vgs_put_bg` | Display a character on the BG in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode) |
@@ -604,6 +617,31 @@ In the [Emulator for Debug (SDL2)](#vgs-x-emulator-for-debug), the value written
 For detailed specifications, please refer to [./lib/vgs.h](./lib/vgs.h).
 
 Since each function specification is documented in Doxygen format within [./lib/vgs.h](./lib/vgs.h), entering the function name in a code editor like Visual Studio Code with a properly configured C/C++ plugin will trigger appropriate specification suggestions.
+
+## liblog.a - Logging Function
+
+`liblog.a` is a library that helps with debug logging (print debug).
+
+To use this library, you must specify the `-llog` option at link time.
+
+```c
+#include <log.h>
+```
+
+| Function | Description |
+|:---------|:------------|
+| `vgs_print` | Output text to the debug console (no line breaks) |
+| `vgs_println` | Output text to the debug console (with line breaks) |
+| `vgs_putlog` | Output formatted string logs to the debug console. |
+
+`vgs_putlog` can display embedded characters using `%d`, `%u`, and `%s`.
+
+Note that `%d` corresponds to `int32_t` and `%u` corresponds to `uint32_t`. (Using variables of type 16-bit `int` or 8-bit `char` instead will corrupt the stack.)
+
+```c
+// Example
+vgs_putlog("d32=%d, u32=%u, str=%s", (int32_t)123, (uint32_t)456, "text");
+```
 
 # Toolchain
 
