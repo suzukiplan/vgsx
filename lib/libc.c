@@ -76,6 +76,12 @@ void vgs_console_print(const char* text)
     }
 }
 
+void vgs_console_println(const char* text)
+{
+    vgs_console_print(text);
+    VGS_OUT_CONSOLE = '\n';
+}
+
 void vgs_put_bg(uint8_t n, uint8_t x, uint8_t y, uint32_t data)
 {
     uint16_t ptr = y;
@@ -231,4 +237,35 @@ void vgs_sfx_play(uint8_t n)
 void vgs_exit(int32_t code)
 {
     VGS_OUT_EXIT = code;
+}
+
+void vgs_u32str(char* buf11, uint32_t n)
+{
+    int32_t kt = 1000000000;
+    int detect = 0;
+    int w;
+    while (0 < kt) {
+        w = (int)(n / kt);
+        if (w) {
+            detect = 1;
+            *buf11 = '0' + w;
+            buf11++;
+        } else if (detect) {
+            *buf11 = '0';
+            buf11++;
+        }
+        n %= kt;
+        kt /= 10;
+    }
+    *buf11 = 0;
+}
+
+void vgs_d32str(char* buf12, int32_t n)
+{
+    if (n < 0) {
+        *buf12 = '-';
+        n = -n;
+        buf12++;
+    }
+    vgs_u32str(buf12, (uint32_t)n);
 }
