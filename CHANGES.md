@@ -1,5 +1,9 @@
 # Changes
 
+## Version 0.2.0
+
+- Fixed an issue where audio noise might be played.
+
 ## Version 0.1.0
 
 - First beta version.

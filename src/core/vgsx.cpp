@@ -523,7 +523,7 @@ void VGSX::tick(void)
 
 void VGSX::tickSound(int16_t* buf, int samples)
 {
-    memset(buf, 0, samples / 2);
+    memset(buf, 0, samples * 2);
     auto helper = (VgmHelper*)this->vgmHelper;
     if (helper) {
         helper->render(buf, samples);
