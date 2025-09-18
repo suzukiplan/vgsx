@@ -603,7 +603,7 @@ This library is always linked implicitly (`-lc`), so you do not need to specify 
 | `vgs_d32str` | Convert a 32-bit signed integer to a string |
 | `vgs_u32str` | Convert a 32-bit unsigned integer to a string |
 | `vgs_put_bg` | Display a character on the [BG](#name-table) in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode) |
-| `vgs_put_bg` | Display a string on the [BG](#name-table) in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode) |
+| `vgs_print_bg` | Display a string on the [BG](#name-table) in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode) |
 | `vgs_cls_bg_all` | [Clear](#0xd20038-0xd20048-clear-screen) all BGs |
 | `vgs_cls_bg` | [Clear](#0xd20038-0xd20048-clear-screen) a specific BG |
 | `vgs_draw_pixel` | Draw a [pixel](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
