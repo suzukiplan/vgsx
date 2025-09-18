@@ -12,11 +12,11 @@ void draw_star(int x, int y)
 int main(int argc, char* argv[])
 {
     vgs_console_print("Hello, World!\n\0");
-    *VGS_VREG_BMP0 = 1; // BG0: Bitmap Mode
-    *VGS_VREG_BMP1 = 1; // BG1: Bitmap Mode
-    *VGS_VREG_BMP2 = 1; // BG2: Bitmap Mode
-    *VGS_VREG_BMP3 = 0; // BG3: Character Pattern Mode
-    *VGS_VREG_SPOS = 3; // Sprite: Displayed on top of BG3
+    VGS_VREG_BMP0 = 1; // BG0: Bitmap Mode
+    VGS_VREG_BMP1 = 1; // BG1: Bitmap Mode
+    VGS_VREG_BMP2 = 1; // BG2: Bitmap Mode
+    VGS_VREG_BMP3 = 0; // BG3: Character Pattern Mode
+    VGS_VREG_SPOS = 3; // Sprite: Displayed on top of BG3
     vgs_print_bg(3, 11, 12, 0, "HELLO VGS-X WORLD!");
 
     uint32_t col = 1;
@@ -79,7 +79,7 @@ int main(int argc, char* argv[])
     vgs_bgm_play(0);
     while (1) {
         vgs_vsync();
-        *VGS_VREG_SY1 = 1;
+        VGS_VREG_SY1 = 1;
         vgs_draw_pixel(1, vgs_rand() % 320, 0, vgs_rand32());
         // vgs_draw_character(1, vgs_rand() % 320 - 4, 0, 0, 0, 0x20 + (vgs_rand() & 0x3F));
         VGS_OAM[0].rotate += 3;

@@ -3,6 +3,7 @@
 ## Version 0.2.0
 
 - Fixed an issue where audio noise might be played.
+- MC68k C Runtime: Changed specification to omit pointer operators for integer register access. **(Breaking)**
 
 ## Version 0.1.0
 
