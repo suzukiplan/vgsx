@@ -23,12 +23,35 @@
  * THE SOFTWARE.
  */
 #pragma once
-#include "vgs_bgm.h"
-#include "vgs_cg.h"
-#include "vgs_ctype.h"
-#include "vgs_sfx.h"
-#include "vgs_stdint.h"
-#include "vgs_stdlib.h"
-#include "vgs_string.h"
-#include "vgs_system.h"
-#include "vgs_io.h"
+#include "vgs.h"
+#include <stdarg.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * @brief Output text to the debug console (no line breaks)
+ * @param text Buffer pointer pointing to the beginning of a buffer containing text terminated by a null character
+ */
+void vgs_print(const char* text);
+
+/**
+ * @brief Output text to the debug console (with line breaks)
+ * @param text Buffer pointer pointing to the beginning of a buffer containing text terminated by a null character
+ */
+void vgs_println(const char* text);
+
+/**
+ * @brief Output formatted string logs to the debug console.
+ * @param format Buffer pointer pointing to the beginning of a buffer containing format-string terminated by a null character
+ * @remark You can specify embedded characters using the following format: %d, %u, %s
+ * @remark %d is must be int32_t
+ * @remark %u is must be uint32_t
+ * @remark %s is must be string pointer terminated by a null character
+ */
+void vgs_putlog(const char* format, ...);
+
+#ifdef __cplusplus
+};
+#endif

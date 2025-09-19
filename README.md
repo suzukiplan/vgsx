@@ -178,7 +178,7 @@ m68k-elf-gcc
     -Wl,-ecrt0                   ... Specify crt0 as the entry point when using the VGS-X runtime
 ```
 
-Note that VGS-X does not provide the C standard library, but it does provide the [Runtime Library for VGS-X](#runtime-library-for-vgs-x).
+Note that VGS-X does not provide the C standard library, but it does provide the [VGS Standard Library](#vgs-standard-library).
 
 > As an exception, you can use the `stdarg.h` provided by GCC.
 
@@ -453,7 +453,11 @@ Note that all addresses and values for I/O instructions must be specified as 32-
 |:--------:|:---:|:---:|:------------|
 | 0xE00000 |  o  |  -  | [V-SYNC](#0xe00000in---v-sync) |
 | 0xE00000 |  -  |  o  | [Console Output](#0xe00000out---console-output) |
-| 0xE00004 |  o  |  o  | [Random](#0xe00004io---random) | 
+| 0xE00004 |  o  |  o  | [Random](#0xe00004io---random) |
+| 0xE00008 |  -  |  o  | [DMA: Destination](#0xe00008-0xe00014io---direct-memory-access) |
+| 0xE0000C |  -  |  o  | [DMA: Source](#0xe00008-0xe00014io---direct-memory-access) |
+| 0xE00010 |  -  |  o  | [DMA: Argument](#0xe00008-0xe00014io---direct-memory-access) |
+| 0xE00014 |  o  |  o  | [DMA: Execute](#0xe00008-0xe00014io---direct-memory-access) |
 | 0xE01000 |  -  |  o  | [Play VGM](#0xe01000o---play-vgm) |
 | 0xE01100 |  -  |  o  | [Play SFX](#0xe01100o---play-sfx) |
 | 0xE02000 |  o  |  -  | [Gamepad: D-pad - Up](#0xe200xxi---gamepad) |
@@ -495,16 +499,56 @@ Writing a value to 0xE00000 allows you to output characters to the console.
 This feature is intended for use in game log output and similar applications.
 
 ```c
-vgs_console_print("Hello, World!\n");
+vgs_print("Hello, World!\n");
 ```
 
-The `vgs_console_print` function is defined in [vgs.h](./lib/vgs.h).
+The `vgs_print` function is defined in [log.h](./lib/log.h).
 
 ### 0xE00004[i/o] - Random
 
 - You can set the seed for random numbers by writing a value to 0xE00004.
 - Reading 0xE00004 allows you to obtain a random number (0 to 65535).
 - The random number generation in VGS-X guarantees that calling it 65,536 times will return each number from 0 to 65,535 exactly once.
+
+### 0xE00008-0xE00014[i/o] - Direct Memory Access
+
+| `Destination` | `Source` | `Argument` | `Execute` | Description |
+|:-:|:-:|:-:|:-|
+|☑︎|☑︎|`size`| `out(0)` | [Copy](#dma-copy) |
+|☑︎|☑︎|`size`| [Set](#dma-set) |
+|-|☑︎|`target`| `in` | [Search](#dma-search) |
+
+#### DMA Copy
+
+Transfer the data from the address specified in `Source` to the address specified in `Destination`, for the number of bytes specified in `Argument` (size).
+
+Remarks:
+
+- The `Source` must be either a Program Address (0x000000 to Size-of-Program) or a RAM Address (0xF00000 to 0xFFFFFF).
+- The `Destination` must be a RAM Address (0xF00000 to 0xFFFFFF).
+- When both `Source` and `Destination` point to RAM addresses, overlapping copy ranges are acceptable. (A copy equivalent to `memmove` is performed.)
+- If an invalid address range (including the result of the addition) is specified, DMA will not be executed.
+
+#### DMA Set
+
+Transfer the value specified by the lower 8 bits of `Source` to the address specified by `Destination`, for the number of bytes specified by `Argument` (size).
+
+Remarks:
+
+- The upper 24 bits of `Source` are ignored.
+- The `Destination` must be a RAM Address (0xF00000 to 0xFFFFFF).
+- If an invalid address range (including the result of the addition) is specified, DMA will not be executed.
+
+#### DMA Search
+
+Search for the byte data specified by the lower 8 bits of `Argument` (target) starting from the address specified by `Source`.
+
+Remarks:
+
+- The upper 24 bits of `Argument` are ignored.
+- The `Source` must be either a Program Address (0x000000 to Size-of-Program) or a RAM Address (0xF00000 to 0xFFFFFF).
+- If the search results fall outside the valid address range, 0 is entered; if an address is found, the found address is entered.
+- Please note that performing searches not expected to yield results can result in significant overhead.
 
 ### 0xE01000[o] - Play VGM
 
@@ -575,35 +619,94 @@ Issuing an exit request for VGS-X.
 
 In the [Emulator for Debug (SDL2)](#vgs-x-emulator-for-debug), the value written here becomes the process exit code.
 
-# Runtime Library for VGS-X
+# VGS Standard Library
 
-| Function | Description |
-|:---------|:------------|
-| `vgs_vsync` | Synchronize the screen output with 60fps |
-| `vgs_srand` | Set the random number seed |
-| `vgs_rand` | Obtain a 16-bit random value |
-| `vgs_rand32` | Obtain a 32-bit random value |
-| `vgs_console_print` | Output text to the debug console (no line breaks) |
-| `vgs_console_println` | Output text to the debug console (with line breaks) |
-| `vgs_d32str` | Convert a 32-bit signed integer to a string |
-| `vgs_u32str` | Convert a 32-bit unsigned integer to a string |
-| `vgs_put_bg` | Display a character on the BG in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode) |
-| `vgs_put_bg` | Display a string on the BG in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode) |
-| `vgs_cls_bg_all` | Clear all BGs |
-| `vgs_cls_bg` | Clear a specific BG |
-| `vgs_draw_pixel` | Draw a [pixel](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
-| `vgs_draw_line` | Draw a [line](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
-| `vgs_draw_box` | Draw a [rectangle](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
-| `vgs_draw_boxf` | Draw a [filled-rectangle](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
-| `vgs_draw_character` | Draw a [character-pattern](#character-pattern) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
-| `vgs_sprite` | Set [OAM](#oam-object-attribute-memory) attribute values in bulk |
-| `vgs_bgm_play` | Play [background music](#0xe01000o---play-vgm) |
-| `vgs_sfx_play` | Play [sound effect](#0xe01100o---play-sfx) |
-| `vgs_exit` | Exit process |
+The **Video Game System Standard Library** is a specification for a C language library designed (standardized) to maintain source code compatibility for user programs across VGS-X and future VGS series as much as possible. This standard specification has been designed with the policy of comprehensively providing all the functions necessary for developing the “Typical 2D Games”.
+
+All hardware functions of the VGS-X specified in this README.md can be utilized from game programs written in C language through this library.
+
+## Static Libraries
+
+| Library | Header File | Desctiption |
+|:--------|:--------|:------------|
+| [libc.a](#libca---basic-function) (`-lc`) | [vgs.h](./lib/vgs.h) | Basic Function |
+| [liblog.a](#libloga---logging-function) (`-llog`) | [log.h](./lib/log.h) | Logging Function |
+
+## libc.a - Basic Function
+
+`libc.a` is a C library that defines APIs to help develop games on VGS-X.
+
+This library is always linked implicitly (`-lc`), so you do not need to specify it with the linker's `-l` option.
+
+```c
+#include <vgs.h>
+```
+
+| Category | Function | Description |
+|:------|:---------|:------------|
+| system | `vgs_vsync` | Synchronize the [V-SYNC](#0xe00000in---v-sync) (screen output with 60fps) |
+| stdlib | `vgs_rand` | Obtain a 16-bit [random](#0xe00004io---random) value |
+| stdlib | `vgs_rand32` | Obtain a 32-bit [random](#0xe00004io---random) value |
+| stdlib | `vgs_srand` | Set the [random number](#0xe00004io---random) seed |
+| stdlib | `vgs_exit` | [Exit](#0xe7fffcout---exit) process |
+| string | `vgs_d32str` | Convert a 32-bit signed integer to a string |
+| string | `vgs_u32str` | Convert a 32-bit unsigned integer to a string |
+| string | `vgs_memcpy` | High-speed memory copy using [DMA Copy](#dma-copy) |
+| string | `vgs_memset` | High-Speed bulk memory writing using [DMA Set](#dma-set)|
+| string | `vgs_strlen` | High-Speed string length retrieval using [DMA Search](#dma-search) |
+| string | `vgs_strchr` | Search for specific characters in a string |
+| string | `vgs_strrchr` | Search for specific characters in a string that right to left |
+| string | `vgs_strcmp` | Compare strings |
+| string | `vgs_strncmp` | Comparing strings of a specific length |
+| string | `vgs_strstr` | Search for a specific string in a string |
+| ctype | `vgs_isdigit` | Check if a character is a number |
+| ctype | `vgs_isupper` | Check if a character is an uppercase |
+| ctype | `vgs_islower` | Check if a character is a lowercase |
+| ctype | `vgs_isalpha` | Check if a character is an alphabet |
+| ctype | `vgs_isalnum` | Check if a character is an alphabet or a digit |
+| ctype | `vgs_toupper` | Convert a lowercase letter to an uppercase letter |
+| ctype | `vgs_tolower` | Convert an uppercase letter to a lowercase letter. |
+| cg:bg | `vgs_put_bg` | Display a character on the [BG](#name-table) in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode) |
+| cg:bg | `vgs_print_bg` | Display a string on the [BG](#name-table) in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode) |
+| cg:bg | `vgs_cls_bg_all` | [Clear](#0xd20038-0xd20048-clear-screen) all BGs |
+| cg:bg | `vgs_cls_bg` | [Clear](#0xd20038-0xd20048-clear-screen) a specific BG |
+| cg:sp | `vgs_sprite` | Set [OAM](#oam-object-attribute-memory) attribute values in bulk |
+| cg:bmp | `vgs_draw_pixel` | Draw a [pixel](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
+| cg:bmp | `vgs_draw_line` | Draw a [line](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
+| cg:bmp | `vgs_draw_box` | Draw a [rectangle](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
+| cg:bmp | `vgs_draw_boxf` | Draw a [filled-rectangle](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
+| cg:bmp | `vgs_draw_character` | Draw a [character-pattern](#character-pattern) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
+| bgm | `vgs_bgm_play` | Play [background music](#0xe01000o---play-vgm) |
+| sfx | `vgs_sfx_play` | Play [sound effect](#0xe01100o---play-sfx) |
 
 For detailed specifications, please refer to [./lib/vgs.h](./lib/vgs.h).
 
 Since each function specification is documented in Doxygen format within [./lib/vgs.h](./lib/vgs.h), entering the function name in a code editor like Visual Studio Code with a properly configured C/C++ plugin will trigger appropriate specification suggestions.
+
+## liblog.a - Logging Function
+
+`liblog.a` is a library that helps with debug logging (print debug).
+
+To use this library, you must specify the `-llog` option at link time.
+
+```c
+#include <log.h>
+```
+
+| Function | Description |
+|:---------|:------------|
+| `vgs_print` | Output text to the [console](#0xe00000out---console-output) (no line breaks) |
+| `vgs_println` | Output text to the [console](#0xe00000out---console-output) (with line breaks) |
+| `vgs_putlog` | Output formatted string logs to the [console](#0xe00000out---console-output). |
+
+`vgs_putlog` can display embedded characters using `%d`, `%u`, and `%s`.
+
+Note that `%d` corresponds to `int32_t` and `%u` corresponds to `uint32_t`. (Using variables of type 16-bit `int` or 8-bit `char` instead will corrupt the stack.)
+
+```c
+// Example
+vgs_putlog("d32=%d, u32=%u, str=%s", (int32_t)123, (uint32_t)456, "text");
+```
 
 # Toolchain
 
@@ -711,6 +814,6 @@ usage: vgmplay /path/to/bgm.vgm
 - FM Sound Chip Emulator - [ymfm](https://github.com/aaronsgiles/ymfm)
   - Copyright (c) 2021, Aaron Giles
   - License: [3-clause BSD](./LICENSE-ymfm.txt)
-- [VGS-X](https://github.com/suzukiplan/vgsx)
+- [VGS-X](https://github.com/suzukiplan/vgsx) and VGS Standard Library for MC68030
   - Copyright (c) 2025 Yoji Suzuki.
   - License: [MIT](./LICENSE-VGSX.txt)

@@ -53,6 +53,9 @@ class VGSX
         size_t programSize;
         int randomIndex;
         uint32_t frameClocks;
+        uint32_t dmaSource;
+        uint32_t dmaDestination;
+        uint32_t dmaArgument;
     } context;
 
     struct KeyStatus {
@@ -97,6 +100,9 @@ class VGSX
     char lastError[256];
     void setLastError(const char* format, ...);
     volatile bool detectReferVSync;
+    void dmaMemcpy();
+    void dmaMemset();
+    uint32_t dmaSearch();
 };
 
 extern VGSX vgsx;

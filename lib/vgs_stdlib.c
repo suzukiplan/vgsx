@@ -22,13 +22,30 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#pragma once
-#include "vgs_bgm.h"
-#include "vgs_cg.h"
-#include "vgs_ctype.h"
-#include "vgs_sfx.h"
-#include "vgs_stdint.h"
-#include "vgs_stdlib.h"
-#include "vgs_string.h"
-#include "vgs_system.h"
-#include "vgs_io.h"
+#include <vgs.h>
+
+static volatile uint32_t _random;
+
+void vgs_srand(uint16_t seed)
+{
+    VGS_IO_RANDOM = seed;
+}
+
+uint16_t vgs_rand(void)
+{
+    _random = VGS_IO_RANDOM;
+    return _random;
+}
+
+uint32_t vgs_rand32(void)
+{
+    uint32_t result = vgs_rand();
+    result <<= 16;
+    result |= vgs_rand();
+    return result;
+}
+
+void vgs_exit(int32_t code)
+{
+    VGS_OUT_EXIT = code;
+}

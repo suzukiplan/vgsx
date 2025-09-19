@@ -1,5 +1,14 @@
 # Changes
 
+## Version 0.3.0
+
+- Core: Implemented DMA functions
+- CRT: Separate logging APIs from `libc.a` to `liblog.a` **(Disruptive)**
+- CRT: Added `vgs_memcpy`, `vgs_memset` and `vgs_strlen` _(Using DMA)_
+- CRT: Added `vgs_strcmp`, `vgs_strncmp`, `vgs_strstr`, `vgs_strchr` and `vgs_strrchr` _(Not DMA)_
+- CRT: Added `vgs_isdigit`, `vgs_isupper`, `vgs_islower`, `vgs_isalpha`, `vgs_isalnum`, `vgs_toupper` and `vgs_tolower`
+- Other: Preparing for Unit Testing in CI
+
 ## Version 0.2.0
 
 - Core: Fixed an issue where audio noise might be played.

@@ -1,5 +1,5 @@
 /**
- * VGS-X Runtime Library for MC68030
+ * VGS Standard Library for MC68030
  * The MIT License (MIT)
  *
  * Copyright (c) 2025 Yoji Suzuki.
@@ -24,63 +24,11 @@
  */
 #include <vgs.h>
 
-static volatile uint32_t _vsync;
-static volatile uint32_t _random;
 static uint32_t* _bg[4] = {
     BG0,
     BG1,
     BG2,
     BG3};
-extern int main(int argc, char* argv[]);
-
-void crt0(void)
-{
-    vgs_exit(main(0, (char**)0));
-
-    // Hang-up after exit
-    vgs_console_print("HANG UP\n");
-    while (1) {
-        vgs_vsync();
-    }
-}
-
-void vgs_vsync(void)
-{
-    _vsync = VGS_IN_VSYNC;
-}
-
-void vgs_srand(uint16_t seed)
-{
-    VGS_IO_RANDOM = seed;
-}
-
-uint16_t vgs_rand(void)
-{
-    _random = VGS_IO_RANDOM;
-    return _random;
-}
-
-uint32_t vgs_rand32(void)
-{
-    uint32_t result = vgs_rand();
-    result <<= 16;
-    result |= vgs_rand();
-    return result;
-}
-
-void vgs_console_print(const char* text)
-{
-    while (*text) {
-        VGS_OUT_CONSOLE = *text;
-        text++;
-    }
-}
-
-void vgs_console_println(const char* text)
-{
-    vgs_console_print(text);
-    VGS_OUT_CONSOLE = '\n';
-}
 
 void vgs_put_bg(uint8_t n, uint8_t x, uint8_t y, uint32_t data)
 {
@@ -175,50 +123,4 @@ void vgs_sprite(uint16_t n, BOOL visible, int16_t x, int16_t y, uint8_t size, ui
     OAM[n].attr |= ptn;
     OAM[n].rotate = 0;
     OAM[n].scale = 0;
-}
-
-void vgs_bgm_play(uint16_t n)
-{
-    VGS_OUT_VGM_PLAY = n;
-}
-
-void vgs_sfx_play(uint8_t n)
-{
-    VGS_OUT_SFX_PLAY = n;
-}
-
-void vgs_exit(int32_t code)
-{
-    VGS_OUT_EXIT = code;
-}
-
-void vgs_u32str(char* buf11, uint32_t n)
-{
-    int32_t kt = 1000000000;
-    int detect = 0;
-    int w;
-    while (0 < kt) {
-        w = (int)(n / kt);
-        if (w) {
-            detect = 1;
-            *buf11 = '0' + w;
-            buf11++;
-        } else if (detect) {
-            *buf11 = '0';
-            buf11++;
-        }
-        n %= kt;
-        kt /= 10;
-    }
-    *buf11 = 0;
-}
-
-void vgs_d32str(char* buf12, int32_t n)
-{
-    if (n < 0) {
-        *buf12 = '-';
-        n = -n;
-        buf12++;
-    }
-    vgs_u32str(buf12, (uint32_t)n);
 }

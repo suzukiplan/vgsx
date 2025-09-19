@@ -22,13 +22,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#pragma once
-#include "vgs_bgm.h"
-#include "vgs_cg.h"
-#include "vgs_ctype.h"
-#include "vgs_sfx.h"
-#include "vgs_stdint.h"
-#include "vgs_stdlib.h"
-#include "vgs_string.h"
-#include "vgs_system.h"
-#include "vgs_io.h"
+#include <vgs.h>
+
+void vgs_sfx_play(uint8_t n)
+{
+    VGS_OUT_SFX_PLAY = n;
+}

@@ -562,6 +562,7 @@ uint32_t VGSX::inPort(uint32_t address)
             this->context.randomIndex++;
             this->context.randomIndex &= 0xFFFF;
             return vgs0_rand16[this->context.randomIndex];
+        case 0xE00014: return this->dmaSearch();
         case 0xE20000: return this->key.up;
         case 0xE20004: return this->key.down;
         case 0xE20008: return this->key.left;
@@ -586,6 +587,21 @@ void VGSX::outPort(uint32_t address, uint32_t value)
         case 0xE00004: // Setup Random
             this->context.randomIndex = (int)value;
             return;
+        case 0xE00008: // DMA (Source)
+            this->context.dmaSource = value;
+            return;
+        case 0xE0000C: // DMA (Destination)
+            this->context.dmaDestination = value;
+            return;
+        case 0xE00010: // DMA (Argument)
+            this->context.dmaArgument = value;
+            return;
+        case 0xE00014: // DMA (Execute)
+            switch (value) {
+                case 0: this->dmaMemcpy(); break;
+                case 1: this->dmaMemset(); break;
+            }
+            return;
         case 0xE01000: // Play VGM
             value &= 0xFFFF;
             if (this->context.vgmData[value].data) {
@@ -609,4 +625,73 @@ void VGSX::outPort(uint32_t address, uint32_t value)
             this->exitCode = (int32_t)value;
             return;
     }
+}
+
+void VGSX::dmaMemcpy()
+{
+    const uint32_t size = this->context.dmaArgument;
+    uint32_t destination = this->context.dmaDestination & 0x00FFFFFF;
+    uint32_t source = this->context.dmaSource & 0x00FFFFFF;
+    // validate destination
+    if (0xF00000 <= destination && destination + size <= 0xFFFFFF) {
+        // validate source
+        if (source < this->context.programSize) {
+            if (source + size <= this->context.programSize) {
+                // Execute copy from ROM to RAM
+                memcpy(&this->context.ram[destination & 0x0FFFFF],
+                       &this->context.program[source],
+                       size);
+                return;
+            }
+        } else if (0xF00000 <= source) {
+            if (source + size <= 0xFFFFFF) {
+                // Execute copy from RAM to RAM
+                memmove(&this->context.ram[destination & 0x0FFFFF],
+                        &this->context.ram[source & 0x0FFFFF],
+                        size);
+                return;
+            }
+        }
+    }
+    printf("warning: Ignored an invalid DMA_copy(0x%06X, 0x%06X, %u)\n", destination, source, size);
+}
+
+void VGSX::dmaMemset()
+{
+    uint32_t destination = this->context.dmaDestination & 0x00FFFFFF;
+    const uint8_t c = this->context.dmaSource & 0xFF;
+    const uint32_t size = this->context.dmaArgument;
+    // validate destination
+    if (0xF00000 <= destination && destination + size <= 0xFFFFFF) {
+        // Bulk set to RAM
+        memset(&this->context.ram[destination & 0x0FFFFF], c, size);
+        return;
+    }
+    printf("warning: Ignored an invalid DMA_set(0x%06X, 0x%02X, %u)\n", destination, c, size);
+}
+
+uint32_t VGSX::dmaSearch()
+{
+    uint8_t search = this->context.dmaArgument & 0xFF;
+    uint32_t ptr = this->context.dmaSource & 0x00FFFFFF;
+    // validate source
+    if (ptr < this->context.programSize) {
+        // Search from ROM
+        for (; ptr < this->context.programSize; ptr++) {
+            if (this->context.program[ptr] == search) {
+                return ptr; // found
+            }
+        }
+        return 0; // not found
+    } else if (0xF00000 <= ptr && ptr < 0xFFFFFF) {
+        // Search from RAM
+        for (; ptr < 0xFFFFFF; ptr++) {
+            if (this->context.ram[ptr] == search) {
+                return ptr; // found
+            }
+        }
+        return 0; // not found
+    }
+    printf("warning: Ignored an invalid DMA_search(0x%06X, 0x%02X)\n", ptr, search);
+    return 0;
 }

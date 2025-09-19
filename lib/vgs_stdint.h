@@ -23,12 +23,17 @@
  * THE SOFTWARE.
  */
 #pragma once
-#include "vgs_bgm.h"
-#include "vgs_cg.h"
-#include "vgs_ctype.h"
-#include "vgs_sfx.h"
-#include "vgs_stdint.h"
-#include "vgs_stdlib.h"
-#include "vgs_string.h"
-#include "vgs_system.h"
-#include "vgs_io.h"
+typedef unsigned char uint8_t;
+typedef signed char int8_t;
+typedef unsigned short uint16_t;
+typedef signed short int16_t;
+typedef unsigned long uint32_t;
+typedef signed long int32_t;
+
+typedef int BOOL;
+#define TRUE 1
+#define FALSE 0
+
+#ifndef NULL
+#define NULL ((void*)0)
+#endif

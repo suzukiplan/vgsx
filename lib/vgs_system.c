@@ -22,13 +22,22 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#pragma once
-#include "vgs_bgm.h"
-#include "vgs_cg.h"
-#include "vgs_ctype.h"
-#include "vgs_sfx.h"
-#include "vgs_stdint.h"
-#include "vgs_stdlib.h"
-#include "vgs_string.h"
-#include "vgs_system.h"
-#include "vgs_io.h"
+#include <vgs.h>
+
+static volatile uint32_t _vsync;
+extern int main(int argc, char* argv[]);
+
+void crt0(void)
+{
+    vgs_exit(main(0, (char**)0));
+
+    // Hang-up after exit
+    while (1) {
+        vgs_vsync();
+    }
+}
+
+void vgs_vsync(void)
+{
+    _vsync = VGS_IN_VSYNC;
+}
