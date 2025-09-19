@@ -23,11 +23,17 @@
  * THE SOFTWARE.
  */
 #pragma once
-#include "vgs_bgm.h"
-#include "vgs_cg.h"
-#include "vgs_sfx.h"
 #include "vgs_stdint.h"
-#include "vgs_stdlib.h"
-#include "vgs_string.h"
-#include "vgs_system.h"
-#include "vgs_io.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * @brief Synchronize the screen output with 60fps.
+ */
+void vgs_vsync(void);
+
+#ifdef __cplusplus
+};
+#endif

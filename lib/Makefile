@@ -1,11 +1,11 @@
 CC = m68k-elf-gcc -m68030 -O2 -I./ -c
 
-LIBCOBJ = system.o
-LIBCOBJ += cg.o
-LIBCOBJ += bgm.o
-LIBCOBJ += sfx.o
-LIBCOBJ += stdlib.o
-LIBCOBJ += string.o
+LIBCOBJ = vgs_system.o
+LIBCOBJ += vgs_cg.o
+LIBCOBJ += vgs_bgm.o
+LIBCOBJ += vgs_sfx.o
+LIBCOBJ += vgs_stdlib.o
+LIBCOBJ += vgs_string.o
 
 all: libc.a liblog.a
 

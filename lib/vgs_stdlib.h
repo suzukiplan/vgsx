@@ -23,9 +23,37 @@
  * THE SOFTWARE.
  */
 #pragma once
-typedef unsigned char uint8_t;
-typedef signed char int8_t;
-typedef unsigned short uint16_t;
-typedef signed short int16_t;
-typedef unsigned long uint32_t;
-typedef signed long int32_t;
+#include "vgs_stdint.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * @brief Set the random number seed.
+ * @param seed Random number seed (0-65535)
+ */
+void vgs_srand(uint16_t seed);
+
+/**
+ * @brief Obtain a 16-bit random value.
+ * @return Random value (0-65535)
+ */
+uint16_t vgs_rand(void);
+
+/**
+ * @brief Obtain a 32-bit random value.
+ * @return Random value (0-4294967295)
+ * @remark This function calls vgs_rand twice, returns the result of the logical OR operation between the first value (shifted 16 bits to the left) and the second value.
+ */
+uint32_t vgs_rand32(void);
+
+/**
+ * @brief Exit processs
+ * @param code Exit code
+ */
+void vgs_exit(int32_t code);
+
+#ifdef __cplusplus
+};
+#endif
