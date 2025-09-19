@@ -30,7 +30,7 @@ Supported development environment operating systems are **Ubuntu Linux** or **ma
 
 The runtime environment supports the all of PC operating systems (Windows, macOS, and Linux) that supported by Steam Client.
 
-In the future, we also plan to provide runtimes capable of running on Nintendo Switch 1/2 and PlayStation 4/5. Due to an NDA, we cannot disclose details, but we will be confirmed that the [core](./src/core) modules can be built and run using the SDKs for those game consoles.
+In the future, we also plan to provide runtimes capable of running on Nintendo Switch 1/2 and PlayStation 4/5. Due to an NDA, we cannot disclose details, but we will be confirmed that the [core](./src) modules can be built and run using the SDKs for those game consoles.
 
 VGS-X aims to provide game developers and publishers with an environment that enables them to deliver games that are fully compatible across any computer with certain performance specifications.
 
@@ -458,6 +458,13 @@ Note that all addresses and values for I/O instructions must be specified as 32-
 | 0xE0000C |  -  |  o  | [DMA: Source](#0xe00008-0xe00014io---direct-memory-access) |
 | 0xE00010 |  -  |  o  | [DMA: Argument](#0xe00008-0xe00014io---direct-memory-access) |
 | 0xE00014 |  o  |  o  | [DMA: Execute](#0xe00008-0xe00014io---direct-memory-access) |
+| 0xE00100 |  -  |  o  | [Angle: X1](#0xe00100-0xe00118io---angle) |
+| 0xE00104 |  -  |  o  | [Angle: Y1](#0xe00100-0xe00118io---angle) |
+| 0xE00108 |  -  |  o  | [Angle: X2](#0xe00100-0xe00118io---angle) |
+| 0xE0010C |  -  |  o  | [Angle: Y2](#0xe00100-0xe00118io---angle) |
+| 0xE00110 |  o  |  o  | [Angle: Get/Set Degree (0 to 359)](#0xe00100-0xe00118io---angle) |
+| 0xE00114 |  o  |  -  | [Angle: Get int-sin (-256 to 256)](#0xe00100-0xe00118io---angle) |
+| 0xE00118 |  o  |  -  | [Angle: Get int-cos (-256 to 256)](#0xe00100-0xe00118io---angle) |
 | 0xE01000 |  -  |  o  | [Play VGM](#0xe01000o---play-vgm) |
 | 0xE01100 |  -  |  o  | [Play SFX](#0xe01100o---play-sfx) |
 | 0xE02000 |  o  |  -  | [Gamepad: D-pad - Up](#0xe200xxi---gamepad) |
@@ -550,6 +557,31 @@ Remarks:
 - If the search results fall outside the valid address range, 0 is entered; if an address is found, the found address is entered.
 - Please note that performing searches not expected to yield results can result in significant overhead.
 
+### 0xE00100-0xE00118[io] - Angle
+
+The angle function can quickly calculate the degrees (from 0 to 359) between two points with coordinates (X1, Y1) and (X2, Y2).
+
+```c
+VGS_OUT_ANGLE_X1 = x1;
+VGS_OUT_ANGLE_Y1 = y1;
+VGS_OUT_ANGLE_X2 = x1;
+VGS_OUT_ANGLE_Y2 = y1;
+// Get (and Set) degree of (x1,y1) and (x2,y2)
+int32_t degree = VGS_IO_ANGLE_DEGREE; 
+```
+
+> Note that entering `VGS_IO_ANGLE_DEGREE (0xE00110)` will **implicitly output** the calculated value `degree` to `VGS_IO_ANGLE_DEGREE (0xE00110)`.
+
+When `VGS_IO_ANGLE_DEGREE (0xE00110)` is input (or output), inputting 0xE00114 yields the integer-sine, and inputting 0xE00118 yields the integer-cosine.
+
+```c
+// Get integer sin/cos
+int32_t s = VGS_IN_ANGLE_SIN;
+int32_t c = VGS_IN_ANGLE_COS;
+```
+
+The standard sin() and cos() functions return double values ranging from -1.0 to 1.0, whereas VGS's integer sine and cosine functions return integers ranging from -256 to 256. Therefore, it can be used directly for fixed-point arithmetic operations where the lower 8 bits represent the fractional part.
+
 ### 0xE01000[o] - Play VGM
 
 Plays the VGM loaded at the index corresponding to the output value.
@@ -632,6 +664,8 @@ All hardware functions of the VGS-X specified in this README.md can be utilized 
 | [libc.a](#libca---basic-function) (`-lc`) | [vgs.h](./lib/vgs.h) | Basic Function |
 | [liblog.a](#libloga---logging-function) (`-llog`) | [log.h](./lib/log.h) | Logging Function |
 
+Since each function specification is documented in Doxygen format within header files, entering the function name in a code editor such as Visual Studio Code with the correct C/C++ plug-in installed will provide the relevant specification suggestions.
+
 ## libc.a - Basic Function
 
 `libc.a` is a C library that defines APIs to help develop games on VGS-X.
@@ -642,9 +676,30 @@ This library is always linked implicitly (`-lc`), so you do not need to specify 
 #include <vgs.h>
 ```
 
+Basic Functions can be classified into [Video Game Functions](#video-game-functions) and [Standard Functions](#standard-functions).
+
+### (Video Game Functions)
+
 | Category | Function | Description |
 |:------|:---------|:------------|
 | system | `vgs_vsync` | Synchronize the [V-SYNC](#0xe00000in---v-sync) (screen output with 60fps) |
+| cg:bg | `vgs_put_bg` | Display a character on the [BG](#name-table) in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode) |
+| cg:bg | `vgs_print_bg` | Display a string on the [BG](#name-table) in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode) |
+| cg:bg | `vgs_cls_bg_all` | [Clear](#0xd20038-0xd20048-clear-screen) all BGs |
+| cg:bg | `vgs_cls_bg` | [Clear](#0xd20038-0xd20048-clear-screen) a specific BG |
+| cg:sp | `vgs_sprite` | Set [OAM](#oam-object-attribute-memory) attribute values in bulk |
+| cg:bmp | `vgs_draw_pixel` | Draw a [pixel](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
+| cg:bmp | `vgs_draw_line` | Draw a [line](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
+| cg:bmp | `vgs_draw_box` | Draw a [rectangle](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
+| cg:bmp | `vgs_draw_boxf` | Draw a [filled-rectangle](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
+| cg:bmp | `vgs_draw_character` | Draw a [character-pattern](#character-pattern) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
+| bgm | `vgs_bgm_play` | Play [background music](#0xe01000o---play-vgm) |
+| sfx | `vgs_sfx_play` | Play [sound effect](#0xe01100o---play-sfx) |
+
+### (Standard Functions)
+
+| Category | Function | Description |
+|:------|:---------|:------------|
 | stdlib | `vgs_rand` | Obtain a 16-bit [random](#0xe00004io---random) value |
 | stdlib | `vgs_rand32` | Obtain a 32-bit [random](#0xe00004io---random) value |
 | stdlib | `vgs_srand` | Set the [random number](#0xe00004io---random) seed |
@@ -666,22 +721,9 @@ This library is always linked implicitly (`-lc`), so you do not need to specify 
 | ctype | `vgs_isalnum` | Check if a character is an alphabet or a digit |
 | ctype | `vgs_toupper` | Convert a lowercase letter to an uppercase letter |
 | ctype | `vgs_tolower` | Convert an uppercase letter to a lowercase letter. |
-| cg:bg | `vgs_put_bg` | Display a character on the [BG](#name-table) in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode) |
-| cg:bg | `vgs_print_bg` | Display a string on the [BG](#name-table) in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode) |
-| cg:bg | `vgs_cls_bg_all` | [Clear](#0xd20038-0xd20048-clear-screen) all BGs |
-| cg:bg | `vgs_cls_bg` | [Clear](#0xd20038-0xd20048-clear-screen) a specific BG |
-| cg:sp | `vgs_sprite` | Set [OAM](#oam-object-attribute-memory) attribute values in bulk |
-| cg:bmp | `vgs_draw_pixel` | Draw a [pixel](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
-| cg:bmp | `vgs_draw_line` | Draw a [line](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
-| cg:bmp | `vgs_draw_box` | Draw a [rectangle](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
-| cg:bmp | `vgs_draw_boxf` | Draw a [filled-rectangle](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
-| cg:bmp | `vgs_draw_character` | Draw a [character-pattern](#character-pattern) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
-| bgm | `vgs_bgm_play` | Play [background music](#0xe01000o---play-vgm) |
-| sfx | `vgs_sfx_play` | Play [sound effect](#0xe01100o---play-sfx) |
-
-For detailed specifications, please refer to [./lib/vgs.h](./lib/vgs.h).
-
-Since each function specification is documented in Doxygen format within [./lib/vgs.h](./lib/vgs.h), entering the function name in a code editor like Visual Studio Code with a properly configured C/C++ plugin will trigger appropriate specification suggestions.
+| math | `vgs_degree` | Calculate the angle between two points (in degrees) |
+| math | `vgs_sin` | Calculate integer sine from the angle in degrees |
+| math | `vgs_cos` | Calculate integer cosine from the angle in degrees |
 
 ## liblog.a - Logging Function
 
