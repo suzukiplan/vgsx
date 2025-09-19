@@ -182,18 +182,23 @@ void vgs_u32str(char* buf11, uint32_t n)
     int32_t kt = 1000000000;
     int detect = 0;
     int w;
-    while (0 < kt) {
-        w = (int)(n / kt);
-        if (w) {
-            detect = 1;
-            *buf11 = '0' + w;
-            buf11++;
-        } else if (detect) {
-            *buf11 = '0';
-            buf11++;
+    if (0 == n) {
+        *buf11 = '0';
+        buf11++;
+    } else {
+        while (0 < kt) {
+            w = (int)(n / kt);
+            if (w) {
+                detect = 1;
+                *buf11 = '0' + w;
+                buf11++;
+            } else if (detect) {
+                *buf11 = '0';
+                buf11++;
+            }
+            n %= kt;
+            kt /= 10;
         }
-        n %= kt;
-        kt /= 10;
     }
     *buf11 = 0;
 }
@@ -252,4 +257,46 @@ char* vgs_strrchr(const char* str, int c)
         }
     }
     return (char*)NULL;
+}
+
+int vgs_strcmp(const char* str1, const char* str2)
+{
+    while (*str1 == *str2) {
+        if (0 == *str1) {
+            return 0;
+        }
+        str1++;
+        str2++;
+    }
+    return *str1 < *str2 ? -1 : 1;
+}
+
+int vgs_strncmp(const char* str1, const char* str2, int n)
+{
+    while (*str1 == *str2) {
+        if (0 == *str1) {
+            return 0;
+        }
+        if (--n == 0) {
+            return 0;
+        }
+        str1++;
+        str2++;
+    }
+    return *str1 < *str2 ? -1 : 1;
+}
+
+char* vgs_strstr(const char* str1, const char* str2)
+{
+    int32_t length = vgs_strlen(str2);
+    if (0 == length) {
+        return (char*)str1; // searched an empty string
+    }
+    while (NULL != (str1 = vgs_strchr(str1, *str2))) {
+        if (0 == vgs_strncmp(str1, str2, length)) {
+            return (char*)str1;
+        }
+        str1++;
+    }
+    return NULL;
 }

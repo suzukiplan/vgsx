@@ -347,6 +347,32 @@ char* vgs_strchr(const char* str, int c);
  */
 char* vgs_strrchr(const char* str, int c);
 
+/**
+ * @brief Compare strings.
+ * @param str1 Null-terminated string buffer
+ * @param str2 Null-terminated string buffer
+ * @return 0: str1 == str2, -1(<0): str1 < str2, 1(>0): str1 > str2
+ */
+int vgs_strcmp(const char* str1, const char* str2);
+
+/**
+ * @brief Comparing strings of a specific length
+ * @param str1 Null-terminated string buffer
+ * @param str2 Null-terminated string buffer
+ * @param n Length
+ * @return 0: str1 == str2, -1(<0): str1 < str2, 1(>0): str1 > str2
+ */
+int vgs_strncmp(const char* str1, const char* str2, int n);
+
+/**
+ * @brief Search for a specific string in a string.
+ * @param str1 Search string
+ * @param str2 String to search for
+ * @return Returns the pointer to the first occurrence of str2 found within str1.
+ * @return If the search string is not found, NULL is returned.
+ */
+char* vgs_strstr(const char* str1, const char* str2);
+
 #ifdef __cplusplus
 };
 #endif

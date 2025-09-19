@@ -640,32 +640,35 @@ This library is always linked implicitly (`-lc`), so you do not need to specify 
 #include <vgs.h>
 ```
 
-| Function | Description |
-|:---------|:------------|
-| `vgs_vsync` | Synchronize the [V-SYNC](#0xe00000in---v-sync) (screen output with 60fps) |
-| `vgs_srand` | Set the [random number](#0xe00004io---random) seed |
-| `vgs_rand` | Obtain a 16-bit [random](#0xe00004io---random) value |
-| `vgs_rand32` | Obtain a 32-bit [random](#0xe00004io---random) value |
-| `vgs_d32str` | Convert a 32-bit signed integer to a string |
-| `vgs_u32str` | Convert a 32-bit unsigned integer to a string |
-| `vgs_memcpy` | High-speed memory copy using [DMA Copy](#dma-copy) |
-| `vgs_memset` | High-Speed bulk memory writing using [DMA Set](#dma-set)|
-| `vgs_strlen` | High-Speed string length retrieval using [DMA Search](#dma-search) |
-| `vgs_strchr` | Search for specific characters in a string |
-| `vgs_strrchr` | Search for specific characters in a string that right to left |
-| `vgs_put_bg` | Display a character on the [BG](#name-table) in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode) |
-| `vgs_print_bg` | Display a string on the [BG](#name-table) in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode) |
-| `vgs_cls_bg_all` | [Clear](#0xd20038-0xd20048-clear-screen) all BGs |
-| `vgs_cls_bg` | [Clear](#0xd20038-0xd20048-clear-screen) a specific BG |
-| `vgs_draw_pixel` | Draw a [pixel](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
-| `vgs_draw_line` | Draw a [line](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
-| `vgs_draw_box` | Draw a [rectangle](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
-| `vgs_draw_boxf` | Draw a [filled-rectangle](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
-| `vgs_draw_character` | Draw a [character-pattern](#character-pattern) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
-| `vgs_sprite` | Set [OAM](#oam-object-attribute-memory) attribute values in bulk |
-| `vgs_bgm_play` | Play [background music](#0xe01000o---play-vgm) |
-| `vgs_sfx_play` | Play [sound effect](#0xe01100o---play-sfx) |
-| `vgs_exit` | [Exit](#0xe7fffcout---exit) process |
+| Category | Function | Description |
+|:------|:---------|:------------|
+| system | `vgs_vsync` | Synchronize the [V-SYNC](#0xe00000in---v-sync) (screen output with 60fps) |
+| stdlib | `vgs_rand` | Obtain a 16-bit [random](#0xe00004io---random) value |
+| stdlib | `vgs_rand32` | Obtain a 32-bit [random](#0xe00004io---random) value |
+| stdlib | `vgs_srand` | Set the [random number](#0xe00004io---random) seed |
+| stdlib | `vgs_exit` | [Exit](#0xe7fffcout---exit) process |
+| string | `vgs_d32str` | Convert a 32-bit signed integer to a string |
+| string | `vgs_u32str` | Convert a 32-bit unsigned integer to a string |
+| string | `vgs_memcpy` | High-speed memory copy using [DMA Copy](#dma-copy) |
+| string | `vgs_memset` | High-Speed bulk memory writing using [DMA Set](#dma-set)|
+| string | `vgs_strlen` | High-Speed string length retrieval using [DMA Search](#dma-search) |
+| string | `vgs_strchr` | Search for specific characters in a string |
+| string | `vgs_strrchr` | Search for specific characters in a string that right to left |
+| string | `vgs_strcmp` | Compare strings |
+| string | `vgs_strncmp` | Comparing strings of a specific length |
+| string | `vgs_strstr` | Search for a specific string in a string |
+| cg:bg | `vgs_put_bg` | Display a character on the [BG](#name-table) in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode) |
+| cg:bg | `vgs_print_bg` | Display a string on the [BG](#name-table) in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode) |
+| cg:bg | `vgs_cls_bg_all` | [Clear](#0xd20038-0xd20048-clear-screen) all BGs |
+| cg:bg | `vgs_cls_bg` | [Clear](#0xd20038-0xd20048-clear-screen) a specific BG |
+| cg:sp | `vgs_sprite` | Set [OAM](#oam-object-attribute-memory) attribute values in bulk |
+| cg:bmp | `vgs_draw_pixel` | Draw a [pixel](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
+| cg:bmp | `vgs_draw_line` | Draw a [line](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
+| cg:bmp | `vgs_draw_box` | Draw a [rectangle](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
+| cg:bmp | `vgs_draw_boxf` | Draw a [filled-rectangle](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
+| cg:bmp | `vgs_draw_character` | Draw a [character-pattern](#character-pattern) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
+| bgm | `vgs_bgm_play` | Play [background music](#0xe01000o---play-vgm) |
+| sfx | `vgs_sfx_play` | Play [sound effect](#0xe01100o---play-sfx) |
 
 For detailed specifications, please refer to [./lib/vgs.h](./lib/vgs.h).
 
