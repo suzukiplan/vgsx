@@ -577,6 +577,8 @@ In the [Emulator for Debug (SDL2)](#vgs-x-emulator-for-debug), the value written
 
 # VGS Standard Library
 
+The VGS Standard Library is a specification for a C language library designed (standardized) to maintain source code compatibility for user programs across VGS-X and future VGS series as much as possible.
+
 All hardware functions of the VGS-X specified in this README.md can be utilized from game programs written in C language through the C library defined in this chapter.
 
 | Library | Header File | Desctiption |
