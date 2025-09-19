@@ -2,7 +2,9 @@
 
 ## Version 0.3.0
 
+- Core: Implemented DMA functions
 - CRT: Separate log-related APIs from libc.a to liblog.a **(Disruptive)**
+- CRT: Added `vgs_memcpy`, `vgs_memset` and `vgs_strlen` _(Using DMA)_
 
 ## Version 0.2.0
 

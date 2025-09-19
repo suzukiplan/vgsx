@@ -207,3 +207,27 @@ void vgs_d32str(char* buf12, int32_t n)
     }
     vgs_u32str(buf12, (uint32_t)n);
 }
+
+void vgs_memcpy(void* destination, const void* source, uint32_t size)
+{
+    VGS_OUT_DMA_DESTINATION = (uint32_t)destination;
+    VGS_OUT_DMA_SOURCE = (uint32_t)source;
+    VGS_OUT_DMA_ARGUMENT = size;
+    VGS_IO_DMA_EXECUTE = VGS_DMA_MEMCPY;
+}
+
+void vgs_memset(void* destination, uint8_t value, uint32_t size)
+{
+    VGS_OUT_DMA_DESTINATION = (uint32_t)destination;
+    VGS_OUT_DMA_SOURCE = value;
+    VGS_OUT_DMA_ARGUMENT = size;
+    VGS_IO_DMA_EXECUTE = VGS_DMA_MEMSET;
+}
+
+uint32_t vgs_strlen(const char* str)
+{
+    VGS_OUT_DMA_SOURCE = (uint32_t)str;
+    VGS_OUT_DMA_ARGUMENT = 0;
+    const char* end = (const char*)VGS_IO_DMA_EXECUTE;
+    return end ? (uint32_t)(end - str) : 0;
+}

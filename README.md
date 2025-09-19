@@ -453,7 +453,11 @@ Note that all addresses and values for I/O instructions must be specified as 32-
 |:--------:|:---:|:---:|:------------|
 | 0xE00000 |  o  |  -  | [V-SYNC](#0xe00000in---v-sync) |
 | 0xE00000 |  -  |  o  | [Console Output](#0xe00000out---console-output) |
-| 0xE00004 |  o  |  o  | [Random](#0xe00004io---random) | 
+| 0xE00004 |  o  |  o  | [Random](#0xe00004io---random) |
+| 0xE00008 |  -  |  o  | [DMA: Destination](#0xe00008-0xe00014io---direct-memory-access) |
+| 0xE0000C |  -  |  o  | [DMA: Source](#0xe00008-0xe00014io---direct-memory-access) |
+| 0xE00010 |  -  |  o  | [DMA: Argument](#0xe00008-0xe00014io---direct-memory-access) |
+| 0xE00014 |  o  |  o  | [DMA: Execute](#0xe00008-0xe00014io---direct-memory-access) |
 | 0xE01000 |  -  |  o  | [Play VGM](#0xe01000o---play-vgm) |
 | 0xE01100 |  -  |  o  | [Play SFX](#0xe01100o---play-sfx) |
 | 0xE02000 |  o  |  -  | [Gamepad: D-pad - Up](#0xe200xxi---gamepad) |
@@ -505,6 +509,46 @@ The `vgs_print` function is defined in [log.h](./lib/log.h).
 - You can set the seed for random numbers by writing a value to 0xE00004.
 - Reading 0xE00004 allows you to obtain a random number (0 to 65535).
 - The random number generation in VGS-X guarantees that calling it 65,536 times will return each number from 0 to 65,535 exactly once.
+
+### 0xE00008-0xE00014[i/o] - Direct Memory Access
+
+| `Destination` | `Source` | `Argument` | `Execute` | Description |
+|:-:|:-:|:-:|:-|
+|☑︎|☑︎|`size`| `out(0)` | [Copy](#dma-copy) |
+|☑︎|☑︎|`size`| [Set](#dma-set) |
+|-|☑︎|`target`| `in` | [Search](#dma-search) |
+
+#### DMA Copy
+
+Transfer the data from the address specified in `Source` to the address specified in `Destination`, for the number of bytes specified in `Argument` (size).
+
+Remarks:
+
+- The `Source` must be either a Program Address (0x000000 to Size-of-Program) or a RAM Address (0xF00000 to 0xFFFFFF).
+- The `Destination` must be a RAM Address (0xF00000 to 0xFFFFFF).
+- When both `Source` and `Destination` point to RAM addresses, overlapping copy ranges are acceptable. (A copy equivalent to `memmove` is performed.)
+- If an invalid address range (including the result of the addition) is specified, DMA will not be executed.
+
+#### DMA Set
+
+Transfer the value specified by the lower 8 bits of `Source` to the address specified by `Destination`, for the number of bytes specified by `Argument` (size).
+
+Remarks:
+
+- The upper 24 bits of `Source` are ignored.
+- The `Destination` must be a RAM Address (0xF00000 to 0xFFFFFF).
+- If an invalid address range (including the result of the addition) is specified, DMA will not be executed.
+
+#### DMA Search
+
+Search for the byte data specified by the lower 8 bits of `Argument` (target) starting from the address specified by `Source`.
+
+Remarks:
+
+- The upper 24 bits of `Argument` are ignored.
+- The `Source` must be either a Program Address (0x000000 to Size-of-Program) or a RAM Address (0xF00000 to 0xFFFFFF).
+- If the search results fall outside the valid address range, 0 is entered; if an address is found, the found address is entered.
+- Please note that performing searches not expected to yield results can result in significant overhead.
 
 ### 0xE01000[o] - Play VGM
 
@@ -604,6 +648,9 @@ This library is always linked implicitly (`-lc`), so you do not need to specify 
 | `vgs_rand32` | Obtain a 32-bit [random](#0xe00004io---random) value |
 | `vgs_d32str` | Convert a 32-bit signed integer to a string |
 | `vgs_u32str` | Convert a 32-bit unsigned integer to a string |
+| `vgs_memcpy` | High-speed memory copy using [DMA Copy](#dma-copy) |
+| `vgs_memset` | High-Speed bulk memory writing using [DMA Set](#dma-set)|
+| `vgs_strlen` | High-Speed string length retrieval using [DMA Search](#dma-search) |
 | `vgs_put_bg` | Display a character on the [BG](#name-table) in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode) |
 | `vgs_print_bg` | Display a string on the [BG](#name-table) in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode) |
 | `vgs_cls_bg_all` | [Clear](#0xd20038-0xd20048-clear-screen) all BGs |

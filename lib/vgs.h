@@ -103,10 +103,18 @@ typedef struct {
 #define VGS_DRAW_BOXF 3
 #define VGS_DRAW_CHR 4
 
+// DMA Function Identifer
+#define VGS_DMA_MEMCPY 0
+#define VGS_DMA_MEMSET 1
+
 // I/O
 #define VGS_IN_VSYNC *((uint32_t*)0xE00000)
 #define VGS_OUT_CONSOLE *((uint32_t*)0xE00000)
 #define VGS_IO_RANDOM *((uint32_t*)0xE00004)
+#define VGS_OUT_DMA_SOURCE *((uint32_t*)0xE00008)
+#define VGS_OUT_DMA_DESTINATION *((uint32_t*)0xE0000C)
+#define VGS_OUT_DMA_ARGUMENT *((uint32_t*)0xE00010)
+#define VGS_IO_DMA_EXECUTE *((uint32_t*)0xE00014)
 #define VGS_OUT_VGM_PLAY *((uint32_t*)0xE01000)
 #define VGS_OUT_SFX_PLAY *((uint32_t*)0xE01100)
 #define VGS_KEY_UP *((uint32_t*)0xE20000)
@@ -290,6 +298,34 @@ void vgs_sfx_play(uint8_t n);
  * @param code Exit code
  */
 void vgs_exit(int32_t code);
+
+/**
+ * @brief Transfer the data from the address specified in `source` to the address specified in `destination`, for the number of bytes specified in `size`.
+ * @param destination must be a RAM Address (0xF00000 to 0xFFFFFF).
+ * @param source must be either a Program Address (0x000000 to Size-of-Program) or a RAM Address (0xF00000 to 0xFFFFFF).
+ * @param size Transfer size in byte.
+ * @remark When both `source` and `destination` point to RAM addresses, overlapping copy ranges are acceptable. (A copy equivalent to `memmove` is performed.)
+ * @remark If an invalid address range (including the result of the addition) is specified, this function will not be executed.
+ */
+void vgs_memcpy(void* destination, const void* source, uint32_t size);
+
+/**
+ * @brief Write the value specified by `value` to the address specified by `destination` for the number of bytes specified by `size`.
+ * @param destination must be a RAM Address (0xF00000 to 0xFFFFFF).
+ * @param value The value to write to the `destination` address
+ * @param size Transfer size in byte.
+ * @remark If an invalid address range (including the result of the addition) is specified, this function will not be executed.
+ */
+void vgs_memset(void* destination, uint8_t value, uint32_t size);
+
+/**
+ * @brief Get the length of a null-terminated string buffer.
+ * @param str Null-terminated string buffer
+ * @return Length or 0
+ * @remark `str` must be either a Program Address (0x000000 to Size-of-Program) or a RAM Address (0xF00000 to 0xFFFFFF).
+ * @remark If an invalid address range (including the result of the addition) is specified, this function will be return 0.
+ */
+uint32_t vgs_strlen(const char* str);
 
 #ifdef __cplusplus
 };
