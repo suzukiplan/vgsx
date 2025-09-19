@@ -478,13 +478,14 @@ int main(int argc, char* argv[])
             printf("\nAverage MC68030 Clocks: %.1fMHz per second.\n", totalClocks / 1000000);
         }
     }
-    maxClocks *= 1000.0 / 60.0;
-    if (maxClocks < 1000) {
-        printf("Maximum MC68030 Clocks: %dHz per second.\n", maxClocks);
-    } else if (maxClocks < 1000000) {
-        printf("Maximum MC68030 Clocks: %d.%dkHz per second.\n", maxClocks / 1000, maxClocks % 1000 / 100);
+    double max = maxClocks;
+    max *= 1000.0 / 60.0;
+    if (max < 1000) {
+        printf("Maximum MC68030 Clocks: %.1fHz per second.\n", max);
+    } else if (max < 1000000) {
+        printf("Maximum MC68030 Clocks: %.1fkHz per second.\n", max / 1000);
     } else {
-        printf("Maximum MC68030 Clocks: %d.%dMHz per second.\n", maxClocks / 1000000, maxClocks % 1000000 / 100000);
+        printf("Maximum MC68030 Clocks: %.1fMHz per second.\n", max / 1000000);
     }
     printf("RAM usage: %d/%d (%d%%)\n", ramUsage, 1024 * 1024, ramUsage * 100 / 1024 / 1024);
     SDL_Quit();
