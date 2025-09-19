@@ -132,6 +132,10 @@ typedef int BOOL;
 #define TRUE 1
 #define FALSE 0
 
+#ifndef NULL
+#define NULL ((void*)0)
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -326,6 +330,22 @@ void vgs_memset(void* destination, uint8_t value, uint32_t size);
  * @remark If an invalid address range (including the result of the addition) is specified, this function will be return 0.
  */
 uint32_t vgs_strlen(const char* str);
+
+/**
+ * @brief Search for specific characters in a string.
+ * @param str Null-terminated string buffer
+ * @param c A search character
+ * @return If the character being searched for is found, it returns a pointer to its position; if not found, it returns NULL.
+ */
+char* vgs_strchr(const char* str, int c);
+
+/**
+ * @brief Search for specific characters in a string that right to left.
+ * @param str Null-terminated string buffer
+ * @param c A search character
+ * @return If the character being searched for is found, it returns a pointer to its position; if not found, it returns NULL.
+ */
+char* vgs_strrchr(const char* str, int c);
 
 #ifdef __cplusplus
 };

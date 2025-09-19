@@ -10,6 +10,8 @@ int main(int argc, char* argv)
     vgs_putlog("length of \"%s\" = %u", text, length);
     vgs_memset(buf, 0x01, sizeof(buf));
     vgs_memcpy(buf, text, length + 1);
+    vgs_putlog("vgs_strchr(\'t\') ... %s", vgs_strchr(text, 't'));
+    vgs_putlog("vgs_strrchr(\'t\') ... %s", vgs_strrchr(text, 't'));
 
     int32_t ret = 0;
     for (int i = 0; i < sizeof(buf); i++) {

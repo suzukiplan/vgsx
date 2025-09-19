@@ -231,3 +231,25 @@ uint32_t vgs_strlen(const char* str)
     const char* end = (const char*)VGS_IO_DMA_EXECUTE;
     return end ? (uint32_t)(end - str) : 0;
 }
+
+char* vgs_strchr(const char* str, int c)
+{
+    while (*str) {
+        if (c == *str) {
+            return (char*)str;
+        }
+        str++;
+    }
+    return (char*)NULL;
+}
+
+char* vgs_strrchr(const char* str, int c)
+{
+    c &= 0xFF;
+    for (int32_t ptr = ((int32_t)vgs_strlen(str)) - 1; 0 < ptr; ptr--) {
+        if (str[ptr] == c) {
+            return (char*)&str[ptr];
+        }
+    }
+    return (char*)NULL;
+}

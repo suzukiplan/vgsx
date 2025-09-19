@@ -651,6 +651,8 @@ This library is always linked implicitly (`-lc`), so you do not need to specify 
 | `vgs_memcpy` | High-speed memory copy using [DMA Copy](#dma-copy) |
 | `vgs_memset` | High-Speed bulk memory writing using [DMA Set](#dma-set)|
 | `vgs_strlen` | High-Speed string length retrieval using [DMA Search](#dma-search) |
+| `vgs_strchr` | Search for specific characters in a string |
+| `vgs_strrchr` | Search for specific characters in a string that right to left |
 | `vgs_put_bg` | Display a character on the [BG](#name-table) in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode) |
 | `vgs_print_bg` | Display a string on the [BG](#name-table) in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode) |
 | `vgs_cls_bg_all` | [Clear](#0xd20038-0xd20048-clear-screen) all BGs |
