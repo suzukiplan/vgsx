@@ -621,9 +621,11 @@ In the [Emulator for Debug (SDL2)](#vgs-x-emulator-for-debug), the value written
 
 # VGS Standard Library
 
-The VGS Standard Library is a specification for a C language library designed (standardized) to maintain source code compatibility for user programs across VGS-X and future VGS series as much as possible.
+The **Video Game System Standard Library** is a specification for a C language library designed (standardized) to maintain source code compatibility for user programs across VGS-X and future VGS series as much as possible. This standard specification has been designed with the policy of comprehensively providing all the functions necessary for developing the “Typical 2D Games”.
 
-All hardware functions of the VGS-X specified in this README.md can be utilized from game programs written in C language through the C library defined in this chapter.
+All hardware functions of the VGS-X specified in this README.md can be utilized from game programs written in C language through this library.
+
+## Static Libraries
 
 | Library | Header File | Desctiption |
 |:--------|:--------|:------------|
@@ -657,6 +659,13 @@ This library is always linked implicitly (`-lc`), so you do not need to specify 
 | string | `vgs_strcmp` | Compare strings |
 | string | `vgs_strncmp` | Comparing strings of a specific length |
 | string | `vgs_strstr` | Search for a specific string in a string |
+| ctype | `vgs_isdigit` | Check if a character is a number |
+| ctype | `vgs_isupper` | Check if a character is an uppercase |
+| ctype | `vgs_islower` | Check if a character is a lowercase |
+| ctype | `vgs_isalpha` | Check if a character is an alphabet |
+| ctype | `vgs_isalnum` | Check if a character is an alphabet or a digit |
+| ctype | `vgs_toupper` | Convert a lowercase letter to an uppercase letter |
+| ctype | `vgs_tolower` | Convert an uppercase letter to a lowercase letter. |
 | cg:bg | `vgs_put_bg` | Display a character on the [BG](#name-table) in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode) |
 | cg:bg | `vgs_print_bg` | Display a string on the [BG](#name-table) in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode) |
 | cg:bg | `vgs_cls_bg_all` | [Clear](#0xd20038-0xd20048-clear-screen) all BGs |

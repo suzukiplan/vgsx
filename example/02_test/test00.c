@@ -40,6 +40,62 @@ int main(int argc, char* argv)
     vgs_putlog("vgs_strncmp(\"1031\",\"1032\",4) = %d", expect32d(vgs_strncmp("1031", "1032", 4), -1));
     vgs_putlog("vgs_strstr(\"%s\",\"is t\") ... %s", text, expect(vgs_strstr(text, "is t"), "is test string."));
 
+    vgs_putlog("vgs_isdigit(\'0\') ... %d", expect32d(vgs_isdigit('0'), TRUE));
+    vgs_putlog("vgs_isdigit(\'9\') ... %d", expect32d(vgs_isdigit('9'), TRUE));
+    vgs_putlog("vgs_isdigit(\'a\') ... %d", expect32d(vgs_isdigit('a'), FALSE));
+    vgs_putlog("vgs_isdigit(\'z\') ... %d", expect32d(vgs_isdigit('z'), FALSE));
+    vgs_putlog("vgs_isdigit(\'A\') ... %d", expect32d(vgs_isdigit('A'), FALSE));
+    vgs_putlog("vgs_isdigit(\'Z\') ... %d", expect32d(vgs_isdigit('Z'), FALSE));
+    vgs_putlog("vgs_isdigit(\'*\') ... %d", expect32d(vgs_isdigit('*'), FALSE));
+
+    vgs_putlog("vgs_isupper(\'0\') ... %d", expect32d(vgs_isupper('0'), FALSE));
+    vgs_putlog("vgs_isupper(\'9\') ... %d", expect32d(vgs_isupper('9'), FALSE));
+    vgs_putlog("vgs_isupper(\'a\') ... %d", expect32d(vgs_isupper('a'), FALSE));
+    vgs_putlog("vgs_isupper(\'z\') ... %d", expect32d(vgs_isupper('z'), FALSE));
+    vgs_putlog("vgs_isupper(\'A\') ... %d", expect32d(vgs_isupper('A'), TRUE));
+    vgs_putlog("vgs_isupper(\'Z\') ... %d", expect32d(vgs_isupper('Z'), TRUE));
+    vgs_putlog("vgs_isupper(\'*\') ... %d", expect32d(vgs_isupper('*'), FALSE));
+
+    vgs_putlog("vgs_islower(\'0\') ... %d", expect32d(vgs_islower('0'), FALSE));
+    vgs_putlog("vgs_islower(\'9\') ... %d", expect32d(vgs_islower('9'), FALSE));
+    vgs_putlog("vgs_islower(\'a\') ... %d", expect32d(vgs_islower('a'), TRUE));
+    vgs_putlog("vgs_islower(\'z\') ... %d", expect32d(vgs_islower('z'), TRUE));
+    vgs_putlog("vgs_islower(\'A\') ... %d", expect32d(vgs_islower('A'), FALSE));
+    vgs_putlog("vgs_islower(\'Z\') ... %d", expect32d(vgs_islower('Z'), FALSE));
+    vgs_putlog("vgs_islower(\'*\') ... %d", expect32d(vgs_islower('*'), FALSE));
+
+    vgs_putlog("vgs_isalpha(\'0\') ... %d", expect32d(vgs_isalpha('0'), FALSE));
+    vgs_putlog("vgs_isalpha(\'9\') ... %d", expect32d(vgs_isalpha('9'), FALSE));
+    vgs_putlog("vgs_isalpha(\'a\') ... %d", expect32d(vgs_isalpha('a'), TRUE));
+    vgs_putlog("vgs_isalpha(\'z\') ... %d", expect32d(vgs_isalpha('z'), TRUE));
+    vgs_putlog("vgs_isalpha(\'A\') ... %d", expect32d(vgs_isalpha('A'), TRUE));
+    vgs_putlog("vgs_isalpha(\'Z\') ... %d", expect32d(vgs_isalpha('Z'), TRUE));
+    vgs_putlog("vgs_isalpha(\'*\') ... %d", expect32d(vgs_isalpha('*'), FALSE));
+
+    vgs_putlog("vgs_isalnum(\'0\') ... %d", expect32d(vgs_isalnum('0'), TRUE));
+    vgs_putlog("vgs_isalnum(\'9\') ... %d", expect32d(vgs_isalnum('9'), TRUE));
+    vgs_putlog("vgs_isalnum(\'a\') ... %d", expect32d(vgs_isalnum('a'), TRUE));
+    vgs_putlog("vgs_isalnum(\'z\') ... %d", expect32d(vgs_isalnum('z'), TRUE));
+    vgs_putlog("vgs_isalnum(\'A\') ... %d", expect32d(vgs_isalnum('A'), TRUE));
+    vgs_putlog("vgs_isalnum(\'Z\') ... %d", expect32d(vgs_isalnum('Z'), TRUE));
+    vgs_putlog("vgs_isalnum(\'*\') ... %d", expect32d(vgs_isalnum('*'), FALSE));
+
+    vgs_putlog("vgs_toupper(\'0\') ... %d", expect32d(vgs_toupper('0'), '0'));
+    vgs_putlog("vgs_toupper(\'9\') ... %d", expect32d(vgs_toupper('9'), '9'));
+    vgs_putlog("vgs_toupper(\'a\') ... %d", expect32d(vgs_toupper('a'), 'A'));
+    vgs_putlog("vgs_toupper(\'z\') ... %d", expect32d(vgs_toupper('z'), 'Z'));
+    vgs_putlog("vgs_toupper(\'A\') ... %d", expect32d(vgs_toupper('A'), 'A'));
+    vgs_putlog("vgs_toupper(\'Z\') ... %d", expect32d(vgs_toupper('Z'), 'Z'));
+    vgs_putlog("vgs_toupper(\'*\') ... %d", expect32d(vgs_toupper('*'), '*'));
+
+    vgs_putlog("vgs_tolower(\'0\') ... %d", expect32d(vgs_tolower('0'), '0'));
+    vgs_putlog("vgs_tolower(\'9\') ... %d", expect32d(vgs_tolower('9'), '9'));
+    vgs_putlog("vgs_tolower(\'a\') ... %d", expect32d(vgs_tolower('a'), 'a'));
+    vgs_putlog("vgs_tolower(\'z\') ... %d", expect32d(vgs_tolower('z'), 'z'));
+    vgs_putlog("vgs_tolower(\'A\') ... %d", expect32d(vgs_tolower('A'), 'a'));
+    vgs_putlog("vgs_tolower(\'Z\') ... %d", expect32d(vgs_tolower('Z'), 'z'));
+    vgs_putlog("vgs_tolower(\'*\') ... %d", expect32d(vgs_tolower('*'), '*'));
+
     int32_t ret = 0;
     for (int i = 0; i < sizeof(buf); i++) {
         if (buf[i] == 0x01) {
