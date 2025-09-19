@@ -25,6 +25,29 @@
 #pragma once
 #include <stdint.h>
 
+// Name table (256x256)
+// Bit Layout:
+// - attribute (12bit): F/H F/V 0 0 - 0 0 0 0 - 0 0 0 0
+//   - F/H: Flip Horizontal
+//   - F/V: Flip Vertical
+// - palette (4bit)
+// - pattern number (16bit)
+#define BG_WIDTH 256
+#define BG_HEIGHT 256
+#define BG0 ((uint32_t*)0xC00000)
+#define BG1 ((uint32_t*)0xC40000)
+#define BG2 ((uint32_t*)0xC80000)
+#define BG3 ((uint32_t*)0xCC0000)
+
+// VRAM: 320x200 x 32bit (RGB888)
+#define VRAM_WIDTH 320
+#define VRAM_HEIGHT 200
+#define VRAM0 ((uint32_t*)0xC00000)
+#define VRAM1 ((uint32_t*)0xC40000)
+#define VRAM2 ((uint32_t*)0xC80000)
+#define VRAM3 ((uint32_t*)0xCC0000)
+
+// Sprites
 typedef struct {
     uint32_t visible;     // Visible (0 or not 0)
     int32_t y;            // Position (Y)
@@ -36,19 +59,6 @@ typedef struct {
     uint32_t reserved[9]; // Reserved
 } OAM;
 
-// Name table (256x256)
-// Bit Layout:
-// - attribute (12bit): F/H F/V 0 0 - 0 0 0 0 - 0 0 0 0
-//   - F/H: Flip Horizontal
-//   - F/V: Flip Vertical
-// - palette (4bit)
-// - pattern number (16bit)
-#define BG0 ((uint32_t*)0xC00000)
-#define BG1 ((uint32_t*)0xC40000)
-#define BG2 ((uint32_t*)0xC80000)
-#define BG3 ((uint32_t*)0xCC0000)
-
-// Sprites
 #define OAM_MAX 1024
 #define OAM ((OAM*)0xD00000)
 
