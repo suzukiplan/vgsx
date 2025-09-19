@@ -22,14 +22,25 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#pragma once
-#include "vgs_bgm.h"
-#include "vgs_cg.h"
-#include "vgs_ctype.h"
-#include "vgs_math.h"
-#include "vgs_sfx.h"
-#include "vgs_stdint.h"
-#include "vgs_stdlib.h"
-#include "vgs_string.h"
-#include "vgs_system.h"
-#include "vgs_io.h"
+#include "vgs.h"
+
+int32_t vgs_degree(int32_t x1, int32_t y1, int32_t x2, int32_t y2)
+{
+    VGS_OUT_ANGLE_X1 = x1;
+    VGS_OUT_ANGLE_Y1 = y1;
+    VGS_OUT_ANGLE_X2 = x2;
+    VGS_OUT_ANGLE_Y2 = y2;
+    return VGS_IO_ANGLE_DEGREE;
+}
+
+int32_t vgs_sin(int32_t degree)
+{
+    VGS_IO_ANGLE_DEGREE = degree;
+    return VGS_IN_ANGLE_SIN;
+}
+
+int32_t vgs_cos(int32_t degree)
+{
+    VGS_IO_ANGLE_DEGREE = degree;
+    return VGS_IN_ANGLE_COS;
+}
