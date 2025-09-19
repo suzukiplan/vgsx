@@ -1,2 +1,2 @@
 ci:
-	cd example/02_test && make
+	cd example/02_test && make run
