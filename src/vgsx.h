@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <math.h>
 #include "vdp.hpp"
 
 class VGSX
@@ -43,6 +44,21 @@ class VGSX
         size_t index;
     } SfxData;
 
+    typedef struct {
+        uint32_t source;
+        uint32_t destination;
+        uint32_t argument;
+    } DMA;
+
+    typedef struct {
+        int32_t x1;
+        int32_t y1;
+        int32_t x2;
+        int32_t y2;
+        int32_t degree;
+        double radian;
+    } Angle;
+
     struct Context {
         uint8_t ram[0x100000]; // WRAM (1MB)
         Binary vgmData[0x10000];
@@ -53,9 +69,8 @@ class VGSX
         size_t programSize;
         int randomIndex;
         uint32_t frameClocks;
-        uint32_t dmaSource;
-        uint32_t dmaDestination;
-        uint32_t dmaArgument;
+        DMA dma;
+        Angle angle;
     } context;
 
     struct KeyStatus {
