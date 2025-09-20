@@ -110,7 +110,7 @@ static void file_dump(const char* fname)
     FILE* fp = fopen(fname, "rb");
     if (fp) {
         printf("\n[%s]\n", fname);
-        char buf[16];
+        uint8_t buf[16];
         int n;
         int offset = 0;
         int totalSize = 0;
@@ -144,6 +144,17 @@ static void file_dump(const char* fname)
 }
 int main(int argc, char* argv[])
 {
+    vgsx.setLogCallback([](VGSX::LogLevel level, const char* msg) {
+        std::string lv;
+        switch (level) {
+            case VGSX::LogLevel::I: lv = "info"; break;
+            case VGSX::LogLevel::N: lv = "notice"; break;
+            case VGSX::LogLevel::W: lv = "warning"; break;
+            case VGSX::LogLevel::E: lv = "error"; break;
+            default: lv = "unknown"; break;
+        }
+        printf("[%s] %s\n", lv.c_str(), msg);
+    });
     const char* programPath = nullptr;
     uint16_t pindex = 0;
     uint16_t bindex = 0;
@@ -295,7 +306,7 @@ int main(int argc, char* argv[])
                     printf("CHR load failed: %s\n", vgsx.getLastError());
                     exit(255);
                 }
-                puts("CHR load succeed.");
+                printf("CHR load succeed. (%d patterns)\n", size / 32);
                 pindex += size / 32;
                 ptr += size;
             } else if (0 == memcmp(ptr, "VGM", 4)) {
@@ -412,6 +423,7 @@ int main(int argc, char* argv[])
                     case SDLK_s: vgsx.key.y = 1; break;
                     case SDLK_SPACE: vgsx.key.start = 1; break;
                     case SDLK_q: quit = true; break;
+                    case SDLK_r: vgsx.reset(); break;
                     case SDLK_c: screenShot(); break;
                 }
             } else if (event.type == SDL_KEYUP) {
@@ -432,9 +444,9 @@ int main(int argc, char* argv[])
             pthread_mutex_lock(&soundMutex);
             vgsx.tick();
             pthread_mutex_unlock(&soundMutex);
-            totalClocks += vgsx.context.frameClocks;
-            if (maxClocks < vgsx.context.frameClocks) {
-                maxClocks = vgsx.context.frameClocks;
+            totalClocks += vgsx.ctx.frameClocks;
+            if (maxClocks < vgsx.ctx.frameClocks) {
+                maxClocks = vgsx.ctx.frameClocks;
                 printf("Update the peak CPU clock rate: %dHz per frame.\n", maxClocks);
             }
             if (!consoleMode) {
@@ -477,13 +489,13 @@ int main(int argc, char* argv[])
     printf("\n[RAM DUMP]\n");
     uint8_t prevbin[16];
     uint32_t ramUsage = 0;
-    for (int i = 0; i < sizeof(vgsx.context.ram); i += 16) {
+    for (int i = 0; i < sizeof(vgsx.ctx.ram); i += 16) {
         if (i != 0) {
-            if (0 == memcmp(prevbin, &vgsx.context.ram[i], 16)) {
+            if (0 == memcmp(prevbin, &vgsx.ctx.ram[i], 16)) {
                 continue; // skip same data
             }
         }
-        memcpy(prevbin, &vgsx.context.ram[i], 16);
+        memcpy(prevbin, &vgsx.ctx.ram[i], 16);
         printf("%06X", 0xF00000 + i);
         for (int j = 0; j < 16; j++) {
             if (8 == j) {

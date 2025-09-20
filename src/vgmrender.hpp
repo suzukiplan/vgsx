@@ -31,6 +31,8 @@
 #include "ymfm_opm.h"
 #include "ymfm_opn.h"
 
+#include "vgsx.h"
+
 #define LOG_WRITES (0)
 
 // run this many dummy clocks of each chip before generating
@@ -215,10 +217,24 @@ class VgmHelper
   private:
     int32_t wait;
     bool done;
+    void (*logCallback)(VGSX::LogLevel level, const char* msg);
+
+    void putlog(VGSX::LogLevel level, const char* format, ...)
+    {
+        if (this->logCallback) {
+            char buf[1024];
+            va_list args;
+            va_start(args, format);
+            vsnprintf(buf, sizeof(buf), format, args);
+            va_end(args);
+            this->logCallback(level, buf);
+        }
+    }
 
   public:
-    VgmHelper(const uint8_t* vgm, size_t vgmSize)
+    VgmHelper(const uint8_t* vgm, size_t vgmSize, void (*logCallback)(VGSX::LogLevel, const char* msg))
     {
+        this->logCallback = logCallback;
         this->buffer = vgm;
         this->data_start = parse_header();
         this->offset = this->data_start;
@@ -230,7 +246,7 @@ class VgmHelper
     ~VgmHelper()
     {
         for (auto& chip : active_chips) {
-            // printf("ymfm: Release %s\n", chip.get()->name());
+            // putlog(VGSX::LogLevel::I, "ymfm: Release %s", chip.get()->name());
             delete chip.release();
         }
         active_chips.clear();
@@ -287,7 +303,7 @@ class VgmHelper
         }
         uint32_t clockval = clock & 0x3fffffff;
         int numchips = (clock & 0x40000000) ? 2 : 1;
-        printf("ymfm: Adding %s%s @ %dHz\n", (numchips == 2) ? "2 x " : "", chipname, clockval);
+        putlog(VGSX::LogLevel::I, "ymfm: Adding %s%s @ %dHz", (numchips == 2) ? "2 x " : "", chipname, clockval);
         for (int index = 0; index < numchips; index++) {
             char name[100];
             snprintf(name, sizeof(name), "%s #%d", chipname, index);
@@ -320,19 +336,19 @@ class VgmHelper
         // +08: parse the version
         uint32_t version = parse_uint32();
         if (version > 0x171) {
-            printf("VGM warning: version > 1.71 detected, some things may not work\n");
+            putlog(VGSX::LogLevel::W, "VGM: version > 1.71 detected, some things may not work");
         }
 
         // +0C: SN76489 clock
         uint32_t clock = parse_uint32();
         if (clock != 0) {
-            printf("VGM warning: clock for SN76489 specified (%d), but not supported\n", clock);
+            putlog(VGSX::LogLevel::W, "VGM: clock for SN76489 specified (%d), but not supported", clock);
         }
 
         // +10: YM2413 clock
         clock = parse_uint32();
         if (clock != 0) {
-            printf("VGM warning: clock for YM2413 specified (%d), but not supported\n", clock);
+            putlog(VGSX::LogLevel::W, "VGM: clock for YM2413 specified (%d), but not supported", clock);
         }
 
         // +14: GD3 offset
@@ -378,7 +394,7 @@ class VgmHelper
         // +38: Sega PCM clock
         clock = parse_uint32();
         if (version >= 0x151 && clock != 0) {
-            printf("VGM warning: clock for Sega PCM specified, but not supported\n");
+            putlog(VGSX::LogLevel::W, "VGM: clock for Sega PCM specified, but not supported");
         }
 
         // +3C: Sega PCM interface register
@@ -391,7 +407,7 @@ class VgmHelper
 
         clock = parse_uint32();
         if (version >= 0x151 && clock != 0) {
-            printf("VGM warning: clock for RF5C68 specified, but not supported\n");
+            putlog(VGSX::LogLevel::W, "VGM: clock for RF5C68 specified, but not supported");
         }
 
         // +44: YM2203 clock
@@ -431,7 +447,7 @@ class VgmHelper
         }
         clock = parse_uint32();
         if (version >= 0x151 && clock != 0) {
-            printf("VGM warning: clock for YM3812 specified, but not supported\n");
+            putlog(VGSX::LogLevel::W, "VGM: clock for YM3812 specified, but not supported");
         }
 
         // +54: YM3526 clock
@@ -440,7 +456,7 @@ class VgmHelper
         }
         clock = parse_uint32();
         if (version >= 0x151 && clock != 0) {
-            printf("VGM warning: clock for YM3526 specified, but not supported\n");
+            putlog(VGSX::LogLevel::W, "VGM: clock for YM3526 specified, but not supported");
         }
 
         // +58: Y8950 clock
@@ -449,7 +465,7 @@ class VgmHelper
         }
         clock = parse_uint32();
         if (version >= 0x151 && clock != 0) {
-            printf("VGM warning: clock for Y8950 specified, but not supported\n");
+            putlog(VGSX::LogLevel::W, "VGM: clock for Y8950 specified, but not supported");
         }
 
         // +5C: YMF262 clock
@@ -458,7 +474,7 @@ class VgmHelper
         }
         clock = parse_uint32();
         if (version >= 0x151 && clock != 0) {
-            printf("VGM warning: clock for YMF262 specified, but not supported\n");
+            putlog(VGSX::LogLevel::W, "VGM: clock for YMF262 specified, but not supported");
         }
 
         // +60: YMF278B clock
@@ -467,7 +483,7 @@ class VgmHelper
         }
         clock = parse_uint32();
         if (version >= 0x151 && clock != 0) {
-            printf("VGM warning: clock for YMF278B specified, but not supported\n");
+            putlog(VGSX::LogLevel::W, "VGM: clock for YMF278B specified, but not supported");
         }
 
         // +64: YMF271 clock
@@ -476,7 +492,7 @@ class VgmHelper
         }
         clock = parse_uint32();
         if (version >= 0x151 && clock != 0) {
-            printf("VGM warning: clock for YMF271 specified, but not supported\n");
+            putlog(VGSX::LogLevel::W, "VGM: clock for YMF271 specified, but not supported");
         }
 
         // +68: YMF280B clock
@@ -485,7 +501,7 @@ class VgmHelper
         }
         clock = parse_uint32();
         if (version >= 0x151 && clock != 0) {
-            printf("VGM warning: clock for YMF280B specified, but not supported\n");
+            putlog(VGSX::LogLevel::W, "VGM: clock for YMF280B specified, but not supported");
         }
 
         // +6C: RF5C164 clock
@@ -494,7 +510,7 @@ class VgmHelper
         }
         clock = parse_uint32();
         if (version >= 0x151 && clock != 0) {
-            printf("VGM warning: clock for RF5C164 specified, but not supported\n");
+            putlog(VGSX::LogLevel::W, "VGM: clock for RF5C164 specified, but not supported");
         }
 
         // +70: PWM clock
@@ -503,7 +519,7 @@ class VgmHelper
         }
         clock = parse_uint32();
         if (version >= 0x151 && clock != 0) {
-            printf("VGM warning: clock for PWM specified, but not supported\n");
+            putlog(VGSX::LogLevel::W, "VGM: clock for PWM specified, but not supported");
         }
 
         // +74: AY8910 clock
@@ -512,7 +528,7 @@ class VgmHelper
         }
         clock = parse_uint32();
         if (version >= 0x151 && clock != 0) {
-            printf("VGM warning: clock for AY8910 specified, substituting YM2149\n");
+            putlog(VGSX::LogLevel::W, "VGM: clock for AY8910 specified, substituting YM2149");
             add_chips<ymfm::ym2149>(clock, CHIP_YM2149, "YM2149");
         }
 
@@ -534,7 +550,7 @@ class VgmHelper
         }
         clock = parse_uint32();
         if (version >= 0x161 && clock != 0) {
-            printf("VGM warning: clock for GameBoy DMG specified, but not supported\n");
+            putlog(VGSX::LogLevel::W, "VGM: clock for GameBoy DMG specified, but not supported");
         }
 
         // +84: NES APU clock
@@ -543,7 +559,7 @@ class VgmHelper
         }
         clock = parse_uint32();
         if (version >= 0x161 && clock != 0) {
-            printf("VGM warning: clock for NES APU specified, but not supported\n");
+            putlog(VGSX::LogLevel::W, "VGM: clock for NES APU specified, but not supported");
         }
 
         // +88: MultiPCM clock
@@ -552,7 +568,7 @@ class VgmHelper
         }
         clock = parse_uint32();
         if (version >= 0x161 && clock != 0) {
-            printf("VGM warning: clock for MultiPCM specified, but not supported\n");
+            putlog(VGSX::LogLevel::W, "VGM: clock for MultiPCM specified, but not supported");
         }
 
         // +8C: uPD7759 clock
@@ -561,7 +577,7 @@ class VgmHelper
         }
         clock = parse_uint32();
         if (version >= 0x161 && clock != 0) {
-            printf("VGM warning: clock for uPD7759 specified, but not supported\n");
+            putlog(VGSX::LogLevel::W, "VGM: clock for uPD7759 specified, but not supported");
         }
 
         // +90: OKIM6258 clock
@@ -570,7 +586,7 @@ class VgmHelper
         }
         clock = parse_uint32();
         if (version >= 0x161 && clock != 0) {
-            printf("VGM warning: clock for OKIM6258 specified, but not supported\n");
+            putlog(VGSX::LogLevel::W, "VGM: clock for OKIM6258 specified, but not supported");
         }
 
         // +94: OKIM6258 Flags / K054539 Flags / C140 Chip Type / reserved
@@ -585,7 +601,7 @@ class VgmHelper
         }
         clock = parse_uint32();
         if (version >= 0x161 && clock != 0) {
-            printf("VGM warning: clock for OKIM6295 specified, but not supported\n");
+            putlog(VGSX::LogLevel::W, "VGM: clock for OKIM6295 specified, but not supported");
         }
 
         // +9C: K051649 clock
@@ -594,7 +610,7 @@ class VgmHelper
         }
         clock = parse_uint32();
         if (version >= 0x161 && clock != 0) {
-            printf("VGM warning: clock for K051649 specified, but not supported\n");
+            putlog(VGSX::LogLevel::W, "VGM: clock for K051649 specified, but not supported");
         }
 
         // +A0: K054539 clock
@@ -603,7 +619,7 @@ class VgmHelper
         }
         clock = parse_uint32();
         if (version >= 0x161 && clock != 0) {
-            printf("VGM warning: clock for K054539 specified, but not supported\n");
+            putlog(VGSX::LogLevel::W, "VGM: clock for K054539 specified, but not supported");
         }
 
         // +A4: HuC6280 clock
@@ -612,7 +628,7 @@ class VgmHelper
         }
         clock = parse_uint32();
         if (version >= 0x161 && clock != 0) {
-            printf("VGM warning: clock for HuC6280 specified, but not supported\n");
+            putlog(VGSX::LogLevel::W, "VGM: clock for HuC6280 specified, but not supported");
         }
 
         // +A8: C140 clock
@@ -621,7 +637,7 @@ class VgmHelper
         }
         clock = parse_uint32();
         if (version >= 0x161 && clock != 0) {
-            printf("VGM warning: clock for C140 specified, but not supported\n");
+            putlog(VGSX::LogLevel::W, "VGM: clock for C140 specified, but not supported");
         }
 
         // +AC: K053260 clock
@@ -630,7 +646,7 @@ class VgmHelper
         }
         clock = parse_uint32();
         if (version >= 0x161 && clock != 0) {
-            printf("VGM warning: clock for K053260 specified, but not supported\n");
+            putlog(VGSX::LogLevel::W, "VGM: clock for K053260 specified, but not supported");
         }
 
         // +B0: Pokey clock
@@ -639,7 +655,7 @@ class VgmHelper
         }
         clock = parse_uint32();
         if (version >= 0x161 && clock != 0) {
-            printf("VGM warning: clock for Pokey specified, but not supported\n");
+            putlog(VGSX::LogLevel::W, "VGM: clock for Pokey specified, but not supported");
         }
 
         // +B4: QSound clock
@@ -648,7 +664,7 @@ class VgmHelper
         }
         clock = parse_uint32();
         if (version >= 0x161 && clock != 0) {
-            printf("VGM warning: clock for QSound specified, but not supported\n");
+            putlog(VGSX::LogLevel::W, "VGM: clock for QSound specified, but not supported");
         }
 
         // +B8: SCSP clock
@@ -657,7 +673,7 @@ class VgmHelper
         }
         clock = parse_uint32();
         if (version >= 0x171 && clock != 0) {
-            printf("VGM warning: clock for SCSP specified, but not supported\n");
+            putlog(VGSX::LogLevel::W, "VGM: clock for SCSP specified, but not supported");
         }
 
         // +BC: extra header offset
@@ -672,7 +688,7 @@ class VgmHelper
         }
         clock = parse_uint32();
         if (version >= 0x171 && clock != 0) {
-            printf("VGM warning: clock for WonderSwan specified, but not supported\n");
+            putlog(VGSX::LogLevel::W, "VGM: clock for WonderSwan specified, but not supported");
         }
 
         // +C4: VSU clock
@@ -681,7 +697,7 @@ class VgmHelper
         }
         clock = parse_uint32();
         if (version >= 0x171 && clock != 0) {
-            printf("VGM warning: clock for VSU specified, but not supported\n");
+            putlog(VGSX::LogLevel::W, "VGM: clock for VSU specified, but not supported");
         }
 
         // +C8: SAA1099 clock
@@ -690,7 +706,7 @@ class VgmHelper
         }
         clock = parse_uint32();
         if (version >= 0x171 && clock != 0) {
-            printf("VGM warning: clock for SAA1099 specified, but not supported\n");
+            putlog(VGSX::LogLevel::W, "VGM: clock for SAA1099 specified, but not supported");
         }
 
         // +CC: ES5503 clock
@@ -699,7 +715,7 @@ class VgmHelper
         }
         clock = parse_uint32();
         if (version >= 0x171 && clock != 0) {
-            printf("VGM warning: clock for ES5503 specified, but not supported\n");
+            putlog(VGSX::LogLevel::W, "VGM: clock for ES5503 specified, but not supported");
         }
 
         // +D0: ES5505/ES5506 clock
@@ -708,7 +724,7 @@ class VgmHelper
         }
         clock = parse_uint32();
         if (version >= 0x171 && clock != 0) {
-            printf("VGM warning: clock for ES5505/ES5506 specified, but not supported\n");
+            putlog(VGSX::LogLevel::W, "VGM: clock for ES5505/ES5506 specified, but not supported");
         }
 
         // +D4: ES5503 output channels / ES5505/ES5506 amount of output channels / C352 clock divider
@@ -723,7 +739,7 @@ class VgmHelper
         }
         clock = parse_uint32();
         if (version >= 0x171 && clock != 0) {
-            printf("VGM warning: clock for X1-010 specified, but not supported\n");
+            putlog(VGSX::LogLevel::W, "VGM: clock for X1-010 specified, but not supported");
         }
 
         // +DC: C352 clock
@@ -732,7 +748,7 @@ class VgmHelper
         }
         clock = parse_uint32();
         if (version >= 0x171 && clock != 0) {
-            printf("VGM warning: clock for C352 specified, but not supported\n");
+            putlog(VGSX::LogLevel::W, "VGM: clock for C352 specified, but not supported");
         }
 
         // +E0: GA20 clock
@@ -741,7 +757,7 @@ class VgmHelper
         }
         clock = parse_uint32();
         if (version >= 0x171 && clock != 0) {
-            printf("VGM warning: clock for GA20 specified, but not supported\n");
+            putlog(VGSX::LogLevel::W, "VGM: clock for GA20 specified, but not supported");
         }
         return data_start;
     }
@@ -941,9 +957,9 @@ class VgmHelper
 
                         default:
                             if (type >= 0x40 && type < 0x7f) {
-                                printf("Compressed data block not supported\n");
+                                putlog(VGSX::LogLevel::E, "Compressed data block not supported");
                             } else {
-                                printf("Unknown data block type 0x%02X\n", type);
+                                putlog(VGSX::LogLevel::E, "Unknown data block type 0x%02X", type);
                             }
                             break;
                     }
@@ -953,7 +969,7 @@ class VgmHelper
 
                 // PCM RAM write
                 case 0x68:
-                    printf("68: PCM RAM write\n");
+                    putlog(VGSX::LogLevel::W, "68: PCM RAM write");
                     break;
 
                 // AY8910, write value dd to register aa

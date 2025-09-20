@@ -77,14 +77,14 @@ class VDP
         OAM oam[1024];                            // OAM
         uint32_t palette[16][16];                 // Palette
         Register reg;                             // Register
-    } context;
+    } ctx;
 
     void reset()
     {
-        memset(this->context.display, 0, sizeof(this->context.display));
-        memset(this->context.nametbl, 0, sizeof(this->context.nametbl));
-        memset(this->context.oam, 0, sizeof(this->context.oam));
-        memset(&this->context.reg, 0, sizeof(Register));
+        memset(this->ctx.display, 0, sizeof(this->ctx.display));
+        memset(this->ctx.nametbl, 0, sizeof(this->ctx.nametbl));
+        memset(this->ctx.oam, 0, sizeof(this->ctx.oam));
+        memset(&this->ctx.reg, 0, sizeof(Register));
     }
 
     uint32_t read(uint32_t address)
@@ -92,23 +92,23 @@ class VDP
         if (0xC00000 <= address && address < 0xD00000) {
             uint8_t n = (address & 0xC0000) >> 18;
             uint16_t addr = (address & 0x3FFFC) >> 2;
-            return this->context.nametbl[n][addr];
+            return this->ctx.nametbl[n][addr];
         } else {
             switch (address & 0xFF0000) {
                 case 0xD00000: {
                     uint16_t index = (address & 0xFFC0) >> 6;
                     uint8_t arg = (address & 0x003C) >> 2;
-                    uint32_t* rawOam = (uint32_t*)&this->context.oam[index];
+                    uint32_t* rawOam = (uint32_t*)&this->ctx.oam[index];
                     return rawOam[arg];
                 }
                 case 0xD10000: {
                     uint8_t pn = (address & 0x3C0) >> 6;
                     uint8_t cn = (address & 0x03C) >> 2;
-                    return this->context.palette[pn][cn];
+                    return this->ctx.palette[pn][cn];
                 }
                 case 0xD20000: {
                     uint8_t index = (address & 0x3FC) >> 2;
-                    uint32_t* rawReg = (uint32_t*)&this->context.reg;
+                    uint32_t* rawReg = (uint32_t*)&this->ctx.reg;
                     switch (index) {
                         case 26: return this->readPixel();
                     }
@@ -124,25 +124,25 @@ class VDP
         if (0xC00000 <= address && address < 0xD00000) {
             uint8_t n = (address & 0xC0000) >> 18;
             uint16_t addr = (address & 0x3FFFC) >> 2;
-            this->context.nametbl[n][addr] = value;
+            this->ctx.nametbl[n][addr] = value;
         } else {
             switch (address & 0xFF0000) {
                 case 0xD00000: {
                     uint16_t index = (address & 0xFFC0) >> 6;
                     uint8_t arg = (address & 0x003C) >> 2;
-                    uint32_t* rawOam = (uint32_t*)&this->context.oam[index];
+                    uint32_t* rawOam = (uint32_t*)&this->ctx.oam[index];
                     rawOam[arg] = value;
                     return;
                 }
                 case 0xD10000: {
                     uint8_t pn = (address & 0x3C0) >> 6;
                     uint8_t cn = (address & 0x03C) >> 2;
-                    this->context.palette[pn][cn] = value;
+                    this->ctx.palette[pn][cn] = value;
                     return;
                 }
                 case 0xD20000: {
                     uint8_t index = (address & 0x3FC) >> 2;
-                    uint32_t* rawReg = (uint32_t*)&this->context.reg;
+                    uint32_t* rawReg = (uint32_t*)&this->ctx.reg;
                     rawReg[index] = value;
                     switch (index) {
                         case 2: this->bitmapScrollX(0, (int)value); break;
@@ -168,15 +168,15 @@ class VDP
 
     void render()
     {
-        if (this->context.reg.skip) {
+        if (this->ctx.reg.skip) {
             return;
         }
         for (int i = 0; i < VDP_WIDTH * VDP_HEIGHT; i++) {
-            this->context.display[i] = this->context.palette[0][0];
+            this->ctx.display[i] = this->ctx.palette[0][0];
         }
         for (int i = 0; i < VDP_BG_NUM; i++) {
             this->renderBG(i);
-            if (i == this->context.reg.spos) {
+            if (i == this->ctx.reg.spos) {
                 this->renderSprites();
             }
         }
@@ -195,10 +195,10 @@ class VDP
         n &= 3;
         uint8_t* cp = (uint8_t*)&value;
         if (cp[0] == cp[1] && cp[1] == cp[2] && cp[2] == cp[3]) {
-            memset(this->context.nametbl[n], *cp, 0x40000);
+            memset(this->ctx.nametbl[n], *cp, 0x40000);
         } else {
             for (int i = 0; i < 0x10000; i++) {
-                this->context.nametbl[n][i] = value;
+                this->ctx.nametbl[n][i] = value;
             }
         }
     }
@@ -219,19 +219,19 @@ class VDP
 
     inline uint32_t readPixel()
     {
-        int bg = this->context.reg.g_bg & 3;
-        int x1 = (int)this->context.reg.g_x1;
-        int y1 = (int)this->context.reg.g_y1;
+        int bg = this->ctx.reg.g_bg & 3;
+        int x1 = (int)this->ctx.reg.g_x1;
+        int y1 = (int)this->ctx.reg.g_y1;
         if (x1 < 0 || VDP_WIDTH <= x1 || y1 < 0 || VDP_HEIGHT <= y1) {
             return 0;
         } else {
-            return this->context.nametbl[bg][y1 * VDP_WIDTH + x1];
+            return this->ctx.nametbl[bg][y1 * VDP_WIDTH + x1];
         }
     }
 
     inline void bitmapScrollX(int bg, int vector)
     {
-        if (!this->context.reg.bmp[bg]) {
+        if (!this->ctx.reg.bmp[bg]) {
             return; // Not Bitmap Mode
         }
         if (0 == vector) {
@@ -241,7 +241,7 @@ class VDP
             this->cls(bg, 0);
             return;
         }
-        uint32_t* vram = this->context.nametbl[bg];
+        uint32_t* vram = this->ctx.nametbl[bg];
         if (vector < 0) {
             // left scroll
             vector = -vector;
@@ -262,7 +262,7 @@ class VDP
 
     inline void bitmapScrollY(int bg, int vector)
     {
-        if (!this->context.reg.bmp[bg]) {
+        if (!this->ctx.reg.bmp[bg]) {
             return; // Not Bitmap Mode
         }
         if (0 == vector) {
@@ -272,7 +272,7 @@ class VDP
             this->cls(bg, 0);
             return;
         }
-        uint32_t* vram = this->context.nametbl[bg];
+        uint32_t* vram = this->ctx.nametbl[bg];
         if (vector < 0) {
             // upward scroll
             vector = -vector;
@@ -287,26 +287,26 @@ class VDP
 
     inline void renderBG(int n)
     {
-        if (this->context.reg.bmp[n]) {
+        if (this->ctx.reg.bmp[n]) {
             // Bitmap Mode
             for (int dptr = 0; dptr < VDP_HEIGHT * VDP_WIDTH; dptr++) {
-                uint32_t col = this->context.nametbl[n][dptr];
+                uint32_t col = this->ctx.nametbl[n][dptr];
                 if (col) {
-                    this->context.display[dptr] = col;
+                    this->ctx.display[dptr] = col;
                 }
             }
         } else {
             // Character Pattern Mode
             int dptr = 0;
             for (int dy = 0; dy < VDP_HEIGHT; dy++) {
-                auto wy = (dy + this->context.reg.scrollY[n]) & 0x7FF;
+                auto wy = (dy + this->ctx.reg.scrollY[n]) & 0x7FF;
                 for (int dx = 0; dx < VDP_WIDTH; dx++) {
-                    auto wx = (dx + this->context.reg.scrollX[n]) & 0x7FF;
-                    auto attr = this->context.nametbl[n][(((wy >> 3) & 0xFF) << 8) | (wx >> 3) & 0xFF];
+                    auto wx = (dx + this->ctx.reg.scrollX[n]) & 0x7FF;
+                    auto attr = this->ctx.nametbl[n][(((wy >> 3) & 0xFF) << 8) | (wx >> 3) & 0xFF];
                     bool flipH = (attr & 0x80000000) ? true : false;
                     bool flipV = (attr & 0x40000000) ? true : false;
                     uint8_t pal = (attr & 0xF0000) >> 16;
-                    uint8_t* ptn = this->context.ptn[attr & 0xFFFF];
+                    uint8_t* ptn = this->ctx.ptn[attr & 0xFFFF];
                     if (flipV) {
                         ptn += (7 - (wy & 0b111)) << 2;
                     } else {
@@ -334,7 +334,7 @@ class VDP
                         }
                     }
                     if (col) {
-                        this->context.display[dptr] = this->context.palette[pal][col];
+                        this->ctx.display[dptr] = this->ctx.palette[pal][col];
                     }
                     dptr++;
                 }
@@ -345,8 +345,8 @@ class VDP
     inline void renderSprites()
     {
         for (int i = 1023; 0 <= i; i--) {
-            if (this->context.oam[i].visible) {
-                renderSprite(&this->context.oam[i]);
+            if (this->ctx.oam[i].visible) {
+                renderSprite(&this->ctx.oam[i]);
             }
         }
     }
@@ -384,7 +384,7 @@ class VDP
                     }
                     // Render Pixel
                     int wx = flipH ? size - px - 1 : px;
-                    uint8_t* ptnptr = this->context.ptn[(ptn + wx / 8 + (wy / 8) * psize) & 0xFFFF];
+                    uint8_t* ptnptr = this->ctx.ptn[(ptn + wx / 8 + (wy / 8) * psize) & 0xFFFF];
                     ptnptr += (wy & 0b0111) << 2;
                     ptnptr += (wx & 0b0110) >> 1;
                     int col;
@@ -394,7 +394,7 @@ class VDP
                         col = ((*ptnptr) & 0xF0) >> 4;
                     }
                     if (col) {
-                        this->context.display[dy * VDP_WIDTH + dx] = this->context.palette[pal][col];
+                        this->ctx.display[dy * VDP_WIDTH + dx] = this->ctx.palette[pal][col];
                     }
                 }
             }
@@ -420,11 +420,11 @@ class VDP
                     if (VDP_WIDTH <= dx) {
                         break; // Out of screen right (end of rendering a line)
                     }
-                    // this->context.display[dy * VDP_WIDTH + dx] = 0xFF0000;
+                    // this->ctx.display[dy * VDP_WIDTH + dx] = 0xFF0000;
                     int px = (int)(bx * ratio);
                     int wx = flipH ? size - px - 1 : px;
                     // Render Pixel
-                    uint8_t* ptnptr = this->context.ptn[(ptn + wx / 8 + (wy / 8) * psize) & 0xFFFF];
+                    uint8_t* ptnptr = this->ctx.ptn[(ptn + wx / 8 + (wy / 8) * psize) & 0xFFFF];
                     ptnptr += (wy & 0b0111) << 2;
                     ptnptr += (wx & 0b0110) >> 1;
                     int col;
@@ -434,7 +434,7 @@ class VDP
                         col = ((*ptnptr) & 0xF0) >> 4;
                     }
                     if (col) {
-                        this->context.display[dy * VDP_WIDTH + dx] = this->context.palette[pal][col];
+                        this->ctx.display[dy * VDP_WIDTH + dx] = this->ctx.palette[pal][col];
                     }
                 }
             }
@@ -455,7 +455,7 @@ class VDP
                     }
                     // Render Pixel
                     int wx = flipH ? size - px - 1 : px;
-                    uint8_t* ptnptr = this->context.ptn[(ptn + wx / 8 + (wy / 8) * psize) & 0xFFFF];
+                    uint8_t* ptnptr = this->ctx.ptn[(ptn + wx / 8 + (wy / 8) * psize) & 0xFFFF];
                     ptnptr += (wy & 0b0111) << 2;
                     ptnptr += (wx & 0b0110) >> 1;
                     int col;
@@ -465,7 +465,11 @@ class VDP
                         col = ((*ptnptr) & 0xF0) >> 4;
                     }
                     if (col) {
-                        this->context.display[dy * VDP_WIDTH + dx] = this->context.palette[pal][col];
+                        int ptr = dy * VDP_WIDTH + dx;
+                        this->ctx.display[ptr] = this->ctx.palette[pal][col];
+                        if (dx < 319) {
+                            this->ctx.display[ptr + 1] = this->ctx.palette[pal][col];
+                        }
                     }
                 }
             }
@@ -481,7 +485,7 @@ class VDP
                 int py = (int)(by * ratio);
                 int wy = flipH ? size - py - 1 : py;
                 for (int dx = oam->x + offset, bx = 0; bx < scaledSize; dx++, bx++) {
-                    // this->context.display[dy * VDP_WIDTH + dx] = 0xFF0000;
+                    // this->ctx.display[dy * VDP_WIDTH + dx] = 0xFF0000;
                     int px = (int)(bx * ratio);
                     int wx = flipH ? size - px - 1 : px;
                     int ddy = (by - halfSize) * sin(rad) + (bx - halfSize) * cos(rad) + halfSize;
@@ -495,7 +499,7 @@ class VDP
                         continue; // Out of screen left (check next pixel)
                     }
                     // Render Pixel
-                    uint8_t* ptnptr = this->context.ptn[(ptn + wx / 8 + (wy / 8) * psize) & 0xFFFF];
+                    uint8_t* ptnptr = this->ctx.ptn[(ptn + wx / 8 + (wy / 8) * psize) & 0xFFFF];
                     ptnptr += (wy & 0b0111) << 2;
                     ptnptr += (wx & 0b0110) >> 1;
                     int col;
@@ -505,15 +509,15 @@ class VDP
                         col = ((*ptnptr) & 0xF0) >> 4;
                     }
                     if (col) {
-                        this->context.display[ddy * VDP_WIDTH + ddx] = this->context.palette[pal][col];
+                        this->ctx.display[ddy * VDP_WIDTH + ddx] = this->ctx.palette[pal][col];
                         if (ddy < 199) {
-                            this->context.display[(ddy + 1) * VDP_WIDTH + ddx] = this->context.palette[pal][col];
+                            this->ctx.display[(ddy + 1) * VDP_WIDTH + ddx] = this->ctx.palette[pal][col];
                         }
                         if (ddx < 319) {
-                            this->context.display[ddy * VDP_WIDTH + ddx + 1] = this->context.palette[pal][col];
+                            this->ctx.display[ddy * VDP_WIDTH + ddx + 1] = this->ctx.palette[pal][col];
                         }
                         if (ddy < 199 && ddx < 319) {
-                            this->context.display[(ddy + 1) * VDP_WIDTH + ddx + 1] = this->context.palette[pal][col];
+                            this->ctx.display[(ddy + 1) * VDP_WIDTH + ddx + 1] = this->ctx.palette[pal][col];
                         }
                     }
                 }
@@ -594,30 +598,30 @@ static inline void drawLine(uint32_t* vram, int32_t fx, int32_t fy, int32_t tx, 
 
 static inline void graphicDrawPixel(VDP* vdp)
 {
-    drawPixel(vdp->context.nametbl[vdp->context.reg.g_bg & 3],
-              (int32_t)vdp->context.reg.g_x1,
-              (int32_t)vdp->context.reg.g_y1,
-              vdp->context.reg.g_col);
+    drawPixel(vdp->ctx.nametbl[vdp->ctx.reg.g_bg & 3],
+              (int32_t)vdp->ctx.reg.g_x1,
+              (int32_t)vdp->ctx.reg.g_y1,
+              vdp->ctx.reg.g_col);
 }
 
 static inline void graphicDrawLine(VDP* vdp)
 {
-    drawLine(vdp->context.nametbl[vdp->context.reg.g_bg & 3],
-             (int32_t)vdp->context.reg.g_x1,
-             (int32_t)vdp->context.reg.g_y1,
-             (int32_t)vdp->context.reg.g_x2,
-             (int32_t)vdp->context.reg.g_y2,
-             vdp->context.reg.g_col);
+    drawLine(vdp->ctx.nametbl[vdp->ctx.reg.g_bg & 3],
+             (int32_t)vdp->ctx.reg.g_x1,
+             (int32_t)vdp->ctx.reg.g_y1,
+             (int32_t)vdp->ctx.reg.g_x2,
+             (int32_t)vdp->ctx.reg.g_y2,
+             vdp->ctx.reg.g_col);
 }
 
 static inline void graphicDrawBox(VDP* vdp)
 {
-    uint32_t* vram = vdp->context.nametbl[vdp->context.reg.g_bg & 3];
-    int32_t fx = (int32_t)vdp->context.reg.g_x1;
-    int32_t fy = (int32_t)vdp->context.reg.g_y1;
-    int32_t tx = (int32_t)vdp->context.reg.g_x2;
-    int32_t ty = (int32_t)vdp->context.reg.g_y2;
-    uint32_t col = vdp->context.reg.g_col;
+    uint32_t* vram = vdp->ctx.nametbl[vdp->ctx.reg.g_bg & 3];
+    int32_t fx = (int32_t)vdp->ctx.reg.g_x1;
+    int32_t fy = (int32_t)vdp->ctx.reg.g_y1;
+    int32_t tx = (int32_t)vdp->ctx.reg.g_x2;
+    int32_t ty = (int32_t)vdp->ctx.reg.g_y2;
+    uint32_t col = vdp->ctx.reg.g_col;
     drawLine(vram, fx, fy, tx, fy, col);
     drawLine(vram, fx, fy, fx, ty, col);
     drawLine(vram, tx, ty, tx, fy, col);
@@ -626,12 +630,12 @@ static inline void graphicDrawBox(VDP* vdp)
 
 static inline void graphicDrawBoxFill(VDP* vdp)
 {
-    uint32_t* vram = vdp->context.nametbl[vdp->context.reg.g_bg & 3];
-    int32_t fx = (int32_t)vdp->context.reg.g_x1;
-    int32_t fy = (int32_t)vdp->context.reg.g_y1;
-    int32_t tx = (int32_t)vdp->context.reg.g_x2;
-    int32_t ty = (int32_t)vdp->context.reg.g_y2;
-    uint32_t col = vdp->context.reg.g_col;
+    uint32_t* vram = vdp->ctx.nametbl[vdp->ctx.reg.g_bg & 3];
+    int32_t fx = (int32_t)vdp->ctx.reg.g_x1;
+    int32_t fy = (int32_t)vdp->ctx.reg.g_y1;
+    int32_t tx = (int32_t)vdp->ctx.reg.g_x2;
+    int32_t ty = (int32_t)vdp->ctx.reg.g_y2;
+    uint32_t col = vdp->ctx.reg.g_col;
     if (ty < fy) {
         int w = fy;
         fy = ty;
@@ -644,12 +648,12 @@ static inline void graphicDrawBoxFill(VDP* vdp)
 
 static inline void graphicDrawCharacter(VDP* vdp)
 {
-    uint32_t* vram = vdp->context.nametbl[vdp->context.reg.g_bg & 3];
-    int32_t x = (int32_t)vdp->context.reg.g_x1;
-    int32_t y = (int32_t)vdp->context.reg.g_y1;
-    uint8_t pal = (int32_t)vdp->context.reg.g_col & 0x0F;
-    uint8_t* ptn = vdp->context.ptn[vdp->context.reg.g_opt & 0xFFFF];
-    bool drawZero = vdp->context.reg.g_col & 0x80000000 ? true : false;
+    uint32_t* vram = vdp->ctx.nametbl[vdp->ctx.reg.g_bg & 3];
+    int32_t x = (int32_t)vdp->ctx.reg.g_x1;
+    int32_t y = (int32_t)vdp->ctx.reg.g_y1;
+    uint8_t pal = (int32_t)vdp->ctx.reg.g_col & 0x0F;
+    uint8_t* ptn = vdp->ctx.ptn[vdp->ctx.reg.g_opt & 0xFFFF];
+    bool drawZero = vdp->ctx.reg.g_col & 0x80000000 ? true : false;
 
     if (x < -8 || y < -8 || 320 <= x || 200 <= y) {
         return;
@@ -661,8 +665,8 @@ static inline void graphicDrawCharacter(VDP* vdp)
         for (int j = 0; j < 4; j++) {
             int p0 = (ptn[i * 4 + j] & 0xF0) >> 4;
             int p1 = ptn[i * 4 + j] & 0x0F;
-            uint32_t c0 = vdp->context.palette[pal][p0];
-            uint32_t c1 = vdp->context.palette[pal][p1];
+            uint32_t c0 = vdp->ctx.palette[pal][p0];
+            uint32_t c1 = vdp->ctx.palette[pal][p1];
             if (0 <= x + j * 2 && x + j * 2 < 320) {
                 if (drawZero || p0) {
                     vram[(y + i) * 320 + x + j * 2] = c0;
