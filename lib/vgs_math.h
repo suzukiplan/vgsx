@@ -53,6 +53,29 @@ int32_t vgs_sin(int32_t degree);
  */
 int32_t vgs_cos(int32_t degree);
 
+/**
+ * @brief Calculate the absolute value of an integer.
+ * @param value Target value
+ * @return The absolute value.
+ */
+static inline int32_t vgs_abs(int32_t value)
+{
+    return value < 0 ? -value : value;
+}
+
+/**
+ * @brief Determine whether an integer is positive, negative or zero.
+ * @param value Target value
+ * @return Return -1 for negative numbers, 1 for positive numbers, and 0 for neither.
+ */
+static inline int32_t vgs_sgn(int32_t value)
+{
+    if (0 == value) {
+        return 0;
+    }
+    return value < 0 ? -1 : 1;
+}
+
 #ifdef __cplusplus
 };
 #endif

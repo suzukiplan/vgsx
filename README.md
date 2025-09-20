@@ -750,6 +750,8 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | math | `vgs_degree` | Calculate the [angle](#0xe00100-0xe00118io---angle) between two points (in degrees) |
 | math | `vgs_sin` | Calculate integer sine from the [angle](#0xe00100-0xe00118io---angle) in degrees |
 | math | `vgs_cos` | Calculate integer cosine from the [angle](#0xe00100-0xe00118io---angle) in degrees |
+| math | `vgs_abs` | Calculate the absolute value of an integer. |
+| math | `vgs_sgn` | Determine whether an integer is positive, negative or zero. |
 
 ## liblog.a - Logging Function
 

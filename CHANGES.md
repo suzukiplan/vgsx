@@ -1,5 +1,9 @@
 # Changes
 
+## Version 0.5.0
+
+- CRT: Added the i-math inline functions: `vgs_abs` and `vgs_sgn`
+
 ## Version 0.4.0
 
 - Core: Implemented IMATH functions
