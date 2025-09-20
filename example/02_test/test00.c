@@ -154,7 +154,7 @@ int main(int argc, char* argv)
     vgs_seq_commit();
     vgs_seq_open_r(10);
     for (int32_t i = 0; i < 300; i++) {
-        vgs_putlog("vgs_seq_read = %d", i & 0xFF, expect32d(vgs_seq_read(), i & 0xFF));
+        vgs_putlog("vgs_seq_read = %d", expect32d(vgs_seq_read(), i & 0xFF));
     }
     vgs_putlog("vgs_seq_read = %d", expect32d(vgs_seq_read(), -1));
 
