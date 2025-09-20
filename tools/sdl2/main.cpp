@@ -144,6 +144,17 @@ static void file_dump(const char* fname)
 }
 int main(int argc, char* argv[])
 {
+    vgsx.setLogCallback([](VGSX::LogLevel level, const char* msg) {
+        std::string lv;
+        switch (level) {
+            case VGSX::LogLevel::I: lv = "info"; break;
+            case VGSX::LogLevel::N: lv = "notice"; break;
+            case VGSX::LogLevel::W: lv = "warning"; break;
+            case VGSX::LogLevel::E: lv = "error"; break;
+            default: lv = "unknown"; break;
+        }
+        printf("[%s] %s\n", lv.c_str(), msg);
+    });
     const char* programPath = nullptr;
     uint16_t pindex = 0;
     uint16_t bindex = 0;

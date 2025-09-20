@@ -186,6 +186,7 @@ extern "C" void m68k_write_memory_32(uint32_t address, uint32_t value)
 
 VGSX::VGSX()
 {
+    this->logCallback = nullptr;
     memset(&this->ctx, 0, sizeof(this->ctx));
     memset(&this->key, 0, sizeof(this->key));
     m68k_set_cpu_type(M68K_CPU_TYPE_68030);
@@ -206,6 +207,18 @@ void VGSX::setLastError(const char* format, ...)
     va_start(args, format);
     vsnprintf(this->lastError, sizeof(this->lastError), format, args);
     va_end(args);
+}
+
+void VGSX::putlog(LogLevel level, const char* format, ...)
+{
+    if (this->logCallback) {
+        char buf[1024];
+        va_list args;
+        va_start(args, format);
+        vsnprintf(buf, sizeof(buf), format, args);
+        va_end(args);
+        this->logCallback(level, buf);
+    }
 }
 
 bool VGSX::loadPattern(uint16_t index, const void* data, size_t size)
@@ -405,7 +418,7 @@ bool VGSX::loadWav(uint8_t index, const void* data, size_t size)
         }
     }
 
-    printf("- PCM Format: %dHz %dbits %dch (%d bytes/sec, %d bytes/sample)\n", rate, bits, ch, bps, bs);
+    putlog(LogLevel::I, "- PCM Format: %dHz %dbits %dch (%d bytes/sec, %d bytes/sample)", rate, bits, ch, bps, bs);
     if (0 == rate) {
         this->setLastError("Invalid wav format: fmt chunk not found");
         return false;
@@ -452,7 +465,7 @@ void VGSX::reset(void)
     // Load ELF Header
     Elf32_Ehdr eh;
     loadElfHeader(&eh, this->ctx.elf);
-    printf("M68K_REG_PC = 0x%06X\n", eh.e_entry);
+    putlog(LogLevel::I, "M68K_REG_PC = 0x%06X", eh.e_entry);
     m68k_set_reg(M68K_REG_PC, eh.e_entry);
 
     // Search an Executable Code
@@ -467,7 +480,7 @@ void VGSX::reset(void)
         ph.p_memsz = b2h32(ph.p_memsz);
         ph.p_flags = b2h32(ph.p_flags);
         ph.p_align = b2h32(ph.p_align);
-        printf(".program:%X offset=%d, va=0x%06X, pa=0x%06X, fs=%d, ms=%d, flg=%d\n",
+        putlog(LogLevel::I, ".program:%X offset=%d, va=0x%06X, pa=0x%06X, fs=%d, ms=%d, flg=%d",
                ph.p_type,
                ph.p_offset,
                ph.p_vaddr,
@@ -502,7 +515,7 @@ void VGSX::reset(void)
                    &this->ctx.elf[sh.sh_offset],
                    sh.sh_size);
         }
-        printf(".section:%X flags=%d, addr=0x%06X, offset=0x%06X, size=%d, link=%d, info=%d\n",
+        putlog(LogLevel::I, ".section:%X flags=%d, addr=0x%06X, offset=0x%06X, size=%d, link=%d, info=%d",
                sh.sh_type,
                sh.sh_flags,
                sh.sh_addr,
@@ -591,42 +604,42 @@ uint32_t VGSX::inPort(uint32_t address)
         {
             this->ctx.save.address &= 0x00FFFFFF;
             if (this->ctx.save.address < 0xF00000) {
-                printf("warning: ignored an invalid load request (addr=0x%X)\n", this->ctx.save.address);
+                putlog(LogLevel::W, "ignored an invalid load request (addr=0x%X)", this->ctx.save.address);
                 return 0;
             }
             FILE* fp = fopen("save.dat", "rb");
             if (!fp) {
-                puts("error: failed load request (File Not Found!)");
+                putlog(LogLevel::E, "failed load request (File Not Found!)");
                 return 0;
             }
             if (fseek(fp, 0, SEEK_END) < 0) {
-                puts("error: failed load request (Seek END Failed!)");
+                putlog(LogLevel::E, "failed load request (Seek END Failed!)");
                 fclose(fp);
                 return 0;
             }
             int32_t size = ftell(fp);
             if (size < 1 || 0x100000 < size) {
-                printf("error: failed load request (Invalid Size: %d)\n", size);
+                putlog(LogLevel::E, "failed load request (Invalid Size: %d)", size);
                 fclose(fp);
                 return 0;
             }
             if (0x00FFFFFF < this->ctx.save.address + size) {
-                printf("error: failed load request (Overflow: %X+%d)\n", this->ctx.save.address, size);
+                putlog(LogLevel::E, "failed load request (Overflow: %X+%d)", this->ctx.save.address, size);
                 fclose(fp);
                 return 0;
             }
             if (fseek(fp, 0, SEEK_SET) < 0) {
-                puts("error: failed load request (Seek SET Failed!)");
+                putlog(LogLevel::E, "failed load request (Seek SET Failed!)");
                 fclose(fp);
                 return 0;
             }
             if (size != fread(&this->ctx.ram[this->ctx.save.address & 0xFFFFF], 1, size, fp)) {
-                puts("error: failed load request (Read Failed!)");
+                putlog(LogLevel::E, "failed load request (Read Failed!)");
                 fclose(fp);
                 return 0;
             }
             fclose(fp);
-            printf("save.dat read (%u bytes)\n", size);
+            putlog(LogLevel::N, "save.dat read (%u bytes)", size);
             return size;
         }
 
@@ -634,17 +647,17 @@ uint32_t VGSX::inPort(uint32_t address)
         {
             FILE* fp = fopen("save.dat", "rb");
             if (!fp) {
-                puts("error: failed check save.dat size request (File Not Found!)");
+                putlog(LogLevel::W, "failed check save.dat size request (File Not Found!)");
                 return 0;
             }
             if (fseek(fp, 0, SEEK_END) < 0) {
-                puts("error: failed check save.dat size request (Seek END Failed!)");
+                putlog(LogLevel::W, "failed check save.dat size request (Seek END Failed!)");
                 fclose(fp);
                 return 0;
             }
             int32_t size = ftell(fp);
             if (size < 1 || 0x100000 < size) {
-                printf("error: failed check save.dat size request (Invalid Size: %d)\n", size);
+                putlog(LogLevel::W, "failed check save.dat size request (Invalid Size: %d)", size);
                 fclose(fp);
                 return 0;
             }
@@ -707,7 +720,7 @@ void VGSX::outPort(uint32_t address, uint32_t value)
                 if (helper) {
                     delete helper;
                 }
-                helper = new VgmHelper(this->ctx.vgmData[value].data, this->ctx.vgmData[value].size);
+                helper = new VgmHelper(this->ctx.vgmData[value].data, this->ctx.vgmData[value].size, this->logCallback);
                 this->vgmHelper = helper;
             }
             return;
@@ -725,20 +738,20 @@ void VGSX::outPort(uint32_t address, uint32_t value)
         case VGS_ADDR_SAVE_EXECUTE: // Execute Save
             this->ctx.save.address &= 0x00FFFFFF;
             if (this->ctx.save.address < 0xF00000) {
-                printf("warning: ignored an invalid save request (addr=0x%X)\n", this->ctx.save.address);
+                putlog(LogLevel::W, "ignored an invalid save request (addr=0x%X)", this->ctx.save.address);
             } else if (0x100000 < value || value < 1) {
-                printf("warning: ignored an invalid save request (size=%u)\n", value);
+                putlog(LogLevel::W, "ignored an invalid save request (size=%u)", value);
             } else if (0x00FFFFFF < this->ctx.save.address + value) {
-                printf("warning: ignored an invalid save request (addr=0x%X+%u)\n", this->ctx.save.address, value);
+                putlog(LogLevel::W, "ignored an invalid save request (addr=0x%X+%u)", this->ctx.save.address, value);
             } else {
                 FILE* fp = fopen("save.dat", "wb");
                 if (!fp) {
-                    puts("error: save.dat open failed!");
+                    putlog(LogLevel::E, "save.dat open failed!");
                 } else {
                     if (value != fwrite(&this->ctx.ram[this->ctx.save.address & 0xFFFFF], 1, value, fp)) {
-                        puts("error: save.dat write failed!");
+                        putlog(LogLevel::E, "save.dat write failed!");
                     } else {
-                        printf("save.dat wrote (%u bytes)\n", value);
+                        putlog(LogLevel::N, "save.dat wrote (%u bytes)", value);
                     }
                     fclose(fp);
                 }
@@ -761,9 +774,9 @@ void VGSX::outPort(uint32_t address, uint32_t value)
             FILE* fp = fopen(fname, "wb");
             if (fp) {
                 if (this->ctx.sqw.size != fwrite(this->ctx.sqw.buffer, 1, this->ctx.sqw.size, fp)) {
-                    printf("error: file write error (%s)\n", fname);
+                    putlog(LogLevel::E, "file write error (%s)", fname);
                 } else {
-                    printf("%s wrote (%u bytes)\n", fname, this->ctx.sqw.size);
+                    putlog(LogLevel::N, "%s wrote (%u bytes)", fname, this->ctx.sqw.size);
                 }
                 fclose(fp);
             }
@@ -777,10 +790,10 @@ void VGSX::outPort(uint32_t address, uint32_t value)
             FILE* fp = fopen(fname, "rb");
             if (fp) {
                 this->ctx.sqr.size = fread(this->ctx.sqr.buffer, 1, sizeof(this->ctx.sqr.buffer), fp);
-                printf("%s read (%u bytes)\n", fname, this->ctx.sqr.size);
+                putlog(LogLevel::N, "%s read (%u bytes)", fname, this->ctx.sqr.size);
                 fclose(fp);
             } else {
-                printf("error: File not found (%s)\n", fname);
+                putlog(LogLevel::E, "File not found (%s)", fname);
                 this->ctx.sqr.size = 0;
             }
             this->ctx.sqr.readOffset = 0;
@@ -820,7 +833,7 @@ void VGSX::dmaMemcpy()
             }
         }
     }
-    printf("warning: Ignored an invalid DMA_copy(0x%06X, 0x%06X, %u)\n", destination, source, size);
+    putlog(LogLevel::W, "Ignored an invalid DMA_copy(0x%06X, 0x%06X, %u)", destination, source, size);
 }
 
 void VGSX::dmaMemset()
@@ -834,7 +847,7 @@ void VGSX::dmaMemset()
         memset(&this->ctx.ram[destination & 0x0FFFFF], c, size);
         return;
     }
-    printf("warning: Ignored an invalid DMA_set(0x%06X, 0x%02X, %u)\n", destination, c, size);
+    putlog(LogLevel::W, "Ignored an invalid DMA_set(0x%06X, 0x%02X, %u)", destination, c, size);
 }
 
 uint32_t VGSX::dmaSearch()
@@ -859,6 +872,6 @@ uint32_t VGSX::dmaSearch()
         }
         return 0; // not found
     }
-    printf("warning: Ignored an invalid DMA_search(0x%06X, 0x%02X)\n", ptr, search);
+    putlog(LogLevel::W, "Ignored an invalid DMA_search(0x%06X, 0x%02X)", ptr, search);
     return 0;
 }
