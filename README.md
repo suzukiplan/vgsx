@@ -33,6 +33,7 @@ Basic Features:
 - [SFX](#0xe01100o---play-sfx): .wav format (44,100Hz, 16-bits, 2ch)
 - High speed [DMA; Direct Memory Access](#0xe00008-0xe00014io---direct-memory-access)
 - High speed [i-math (integer math)](#0xe00100-0xe00118io---angle) API
+- Supports [Save Data](#0xe030xxio---savedata)
 
 VDP Features:
 
@@ -498,6 +499,8 @@ Note that all addresses and values for I/O instructions must be specified as 32-
 | 0xE02018 |  o  |  -  | [Gamepad: X button](#0xe200xxi---gamepad) |
 | 0xE0201C |  o  |  -  | [Gamepad: Y button](#0xe200xxi---gamepad) |
 | 0xE02020 |  o  |  -  | [Gamepad: Start button](#0xe200xxi---gamepad) |
+| 0xE03000 |  o  |  -  | [SaveData: Address](#0xe030xxio---savedata) |
+| 0xE03004 |  o  |  o  | [SaveData: Execute Save(out) or Load(in)](#0xe030xxio---savedata) |
 | 0xE7FFFC |  -  |  o  | [Exit](#0xe7fffcout---exit) |
 
 ### 0xE00000[in] - V-SYNC
@@ -671,6 +674,21 @@ The following table shows the button assignments for a typical gamepad:
 | `Y` | `S` | `X` | `Triangle` |
 | `Start` | `Space` | `Plus` | `Options` |
 
+### 0xE030xx[io] - SaveData
+
+You can save your save data to storage (save.dat file) or load saved save data.
+
+```c
+VGS_OUT_SAVE_ADDRESS = (uint32_t)&mydata; // ROM or RAM address
+VGS_IO_SAVE_EXECUTE = sizeof(mydata);     // Write save.dat from &mydata
+uint32_t size = VGS_IO_SAVE_EXECUTE;      // Read save.dat to &mydata
+```
+
+Remarks
+
+- `0xE03000 (VGS_OUT_SAVE_ADDRESS)` must be within the RAM address range (0xF00000 to 0xFFFFFF).
+- If the save data is corrupted or fails to load, the load result will be 0.
+
 ### 0xE7FFFC[out] - Exit
 
 Issuing an exit request for VGS-X.
@@ -721,6 +739,8 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | cg:bmp | `vgs_draw_character` | Draw a [character-pattern](#character-pattern) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
 | bgm | `vgs_bgm_play` | Play [background music](#0xe01000o---play-vgm) |
 | sfx | `vgs_sfx_play` | Play [sound effect](#0xe01100o---play-sfx) |
+| save | `vgs_save` | Save [save data](#0xe030xxio---savedata). |
+| save | `vgs_load` | Load [save data](#0xe030xxio---savedata).　|
 
 ### (Standard Functions)
 
