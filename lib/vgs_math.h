@@ -23,13 +23,36 @@
  * THE SOFTWARE.
  */
 #pragma once
-#include "vgs_bgm.h"
-#include "vgs_cg.h"
-#include "vgs_ctype.h"
-#include "vgs_math.h"
-#include "vgs_sfx.h"
 #include "vgs_stdint.h"
-#include "vgs_stdlib.h"
-#include "vgs_string.h"
-#include "vgs_system.h"
-#include "vgs_io.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * @brief Calculate the angle between two points (in degrees)
+ * @param x1 X of Coordinate 1
+ * @param y1 Y of Coordinate 1
+ * @param x2 X of Coordinate 2
+ * @param y2 Y of Coordinate 2
+ * @return The angle between two points is measured in degrees, from 0 to 359.
+ */
+int32_t vgs_degree(int32_t x1, int32_t y1, int32_t x2, int32_t y2);
+
+/**
+ * @brief Calculate integer sine from the angle in degrees
+ * @param degree Angle in degrees
+ * @return The integer sine ranges from -256 to 256.
+ */
+int32_t vgs_sin(int32_t degree);
+
+/**
+ * @brief Calculate integer cosine from the angle in degrees
+ * @param degree Angle in degrees
+ * @return The integer cosine ranges from -256 to 256.
+ */
+int32_t vgs_cos(int32_t degree);
+
+#ifdef __cplusplus
+};
+#endif

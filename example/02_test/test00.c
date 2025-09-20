@@ -96,6 +96,40 @@ int main(int argc, char* argv)
     vgs_putlog("vgs_tolower(\'Z\') ... %d", expect32d(vgs_tolower('Z'), 'z'));
     vgs_putlog("vgs_tolower(\'*\') ... %d", expect32d(vgs_tolower('*'), '*'));
 
+    vgs_putlog("vgs_degree(0, 0, 0, 0) = %d", expect32d(vgs_degree(0, 0, 0, 0), 0));
+
+    vgs_putlog("vgs_degree(0, 0, 0, -100) = %d", expect32d(vgs_degree(0, 0, 0, -100), 270));
+    vgs_putlog("- vgs_cos(270) = %d", expect32d(vgs_cos(270), 0));
+    vgs_putlog("- vgs_sin(270) = %d", expect32d(vgs_sin(270), -256));
+
+    vgs_putlog("vgs_degree(0, 0, 100, -100) = %d", expect32d(vgs_degree(0, 0, 100, -100), 315));
+    vgs_putlog("- vgs_cos(315) = %d", expect32d(vgs_cos(315), 181));
+    vgs_putlog("- vgs_sin(315) = %d", expect32d(vgs_sin(315), -181));
+
+    vgs_putlog("vgs_degree(0, 0, 100,0) = %d", expect32d(vgs_degree(0, 0, 100, 0), 0));
+    vgs_putlog("- vgs_cos(0) = %d", expect32d(vgs_cos(0), 256));
+    vgs_putlog("- vgs_sin(0) = %d", expect32d(vgs_sin(0), 0));
+
+    vgs_putlog("vgs_degree(0, 0, 100, 100) = %d", expect32d(vgs_degree(0, 0, 100, 100), 45));
+    vgs_putlog("- vgs_cos(45) = %d", expect32d(vgs_cos(45), 181));
+    vgs_putlog("- vgs_sin(45) = %d", expect32d(vgs_sin(45), 181));
+
+    vgs_putlog("vgs_degree(0, 0, 0, 100) = %d", expect32d(vgs_degree(0, 0, 0, 100), 90));
+    vgs_putlog("- vgs_cos(90) = %d", expect32d(vgs_cos(90), 0));
+    vgs_putlog("- vgs_sin(90) = %d", expect32d(vgs_sin(90), 256));
+
+    vgs_putlog("vgs_degree(0, 0, -100, 100) = %d", expect32d(vgs_degree(0, 0, -100, 100), 135));
+    vgs_putlog("- vgs_cos(135) = %d", expect32d(vgs_cos(135), -181));
+    vgs_putlog("- vgs_sin(135) = %d", expect32d(vgs_sin(135), 181));
+
+    vgs_putlog("vgs_degree(0, 0, -100, 0) = %d", expect32d(vgs_degree(0, 0, -100, 0), 180));
+    vgs_putlog("- vgs_cos(180) = %d", expect32d(vgs_cos(180), -256));
+    vgs_putlog("- vgs_sin(180) = %d", expect32d(vgs_sin(180), 0));
+
+    vgs_putlog("vgs_degree(0, 0, -100, -100) = %d", expect32d(vgs_degree(0, 0, -100, -100), 225));
+    vgs_putlog("- vgs_cos(225) = %d", expect32d(vgs_cos(225), -181));
+    vgs_putlog("- vgs_sin(225) = %d", expect32d(vgs_sin(225), -181));
+
     int32_t ret = 0;
     for (int i = 0; i < sizeof(buf); i++) {
         if (buf[i] == 0x01) {

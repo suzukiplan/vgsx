@@ -563,6 +563,19 @@ uint32_t VGSX::inPort(uint32_t address)
             this->context.randomIndex &= 0xFFFF;
             return vgs0_rand16[this->context.randomIndex];
         case 0xE00014: return this->dmaSearch();
+
+        case 0xE00110: // atan2
+            this->context.angle.radian = atan2(this->context.angle.y2 - this->context.angle.y1,
+                                               this->context.angle.x2 - this->context.angle.x1);
+            this->context.angle.degree = (int32_t)(this->context.angle.radian * 180 / M_PI);
+            this->context.angle.degree %= 360;
+            if (this->context.angle.degree < 0) {
+                this->context.angle.degree += 360;
+            }
+            return this->context.angle.degree;
+        case 0xE00114: return (int32_t)(sin(this->context.angle.radian) * 256);
+        case 0xE00118: return (int32_t)(cos(this->context.angle.radian) * 256);
+
         case 0xE20000: return this->key.up;
         case 0xE20004: return this->key.down;
         case 0xE20008: return this->key.left;
@@ -588,13 +601,13 @@ void VGSX::outPort(uint32_t address, uint32_t value)
             this->context.randomIndex = (int)value;
             return;
         case 0xE00008: // DMA (Source)
-            this->context.dmaSource = value;
+            this->context.dma.source = value;
             return;
         case 0xE0000C: // DMA (Destination)
-            this->context.dmaDestination = value;
+            this->context.dma.destination = value;
             return;
         case 0xE00010: // DMA (Argument)
-            this->context.dmaArgument = value;
+            this->context.dma.argument = value;
             return;
         case 0xE00014: // DMA (Execute)
             switch (value) {
@@ -602,6 +615,21 @@ void VGSX::outPort(uint32_t address, uint32_t value)
                 case 1: this->dmaMemset(); break;
             }
             return;
+
+        // Angle
+        case 0xE00100: this->context.angle.x1 = (int32_t)value; return;
+        case 0xE00104: this->context.angle.y1 = (int32_t)value; return;
+        case 0xE00108: this->context.angle.x2 = (int32_t)value; return;
+        case 0xE0010C: this->context.angle.y2 = (int32_t)value; return;
+        case 0xE00110:
+            this->context.angle.degree = (int32_t)value;
+            this->context.angle.degree %= 360;
+            if (this->context.angle.degree < 0) {
+                this->context.angle.degree += 360;
+            }
+            this->context.angle.radian = this->context.angle.degree * (M_PI / 180.0);
+            return;
+
         case 0xE01000: // Play VGM
             value &= 0xFFFF;
             if (this->context.vgmData[value].data) {
@@ -629,9 +657,9 @@ void VGSX::outPort(uint32_t address, uint32_t value)
 
 void VGSX::dmaMemcpy()
 {
-    const uint32_t size = this->context.dmaArgument;
-    uint32_t destination = this->context.dmaDestination & 0x00FFFFFF;
-    uint32_t source = this->context.dmaSource & 0x00FFFFFF;
+    const uint32_t size = this->context.dma.argument;
+    uint32_t destination = this->context.dma.destination & 0x00FFFFFF;
+    uint32_t source = this->context.dma.source & 0x00FFFFFF;
     // validate destination
     if (0xF00000 <= destination && destination + size <= 0xFFFFFF) {
         // validate source
@@ -658,9 +686,9 @@ void VGSX::dmaMemcpy()
 
 void VGSX::dmaMemset()
 {
-    uint32_t destination = this->context.dmaDestination & 0x00FFFFFF;
-    const uint8_t c = this->context.dmaSource & 0xFF;
-    const uint32_t size = this->context.dmaArgument;
+    uint32_t destination = this->context.dma.destination & 0x00FFFFFF;
+    const uint8_t c = this->context.dma.source & 0xFF;
+    const uint32_t size = this->context.dma.argument;
     // validate destination
     if (0xF00000 <= destination && destination + size <= 0xFFFFFF) {
         // Bulk set to RAM
@@ -672,8 +700,8 @@ void VGSX::dmaMemset()
 
 uint32_t VGSX::dmaSearch()
 {
-    uint8_t search = this->context.dmaArgument & 0xFF;
-    uint32_t ptr = this->context.dmaSource & 0x00FFFFFF;
+    uint8_t search = this->context.dma.argument & 0xFF;
+    uint32_t ptr = this->context.dma.source & 0x00FFFFFF;
     // validate source
     if (ptr < this->context.programSize) {
         // Search from ROM

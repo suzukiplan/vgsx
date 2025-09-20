@@ -1,5 +1,10 @@
 # Changes
 
+## Version 0.4.0
+
+- Core: Implemented IMATH functions
+- CRT: Added `vgs_degree`, `vgs_sin` and `vgs_cos`
+
 ## Version 0.3.0
 
 - Core: Implemented DMA functions

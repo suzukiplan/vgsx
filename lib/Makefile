@@ -6,6 +6,7 @@ LIBCOBJ += vgs_bgm.o
 LIBCOBJ += vgs_sfx.o
 LIBCOBJ += vgs_stdlib.o
 LIBCOBJ += vgs_string.o
+LIBCOBJ += vgs_math.o
 
 all: libc.a liblog.a
 
