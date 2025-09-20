@@ -306,7 +306,7 @@ int main(int argc, char* argv[])
                     printf("CHR load failed: %s\n", vgsx.getLastError());
                     exit(255);
                 }
-                puts("CHR load succeed.");
+                printf("CHR load succeed. (%d patterns)\n", size / 32);
                 pindex += size / 32;
                 ptr += size;
             } else if (0 == memcmp(ptr, "VGM", 4)) {
