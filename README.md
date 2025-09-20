@@ -582,6 +582,10 @@ int32_t c = VGS_IN_ANGLE_COS;
 
 The standard sin() and cos() functions return double values ranging from -1.0 to 1.0, whereas VGS's integer sine and cosine functions return integers ranging from -256 to 256. Therefore, it can be used directly for fixed-point arithmetic operations where the lower 8 bits represent the fractional part.
 
+The relationship between the sine and cosine of two points is illustrated below.
+
+![./angle.png](./angle.png)
+
 ### 0xE01000[o] - Play VGM
 
 Plays the VGM loaded at the index corresponding to the output value.
