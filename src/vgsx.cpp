@@ -27,6 +27,7 @@
 #include "vgsx.h"
 #include "m68k.h"
 #include "vgmrender.hpp"
+#include "vgs_io.h"
 
 VGSX vgsx;
 
@@ -555,16 +556,16 @@ void VGSX::tickSound(int16_t* buf, int samples)
 uint32_t VGSX::inPort(uint32_t address)
 {
     switch (address) {
-        case 0xE00000: // V-SYNC
+        case VGS_ADDR_VSYNC: // V-SYNC
             this->detectReferVSync = true;
             return 1;
-        case 0xE00004: // Random
+        case VGS_ADDR_RANDOM: // Random
             this->context.randomIndex++;
             this->context.randomIndex &= 0xFFFF;
             return vgs0_rand16[this->context.randomIndex];
-        case 0xE00014: return this->dmaSearch();
+        case VGS_ADDR_DMA_EXECUTE: return this->dmaSearch();
 
-        case 0xE00110: // atan2
+        case VGS_ADDR_ANGLE_DEGREE: // atan2
             this->context.angle.radian = atan2(this->context.angle.y2 - this->context.angle.y1,
                                                this->context.angle.x2 - this->context.angle.x1);
             this->context.angle.degree = (int32_t)(this->context.angle.radian * 180 / M_PI);
@@ -573,22 +574,20 @@ uint32_t VGSX::inPort(uint32_t address)
                 this->context.angle.degree += 360;
             }
             return this->context.angle.degree;
-        case 0xE00114: return (int32_t)(sin(this->context.angle.radian) * 256);
-        case 0xE00118: return (int32_t)(cos(this->context.angle.radian) * 256);
+        case VGS_ADDR_ANGLE_SIN: return (int32_t)(sin(this->context.angle.radian) * 256);
+        case VGS_ADDR_ANGLE_COS: return (int32_t)(cos(this->context.angle.radian) * 256);
 
-        case 0xE20000: return this->key.up;
-        case 0xE20004: return this->key.down;
-        case 0xE20008: return this->key.left;
-        case 0xE2000C: return this->key.right;
-        case 0xE20010: return this->key.a;
-        case 0xE20014: return this->key.b;
-        case 0xE20018: return this->key.x;
-        case 0xE2001C: return this->key.y;
-        case 0xE20020: return this->key.start;
-        case 0xE20024: return this->key.axisX;
-        case 0xE20028: return this->key.axisY;
+        case VGS_ADDR_KEY_UP: return this->key.up;
+        case VGS_ADDR_KEY_DOWN: return this->key.down;
+        case VGS_ADDR_KEY_LEFT: return this->key.left;
+        case VGS_ADDR_KEY_RIGHT: return this->key.right;
+        case VGS_ADDR_KEY_A: return this->key.a;
+        case VGS_ADDR_KEY_B: return this->key.b;
+        case VGS_ADDR_KEY_X: return this->key.x;
+        case VGS_ADDR_KEY_Y: return this->key.y;
+        case VGS_ADDR_KEY_START: return this->key.start;
 
-        case 0xE30004: // Execute Load
+        case VGS_ADDR_SAVE_EXECUTE: // Execute Load
         {
             this->context.save.address &= 0x00FFFFFF;
             if (this->context.save.address < 0xF00000) {
@@ -627,10 +626,11 @@ uint32_t VGSX::inPort(uint32_t address)
                 return 0;
             }
             fclose(fp);
+            printf("save.dat read (%u bytes)\n", size);
             return size;
         }
 
-        case 0xE30008: // Check save.dat size
+        case VGS_ADDR_SAVE_CHECK: // Check save.dat size
         {
             FILE* fp = fopen("save.dat", "rb");
             if (!fp) {
@@ -651,6 +651,12 @@ uint32_t VGSX::inPort(uint32_t address)
             fclose(fp);
             return size;
         }
+
+        case VGS_ADDR_SEQ_READ:
+            if (this->context.sqr.size <= this->context.sqr.readOffset) {
+                return 0xFFFFFFFF;
+            }
+            return this->context.sqr.buffer[this->context.sqr.readOffset++];
     }
     return 0xFFFFFFFF;
 }
@@ -658,22 +664,22 @@ uint32_t VGSX::inPort(uint32_t address)
 void VGSX::outPort(uint32_t address, uint32_t value)
 {
     switch (address) {
-        case 0xE00000: // Console Output
+        case VGS_ADDR_CONSOLE: // Console Output
             fputc(value, stdout);
             return;
-        case 0xE00004: // Setup Random
+        case VGS_ADDR_RANDOM: // Setup Random
             this->context.randomIndex = (int)value;
             return;
-        case 0xE00008: // DMA (Source)
+        case VGS_ADDR_DMA_SOURCE: // DMA (Source)
             this->context.dma.source = value;
             return;
-        case 0xE0000C: // DMA (Destination)
+        case VGS_ADDR_DMA_DESTINATION: // DMA (Destination)
             this->context.dma.destination = value;
             return;
-        case 0xE00010: // DMA (Argument)
+        case VGS_ADDR_DMA_ARGUMENT: // DMA (Argument)
             this->context.dma.argument = value;
             return;
-        case 0xE00014: // DMA (Execute)
+        case VGS_ADDR_DMA_EXECUTE: // DMA (Execute)
             switch (value) {
                 case 0: this->dmaMemcpy(); break;
                 case 1: this->dmaMemset(); break;
@@ -681,11 +687,11 @@ void VGSX::outPort(uint32_t address, uint32_t value)
             return;
 
         // Angle
-        case 0xE00100: this->context.angle.x1 = (int32_t)value; return;
-        case 0xE00104: this->context.angle.y1 = (int32_t)value; return;
-        case 0xE00108: this->context.angle.x2 = (int32_t)value; return;
-        case 0xE0010C: this->context.angle.y2 = (int32_t)value; return;
-        case 0xE00110:
+        case VGS_ADDR_ANGLE_X1: this->context.angle.x1 = (int32_t)value; return;
+        case VGS_ADDR_ANGLE_Y1: this->context.angle.y1 = (int32_t)value; return;
+        case VGS_ADDR_ANGLE_X2: this->context.angle.x2 = (int32_t)value; return;
+        case VGS_ADDR_ANGLE_Y2: this->context.angle.y2 = (int32_t)value; return;
+        case VGS_ADDR_ANGLE_DEGREE:
             this->context.angle.degree = (int32_t)value;
             this->context.angle.degree %= 360;
             if (this->context.angle.degree < 0) {
@@ -694,7 +700,7 @@ void VGSX::outPort(uint32_t address, uint32_t value)
             this->context.angle.radian = this->context.angle.degree * (M_PI / 180.0);
             return;
 
-        case 0xE01000: // Play VGM
+        case VGS_ADDR_VGM_PLAY: // Play VGM
             value &= 0xFFFF;
             if (this->context.vgmData[value].data) {
                 auto helper = (VgmHelper*)this->vgmHelper;
@@ -705,7 +711,7 @@ void VGSX::outPort(uint32_t address, uint32_t value)
                 this->vgmHelper = helper;
             }
             return;
-        case 0xE01100: // Play SFX
+        case VGS_ADDR_SFX_PLAY: // Play SFX
             value &= 0xFF;
             if (this->context.sfxData[value].data) {
                 this->context.sfxData[value].index = 0;
@@ -713,10 +719,10 @@ void VGSX::outPort(uint32_t address, uint32_t value)
             }
             return;
 
-        case 0xE30000: // Save Data
+        case VGS_ADDR_SAVE_ADDRESS: // Save Data
             this->context.save.address = value;
             return;
-        case 0xE30004: // Execute Save
+        case VGS_ADDR_SAVE_EXECUTE: // Execute Save
             this->context.save.address &= 0x00FFFFFF;
             if (this->context.save.address < 0xF00000) {
                 printf("warning: ignored an invalid save request (addr=0x%X)\n", this->context.save.address);
@@ -731,11 +737,55 @@ void VGSX::outPort(uint32_t address, uint32_t value)
                 } else {
                     if (value != fwrite(&this->context.ram[this->context.save.address & 0xFFFFF], 1, value, fp)) {
                         puts("error: save.dat write failed!");
+                    } else {
+                        printf("save.dat wrote (%u bytes)\n", value);
                     }
                     fclose(fp);
                 }
             }
             return;
+
+        case VGS_ADDR_SEQ_OPEN_W: // Sequencial Open for Write
+            this->context.sqw.index = value & 0xFF;
+            this->context.sqw.size = 0;
+            return;
+
+        case VGS_ADDR_SEQ_WRITE: // Write Sequencial Data
+            this->context.sqw.buffer[this->context.sqw.size++] = value & 0xFF;
+            this->context.sqw.size &= 0xFFFFF;
+            return;
+
+        case VGS_ADDR_SEQ_COMMIT: {
+            char fname[80];
+            snprintf(fname, sizeof(fname), "save%03d.dat", (int)this->context.sqw.index);
+            FILE* fp = fopen(fname, "wb");
+            if (fp) {
+                if (this->context.sqw.size != fwrite(this->context.sqw.buffer, 1, this->context.sqw.size, fp)) {
+                    printf("error: file write error (%s)\n", fname);
+                } else {
+                    printf("%s wrote (%u bytes)\n", fname, this->context.sqw.size);
+                }
+                fclose(fp);
+            }
+            return;
+        }
+
+        case VGS_ADDR_SEQ_OPEN_R: {
+            this->context.sqr.index = value & 0xFF;
+            char fname[80];
+            snprintf(fname, sizeof(fname), "save%03d.dat", (int)this->context.sqr.index);
+            FILE* fp = fopen(fname, "rb");
+            if (fp) {
+                this->context.sqr.size = fread(this->context.sqr.buffer, 1, sizeof(this->context.sqr.buffer), fp);
+                printf("%s read (%u bytes)\n", fname, this->context.sqr.size);
+                fclose(fp);
+            } else {
+                printf("error: File not found (%s)\n", fname);
+                this->context.sqr.size = 0;
+            }
+            this->context.sqr.readOffset = 0;
+            return;
+        }
 
         case 0xE7FFFC: // Exit
             this->exitFlag = true;

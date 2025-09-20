@@ -47,7 +47,52 @@ uint32_t vgs_load(void* addr);
  * @brief Check save.dat size without to read.
  * @return Loadable save data size
  */
-uint32_t vgs_save_check();
+uint32_t vgs_save_check(void);
+
+/**
+ * @brief Open a large sequencial file for write.
+ * @param index Index of a large sequencial file.
+ */
+static inline void vgs_seq_open_w(uint8_t index)
+{
+    VGS_OUT_SEQ_OPEN_W = index;
+}
+
+/**
+ * @brief Write a byte data to a large sequencial file.
+ * @param data Data to write.
+ */
+static inline void vgs_seq_write(uint8_t data)
+{
+    VGS_OUT_SEQ_WRITE = data;
+}
+
+/**
+ * @brief Commit a large sequencial file for write.
+ */
+static inline void vgs_seq_commit(void)
+{
+    VGS_OUT_SEQ_COMMIT = 0x12345678;
+}
+
+/**
+ * @brief Open a large sequencial file for write.
+ * @param index Index of a large sequencial file.
+ */
+static inline void vgs_seq_open_r(uint8_t index)
+{
+    VGS_OUT_SEQ_OPEN_R = index;
+}
+
+/**
+ * @brief Read a byte data to a large sequencial file.
+ * @return 0x00~0xFF: Valid sequencial data
+ * @return 0xFFFFFFFF: EOF
+ */
+static inline uint32_t vgs_seq_read(void)
+{
+    return VGS_IN_SEQ_READ;
+}
 
 #ifdef __cplusplus
 };

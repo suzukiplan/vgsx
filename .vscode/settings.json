@@ -50,6 +50,7 @@
         "variant": "cpp",
         "algorithm": "cpp",
         "vgs_save.h": "c",
-        "vgs_io.h": "c"
+        "vgs_io.h": "c",
+        "stdint.h": "c"
     }
 }

@@ -36,7 +36,7 @@ uint32_t vgs_load(void* addr)
     return VGS_IO_SAVE_EXECUTE;
 }
 
-uint32_t vgs_save_check()
+uint32_t vgs_save_check(void)
 {
     return VGS_IN_SAVE_CHECK;
 }

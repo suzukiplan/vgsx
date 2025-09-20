@@ -725,7 +725,7 @@ VGS_OUT_SEQ_COMMIT = 0;
 Remarks:
 
 - You cannot write to multiple sequential files simultaneously.
-- It is possible to read and write sequential files simultaneously.
+- It is possible to read and write to sequential files simultaneously. However, it is not possible to read and write to the same index file simultaneously.
 - Writes are processed in memory, so there is no overhead from disk I/O.
 - If another sequential file is open for writing, the previous one will **not** be committed automatically, resulting in data loss.
 - Sequential files that were not committed will be lost without being saved.
@@ -750,7 +750,7 @@ Remarks:
 
 - When the file reaches EOF, `VGS_IN_SEQ_READ` returns `0xFFFFFFFF`.
 - You cannot read to multiple sequential files simultaneously.
-- It is possible to read and write sequential files simultaneously.
+- It is possible to read and write to sequential files simultaneously. However, it is not possible to read and write to the same index file simultaneously.
 - Since loading is processed in memory, there is no overhead from disk I/O.
 
 ### 0xE7FFFC[out] - Exit
@@ -806,11 +806,11 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | save | `vgs_save` | Save [save data](#0xe030xxio---savedata). |
 | save | `vgs_load` | Load [save data](#0xe030xxio---savedata).　|
 | save | `vgs_save_check` | Check the size of [save data](#0xe030xxio---savedata).　|
-| save | `vgs_seq_open_w` | |
-| save | `vgs_seq_write` | |
-| save | `vgs_seq_commit` | |
-| save | `vgs_seq_open_r` | |
-| save | `vgs_seq_read` | |
+| save | `vgs_seq_open_w` | Open a large sequencial file for write. |
+| save | `vgs_seq_write` | Write a byte data to a large sequencial file. |
+| save | `vgs_seq_commit` | Commit a large sequencial file for write. |
+| save | `vgs_seq_open_r` | Open a large sequencial file for write. |
+| save | `vgs_seq_read` | Read a byte data to a large sequencial file. |
 
 ### (Standard Functions)
 

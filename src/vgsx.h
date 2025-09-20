@@ -64,6 +64,14 @@ class VGSX
         uint32_t size;
     } SaveData;
 
+    typedef struct {
+        uint8_t buffer[1024 * 1024];
+        uint32_t size;
+        uint32_t readOffset;
+        uint8_t index;
+        uint8_t reserved[3];
+    } SequencialData;
+
     struct Context {
         uint8_t ram[0x100000]; // WRAM (1MB)
         Binary vgmData[0x10000];
@@ -77,6 +85,8 @@ class VGSX
         DMA dma;
         Angle angle;
         SaveData save;
+        SequencialData sqw;
+        SequencialData sqr;
     } context;
 
     struct KeyStatus {
