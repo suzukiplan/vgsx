@@ -87,7 +87,7 @@ class VGSX
         SaveData save;
         SequencialData sqw;
         SequencialData sqr;
-    } context;
+    } ctx;
 
     struct KeyStatus {
         uint8_t up;
@@ -117,7 +117,7 @@ class VGSX
     void reset();
     void tick();
     void tickSound(int16_t* buf, int samples);
-    inline uint32_t* getDisplay() { return this->vdp.context.display; }
+    inline uint32_t* getDisplay() { return this->vdp.ctx.display; }
     inline int getDisplayWidth() { return VDP_WIDTH; }
     inline int getDisplayHeight() { return VDP_HEIGHT; }
     uint32_t inPort(uint32_t address);
