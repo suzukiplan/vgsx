@@ -53,3 +53,8 @@
 #define VGS_IO_SAVE_EXECUTE *((uint32_t*)0xE30004)
 #define VGS_IN_SAVE_CHECK *((uint32_t*)0xE30008)
 #define VGS_OUT_EXIT *((int32_t*)0xE7FFFC)
+#define VGS_OUT_SEQ_OPEN_W *((uint32_t*)0xE03100)
+#define VGS_OUT_SEQ_WRITE *((uint32_t*)0xE03104)
+#define VGS_OUT_SEQ_COMMIT *((uint32_t*)0xE03108)
+#define VGS_OUT_SEQ_OPEN_R *((uint32_t*)0xE03110)
+#define VGS_IN_SEQ_READ *((uint32_t*)0xE03114)
