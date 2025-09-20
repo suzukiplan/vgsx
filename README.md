@@ -502,6 +502,11 @@ Note that all addresses and values for I/O instructions must be specified as 32-
 | 0xE03000 |  o  |  -  | [SaveData: Address](#0xe030xxio---savedata) |
 | 0xE03004 |  o  |  o  | [SaveData: Execute Save(out) or Load(in)](#0xe030xxio---savedata) |
 | 0xE03008 |  -  |  o  | [SaveData: Check Size](#0xe030xxio---savedata) |
+| 0xE03100 |  o  |  -  | [Sequencial: Open for Write](#0xe031xxio---large-sequencial-file-io) |
+| 0xE03104 |  o  |  -  | [Sequencial: Write a Byte](#0xe031xxio---large-sequencial-file-io) |
+| 0xE03108 |  o  |  -  | [Sequencial: Commit](#0xe031xxio---large-sequencial-file-io) |
+| 0xE03110 |  o  |  -  | [Sequencial: Open for Read](#0xe031xxio---large-sequencial-file-io) |
+| 0xE03114 |  -  |  o  | [Sequencial: Read a Byte](#0xe031xxio---large-sequencial-file-io) |
 | 0xE7FFFC |  -  |  o  | [Exit](#0xe7fffcout---exit) |
 
 ### 0xE00000[in] - V-SYNC
@@ -690,6 +695,64 @@ Remarks
 - `0xE03000 (VGS_OUT_SAVE_ADDRESS)` must be within the RAM address range (0xF00000 to 0xFFFFFF).
 - If the save data is corrupted or fails to load, the load result will be 0.
 
+### 0xE031xx[io] - Large Sequencial File I/O
+
+VGS-X can perform sequential file I/O of up to 1MB in byte units.
+
+This feature is suitable for tasks such as saving game replay data.
+
+By continuously writing data that encodes key input information into 1-byte units per frame, it can record up to 1,048,576 frames (approximately 291 minutes) of replay data.
+
+You can create up to 256 sequential files.
+
+#### (Write Large Sequencial File)
+
+```c
+// Specify the index of the sequential file (0 ~ 255) to write to.
+// Note: if another sequential file is open for writing, the previous one will not be committed automatically, resulting in data loss.
+VGS_OUT_SEQ_OPEN_W = 0;
+
+// Write 1, 2, 3 (3 bytes) to the sequential file.
+VGS_OUT_SEQ_WRITE = 1;
+VGS_OUT_SEQ_WRITE = 2;
+VGS_OUT_SEQ_WRITE = 3;
+
+// An explicit commit will write to the file (save000.dat).
+// The value specified in the commit will be ignored.
+VGS_OUT_SEQ_COMMIT = 0;
+```
+
+Remarks:
+
+- You cannot write to multiple sequential files simultaneously.
+- It is possible to read and write sequential files simultaneously.
+- Writes are processed in memory, so there is no overhead from disk I/O.
+- If another sequential file is open for writing, the previous one will **not** be committed automatically, resulting in data loss.
+- Sequential files that were not committed will be lost without being saved.
+
+#### (Read Large Sequencial File)
+
+```c
+// Specify the index of the sequential file (0 ~ 255) to read.
+VGS_OUT_SEQ_OPEN_R = 0;
+
+// Continue reading data until EOF is detected.
+while (1) {
+    uint32_t data = VGS_IN_SEQ_READ;
+    if (0x100 < data) {
+        break; // EOF is detected
+    }
+    playback_replay(data);
+}
+```
+
+Remarks:
+
+- When the file reaches EOF, `VGS_IN_SEQ_READ` returns `0xFFFFFFFF`.
+- You cannot read to multiple sequential files simultaneously.
+- It is possible to read and write sequential files simultaneously.
+- Since loading is processed in memory, there is no overhead from disk I/O.
+
 ### 0xE7FFFC[out] - Exit
 
 Issuing an exit request for VGS-X.
@@ -743,6 +806,11 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | save | `vgs_save` | Save [save data](#0xe030xxio---savedata). |
 | save | `vgs_load` | Load [save data](#0xe030xxio---savedata).　|
 | save | `vgs_save_check` | Check the size of [save data](#0xe030xxio---savedata).　|
+| save | `vgs_seq_open_w` | |
+| save | `vgs_seq_write` | |
+| save | `vgs_seq_commit` | |
+| save | `vgs_seq_open_r` | |
+| save | `vgs_seq_read` | |
 
 ### (Standard Functions)
 
