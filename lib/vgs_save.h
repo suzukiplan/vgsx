@@ -30,50 +30,68 @@ extern "C" {
 #endif
 
 /**
- * @brief Calculate the angle between two points (in degrees)
- * @param x1 X of Coordinate 1
- * @param y1 Y of Coordinate 1
- * @param x2 X of Coordinate 2
- * @param y2 Y of Coordinate 2
- * @return The angle between two points is measured in degrees, from 0 to 359.
+ * @brief Write save.dat from RAM.
+ * @param addr RAM address
+ * @param size Save size
  */
-int32_t vgs_degree(int32_t x1, int32_t y1, int32_t x2, int32_t y2);
+void vgs_save(void* addr, uint32_t size);
 
 /**
- * @brief Calculate integer sine from the angle in degrees
- * @param degree Angle in degrees
- * @return The integer sine ranges from -256 to 256.
+ * @brief Read save.dat to RAM.
+ * @param addr RAM address
+ * @return Loaded save data size
  */
-int32_t vgs_sin(int32_t degree);
+uint32_t vgs_load(void* addr);
 
 /**
- * @brief Calculate integer cosine from the angle in degrees
- * @param degree Angle in degrees
- * @return The integer cosine ranges from -256 to 256.
+ * @brief Check save.dat size without to read.
+ * @return Loadable save data size
  */
-int32_t vgs_cos(int32_t degree);
+uint32_t vgs_save_check(void);
 
 /**
- * @brief Calculate the absolute value of an integer.
- * @param value Target value
- * @return The absolute value.
+ * @brief Open a large sequencial file for write.
+ * @param index Index of a large sequencial file.
  */
-static inline int32_t vgs_abs(int32_t value)
+static inline void vgs_seq_open_w(uint8_t index)
 {
-    return value < 0 ? -value : value;
+    VGS_OUT_SEQ_OPEN_W = index;
 }
 
 /**
- * @brief Determine whether an integer is positive, negative or zero.
- * @param value Target value
- * @return Return -1 for negative numbers, 1 for positive numbers, and 0 for neither.
+ * @brief Write a byte data to a large sequencial file.
+ * @param data Data to write.
  */
-static inline int32_t vgs_sgn(int32_t value)
+static inline void vgs_seq_write(uint8_t data)
 {
-    if (0 == value) {
-        return 0;
-    }
-    return value < 0 ? -1 : 1;
+    VGS_OUT_SEQ_WRITE = data;
+}
+
+/**
+ * @brief Commit a large sequencial file for write.
+ */
+static inline void vgs_seq_commit(void)
+{
+    VGS_OUT_SEQ_COMMIT = 0x12345678;
+}
+
+/**
+ * @brief Open a large sequencial file for write.
+ * @param index Index of a large sequencial file.
+ */
+static inline void vgs_seq_open_r(uint8_t index)
+{
+    VGS_OUT_SEQ_OPEN_R = index;
+}
+
+/**
+ * @brief Read a byte data to a large sequencial file.
+ * @return 0x00~0xFF: Valid sequencial data
+ * @return 0xFFFFFFFF: EOF
+ */
+static inline uint32_t vgs_seq_read(void)
+{
+    return VGS_IN_SEQ_READ;
 }
 
 #ifdef __cplusplus

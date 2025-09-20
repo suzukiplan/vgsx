@@ -22,15 +22,20 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#pragma once
-#include "vgs_bgm.h"
-#include "vgs_cg.h"
-#include "vgs_ctype.h"
-#include "vgs_io.h"
-#include "vgs_math.h"
-#include "vgs_save.h"
-#include "vgs_sfx.h"
-#include "vgs_stdint.h"
-#include "vgs_stdlib.h"
-#include "vgs_string.h"
-#include "vgs_system.h"
+#include <vgs.h>
+
+int32_t vgs_atoi(const char* str)
+{
+    BOOL negative = FALSE;
+    if ('-' == *str) {
+        negative = TRUE;
+        str++;
+    }
+    int32_t result = 0;
+    while (vgs_isdigit(*str)) {
+        result *= 10;
+        result += (*str) - '0';
+        str++;
+    }
+    return negative ? -result : result;
+}

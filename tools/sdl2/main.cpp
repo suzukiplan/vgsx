@@ -105,6 +105,43 @@ static void audioCallback(void* userdata, Uint8* stream, int len)
     pthread_mutex_unlock(&soundMutex);
 }
 
+static void file_dump(const char* fname)
+{
+    FILE* fp = fopen(fname, "rb");
+    if (fp) {
+        printf("\n[%s]\n", fname);
+        char buf[16];
+        int n;
+        int offset = 0;
+        int totalSize = 0;
+        while (0 < (n = fread(buf, 1, 16, fp))) {
+            totalSize += n;
+            printf("%06X", offset);
+            char ascii[17];
+            memset(ascii, 0, sizeof(ascii));
+            int j;
+            for (j = 0; j < n; j++) {
+                if (8 == j) {
+                    printf(" - %02X", buf[j]);
+                } else {
+                    printf(" %02X", buf[j]);
+                }
+                ascii[j] = isprint(buf[j]) ? buf[j] : '.';
+            }
+            for (; j < 16; j++) {
+                if (8 == j) {
+                    printf("     ");
+                } else {
+                    printf("   ");
+                }
+            }
+            printf("  %s\n", ascii);
+            offset += 0x10;
+        }
+        fclose(fp);
+        printf("Size: %d bytes\n", totalSize);
+    }
+}
 int main(int argc, char* argv[])
 {
     const char* programPath = nullptr;
@@ -465,6 +502,13 @@ int main(int argc, char* argv[])
         }
         printf("\n");
         ramUsage += 16;
+    }
+
+    file_dump("save.dat");
+    for (int i = 0; i < 256; i++) {
+        char fname[80];
+        snprintf(fname, sizeof(fname), "save%03d.dat", i);
+        file_dump(fname);
     }
 
     if (0 < loopCount) {

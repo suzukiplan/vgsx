@@ -48,6 +48,9 @@
         "typeinfo": "cpp",
         "unordered_map": "cpp",
         "variant": "cpp",
-        "algorithm": "cpp"
+        "algorithm": "cpp",
+        "vgs_save.h": "c",
+        "vgs_io.h": "c",
+        "stdint.h": "c"
     }
 }

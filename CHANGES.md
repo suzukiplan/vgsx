@@ -1,5 +1,15 @@
 # Changes
 
+## Version 0.5.0
+
+- Core: Implemented SaveData functions
+- Core: Implemented Large Sequencial File I/O functions
+- CRT: Added the save functions: `vgs_save`, `vgs_load` and `vgs_save_check`
+- CRT: Added the save functions: `vgs_seq_open_w`, `vgs_seq_write`, `vgs_seq_commit`, `vgs_seq_open_r` and `vgs_seq_read`
+- CRT: Added the i-math inline functions: `vgs_abs` and `vgs_sgn`
+- CRT: Added a string function: `vgs_stricmp`
+- CRT: Added a ctype function: `vgs_atoi`
+
 ## Version 0.4.0
 
 - Core: Implemented IMATH functions

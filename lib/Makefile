@@ -1,4 +1,4 @@
-CC = m68k-elf-gcc -m68030 -O2 -I./ -c
+CC = m68k-elf-gcc -m68030 -O2 -I./ -I../src -c
 
 LIBCOBJ = vgs_system.o
 LIBCOBJ += vgs_cg.o
@@ -7,8 +7,11 @@ LIBCOBJ += vgs_sfx.o
 LIBCOBJ += vgs_stdlib.o
 LIBCOBJ += vgs_string.o
 LIBCOBJ += vgs_math.o
+LIBCOBJ += vgs_ctype.o
+LIBCOBJ += vgs_save.o
 
 all: libc.a liblog.a
+	cp -p vgs_io.h ../src
 
 clean:
 	rm -f *.a

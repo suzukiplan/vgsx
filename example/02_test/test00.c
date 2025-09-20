@@ -39,6 +39,11 @@ int main(int argc, char* argv)
     vgs_putlog("vgs_strncmp(\"1031\",\"1032\",3) = %d", expect32d(vgs_strncmp("1031", "1032", 3), 0));
     vgs_putlog("vgs_strncmp(\"1031\",\"1032\",4) = %d", expect32d(vgs_strncmp("1031", "1032", 4), -1));
     vgs_putlog("vgs_strstr(\"%s\",\"is t\") ... %s", text, expect(vgs_strstr(text, "is t"), "is test string."));
+    vgs_putlog("vgs_strcmp(\"AbCd\",\"aBcD\") = %d", expect32d(vgs_strcmp("AbCd", "aBcD"), -1));
+    vgs_putlog("vgs_stricmp(\"AbCd\",\"aBcD\") = %d", expect32d(vgs_stricmp("AbCd", "aBcD"), 0));
+    vgs_putlog("vgs_atoi(\"12345\") = %d", expect32d(vgs_atoi("12345"), 12345));
+    vgs_putlog("vgs_atoi(\"-12345\") = %d", expect32d(vgs_atoi("-12345"), -12345));
+    vgs_putlog("vgs_atoi(\" 12345\") = %d", expect32d(vgs_atoi(" 12345"), 0));
 
     vgs_putlog("vgs_isdigit(\'0\') ... %d", expect32d(vgs_isdigit('0'), TRUE));
     vgs_putlog("vgs_isdigit(\'9\') ... %d", expect32d(vgs_isdigit('9'), TRUE));
@@ -136,6 +141,22 @@ int main(int argc, char* argv)
             ret++;
         }
     }
+
+    vgs_putlog("vgs_save(%u,%d)", (uint32_t)buf, sizeof(buf));
+    vgs_save(buf, sizeof(buf));
+    vgs_putlog("vgs_save_check() = %d", expect32d(vgs_save_check(), sizeof(buf)));
+    vgs_putlog("vgs_load(%u) = %d", (uint32_t)buf, expect32d(vgs_load(buf), sizeof(buf)));
+
+    vgs_seq_open_w(10);
+    for (int i = 0; i < 100; i++) {
+        vgs_seq_write(i & 0xFF);
+    }
+    vgs_seq_commit();
+    vgs_seq_open_r(10);
+    for (int32_t i = 0; i < 100; i++) {
+        vgs_putlog("vgs_seq_read(%d) = %d", i, expect32d(vgs_seq_read(), i));
+    }
+    vgs_putlog("vgs_seq_read(100) = %d", expect32d(vgs_seq_read(), -1));
 
     vgs_putlog("call vgs_exit with exit code: %d", ret);
     vgs_exit(ret);

@@ -96,6 +96,14 @@ char* vgs_strrchr(const char* str, int c);
 int vgs_strcmp(const char* str1, const char* str2);
 
 /**
+ * @brief Case-insensitive string comparison.
+ * @param str1 Null-terminated string buffer
+ * @param str2 Null-terminated string buffer
+ * @return 0: str1 == str2, -1(<0): str1 < str2, 1(>0): str1 > str2
+ */
+int vgs_stricmp(const char* str1, const char* str2);
+
+/**
  * @brief Comparing strings of a specific length
  * @param str1 Null-terminated string buffer
  * @param str2 Null-terminated string buffer

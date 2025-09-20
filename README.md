@@ -33,6 +33,7 @@ Basic Features:
 - [SFX](#0xe01100o---play-sfx): .wav format (44,100Hz, 16-bits, 2ch)
 - High speed [DMA; Direct Memory Access](#0xe00008-0xe00014io---direct-memory-access)
 - High speed [i-math (integer math)](#0xe00100-0xe00118io---angle) API
+- [Save Data](#0xe030xxio---savedata)
 
 VDP Features:
 
@@ -498,6 +499,14 @@ Note that all addresses and values for I/O instructions must be specified as 32-
 | 0xE02018 |  o  |  -  | [Gamepad: X button](#0xe200xxi---gamepad) |
 | 0xE0201C |  o  |  -  | [Gamepad: Y button](#0xe200xxi---gamepad) |
 | 0xE02020 |  o  |  -  | [Gamepad: Start button](#0xe200xxi---gamepad) |
+| 0xE03000 |  o  |  -  | [SaveData: Address](#0xe030xxio---savedata) |
+| 0xE03004 |  o  |  o  | [SaveData: Execute Save(out) or Load(in)](#0xe030xxio---savedata) |
+| 0xE03008 |  -  |  o  | [SaveData: Check Size](#0xe030xxio---savedata) |
+| 0xE03100 |  o  |  -  | [Sequencial: Open for Write](#0xe031xxio---large-sequencial-file-io) |
+| 0xE03104 |  o  |  -  | [Sequencial: Write a Byte](#0xe031xxio---large-sequencial-file-io) |
+| 0xE03108 |  o  |  -  | [Sequencial: Commit](#0xe031xxio---large-sequencial-file-io) |
+| 0xE03110 |  o  |  -  | [Sequencial: Open for Read](#0xe031xxio---large-sequencial-file-io) |
+| 0xE03114 |  -  |  o  | [Sequencial: Read a Byte](#0xe031xxio---large-sequencial-file-io) |
 | 0xE7FFFC |  -  |  o  | [Exit](#0xe7fffcout---exit) |
 
 ### 0xE00000[in] - V-SYNC
@@ -671,6 +680,79 @@ The following table shows the button assignments for a typical gamepad:
 | `Y` | `S` | `X` | `Triangle` |
 | `Start` | `Space` | `Plus` | `Options` |
 
+### 0xE030xx[io] - SaveData
+
+You can save your save data to storage (save.dat file) or load saved save data.
+
+```c
+VGS_OUT_SAVE_ADDRESS = (uint32_t)&mydata; // RAM address
+VGS_IO_SAVE_EXECUTE = sizeof(mydata);     // Write save.dat from RAM
+uint32_t size = VGS_IO_SAVE_EXECUTE;      // Read save.dat to RAM
+```
+
+Remarks
+
+- `0xE03000 (VGS_OUT_SAVE_ADDRESS)` must be within the RAM address range (0xF00000 to 0xFFFFFF).
+- If the save data is corrupted or fails to load, the load result will be 0.
+
+### 0xE031xx[io] - Large Sequencial File I/O
+
+VGS-X can perform sequential file I/O of up to 1MB in byte units.
+
+This feature is suitable for tasks such as saving game replay data.
+
+By continuously writing data that encodes key input information into 1-byte units per frame, it can record up to 1,048,576 frames (approximately 291 minutes) of replay data.
+
+You can create up to 256 sequential files.
+
+#### (Write Large Sequencial File)
+
+```c
+// Specify the index of the sequential file (0 ~ 255) to write to.
+// Note: if another sequential file is open for writing, the previous one will not be committed automatically, resulting in data loss.
+VGS_OUT_SEQ_OPEN_W = 0;
+
+// Write 1, 2, 3 (3 bytes) to the sequential file.
+VGS_OUT_SEQ_WRITE = 1;
+VGS_OUT_SEQ_WRITE = 2;
+VGS_OUT_SEQ_WRITE = 3;
+
+// An explicit commit will write to the file (save000.dat).
+// The value specified in the commit will be ignored.
+VGS_OUT_SEQ_COMMIT = 0;
+```
+
+Remarks:
+
+- You cannot write to multiple sequential files simultaneously.
+- It is possible to read and write to sequential files simultaneously. However, it is not possible to read and write to the same index file simultaneously.
+- Writes are processed in memory, so there is no overhead from disk I/O.
+- If another sequential file is open for writing, the previous one will **not** be committed automatically, resulting in data loss.
+- Sequential files that were not committed will be lost without being saved.
+
+#### (Read Large Sequencial File)
+
+```c
+// Specify the index of the sequential file (0 ~ 255) to read.
+VGS_OUT_SEQ_OPEN_R = 0;
+
+// Continue reading data until EOF is detected.
+while (1) {
+    uint32_t data = VGS_IN_SEQ_READ;
+    if (0x100 < data) {
+        break; // EOF is detected
+    }
+    playback_replay(data);
+}
+```
+
+Remarks:
+
+- When the file reaches EOF, `VGS_IN_SEQ_READ` returns `0xFFFFFFFF`.
+- You cannot read to multiple sequential files simultaneously.
+- It is possible to read and write to sequential files simultaneously. However, it is not possible to read and write to the same index file simultaneously.
+- Since loading is processed in memory, there is no overhead from disk I/O.
+
 ### 0xE7FFFC[out] - Exit
 
 Issuing an exit request for VGS-X.
@@ -721,6 +803,14 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | cg:bmp | `vgs_draw_character` | Draw a [character-pattern](#character-pattern) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
 | bgm | `vgs_bgm_play` | Play [background music](#0xe01000o---play-vgm) |
 | sfx | `vgs_sfx_play` | Play [sound effect](#0xe01100o---play-sfx) |
+| save | `vgs_save` | Save [save data](#0xe030xxio---savedata). |
+| save | `vgs_load` | Load [save data](#0xe030xxio---savedata).　|
+| save | `vgs_save_check` | Check the size of [save data](#0xe030xxio---savedata).　|
+| save | `vgs_seq_open_w` | Open a large sequencial file for write. |
+| save | `vgs_seq_write` | Write a byte data to a large sequencial file. |
+| save | `vgs_seq_commit` | Commit a large sequencial file for write. |
+| save | `vgs_seq_open_r` | Open a large sequencial file for write. |
+| save | `vgs_seq_read` | Read a byte data to a large sequencial file. |
 
 ### (Standard Functions)
 
@@ -738,8 +828,10 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | string | `vgs_strchr` | Search for specific characters in a string |
 | string | `vgs_strrchr` | Search for specific characters in a string that right to left |
 | string | `vgs_strcmp` | Compare strings |
+| string | `vgs_stricmp` | Case-insensitive string comparison. |
 | string | `vgs_strncmp` | Comparing strings of a specific length |
 | string | `vgs_strstr` | Search for a specific string in a string |
+| ctype | `vgs_atoi` | Convert a string to an integer. |
 | ctype | `vgs_isdigit` | Check if a character is a number |
 | ctype | `vgs_isupper` | Check if a character is an uppercase |
 | ctype | `vgs_islower` | Check if a character is a lowercase |
@@ -750,6 +842,8 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | math | `vgs_degree` | Calculate the [angle](#0xe00100-0xe00118io---angle) between two points (in degrees) |
 | math | `vgs_sin` | Calculate integer sine from the [angle](#0xe00100-0xe00118io---angle) in degrees |
 | math | `vgs_cos` | Calculate integer cosine from the [angle](#0xe00100-0xe00118io---angle) in degrees |
+| math | `vgs_abs` | Calculate the absolute value of an integer. |
+| math | `vgs_sgn` | Determine whether an integer is positive, negative or zero. |
 
 ## liblog.a - Logging Function
 

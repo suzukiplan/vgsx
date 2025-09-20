@@ -25,6 +25,10 @@
 #pragma once
 #include "vgs_stdint.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief Check if a character is a number
  * @param c A character to check
@@ -94,3 +98,15 @@ static inline int vgs_tolower(int c)
 {
     return vgs_isupper(c) ? c + ('a' - 'A') : c;
 }
+
+/**
+ * @brief Convert a string to an integer.
+ * @param str String to convert
+ * @return Converted integer
+ * @remark If an unrecognizable string is specified, return 0.
+ */
+int32_t vgs_atoi(const char* str);
+
+#ifdef __cplusplus
+};
+#endif
