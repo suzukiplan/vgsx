@@ -22,15 +22,21 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#pragma once
-#include "vgs_bgm.h"
-#include "vgs_cg.h"
-#include "vgs_ctype.h"
-#include "vgs_io.h"
-#include "vgs_math.h"
-#include "vgs_save.h"
-#include "vgs_sfx.h"
-#include "vgs_stdint.h"
-#include "vgs_stdlib.h"
-#include "vgs_string.h"
-#include "vgs_system.h"
+#include <vgs.h>
+
+void vgs_save(void* addr, uint32_t size)
+{
+    VGS_OUT_SAVE_ADDRESS = (uint32_t)addr;
+    VGS_IO_SAVE_EXECUTE = size;
+}
+
+uint32_t vgs_load(void* addr)
+{
+    VGS_OUT_SAVE_ADDRESS = (uint32_t)addr;
+    return VGS_IO_SAVE_EXECUTE;
+}
+
+uint32_t vgs_save_check()
+{
+    return VGS_IN_SAVE_CHECK;
+}

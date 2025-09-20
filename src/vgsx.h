@@ -59,6 +59,11 @@ class VGSX
         double radian;
     } Angle;
 
+    typedef struct {
+        uint32_t address;
+        uint32_t size;
+    } SaveData;
+
     struct Context {
         uint8_t ram[0x100000]; // WRAM (1MB)
         Binary vgmData[0x10000];
@@ -71,6 +76,7 @@ class VGSX
         uint32_t frameClocks;
         DMA dma;
         Angle angle;
+        SaveData save;
     } context;
 
     struct KeyStatus {

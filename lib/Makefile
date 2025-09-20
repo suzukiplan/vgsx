@@ -8,6 +8,7 @@ LIBCOBJ += vgs_stdlib.o
 LIBCOBJ += vgs_string.o
 LIBCOBJ += vgs_math.o
 LIBCOBJ += vgs_ctype.o
+LIBCOBJ += vgs_save.o
 
 all: libc.a liblog.a
 

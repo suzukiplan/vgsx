@@ -23,14 +23,32 @@
  * THE SOFTWARE.
  */
 #pragma once
-#include "vgs_bgm.h"
-#include "vgs_cg.h"
-#include "vgs_ctype.h"
-#include "vgs_io.h"
-#include "vgs_math.h"
-#include "vgs_save.h"
-#include "vgs_sfx.h"
 #include "vgs_stdint.h"
-#include "vgs_stdlib.h"
-#include "vgs_string.h"
-#include "vgs_system.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * @brief Write save.dat from RAM.
+ * @param addr RAM address
+ * @param size Save size
+ */
+void vgs_save(void* addr, uint32_t size);
+
+/**
+ * @brief Read save.dat to RAM.
+ * @param addr RAM address
+ * @return Loaded save data size
+ */
+uint32_t vgs_load(void* addr);
+
+/**
+ * @brief Check save.dat size without to read.
+ * @return Loadable save data size
+ */
+uint32_t vgs_save_check();
+
+#ifdef __cplusplus
+};
+#endif

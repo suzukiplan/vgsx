@@ -467,6 +467,43 @@ int main(int argc, char* argv[])
         ramUsage += 16;
     }
 
+    printf("\n[save.dat]\n");
+    FILE* fp = fopen("save.dat", "rb");
+    if (!fp) {
+        puts("No save.dat");
+    } else {
+        char buf[16];
+        int n;
+        int offset = 0;
+        int totalSize = 0;
+        while (0 < (n = fread(buf, 1, 16, fp))) {
+            totalSize += n;
+            printf("%06X", offset);
+            char ascii[17];
+            memset(ascii, 0, sizeof(ascii));
+            int j;
+            for (j = 0; j < n; j++) {
+                if (8 == j) {
+                    printf(" - %02X", buf[j]);
+                } else {
+                    printf(" %02X", buf[j]);
+                }
+                ascii[j] = isprint(buf[j]) ? buf[j] : '.';
+            }
+            for (; j < 16; j++) {
+                if (8 == j) {
+                    printf("     ");
+                } else {
+                    printf("   ");
+                }
+            }
+            printf("  %s\n", ascii);
+            offset += 0x10;
+        }
+        fclose(fp);
+        printf("Size: %d bytes\n", totalSize);
+    }
+
     if (0 < loopCount) {
         totalClocks /= loopCount;
         totalClocks *= 1000.0 / 60.0;

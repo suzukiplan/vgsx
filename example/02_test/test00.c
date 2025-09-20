@@ -142,6 +142,11 @@ int main(int argc, char* argv)
         }
     }
 
+    vgs_putlog("vgs_save(%u,%d)", (uint32_t)buf, sizeof(buf));
+    vgs_save(buf, sizeof(buf));
+    vgs_putlog("vgs_save_check() = %d", expect32d(vgs_save_check(), sizeof(buf)));
+    vgs_putlog("vgs_load(%u) = %d", (uint32_t)buf, expect32d(vgs_load(buf), sizeof(buf)));
+
     vgs_putlog("call vgs_exit with exit code: %d", ret);
     vgs_exit(ret);
     vgs_putlog("return 456 (this message will not shown)");

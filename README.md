@@ -33,7 +33,7 @@ Basic Features:
 - [SFX](#0xe01100o---play-sfx): .wav format (44,100Hz, 16-bits, 2ch)
 - High speed [DMA; Direct Memory Access](#0xe00008-0xe00014io---direct-memory-access)
 - High speed [i-math (integer math)](#0xe00100-0xe00118io---angle) API
-- Supports [Save Data](#0xe030xxio---savedata)
+- [Save Data](#0xe030xxio---savedata)
 
 VDP Features:
 
@@ -501,6 +501,7 @@ Note that all addresses and values for I/O instructions must be specified as 32-
 | 0xE02020 |  o  |  -  | [Gamepad: Start button](#0xe200xxi---gamepad) |
 | 0xE03000 |  o  |  -  | [SaveData: Address](#0xe030xxio---savedata) |
 | 0xE03004 |  o  |  o  | [SaveData: Execute Save(out) or Load(in)](#0xe030xxio---savedata) |
+| 0xE03008 |  -  |  o  | [SaveData: Check Size](#0xe030xxio---savedata) |
 | 0xE7FFFC |  -  |  o  | [Exit](#0xe7fffcout---exit) |
 
 ### 0xE00000[in] - V-SYNC
@@ -679,9 +680,9 @@ The following table shows the button assignments for a typical gamepad:
 You can save your save data to storage (save.dat file) or load saved save data.
 
 ```c
-VGS_OUT_SAVE_ADDRESS = (uint32_t)&mydata; // ROM or RAM address
-VGS_IO_SAVE_EXECUTE = sizeof(mydata);     // Write save.dat from &mydata
-uint32_t size = VGS_IO_SAVE_EXECUTE;      // Read save.dat to &mydata
+VGS_OUT_SAVE_ADDRESS = (uint32_t)&mydata; // RAM address
+VGS_IO_SAVE_EXECUTE = sizeof(mydata);     // Write save.dat from RAM
+uint32_t size = VGS_IO_SAVE_EXECUTE;      // Read save.dat to RAM
 ```
 
 Remarks
@@ -741,6 +742,7 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | sfx | `vgs_sfx_play` | Play [sound effect](#0xe01100o---play-sfx) |
 | save | `vgs_save` | Save [save data](#0xe030xxio---savedata). |
 | save | `vgs_load` | Load [save data](#0xe030xxio---savedata).　|
+| save | `vgs_save_check` | Check the size of [save data](#0xe030xxio---savedata).　|
 
 ### (Standard Functions)
 

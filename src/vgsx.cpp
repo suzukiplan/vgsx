@@ -587,6 +587,70 @@ uint32_t VGSX::inPort(uint32_t address)
         case 0xE20020: return this->key.start;
         case 0xE20024: return this->key.axisX;
         case 0xE20028: return this->key.axisY;
+
+        case 0xE30004: // Execute Load
+        {
+            this->context.save.address &= 0x00FFFFFF;
+            if (this->context.save.address < 0xF00000) {
+                printf("warning: ignored an invalid load request (addr=0x%X)\n", this->context.save.address);
+                return 0;
+            }
+            FILE* fp = fopen("save.dat", "rb");
+            if (!fp) {
+                puts("error: failed load request (File Not Found!)");
+                return 0;
+            }
+            if (fseek(fp, 0, SEEK_END) < 0) {
+                puts("error: failed load request (Seek END Failed!)");
+                fclose(fp);
+                return 0;
+            }
+            int32_t size = ftell(fp);
+            if (size < 1 || 0x100000 < size) {
+                printf("error: failed load request (Invalid Size: %d)\n", size);
+                fclose(fp);
+                return 0;
+            }
+            if (0x00FFFFFF < this->context.save.address + size) {
+                printf("error: failed load request (Overflow: %X+%d)\n", this->context.save.address, size);
+                fclose(fp);
+                return 0;
+            }
+            if (fseek(fp, 0, SEEK_SET) < 0) {
+                puts("error: failed load request (Seek SET Failed!)");
+                fclose(fp);
+                return 0;
+            }
+            if (size != fread(&this->context.ram[this->context.save.address & 0xFFFFF], 1, size, fp)) {
+                puts("error: failed load request (Read Failed!)");
+                fclose(fp);
+                return 0;
+            }
+            fclose(fp);
+            return size;
+        }
+
+        case 0xE30008: // Check save.dat size
+        {
+            FILE* fp = fopen("save.dat", "rb");
+            if (!fp) {
+                puts("error: failed check save.dat size request (File Not Found!)");
+                return 0;
+            }
+            if (fseek(fp, 0, SEEK_END) < 0) {
+                puts("error: failed check save.dat size request (Seek END Failed!)");
+                fclose(fp);
+                return 0;
+            }
+            int32_t size = ftell(fp);
+            if (size < 1 || 0x100000 < size) {
+                printf("error: failed check save.dat size request (Invalid Size: %d)\n", size);
+                fclose(fp);
+                return 0;
+            }
+            fclose(fp);
+            return size;
+        }
     }
     return 0xFFFFFFFF;
 }
@@ -648,6 +712,31 @@ void VGSX::outPort(uint32_t address, uint32_t value)
                 this->context.sfxData[value].play = true;
             }
             return;
+
+        case 0xE30000: // Save Data
+            this->context.save.address = value;
+            return;
+        case 0xE30004: // Execute Save
+            this->context.save.address &= 0x00FFFFFF;
+            if (this->context.save.address < 0xF00000) {
+                printf("warning: ignored an invalid save request (addr=0x%X)\n", this->context.save.address);
+            } else if (0x100000 < value || value < 1) {
+                printf("warning: ignored an invalid save request (size=%u)\n", value);
+            } else if (0x00FFFFFF < this->context.save.address + value) {
+                printf("warning: ignored an invalid save request (addr=0x%X+%u)\n", this->context.save.address, value);
+            } else {
+                FILE* fp = fopen("save.dat", "wb");
+                if (!fp) {
+                    puts("error: save.dat open failed!");
+                } else {
+                    if (value != fwrite(&this->context.ram[this->context.save.address & 0xFFFFF], 1, value, fp)) {
+                        puts("error: save.dat write failed!");
+                    }
+                    fclose(fp);
+                }
+            }
+            return;
+
         case 0xE7FFFC: // Exit
             this->exitFlag = true;
             this->exitCode = (int32_t)value;

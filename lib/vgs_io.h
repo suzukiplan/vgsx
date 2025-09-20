@@ -49,4 +49,7 @@
 #define VGS_KEY_X *((uint32_t*)0xE20018)
 #define VGS_KEY_Y *((uint32_t*)0xE2001C)
 #define VGS_KEY_START *((uint32_t*)0xE20020)
+#define VGS_OUT_SAVE_ADDRESS *((uint32_t*)0xE30000)
+#define VGS_IO_SAVE_EXECUTE *((uint32_t*)0xE30004)
+#define VGS_IN_SAVE_CHECK *((uint32_t*)0xE30008)
 #define VGS_OUT_EXIT *((int32_t*)0xE7FFFC)
