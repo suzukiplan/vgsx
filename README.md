@@ -725,9 +725,9 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | ctype | `vgs_isalnum` | Check if a character is an alphabet or a digit |
 | ctype | `vgs_toupper` | Convert a lowercase letter to an uppercase letter |
 | ctype | `vgs_tolower` | Convert an uppercase letter to a lowercase letter. |
-| math | `vgs_degree` | Calculate the angle between two points (in degrees) |
-| math | `vgs_sin` | Calculate integer sine from the angle in degrees |
-| math | `vgs_cos` | Calculate integer cosine from the angle in degrees |
+| math | `vgs_degree` | Calculate the [angle](#0xe00100-0xe00118io---angle) between two points (in degrees) |
+| math | `vgs_sin` | Calculate integer sine from the [angle](#0xe00100-0xe00118io---angle) in degrees |
+| math | `vgs_cos` | Calculate integer cosine from the [angle](#0xe00100-0xe00118io---angle) in degrees |
 
 ## liblog.a - Logging Function
 
