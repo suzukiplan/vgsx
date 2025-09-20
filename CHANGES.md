@@ -1,5 +1,9 @@
 # Changes
 
+## Version 0.6.0
+
+- Toolchain: Implemented an enhancement to allow specifying multiple files in the format `-g file1 file2 file3` using the `-g`, `-b`, and `-s` options of the makerom command.
+
 ## Version 0.5.0
 
 - Core: Implemented SaveData functions

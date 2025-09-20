@@ -119,9 +119,9 @@ static void loadElfHeader(Elf32_Ehdr* header, const void* prg)
 extern "C" uint32_t m68k_read_memory_8(uint32_t address)
 {
     if (address < 0xC00000) {
-        return address < vgsx.context.programSize ? vgsx.context.program[address] : 0xFF;
+        return address < vgsx.ctx.programSize ? vgsx.ctx.program[address] : 0xFF;
     } else if (0xF00000 <= address) {
-        return vgsx.context.ram[address & 0xFFFFF];
+        return vgsx.ctx.ram[address & 0xFFFFF];
     }
     return 0xFF;
 }
@@ -160,7 +160,7 @@ extern "C" uint32_t m68k_read_disassembler_32(uint32_t address) { return m68k_re
 extern "C" void m68k_write_memory_8(uint32_t address, uint32_t value)
 {
     if (0xF00000 <= address) {
-        vgsx.context.ram[address & 0xFFFFF] = value & 0xFF;
+        vgsx.ctx.ram[address & 0xFFFFF] = value & 0xFF;
     }
 }
 
@@ -186,7 +186,8 @@ extern "C" void m68k_write_memory_32(uint32_t address, uint32_t value)
 
 VGSX::VGSX()
 {
-    memset(&this->context, 0, sizeof(this->context));
+    this->logCallback = nullptr;
+    memset(&this->ctx, 0, sizeof(this->ctx));
     memset(&this->key, 0, sizeof(this->key));
     m68k_set_cpu_type(M68K_CPU_TYPE_68030);
     m68k_init();
@@ -208,6 +209,18 @@ void VGSX::setLastError(const char* format, ...)
     va_end(args);
 }
 
+void VGSX::putlog(LogLevel level, const char* format, ...)
+{
+    if (this->logCallback) {
+        char buf[1024];
+        va_list args;
+        va_start(args, format);
+        vsnprintf(buf, sizeof(buf), format, args);
+        va_end(args);
+        this->logCallback(level, buf);
+    }
+}
+
 bool VGSX::loadPattern(uint16_t index, const void* data, size_t size)
 {
     if (!data) {
@@ -220,7 +233,7 @@ bool VGSX::loadPattern(uint16_t index, const void* data, size_t size)
     }
     const uint8_t* ptr = (const uint8_t*)data;
     while (0 < size) {
-        memcpy(&this->vdp.context.ptn[index++], ptr, 32);
+        memcpy(&this->vdp.ctx.ptn[index++], ptr, 32);
         ptr += 32;
         size -= 32;
     }
@@ -241,7 +254,7 @@ bool VGSX::loadPalette(const void* data, size_t size)
     int cindex = 0;
     const uint8_t* ptr = (const uint8_t*)data;
     while (0 < size) {
-        memcpy(&this->vdp.context.palette[pindex][cindex], ptr, 4);
+        memcpy(&this->vdp.ctx.palette[pindex][cindex], ptr, 4);
         cindex++;
         cindex &= 0x0F;
         if (0 == cindex) {
@@ -302,16 +315,16 @@ bool VGSX::loadProgram(const void* data, size_t size)
         return false;
     }
 
-    this->context.elf = (const uint8_t*)data;
-    this->context.elfSize = size;
+    this->ctx.elf = (const uint8_t*)data;
+    this->ctx.elfSize = size;
     this->reset();
     return true;
 }
 
 bool VGSX::loadVgm(uint16_t index, const void* data, size_t size)
 {
-    this->context.vgmData[index].data = (const uint8_t*)data;
-    this->context.vgmData[index].size = size;
+    this->ctx.vgmData[index].data = (const uint8_t*)data;
+    this->ctx.vgmData[index].size = size;
     return true;
 }
 
@@ -405,7 +418,7 @@ bool VGSX::loadWav(uint8_t index, const void* data, size_t size)
         }
     }
 
-    printf("- PCM Format: %dHz %dbits %dch (%d bytes/sec, %d bytes/sample)\n", rate, bits, ch, bps, bs);
+    putlog(LogLevel::I, "- PCM Format: %dHz %dbits %dch (%d bytes/sec, %d bytes/sample)", rate, bits, ch, bps, bs);
     if (0 == rate) {
         this->setLastError("Invalid wav format: fmt chunk not found");
         return false;
@@ -421,8 +434,8 @@ bool VGSX::loadWav(uint8_t index, const void* data, size_t size)
         return false;
     }
     size -= 4;
-    this->context.sfxData[index].data = (const int16_t*)wav;
-    this->context.sfxData[index].count = size / 2;
+    this->ctx.sfxData[index].data = (const int16_t*)wav;
+    this->ctx.sfxData[index].count = size / 2;
     return true;
 }
 
@@ -433,32 +446,32 @@ void VGSX::reset(void)
     this->detectReferVSync = false;
     this->exitFlag = false;
     this->exitCode = 0;
-    this->context.program = NULL;
-    this->context.programSize = 0;
-    this->context.randomIndex = 0;
-    this->context.frameClocks = 0;
+    this->ctx.program = NULL;
+    this->ctx.programSize = 0;
+    this->ctx.randomIndex = 0;
+    this->ctx.frameClocks = 0;
     this->vdp.reset();
     if (this->vgmHelper) {
         delete (VgmHelper*)this->vgmHelper;
         this->vgmHelper = nullptr;
     }
     for (int i = 0; i < 0x100; i++) {
-        this->context.sfxData[i].play = false;
+        this->ctx.sfxData[i].play = false;
     }
-    if (!this->context.elf) {
+    if (!this->ctx.elf) {
         return;
     }
 
     // Load ELF Header
     Elf32_Ehdr eh;
-    loadElfHeader(&eh, this->context.elf);
-    printf("M68K_REG_PC = 0x%06X\n", eh.e_entry);
+    loadElfHeader(&eh, this->ctx.elf);
+    putlog(LogLevel::I, "M68K_REG_PC = 0x%06X", eh.e_entry);
     m68k_set_reg(M68K_REG_PC, eh.e_entry);
 
     // Search an Executable Code
     for (uint32_t i = 0, off = eh.e_phoff; i < eh.e_phnum; i++, off += eh.e_phentsize) {
         Elf32_Phdr ph;
-        memcpy(&ph, &this->context.elf[off], eh.e_phentsize);
+        memcpy(&ph, &this->ctx.elf[off], eh.e_phentsize);
         ph.p_type = b2h32(ph.p_type);
         ph.p_offset = b2h32(ph.p_offset);
         ph.p_vaddr = b2h32(ph.p_vaddr);
@@ -467,7 +480,7 @@ void VGSX::reset(void)
         ph.p_memsz = b2h32(ph.p_memsz);
         ph.p_flags = b2h32(ph.p_flags);
         ph.p_align = b2h32(ph.p_align);
-        printf(".program:%X offset=%d, va=0x%06X, pa=0x%06X, fs=%d, ms=%d, flg=%d\n",
+        putlog(LogLevel::I, ".program:%X offset=%d, va=0x%06X, pa=0x%06X, fs=%d, ms=%d, flg=%d",
                ph.p_type,
                ph.p_offset,
                ph.p_vaddr,
@@ -477,18 +490,18 @@ void VGSX::reset(void)
                ph.p_flags);
         if (ph.p_type == 1) {
             if (0 == ph.p_paddr && (ph.p_flags & 0x01)) {
-                this->context.program = &this->context.elf[ph.p_offset];
-                this->context.programSize = ph.p_memsz;
+                this->ctx.program = &this->ctx.elf[ph.p_offset];
+                this->ctx.programSize = ph.p_memsz;
             }
         }
     }
 
     // Reset RAM
-    memset(this->context.ram, 0xFF, sizeof(this->context.ram));
+    memset(this->ctx.ram, 0xFF, sizeof(this->ctx.ram));
     // ELF section data relocate to RAM from ROM
     for (uint32_t i = 0, off = eh.e_shoff; i < eh.e_shnum; i++, off += eh.e_shentsize) {
         Elf32_Shdr sh;
-        memcpy(&sh, &this->context.elf[off], eh.e_shentsize);
+        memcpy(&sh, &this->ctx.elf[off], eh.e_shentsize);
         sh.sh_name = b2h32(sh.sh_name);
         sh.sh_type = b2h32(sh.sh_type);
         sh.sh_flags = b2h32(sh.sh_flags);
@@ -498,11 +511,11 @@ void VGSX::reset(void)
         sh.sh_link = b2h32(sh.sh_link);
         sh.sh_info = b2h32(sh.sh_info);
         if (0xF00000 <= sh.sh_addr) {
-            memcpy(&this->context.ram[sh.sh_addr & 0xFFFFF],
-                   &this->context.elf[sh.sh_offset],
+            memcpy(&this->ctx.ram[sh.sh_addr & 0xFFFFF],
+                   &this->ctx.elf[sh.sh_offset],
                    sh.sh_size);
         }
-        printf(".section:%X flags=%d, addr=0x%06X, offset=0x%06X, size=%d, link=%d, info=%d\n",
+        putlog(LogLevel::I, ".section:%X flags=%d, addr=0x%06X, offset=0x%06X, size=%d, link=%d, info=%d",
                sh.sh_type,
                sh.sh_flags,
                sh.sh_addr,
@@ -516,10 +529,10 @@ void VGSX::reset(void)
 void VGSX::tick(void)
 {
     this->detectReferVSync = false;
-    this->context.frameClocks = 0;
+    this->ctx.frameClocks = 0;
     while (!this->detectReferVSync && !this->exitFlag) {
         m68k_execute(4);
-        this->context.frameClocks += 4;
+        this->ctx.frameClocks += 4;
     }
     this->vdp.render();
 }
@@ -532,20 +545,20 @@ void VGSX::tickSound(int16_t* buf, int samples)
         helper->render(buf, samples);
     }
     for (int i = 0; i < 0x100; i++) {
-        if (this->context.sfxData[i].play) {
+        if (this->ctx.sfxData[i].play) {
             for (int j = 0; j < samples; j++) {
-                if (this->context.sfxData[i].index < this->context.sfxData[i].count) {
+                if (this->ctx.sfxData[i].index < this->ctx.sfxData[i].count) {
                     int w = buf[j];
-                    w += this->context.sfxData[i].data[this->context.sfxData[i].index];
+                    w += this->ctx.sfxData[i].data[this->ctx.sfxData[i].index];
                     if (32767 < w) {
                         w = 32767;
                     } else if (w < -32768) {
                         w = -32768;
                     }
                     buf[j] = w;
-                    this->context.sfxData[i].index++;
+                    this->ctx.sfxData[i].index++;
                 } else {
-                    this->context.sfxData[i].play = false;
+                    this->ctx.sfxData[i].play = false;
                     break;
                 }
             }
@@ -560,22 +573,22 @@ uint32_t VGSX::inPort(uint32_t address)
             this->detectReferVSync = true;
             return 1;
         case VGS_ADDR_RANDOM: // Random
-            this->context.randomIndex++;
-            this->context.randomIndex &= 0xFFFF;
-            return vgs0_rand16[this->context.randomIndex];
+            this->ctx.randomIndex++;
+            this->ctx.randomIndex &= 0xFFFF;
+            return vgs0_rand16[this->ctx.randomIndex];
         case VGS_ADDR_DMA_EXECUTE: return this->dmaSearch();
 
         case VGS_ADDR_ANGLE_DEGREE: // atan2
-            this->context.angle.radian = atan2(this->context.angle.y2 - this->context.angle.y1,
-                                               this->context.angle.x2 - this->context.angle.x1);
-            this->context.angle.degree = (int32_t)(this->context.angle.radian * 180 / M_PI);
-            this->context.angle.degree %= 360;
-            if (this->context.angle.degree < 0) {
-                this->context.angle.degree += 360;
+            this->ctx.angle.radian = atan2(this->ctx.angle.y2 - this->ctx.angle.y1,
+                                           this->ctx.angle.x2 - this->ctx.angle.x1);
+            this->ctx.angle.degree = (int32_t)(this->ctx.angle.radian * 180 / M_PI);
+            this->ctx.angle.degree %= 360;
+            if (this->ctx.angle.degree < 0) {
+                this->ctx.angle.degree += 360;
             }
-            return this->context.angle.degree;
-        case VGS_ADDR_ANGLE_SIN: return (int32_t)(sin(this->context.angle.radian) * 256);
-        case VGS_ADDR_ANGLE_COS: return (int32_t)(cos(this->context.angle.radian) * 256);
+            return this->ctx.angle.degree;
+        case VGS_ADDR_ANGLE_SIN: return (int32_t)(sin(this->ctx.angle.radian) * 256);
+        case VGS_ADDR_ANGLE_COS: return (int32_t)(cos(this->ctx.angle.radian) * 256);
 
         case VGS_ADDR_KEY_UP: return this->key.up;
         case VGS_ADDR_KEY_DOWN: return this->key.down;
@@ -589,44 +602,44 @@ uint32_t VGSX::inPort(uint32_t address)
 
         case VGS_ADDR_SAVE_EXECUTE: // Execute Load
         {
-            this->context.save.address &= 0x00FFFFFF;
-            if (this->context.save.address < 0xF00000) {
-                printf("warning: ignored an invalid load request (addr=0x%X)\n", this->context.save.address);
+            this->ctx.save.address &= 0x00FFFFFF;
+            if (this->ctx.save.address < 0xF00000) {
+                putlog(LogLevel::W, "ignored an invalid load request (addr=0x%X)", this->ctx.save.address);
                 return 0;
             }
             FILE* fp = fopen("save.dat", "rb");
             if (!fp) {
-                puts("error: failed load request (File Not Found!)");
+                putlog(LogLevel::E, "failed load request (File Not Found!)");
                 return 0;
             }
             if (fseek(fp, 0, SEEK_END) < 0) {
-                puts("error: failed load request (Seek END Failed!)");
+                putlog(LogLevel::E, "failed load request (Seek END Failed!)");
                 fclose(fp);
                 return 0;
             }
             int32_t size = ftell(fp);
             if (size < 1 || 0x100000 < size) {
-                printf("error: failed load request (Invalid Size: %d)\n", size);
+                putlog(LogLevel::E, "failed load request (Invalid Size: %d)", size);
                 fclose(fp);
                 return 0;
             }
-            if (0x00FFFFFF < this->context.save.address + size) {
-                printf("error: failed load request (Overflow: %X+%d)\n", this->context.save.address, size);
+            if (0x00FFFFFF < this->ctx.save.address + size) {
+                putlog(LogLevel::E, "failed load request (Overflow: %X+%d)", this->ctx.save.address, size);
                 fclose(fp);
                 return 0;
             }
             if (fseek(fp, 0, SEEK_SET) < 0) {
-                puts("error: failed load request (Seek SET Failed!)");
+                putlog(LogLevel::E, "failed load request (Seek SET Failed!)");
                 fclose(fp);
                 return 0;
             }
-            if (size != fread(&this->context.ram[this->context.save.address & 0xFFFFF], 1, size, fp)) {
-                puts("error: failed load request (Read Failed!)");
+            if (size != fread(&this->ctx.ram[this->ctx.save.address & 0xFFFFF], 1, size, fp)) {
+                putlog(LogLevel::E, "failed load request (Read Failed!)");
                 fclose(fp);
                 return 0;
             }
             fclose(fp);
-            printf("save.dat read (%u bytes)\n", size);
+            putlog(LogLevel::N, "save.dat read (%u bytes)", size);
             return size;
         }
 
@@ -634,17 +647,17 @@ uint32_t VGSX::inPort(uint32_t address)
         {
             FILE* fp = fopen("save.dat", "rb");
             if (!fp) {
-                puts("error: failed check save.dat size request (File Not Found!)");
+                putlog(LogLevel::W, "failed check save.dat size request (File Not Found!)");
                 return 0;
             }
             if (fseek(fp, 0, SEEK_END) < 0) {
-                puts("error: failed check save.dat size request (Seek END Failed!)");
+                putlog(LogLevel::W, "failed check save.dat size request (Seek END Failed!)");
                 fclose(fp);
                 return 0;
             }
             int32_t size = ftell(fp);
             if (size < 1 || 0x100000 < size) {
-                printf("error: failed check save.dat size request (Invalid Size: %d)\n", size);
+                putlog(LogLevel::W, "failed check save.dat size request (Invalid Size: %d)", size);
                 fclose(fp);
                 return 0;
             }
@@ -653,10 +666,10 @@ uint32_t VGSX::inPort(uint32_t address)
         }
 
         case VGS_ADDR_SEQ_READ:
-            if (this->context.sqr.size <= this->context.sqr.readOffset) {
+            if (this->ctx.sqr.size <= this->ctx.sqr.readOffset) {
                 return 0xFFFFFFFF;
             }
-            return this->context.sqr.buffer[this->context.sqr.readOffset++];
+            return this->ctx.sqr.buffer[this->ctx.sqr.readOffset++];
     }
     return 0xFFFFFFFF;
 }
@@ -668,16 +681,16 @@ void VGSX::outPort(uint32_t address, uint32_t value)
             fputc(value, stdout);
             return;
         case VGS_ADDR_RANDOM: // Setup Random
-            this->context.randomIndex = (int)value;
+            this->ctx.randomIndex = (int)value;
             return;
         case VGS_ADDR_DMA_SOURCE: // DMA (Source)
-            this->context.dma.source = value;
+            this->ctx.dma.source = value;
             return;
         case VGS_ADDR_DMA_DESTINATION: // DMA (Destination)
-            this->context.dma.destination = value;
+            this->ctx.dma.destination = value;
             return;
         case VGS_ADDR_DMA_ARGUMENT: // DMA (Argument)
-            this->context.dma.argument = value;
+            this->ctx.dma.argument = value;
             return;
         case VGS_ADDR_DMA_EXECUTE: // DMA (Execute)
             switch (value) {
@@ -687,58 +700,58 @@ void VGSX::outPort(uint32_t address, uint32_t value)
             return;
 
         // Angle
-        case VGS_ADDR_ANGLE_X1: this->context.angle.x1 = (int32_t)value; return;
-        case VGS_ADDR_ANGLE_Y1: this->context.angle.y1 = (int32_t)value; return;
-        case VGS_ADDR_ANGLE_X2: this->context.angle.x2 = (int32_t)value; return;
-        case VGS_ADDR_ANGLE_Y2: this->context.angle.y2 = (int32_t)value; return;
+        case VGS_ADDR_ANGLE_X1: this->ctx.angle.x1 = (int32_t)value; return;
+        case VGS_ADDR_ANGLE_Y1: this->ctx.angle.y1 = (int32_t)value; return;
+        case VGS_ADDR_ANGLE_X2: this->ctx.angle.x2 = (int32_t)value; return;
+        case VGS_ADDR_ANGLE_Y2: this->ctx.angle.y2 = (int32_t)value; return;
         case VGS_ADDR_ANGLE_DEGREE:
-            this->context.angle.degree = (int32_t)value;
-            this->context.angle.degree %= 360;
-            if (this->context.angle.degree < 0) {
-                this->context.angle.degree += 360;
+            this->ctx.angle.degree = (int32_t)value;
+            this->ctx.angle.degree %= 360;
+            if (this->ctx.angle.degree < 0) {
+                this->ctx.angle.degree += 360;
             }
-            this->context.angle.radian = this->context.angle.degree * (M_PI / 180.0);
+            this->ctx.angle.radian = this->ctx.angle.degree * (M_PI / 180.0);
             return;
 
         case VGS_ADDR_VGM_PLAY: // Play VGM
             value &= 0xFFFF;
-            if (this->context.vgmData[value].data) {
+            if (this->ctx.vgmData[value].data) {
                 auto helper = (VgmHelper*)this->vgmHelper;
                 if (helper) {
                     delete helper;
                 }
-                helper = new VgmHelper(this->context.vgmData[value].data, this->context.vgmData[value].size);
+                helper = new VgmHelper(this->ctx.vgmData[value].data, this->ctx.vgmData[value].size, this->logCallback);
                 this->vgmHelper = helper;
             }
             return;
         case VGS_ADDR_SFX_PLAY: // Play SFX
             value &= 0xFF;
-            if (this->context.sfxData[value].data) {
-                this->context.sfxData[value].index = 0;
-                this->context.sfxData[value].play = true;
+            if (this->ctx.sfxData[value].data) {
+                this->ctx.sfxData[value].index = 0;
+                this->ctx.sfxData[value].play = true;
             }
             return;
 
         case VGS_ADDR_SAVE_ADDRESS: // Save Data
-            this->context.save.address = value;
+            this->ctx.save.address = value;
             return;
         case VGS_ADDR_SAVE_EXECUTE: // Execute Save
-            this->context.save.address &= 0x00FFFFFF;
-            if (this->context.save.address < 0xF00000) {
-                printf("warning: ignored an invalid save request (addr=0x%X)\n", this->context.save.address);
+            this->ctx.save.address &= 0x00FFFFFF;
+            if (this->ctx.save.address < 0xF00000) {
+                putlog(LogLevel::W, "ignored an invalid save request (addr=0x%X)", this->ctx.save.address);
             } else if (0x100000 < value || value < 1) {
-                printf("warning: ignored an invalid save request (size=%u)\n", value);
-            } else if (0x00FFFFFF < this->context.save.address + value) {
-                printf("warning: ignored an invalid save request (addr=0x%X+%u)\n", this->context.save.address, value);
+                putlog(LogLevel::W, "ignored an invalid save request (size=%u)", value);
+            } else if (0x00FFFFFF < this->ctx.save.address + value) {
+                putlog(LogLevel::W, "ignored an invalid save request (addr=0x%X+%u)", this->ctx.save.address, value);
             } else {
                 FILE* fp = fopen("save.dat", "wb");
                 if (!fp) {
-                    puts("error: save.dat open failed!");
+                    putlog(LogLevel::E, "save.dat open failed!");
                 } else {
-                    if (value != fwrite(&this->context.ram[this->context.save.address & 0xFFFFF], 1, value, fp)) {
-                        puts("error: save.dat write failed!");
+                    if (value != fwrite(&this->ctx.ram[this->ctx.save.address & 0xFFFFF], 1, value, fp)) {
+                        putlog(LogLevel::E, "save.dat write failed!");
                     } else {
-                        printf("save.dat wrote (%u bytes)\n", value);
+                        putlog(LogLevel::N, "save.dat wrote (%u bytes)", value);
                     }
                     fclose(fp);
                 }
@@ -746,24 +759,24 @@ void VGSX::outPort(uint32_t address, uint32_t value)
             return;
 
         case VGS_ADDR_SEQ_OPEN_W: // Sequencial Open for Write
-            this->context.sqw.index = value & 0xFF;
-            this->context.sqw.size = 0;
+            this->ctx.sqw.index = value & 0xFF;
+            this->ctx.sqw.size = 0;
             return;
 
         case VGS_ADDR_SEQ_WRITE: // Write Sequencial Data
-            this->context.sqw.buffer[this->context.sqw.size++] = value & 0xFF;
-            this->context.sqw.size &= 0xFFFFF;
+            this->ctx.sqw.buffer[this->ctx.sqw.size++] = value & 0xFF;
+            this->ctx.sqw.size &= 0xFFFFF;
             return;
 
         case VGS_ADDR_SEQ_COMMIT: {
             char fname[80];
-            snprintf(fname, sizeof(fname), "save%03d.dat", (int)this->context.sqw.index);
+            snprintf(fname, sizeof(fname), "save%03d.dat", (int)this->ctx.sqw.index);
             FILE* fp = fopen(fname, "wb");
             if (fp) {
-                if (this->context.sqw.size != fwrite(this->context.sqw.buffer, 1, this->context.sqw.size, fp)) {
-                    printf("error: file write error (%s)\n", fname);
+                if (this->ctx.sqw.size != fwrite(this->ctx.sqw.buffer, 1, this->ctx.sqw.size, fp)) {
+                    putlog(LogLevel::E, "file write error (%s)", fname);
                 } else {
-                    printf("%s wrote (%u bytes)\n", fname, this->context.sqw.size);
+                    putlog(LogLevel::N, "%s wrote (%u bytes)", fname, this->ctx.sqw.size);
                 }
                 fclose(fp);
             }
@@ -771,19 +784,19 @@ void VGSX::outPort(uint32_t address, uint32_t value)
         }
 
         case VGS_ADDR_SEQ_OPEN_R: {
-            this->context.sqr.index = value & 0xFF;
+            this->ctx.sqr.index = value & 0xFF;
             char fname[80];
-            snprintf(fname, sizeof(fname), "save%03d.dat", (int)this->context.sqr.index);
+            snprintf(fname, sizeof(fname), "save%03d.dat", (int)this->ctx.sqr.index);
             FILE* fp = fopen(fname, "rb");
             if (fp) {
-                this->context.sqr.size = fread(this->context.sqr.buffer, 1, sizeof(this->context.sqr.buffer), fp);
-                printf("%s read (%u bytes)\n", fname, this->context.sqr.size);
+                this->ctx.sqr.size = fread(this->ctx.sqr.buffer, 1, sizeof(this->ctx.sqr.buffer), fp);
+                putlog(LogLevel::N, "%s read (%u bytes)", fname, this->ctx.sqr.size);
                 fclose(fp);
             } else {
-                printf("error: File not found (%s)\n", fname);
-                this->context.sqr.size = 0;
+                putlog(LogLevel::E, "File not found (%s)", fname);
+                this->ctx.sqr.size = 0;
             }
-            this->context.sqr.readOffset = 0;
+            this->ctx.sqr.readOffset = 0;
             return;
         }
 
@@ -796,56 +809,56 @@ void VGSX::outPort(uint32_t address, uint32_t value)
 
 void VGSX::dmaMemcpy()
 {
-    const uint32_t size = this->context.dma.argument;
-    uint32_t destination = this->context.dma.destination & 0x00FFFFFF;
-    uint32_t source = this->context.dma.source & 0x00FFFFFF;
+    const uint32_t size = this->ctx.dma.argument;
+    uint32_t destination = this->ctx.dma.destination & 0x00FFFFFF;
+    uint32_t source = this->ctx.dma.source & 0x00FFFFFF;
     // validate destination
     if (0xF00000 <= destination && destination + size <= 0xFFFFFF) {
         // validate source
-        if (source < this->context.programSize) {
-            if (source + size <= this->context.programSize) {
+        if (source < this->ctx.programSize) {
+            if (source + size <= this->ctx.programSize) {
                 // Execute copy from ROM to RAM
-                memcpy(&this->context.ram[destination & 0x0FFFFF],
-                       &this->context.program[source],
+                memcpy(&this->ctx.ram[destination & 0x0FFFFF],
+                       &this->ctx.program[source],
                        size);
                 return;
             }
         } else if (0xF00000 <= source) {
             if (source + size <= 0xFFFFFF) {
                 // Execute copy from RAM to RAM
-                memmove(&this->context.ram[destination & 0x0FFFFF],
-                        &this->context.ram[source & 0x0FFFFF],
+                memmove(&this->ctx.ram[destination & 0x0FFFFF],
+                        &this->ctx.ram[source & 0x0FFFFF],
                         size);
                 return;
             }
         }
     }
-    printf("warning: Ignored an invalid DMA_copy(0x%06X, 0x%06X, %u)\n", destination, source, size);
+    putlog(LogLevel::W, "Ignored an invalid DMA_copy(0x%06X, 0x%06X, %u)", destination, source, size);
 }
 
 void VGSX::dmaMemset()
 {
-    uint32_t destination = this->context.dma.destination & 0x00FFFFFF;
-    const uint8_t c = this->context.dma.source & 0xFF;
-    const uint32_t size = this->context.dma.argument;
+    uint32_t destination = this->ctx.dma.destination & 0x00FFFFFF;
+    const uint8_t c = this->ctx.dma.source & 0xFF;
+    const uint32_t size = this->ctx.dma.argument;
     // validate destination
     if (0xF00000 <= destination && destination + size <= 0xFFFFFF) {
         // Bulk set to RAM
-        memset(&this->context.ram[destination & 0x0FFFFF], c, size);
+        memset(&this->ctx.ram[destination & 0x0FFFFF], c, size);
         return;
     }
-    printf("warning: Ignored an invalid DMA_set(0x%06X, 0x%02X, %u)\n", destination, c, size);
+    putlog(LogLevel::W, "Ignored an invalid DMA_set(0x%06X, 0x%02X, %u)", destination, c, size);
 }
 
 uint32_t VGSX::dmaSearch()
 {
-    uint8_t search = this->context.dma.argument & 0xFF;
-    uint32_t ptr = this->context.dma.source & 0x00FFFFFF;
+    uint8_t search = this->ctx.dma.argument & 0xFF;
+    uint32_t ptr = this->ctx.dma.source & 0x00FFFFFF;
     // validate source
-    if (ptr < this->context.programSize) {
+    if (ptr < this->ctx.programSize) {
         // Search from ROM
-        for (; ptr < this->context.programSize; ptr++) {
-            if (this->context.program[ptr] == search) {
+        for (; ptr < this->ctx.programSize; ptr++) {
+            if (this->ctx.program[ptr] == search) {
                 return ptr; // found
             }
         }
@@ -853,12 +866,12 @@ uint32_t VGSX::dmaSearch()
     } else if (0xF00000 <= ptr && ptr < 0xFFFFFF) {
         // Search from RAM
         for (; ptr < 0xFFFFFF; ptr++) {
-            if (this->context.ram[ptr] == search) {
+            if (this->ctx.ram[ptr] == search) {
                 return ptr; // found
             }
         }
         return 0; // not found
     }
-    printf("warning: Ignored an invalid DMA_search(0x%06X, 0x%02X)\n", ptr, search);
+    putlog(LogLevel::W, "Ignored an invalid DMA_search(0x%06X, 0x%02X)", ptr, search);
     return 0;
 }

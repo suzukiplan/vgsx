@@ -87,7 +87,7 @@ class VGSX
         SaveData save;
         SequencialData sqw;
         SequencialData sqr;
-    } context;
+    } ctx;
 
     struct KeyStatus {
         uint8_t up;
@@ -103,6 +103,13 @@ class VGSX
         int8_t axisY;
     } key;
 
+    enum class LogLevel {
+        I, // Information
+        N, // Notice
+        W, // Warning
+        E, // Error
+    };
+
     VDP vdp;
     void* vgmHelper;
 
@@ -117,15 +124,18 @@ class VGSX
     void reset();
     void tick();
     void tickSound(int16_t* buf, int samples);
-    inline uint32_t* getDisplay() { return this->vdp.context.display; }
+    inline uint32_t* getDisplay() { return this->vdp.ctx.display; }
     inline int getDisplayWidth() { return VDP_WIDTH; }
     inline int getDisplayHeight() { return VDP_HEIGHT; }
     uint32_t inPort(uint32_t address);
     void outPort(uint32_t address, uint32_t value);
     inline bool isExit() { return this->exitFlag; }
     int32_t getExitCode() { return this->exitCode; }
+    void putlog(LogLevel level, const char* format, ...);
+    void setLogCallback(void (*callback)(LogLevel level, const char* msg)) { this->logCallback = callback; }
 
   private:
+    void (*logCallback)(LogLevel level, const char* msg);
     bool exitFlag;
     int32_t exitCode;
     char lastError[256];

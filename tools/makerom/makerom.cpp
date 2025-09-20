@@ -43,10 +43,10 @@ static void put_usage(void)
 {
     puts("usage: makerom  -o /path/to/output.rom");
     puts("                -e /path/to/program.elf");
-    puts("               [-g /path/to/pattern.chr]");
     puts("               [-c /path/to/palette.bin]");
-    puts("               [-b /path/to/bgm.vgm]");
-    puts("               [-s /path/to/sfx.wav]");
+    puts("               [-g /path/to/pattern.chr ...]");
+    puts("               [-b /path/to/bgm.vgm ...]");
+    puts("               [-s /path/to/sfx.wav ...]");
     exit(1);
 }
 
@@ -64,6 +64,10 @@ int main(int argc, char* argv[])
                     void* bin;
                     bin = loadBinary(argv[i], &size);
                     _data.push_back(new Data("CHR", bin, size));
+                    while (i + 1 < argc && argv[i + 1][0] != '-') {
+                        bin = loadBinary(argv[++i], &size);
+                        _data.push_back(new Data("CHR", bin, size));
+                    }
                     break;
                 }
                 case 'c': {
@@ -80,6 +84,10 @@ int main(int argc, char* argv[])
                     void* bin;
                     bin = loadBinary(argv[i], &size);
                     _data.push_back(new Data("VGM", bin, size));
+                    while (i + 1 < argc && argv[i + 1][0] != '-') {
+                        bin = loadBinary(argv[++i], &size);
+                        _data.push_back(new Data("VGM", bin, size));
+                    }
                     break;
                 }
                 case 's': {
@@ -88,6 +96,10 @@ int main(int argc, char* argv[])
                     void* bin;
                     bin = loadBinary(argv[i], &size);
                     _data.push_back(new Data("WAV", bin, size));
+                    while (i + 1 < argc && argv[i + 1][0] != '-') {
+                        bin = loadBinary(argv[++i], &size);
+                        _data.push_back(new Data("WAV", bin, size));
+                    }
                     break;
                 }
                 case 'e': {
