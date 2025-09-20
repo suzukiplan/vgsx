@@ -1,0 +1,6 @@
+program.elf
+program.rom
+program.o
+*.chr
+*.pal
+screen.bmp
