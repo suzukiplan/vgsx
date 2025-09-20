@@ -423,6 +423,7 @@ int main(int argc, char* argv[])
                     case SDLK_s: vgsx.key.y = 1; break;
                     case SDLK_SPACE: vgsx.key.start = 1; break;
                     case SDLK_q: quit = true; break;
+                    case SDLK_r: vgsx.reset(); break;
                     case SDLK_c: screenShot(); break;
                 }
             } else if (event.type == SDL_KEYUP) {
