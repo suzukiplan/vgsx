@@ -741,6 +741,7 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | string | `vgs_stricmp` | Case-insensitive string comparison. |
 | string | `vgs_strncmp` | Comparing strings of a specific length |
 | string | `vgs_strstr` | Search for a specific string in a string |
+| ctype | `vgs_atoi` | Convert a string to an integer. |
 | ctype | `vgs_isdigit` | Check if a character is a number |
 | ctype | `vgs_isupper` | Check if a character is an uppercase |
 | ctype | `vgs_islower` | Check if a character is a lowercase |
