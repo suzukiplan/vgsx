@@ -776,7 +776,7 @@ Since each function specification is documented in Doxygen format within header 
 
 ## libc.a - Basic Function
 
-`libc.a` is a C library that defines APIs to help develop games on VGS-X.
+`libc.a` is a C library that defines APIs to help develop games on VGS series.
 
 This library is always linked implicitly (`-lc`), so you do not need to specify it with the linker's `-l` option.
 
