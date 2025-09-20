@@ -110,7 +110,7 @@ static void file_dump(const char* fname)
     FILE* fp = fopen(fname, "rb");
     if (fp) {
         printf("\n[%s]\n", fname);
-        char buf[16];
+        uint8_t buf[16];
         int n;
         int offset = 0;
         int totalSize = 0;
