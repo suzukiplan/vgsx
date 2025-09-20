@@ -24,6 +24,28 @@ Changes after Version 0.1.0 can be found in [CHANGES.md](./CHANGES.md).
 
 The VGS-X is a 16-bit game console featuring an MC68030 processor, the FM sound chips, and a proprietary VDP optimized for MC68k architecture.
 
+Basic Features:
+
+- CPU: MC68030 _(unlimited clocks)_
+- [VGS Standard Library](#vgs-standard-library) compatible
+- VDP: VGS-X Video
+- [BGM](#0xe01000o---play-vgm): .vgm format (YM2149, YM2151, YM2203, YM2608, YM2610 and YM2612)
+- [SFX](#0xe01100o---play-sfx): .wav format (44,100Hz, 16-bits, 2ch)
+- High speed [DMA; Direct Memory Access](#0xe00008-0xe00014io---direct-memory-access)
+- High speed [i-math (integer math)](#0xe00100-0xe00118io---angle) API
+
+VDP Features:
+
+- Screen Resolution: 320x200 pixels
+- Color: 24-bits color (RGB888)
+- BG: Four [nametables](#name-table), and Two modes ([Character Pattern and Bitmap](#0xd20028-0xd20034-bitmap-mode))
+- BG nametable size: 256x256 (2048x2048 pixels)
+- Supported the BG [Hardware Scroll](#0xd20008-0xd20024-hardware-scroll) function
+- [Character Pattern](#character-pattern) number: 65,536
+- Number of [OAM](#oam-object-attribute-memory) (Sprites): 1,024
+- [Size of Sprite](#size-of-sprite): from 8x8 pixels to 256x256 pixels
+- Supports [rotation](#rotate-of-sprite) and [scaling](#scale-of-sprite) for each sprites
+
 Games can be developed using the GCC; _GNU Compiler Collection_ for MC68k.
 
 Supported development environment operating systems are **Ubuntu Linux** or **macOS**. _(If you want to use Windows as a development machine, please use WSL2.)_
