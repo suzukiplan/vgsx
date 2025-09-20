@@ -948,15 +948,16 @@ Generates a ROM file that combines the program and assets into a single file.
 ```
 usage: makerom  -o /path/to/output.rom
                 -e /path/to/program.elf
-               [-g /path/to/pattern.chr]
                [-c /path/to/palette.bin]
-               [-b /path/to/bgm.vgm]
-               [-s /path/to/sfx.wav]
+               [-g /path/to/pattern.chr ...]
+               [-b /path/to/bgm.vgm ...]
+               [-s /path/to/sfx.wav ...]
 ```
 
 Remarks:
 
 - The `-g`, `-b`, and `-s` options can be specified multiple times.
+- The `-g`, `-b`, and `-s` options can also specify multiple files in the format `-g file1 file2 file3`.
 - Files are read sequentially from the specified file.
 - The character pattern specified with the first `-g` option is loaded at index 0, and the index of the pattern specified with the second `-g` option is the next one.
 

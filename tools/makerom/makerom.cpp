@@ -43,10 +43,10 @@ static void put_usage(void)
 {
     puts("usage: makerom  -o /path/to/output.rom");
     puts("                -e /path/to/program.elf");
-    puts("               [-g /path/to/pattern.chr]");
     puts("               [-c /path/to/palette.bin]");
-    puts("               [-b /path/to/bgm.vgm]");
-    puts("               [-s /path/to/sfx.wav]");
+    puts("               [-g /path/to/pattern.chr ...]");
+    puts("               [-b /path/to/bgm.vgm ...]");
+    puts("               [-s /path/to/sfx.wav ...]");
     exit(1);
 }
 
