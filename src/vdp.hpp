@@ -465,7 +465,11 @@ class VDP
                         col = ((*ptnptr) & 0xF0) >> 4;
                     }
                     if (col) {
-                        this->ctx.display[dy * VDP_WIDTH + dx] = this->ctx.palette[pal][col];
+                        int ptr = dy * VDP_WIDTH + dx;
+                        this->ctx.display[ptr] = this->ctx.palette[pal][col];
+                        if (dx < 319) {
+                            this->ctx.display[ptr + 1] = this->ctx.palette[pal][col];
+                        }
                     }
                 }
             }
