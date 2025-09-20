@@ -118,6 +118,18 @@ int vgs_strcmp(const char* str1, const char* str2)
     return *str1 < *str2 ? -1 : 1;
 }
 
+int vgs_stricmp(const char* str1, const char* str2)
+{
+    while (vgs_toupper(*str1) == vgs_toupper(*str2)) {
+        if (0 == *str1) {
+            return 0;
+        }
+        str1++;
+        str2++;
+    }
+    return *str1 < *str2 ? -1 : 1;
+}
+
 int vgs_strncmp(const char* str1, const char* str2, int n)
 {
     while (*str1 == *str2) {

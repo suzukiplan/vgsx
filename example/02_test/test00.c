@@ -39,6 +39,8 @@ int main(int argc, char* argv)
     vgs_putlog("vgs_strncmp(\"1031\",\"1032\",3) = %d", expect32d(vgs_strncmp("1031", "1032", 3), 0));
     vgs_putlog("vgs_strncmp(\"1031\",\"1032\",4) = %d", expect32d(vgs_strncmp("1031", "1032", 4), -1));
     vgs_putlog("vgs_strstr(\"%s\",\"is t\") ... %s", text, expect(vgs_strstr(text, "is t"), "is test string."));
+    vgs_putlog("vgs_strcmp(\"AbCd\",\"aBcD\") = %d", expect32d(vgs_strcmp("AbCd", "aBcD"), -1));
+    vgs_putlog("vgs_stricmp(\"AbCd\",\"aBcD\") = %d", expect32d(vgs_stricmp("AbCd", "aBcD"), 0));
 
     vgs_putlog("vgs_isdigit(\'0\') ... %d", expect32d(vgs_isdigit('0'), TRUE));
     vgs_putlog("vgs_isdigit(\'9\') ... %d", expect32d(vgs_isdigit('9'), TRUE));
