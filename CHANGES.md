@@ -3,7 +3,7 @@
 ## Version 0.5.0
 
 - CRT: Added the i-math inline functions: `vgs_abs` and `vgs_sgn`
-- CRT: Added a stdlib function: `stricmp`
+- CRT: Added a string function: `stricmp`
 
 ## Version 0.4.0
 
