@@ -6,6 +6,8 @@
 - Example: added a `03_rotate`.
 - Toolchain: Implemented an enhancement to allow specifying multiple files in the format `-g file1 file2 file3` using the `-g`, `-b`, and `-s` options of the makerom command.
 - Toolchain: Fixed the SDL2 emulator to display the number of characters loaded from the ROM.
+- Toolchain: Fixed an issue where values of 0x80 or higher were incorrectly displayed in the SDL2 emulator's file dump.
+- Toolchain: Added a reset function via the R key to the SDL2 version emulator.
 
 ## Version 0.5.0
 

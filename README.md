@@ -918,7 +918,7 @@ bin2var /path/to/binary.rom
 
 Path: [./tools/bmp2chr](./tools/bmp2chr/)
 
-Generates VGS-X [Character Pattern](#character-pattern) data from 256-color .bmp (Windows Bitmap) file.
+Generates VGS-X [Character Pattern](#character-pattern) pattern data from a 256-colour or 16-colour .bmp (Windows bitmap) file.
 
 ```
 usage: bmp2chr input.bmp output.chr
