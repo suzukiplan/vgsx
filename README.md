@@ -357,6 +357,8 @@ By specifying an angle (-360 to 360) for `rotate`, you can draw a rotated sprite
 
 Note that setting `rotate` to a non-zero value increases the sprite's drawing overhead.
 
+The Sprite rotation feature is useful when combined with the [Angle](#0xe00100-0xe00118io---angle) function.
+
 ### (Scale of Sprite)
 
 You can specify the magnification rate as a percentage on the `scale`, either 0 (disabled) or within the range of 1 to 400.
@@ -616,6 +618,14 @@ The standard sin() and cos() functions return double values ranging from -1.0 to
 The relationship between the sine and cosine of two points is illustrated below.
 
 ![./angle.png](./angle.png)
+
+In order to align the specified degree value for the '[OAM](#oam-object-attribute-memory).[rotate](#rotate-of-sprite)' attribute with that for the 'Sin/Cos' function, draw the sprite's character pattern facing right, as depicted in the figure below.
+
+![facing right pattern](./example/03_rotate/player.png)
+
+For a concrete example, please refer to the implementation in [./example/03_rotate/program.c](./example/03_rotate/program.c).
+
+![03_rotate](./example/03_rotate/screen.png)
 
 ### 0xE01000[o] - Play VGM
 
