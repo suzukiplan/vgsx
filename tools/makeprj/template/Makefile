@@ -15,6 +15,7 @@ BGM_FILES = ./vgm/sample.vgm
 WAV_FILES = ./wav/sample.wav
 
 all:
+	git submodule update --init
 	cd vgsx/tools && make
 	make game.rom 
 	${SDL2EMU} game.rom
