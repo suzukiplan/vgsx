@@ -132,12 +132,22 @@ If you've finished installing `m68k-elf-gcc`, you're now ready to start developi
 The following steps show how to obtain this repository using `git clone` and then run the example that displays “HELLO, WORLD!”.
 
 ```bash
+cd ~
 git clone https://github.com/suzukiplan/vgsx
 cd vgsx/example/01_hello
 make
 ```
 
 ![screen shot](./example/01_hello/screen.png)
+
+## How to Create a New Project
+
+You can create a new project for developing your game by executing the [makeprj](#makeprj) command.
+
+```bash
+cd ~/vgsx
+./tools/makeprj/makeprj "My Game" ~/projects/MyGame
+```
 
 # Architecture Reference Manual
 
@@ -888,6 +898,7 @@ vgs_putlog("d32=%d, u32=%u, str=%s", (int32_t)123, (uint32_t)456, "text");
 | [bin2var](#bin2var) | Convert binary files to C language code |
 | [bmp2chr](#bmp2chr) | Make [CHR](#character-pattern) data from .bmp file |
 | [bmp2pal](#bmp2pal) | Make initial [palette](#palette) from .bmp file |
+| [makeprj](#makeprj) | Create a new project |
 | [makerom](#makerom) | Make ROM file from Program and Assets |
 | [vgmplay](#vgmplay) | Play a .vgm file from the command line |
 
@@ -948,6 +959,21 @@ Generates initial [Palette](#palette) data for VGS-X from 256-color .bmp (Window
 ```
 usage: bmp2pal input.bmp palette.dat
 ```
+
+## makeprj
+
+Path: [./tools/makeprj](./tools/makeprj/)
+
+Create a new game project.
+
+```
+Usage: ./tools/makeprj/makeprj name /path/to/project
+```
+
+Remarks:
+
+- The [makeprj command](./tools/makeprj/makeprj) is a simple shell script.
+- The project path must specify a directory that does not exist.
 
 ## makerom
 

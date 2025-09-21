@@ -1,5 +1,10 @@
 # Changes
 
+## Version 0.7.0
+
+- Toolchain: added a `makeprj` command.
+- Document: How to Create a New Project
+
 ## Version 0.6.0
 
 - Core: Correct Logging System (do not stdout in the core)

@@ -1,0 +1,6 @@
+*.o
+*.elf
+*.chr
+game.rom
+palette.bin
+
