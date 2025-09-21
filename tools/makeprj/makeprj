@@ -7,6 +7,11 @@ if [ "$#" -ne 2 ]; then
     exit 1
 fi
 
+if ! [[ "$2" =~ ^/ ]]; then
+    echo "Relative paths cannot be specified: $2"
+    exit 1
+fi
+
 if [ -d $2 ]; then
     echo "Directory $2 already exist."
     exit 1
