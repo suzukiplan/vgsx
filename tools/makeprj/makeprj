@@ -13,19 +13,19 @@ if [ -d $2 ]; then
 fi
 
 echo "Create directory: $2"
-mkdir -p $2
+mkdir -p "$2"
 
 echo "Create directory: $2/src"
-mkdir -p "$2/src"
+mkdir "$2/src"
 
 echo "Create directory: $2/bmp"
-mkdir -p "$2/bmp"
+mkdir "$2/bmp"
 
 echo "Create directory: $2/vgm"
-mkdir -p "$2/vgm"
+mkdir "$2/vgm"
 
 echo "Create directory: $2/wav"
-mkdir -p "$2/wav"
+mkdir "$2/wav"
 
 echo "Create file: $2/.clang-format"
 cp -p template/clang-format "$2/.clang-format"
