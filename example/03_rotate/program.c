@@ -5,7 +5,9 @@
 #define P_PLAYER 128
 
 // Index of OAM
-#define O_PLAYER 0
+enum OamIndex {
+    O_PLAYER,
+};
 
 struct GlobalVariables {
     BOOL gameover;
@@ -22,8 +24,8 @@ struct GlobalVariables {
 void game_init(void)
 {
     VGS_VREG_CLSA = 0;
-    VGS_VREG_BMP0 = 1;
-    VGS_VREG_BMP1 = 1;
+    VGS_VREG_BMP0 = TRUE;
+    VGS_VREG_BMP1 = TRUE;
     VGS_VREG_SPOS = 0;
 
     for (int i = 0; i < 8; i++) {
@@ -52,6 +54,7 @@ BOOL game_main(void)
         if (!g.gameover) {
             vgs_print_bg(2, 15, 11, 0, "GAME  OVER");
             vgs_print_bg(2, 11, 13, 0, "PRESS START BUTTON");
+            g.gameover = TRUE;
         }
         return VGS_KEY_START ? FALSE : TRUE;
     }
