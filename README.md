@@ -790,11 +790,11 @@ Since each function specification is documented in Doxygen format within header 
 
 This library is always linked implicitly (`-lc`), so you do not need to specify it with the linker's `-l` option.
 
+Basic Functions can be classified into [Video Game Functions](#video-game-functions) and [Standard Functions](#standard-functions). All these functions can be used by including the header file [vgs.h](./lib/vgs.h).
+
 ```c
 #include <vgs.h>
 ```
-
-Basic Functions can be classified into [Video Game Functions](#video-game-functions) and [Standard Functions](#standard-functions).
 
 ### (Video Game Functions)
 
