@@ -27,7 +27,7 @@ The VGS-X is a 16-bit game console featuring an MC68030 processor, the FM sound 
 Basic Features:
 
 - CPU: MC68030 _(unlimited clocks)_
-- [VGS Standard Library](#vgs-standard-library) compatible
+- Fully compatible with the [VGS Standard Library](#vgs-standard-library)
 - VDP: VGS-X Video
 - [BGM](#0xe01000o---play-vgm): .vgm format (YM2149, YM2151, YM2203, YM2608, YM2610 and YM2612)
 - [SFX](#0xe01100o---play-sfx): .wav format (44,100Hz, 16-bits, 2ch)
@@ -81,8 +81,8 @@ Below are the installation steps required for game development for the VGS-X.
 sudo apt update
 sudo apt install build-essential bison flex libgmp-dev libmpc-dev libmpfr-dev texinfo libncurses5-dev
 
-# Install SDL2
-sudo apt install build-essential libsdl2-dev libasound2 libasound2-dev
+# Install SDL2 and ALSA
+sudo apt install libsdl2-dev libasound2 libasound2-dev
 
 # Make a work directory for build m68k-elf
 mkdir ~/m68k-work
@@ -132,9 +132,16 @@ If you've finished installing `m68k-elf-gcc`, you're now ready to start developi
 The following steps show how to obtain this repository using `git clone` and then run the example that displays “HELLO, WORLD!”.
 
 ```bash
+# Move to the home directory.
 cd ~
+
+# Clone the VGS-X repository
 git clone https://github.com/suzukiplan/vgsx
+
+# Move to the example directory
 cd vgsx/example/01_hello
+
+# Build and Execute
 make
 ```
 
@@ -145,6 +152,7 @@ make
 You can create a new project for developing your game by executing the [makeprj](#makeprj) command.
 
 ```bash
+# Create a new project: "My Game"
 ~/vgsx/tools/makeprj/makeprj "My Game" ~/projects/MyGame
 ```
 
@@ -973,6 +981,8 @@ Remarks:
 
 - The [makeprj command](./tools/makeprj/makeprj) is a simple shell script.
 - The project path must specify a directory that does not exist.
+- The project name specified in `name` is only used for the header output in README.md, so it can be changed later.
+- You can rename or move the project's root directory later without any issues.
 
 ## makerom
 
