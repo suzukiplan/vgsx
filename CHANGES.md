@@ -3,6 +3,7 @@
 ## Version 0.8.0
 
 - CRT: Added a math function: `vgs_hitchk`
+- Toolchain: Prevent specifying relative paths with `makeprj`
 
 ## Version 0.7.0
 
