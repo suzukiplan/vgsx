@@ -4,7 +4,7 @@
 
 This project is still in the WIP; _Work In Progress_ phase.
 
-Please note that the current specifications are subject to frequent, casual breaking changes.
+All the features listed in this README.md have been implemented. However, please note that the current specifications are subject to frequent and unexpected changes.
 
 Once this project reaches a stable phase, version 1.0.0 is scheduled for release.
 
