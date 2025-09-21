@@ -31,7 +31,7 @@ program.elf: ${OBJ_FILES}
 palette.bin: ./bmp/font.bmp
 	${BMP2PAL} $< $@
 	
-.SUFFIXES: .bmp .chr
+.SUFFIXES: .bmp .chr .c .o
 
 .bmp.chr:
 	${BMP2CHR} $< $@
