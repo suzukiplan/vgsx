@@ -76,6 +76,23 @@ static inline int32_t vgs_sgn(int32_t value)
     return value < 0 ? -1 : 1;
 }
 
+/**
+ * @brief 2 Rectangular Collision Detection.
+ * @param x1 X-coordinate of Rectangle 1
+ * @param y1 Y-coordinate of Rectangle 1
+ * @param w1 Width of Rectangle 1
+ * @param h1 Height of Rectangle 1
+ * @param x2 X-coordinate of Rectangle 2
+ * @param y2 Y-coordinate of Rectangle 2
+ * @param w2 Width of Rectangle 2
+ * @param h2 Height of Rectangle 2
+ * @return Returns TRUE if a collision is detected, FALSE otherwise.
+ */
+static inline BOOL vgs_hitchk(int x1, int y1, int w1, int h1, int x2, int y2, int w2, int h2)
+{
+    return y1 < y2 + h2 && y2 < y1 + h1 && x1 < x2 + w2 && x2 < x1 + w1 ? TRUE : FALSE;
+}
+
 #ifdef __cplusplus
 };
 #endif

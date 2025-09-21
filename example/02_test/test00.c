@@ -135,6 +135,9 @@ int main(int argc, char* argv)
     vgs_putlog("- vgs_cos(225) = %d", expect32d(vgs_cos(225), -181));
     vgs_putlog("- vgs_sin(225) = %d", expect32d(vgs_sin(225), -181));
 
+    vgs_putlog("vgs_hitchk(10,10,10,10,20,20,10,10) = %d", expect32d(vgs_hitchk(10, 10, 10, 10, 20, 20, 10, 10), (int32_t)FALSE));
+    vgs_putlog("vgs_hitchk(10,10,10,10,15,15,10,10) = %d", expect32d(vgs_hitchk(10, 10, 10, 10, 15, 15, 10, 10), (int32_t)TRUE));
+
     int32_t ret = 0;
     for (int i = 0; i < sizeof(buf); i++) {
         if (buf[i] == 0x01) {

@@ -1,5 +1,9 @@
 # Changes
 
+## Version 0.8.0
+
+- CRT: Added a math function: `vgs_hitchk`
+
 ## Version 0.7.0
 
 - Toolchain: added a `makeprj` command.
