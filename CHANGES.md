@@ -5,6 +5,7 @@
 - CRT: Added a math function: `vgs_hitchk`
 - Toolchain: Prevent specifying relative paths with `makeprj`
 - Toolchain: Modified the project created with the `makeprj` command to initialize the Git submodule every time it is built.
+- Toolchain: Prevent the `vgmplay` command from being built every time (to reduce build time when creating initial projects)
 
 ## Version 0.7.0
 
