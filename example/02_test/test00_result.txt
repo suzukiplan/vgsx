@@ -1,0 +1,481 @@
+[info] M68K_REG_PC = 0x0002AC
+[info] .program:1 offset=8192, va=0x000000, pa=0x000000, fs=9775, ms=9775, flg=5
+[info] .program:1 offset=24576, va=0xF00000, pa=0xF00000, fs=20, ms=60, flg=6
+[info] .section:0 flags=0, addr=0x000000, offset=0x000000, size=0, link=0, info=0
+[info] .section:1 flags=6, addr=0x000000, offset=0x002000, size=1844, link=0, info=0
+[info] .section:1 flags=6, addr=0x000734, offset=0x002734, size=6, link=0, info=0
+[info] .section:1 flags=6, addr=0x00073A, offset=0x00273A, size=12, link=0, info=0
+[info] .section:1 flags=6, addr=0x000746, offset=0x002746, size=5182, link=0, info=0
+[info] .section:1 flags=2, addr=0x001B84, offset=0x003B84, size=4, link=0, info=0
+[info] .section:1 flags=50, addr=0x001B88, offset=0x003B88, size=2727, link=0, info=0
+[info] .section:1 flags=3, addr=0xF00000, offset=0x006000, size=4, link=0, info=0
+[info] .section:1 flags=3, addr=0xF00004, offset=0x006004, size=8, link=0, info=0
+[info] .section:1 flags=3, addr=0xF0000C, offset=0x00600C, size=8, link=0, info=0
+[info] .section:8 flags=3, addr=0xF00014, offset=0x006014, size=40, link=0, info=0
+[info] .section:1 flags=48, addr=0x000000, offset=0x006014, size=18, link=0, info=0
+[info] .section:2 flags=0, addr=0x000000, offset=0x006028, size=1184, link=13, info=41
+[info] .section:3 flags=0, addr=0x000000, offset=0x0064C8, size=663, link=0, info=0
+[info] .section:3 flags=0, addr=0x000000, offset=0x00675F, size=118, link=0, info=0
+Load succeed.
+Start main loop.
+length of "This is test string." = 20
+vgs_strchr('t') ... test string.
+vgs_strrchr('t') ... tring.
+vgs_strcmp("100","101") = -1
+vgs_strcmp("102","101") = 1
+vgs_strcmp("102","1000") = 1
+vgs_strcmp("103","103") = 0
+vgs_strncmp("1031","1032",3) = 0
+vgs_strncmp("1031","1032",4) = -1
+vgs_strstr("This is test string.","is t") ... is test string.
+vgs_strcmp("AbCd","aBcD") = -1
+vgs_stricmp("AbCd","aBcD") = 0
+vgs_atoi("12345") = 12345
+vgs_atoi("-12345") = -12345
+vgs_atoi(" 12345") = 0
+vgs_isdigit('0') ... 1
+vgs_isdigit('9') ... 1
+vgs_isdigit('a') ... 0
+vgs_isdigit('z') ... 0
+vgs_isdigit('A') ... 0
+vgs_isdigit('Z') ... 0
+vgs_isdigit('*') ... 0
+vgs_isupper('0') ... 0
+vgs_isupper('9') ... 0
+vgs_isupper('a') ... 0
+vgs_isupper('z') ... 0
+vgs_isupper('A') ... 1
+vgs_isupper('Z') ... 1
+vgs_isupper('*') ... 0
+vgs_islower('0') ... 0
+vgs_islower('9') ... 0
+vgs_islower('a') ... 1
+vgs_islower('z') ... 1
+vgs_islower('A') ... 0
+vgs_islower('Z') ... 0
+vgs_islower('*') ... 0
+vgs_isalpha('0') ... 0
+vgs_isalpha('9') ... 0
+vgs_isalpha('a') ... 1
+vgs_isalpha('z') ... 1
+vgs_isalpha('A') ... 1
+vgs_isalpha('Z') ... 1
+vgs_isalpha('*') ... 0
+vgs_isalnum('0') ... 1
+vgs_isalnum('9') ... 1
+vgs_isalnum('a') ... 1
+vgs_isalnum('z') ... 1
+vgs_isalnum('A') ... 1
+vgs_isalnum('Z') ... 1
+vgs_isalnum('*') ... 0
+vgs_toupper('0') ... 48
+vgs_toupper('9') ... 57
+vgs_toupper('a') ... 65
+vgs_toupper('z') ... 90
+vgs_toupper('A') ... 65
+vgs_toupper('Z') ... 90
+vgs_toupper('*') ... 42
+vgs_tolower('0') ... 48
+vgs_tolower('9') ... 57
+vgs_tolower('a') ... 97
+vgs_tolower('z') ... 122
+vgs_tolower('A') ... 97
+vgs_tolower('Z') ... 122
+vgs_tolower('*') ... 42
+vgs_degree(0, 0, 0, 0) = 0
+vgs_degree(0, 0, 0, -100) = 270
+- vgs_cos(270) = 0
+- vgs_sin(270) = -256
+vgs_degree(0, 0, 100, -100) = 315
+- vgs_cos(315) = 181
+- vgs_sin(315) = -181
+vgs_degree(0, 0, 100,0) = 0
+- vgs_cos(0) = 256
+- vgs_sin(0) = 0
+vgs_degree(0, 0, 100, 100) = 45
+- vgs_cos(45) = 181
+- vgs_sin(45) = 181
+vgs_degree(0, 0, 0, 100) = 90
+- vgs_cos(90) = 0
+- vgs_sin(90) = 256
+vgs_degree(0, 0, -100, 100) = 135
+- vgs_cos(135) = -181
+- vgs_sin(135) = 181
+vgs_degree(0, 0, -100, 0) = 180
+- vgs_cos(180) = -256
+- vgs_sin(180) = 0
+vgs_degree(0, 0, -100, -100) = 225
+- vgs_cos(225) = -181
+- vgs_sin(225) = -181
+vgs_hitchk(10,10,10,10,20,20,10,10) = 0
+vgs_hitchk(10,10,10,10,15,15,10,10) = 1
+vgs_bg_width() = 256
+vgs_bg_height() = 256
+vgs_chr_width() = 40
+vgs_chr_height() = 25
+vgs_draw_width() = 320
+vgs_draw_height() = 200
+vgs_save(4294967204,80)
+[notice] save.dat wrote (80 bytes)
+vgs_save_check() = 80
+[notice] save.dat read (80 bytes)
+vgs_load(4294967204) = 80
+[notice] save010.dat wrote (300 bytes)
+[notice] save010.dat read (300 bytes)
+vgs_seq_read = 0
+vgs_seq_read = 1
+vgs_seq_read = 2
+vgs_seq_read = 3
+vgs_seq_read = 4
+vgs_seq_read = 5
+vgs_seq_read = 6
+vgs_seq_read = 7
+vgs_seq_read = 8
+vgs_seq_read = 9
+vgs_seq_read = 10
+vgs_seq_read = 11
+vgs_seq_read = 12
+vgs_seq_read = 13
+vgs_seq_read = 14
+vgs_seq_read = 15
+vgs_seq_read = 16
+vgs_seq_read = 17
+vgs_seq_read = 18
+vgs_seq_read = 19
+vgs_seq_read = 20
+vgs_seq_read = 21
+vgs_seq_read = 22
+vgs_seq_read = 23
+vgs_seq_read = 24
+vgs_seq_read = 25
+vgs_seq_read = 26
+vgs_seq_read = 27
+vgs_seq_read = 28
+vgs_seq_read = 29
+vgs_seq_read = 30
+vgs_seq_read = 31
+vgs_seq_read = 32
+vgs_seq_read = 33
+vgs_seq_read = 34
+vgs_seq_read = 35
+vgs_seq_read = 36
+vgs_seq_read = 37
+vgs_seq_read = 38
+vgs_seq_read = 39
+vgs_seq_read = 40
+vgs_seq_read = 41
+vgs_seq_read = 42
+vgs_seq_read = 43
+vgs_seq_read = 44
+vgs_seq_read = 45
+vgs_seq_read = 46
+vgs_seq_read = 47
+vgs_seq_read = 48
+vgs_seq_read = 49
+vgs_seq_read = 50
+vgs_seq_read = 51
+vgs_seq_read = 52
+vgs_seq_read = 53
+vgs_seq_read = 54
+vgs_seq_read = 55
+vgs_seq_read = 56
+vgs_seq_read = 57
+vgs_seq_read = 58
+vgs_seq_read = 59
+vgs_seq_read = 60
+vgs_seq_read = 61
+vgs_seq_read = 62
+vgs_seq_read = 63
+vgs_seq_read = 64
+vgs_seq_read = 65
+vgs_seq_read = 66
+vgs_seq_read = 67
+vgs_seq_read = 68
+vgs_seq_read = 69
+vgs_seq_read = 70
+vgs_seq_read = 71
+vgs_seq_read = 72
+vgs_seq_read = 73
+vgs_seq_read = 74
+vgs_seq_read = 75
+vgs_seq_read = 76
+vgs_seq_read = 77
+vgs_seq_read = 78
+vgs_seq_read = 79
+vgs_seq_read = 80
+vgs_seq_read = 81
+vgs_seq_read = 82
+vgs_seq_read = 83
+vgs_seq_read = 84
+vgs_seq_read = 85
+vgs_seq_read = 86
+vgs_seq_read = 87
+vgs_seq_read = 88
+vgs_seq_read = 89
+vgs_seq_read = 90
+vgs_seq_read = 91
+vgs_seq_read = 92
+vgs_seq_read = 93
+vgs_seq_read = 94
+vgs_seq_read = 95
+vgs_seq_read = 96
+vgs_seq_read = 97
+vgs_seq_read = 98
+vgs_seq_read = 99
+vgs_seq_read = 100
+vgs_seq_read = 101
+vgs_seq_read = 102
+vgs_seq_read = 103
+vgs_seq_read = 104
+vgs_seq_read = 105
+vgs_seq_read = 106
+vgs_seq_read = 107
+vgs_seq_read = 108
+vgs_seq_read = 109
+vgs_seq_read = 110
+vgs_seq_read = 111
+vgs_seq_read = 112
+vgs_seq_read = 113
+vgs_seq_read = 114
+vgs_seq_read = 115
+vgs_seq_read = 116
+vgs_seq_read = 117
+vgs_seq_read = 118
+vgs_seq_read = 119
+vgs_seq_read = 120
+vgs_seq_read = 121
+vgs_seq_read = 122
+vgs_seq_read = 123
+vgs_seq_read = 124
+vgs_seq_read = 125
+vgs_seq_read = 126
+vgs_seq_read = 127
+vgs_seq_read = 128
+vgs_seq_read = 129
+vgs_seq_read = 130
+vgs_seq_read = 131
+vgs_seq_read = 132
+vgs_seq_read = 133
+vgs_seq_read = 134
+vgs_seq_read = 135
+vgs_seq_read = 136
+vgs_seq_read = 137
+vgs_seq_read = 138
+vgs_seq_read = 139
+vgs_seq_read = 140
+vgs_seq_read = 141
+vgs_seq_read = 142
+vgs_seq_read = 143
+vgs_seq_read = 144
+vgs_seq_read = 145
+vgs_seq_read = 146
+vgs_seq_read = 147
+vgs_seq_read = 148
+vgs_seq_read = 149
+vgs_seq_read = 150
+vgs_seq_read = 151
+vgs_seq_read = 152
+vgs_seq_read = 153
+vgs_seq_read = 154
+vgs_seq_read = 155
+vgs_seq_read = 156
+vgs_seq_read = 157
+vgs_seq_read = 158
+vgs_seq_read = 159
+vgs_seq_read = 160
+vgs_seq_read = 161
+vgs_seq_read = 162
+vgs_seq_read = 163
+vgs_seq_read = 164
+vgs_seq_read = 165
+vgs_seq_read = 166
+vgs_seq_read = 167
+vgs_seq_read = 168
+vgs_seq_read = 169
+vgs_seq_read = 170
+vgs_seq_read = 171
+vgs_seq_read = 172
+vgs_seq_read = 173
+vgs_seq_read = 174
+vgs_seq_read = 175
+vgs_seq_read = 176
+vgs_seq_read = 177
+vgs_seq_read = 178
+vgs_seq_read = 179
+vgs_seq_read = 180
+vgs_seq_read = 181
+vgs_seq_read = 182
+vgs_seq_read = 183
+vgs_seq_read = 184
+vgs_seq_read = 185
+vgs_seq_read = 186
+vgs_seq_read = 187
+vgs_seq_read = 188
+vgs_seq_read = 189
+vgs_seq_read = 190
+vgs_seq_read = 191
+vgs_seq_read = 192
+vgs_seq_read = 193
+vgs_seq_read = 194
+vgs_seq_read = 195
+vgs_seq_read = 196
+vgs_seq_read = 197
+vgs_seq_read = 198
+vgs_seq_read = 199
+vgs_seq_read = 200
+vgs_seq_read = 201
+vgs_seq_read = 202
+vgs_seq_read = 203
+vgs_seq_read = 204
+vgs_seq_read = 205
+vgs_seq_read = 206
+vgs_seq_read = 207
+vgs_seq_read = 208
+vgs_seq_read = 209
+vgs_seq_read = 210
+vgs_seq_read = 211
+vgs_seq_read = 212
+vgs_seq_read = 213
+vgs_seq_read = 214
+vgs_seq_read = 215
+vgs_seq_read = 216
+vgs_seq_read = 217
+vgs_seq_read = 218
+vgs_seq_read = 219
+vgs_seq_read = 220
+vgs_seq_read = 221
+vgs_seq_read = 222
+vgs_seq_read = 223
+vgs_seq_read = 224
+vgs_seq_read = 225
+vgs_seq_read = 226
+vgs_seq_read = 227
+vgs_seq_read = 228
+vgs_seq_read = 229
+vgs_seq_read = 230
+vgs_seq_read = 231
+vgs_seq_read = 232
+vgs_seq_read = 233
+vgs_seq_read = 234
+vgs_seq_read = 235
+vgs_seq_read = 236
+vgs_seq_read = 237
+vgs_seq_read = 238
+vgs_seq_read = 239
+vgs_seq_read = 240
+vgs_seq_read = 241
+vgs_seq_read = 242
+vgs_seq_read = 243
+vgs_seq_read = 244
+vgs_seq_read = 245
+vgs_seq_read = 246
+vgs_seq_read = 247
+vgs_seq_read = 248
+vgs_seq_read = 249
+vgs_seq_read = 250
+vgs_seq_read = 251
+vgs_seq_read = 252
+vgs_seq_read = 253
+vgs_seq_read = 254
+vgs_seq_read = 255
+vgs_seq_read = 0
+vgs_seq_read = 1
+vgs_seq_read = 2
+vgs_seq_read = 3
+vgs_seq_read = 4
+vgs_seq_read = 5
+vgs_seq_read = 6
+vgs_seq_read = 7
+vgs_seq_read = 8
+vgs_seq_read = 9
+vgs_seq_read = 10
+vgs_seq_read = 11
+vgs_seq_read = 12
+vgs_seq_read = 13
+vgs_seq_read = 14
+vgs_seq_read = 15
+vgs_seq_read = 16
+vgs_seq_read = 17
+vgs_seq_read = 18
+vgs_seq_read = 19
+vgs_seq_read = 20
+vgs_seq_read = 21
+vgs_seq_read = 22
+vgs_seq_read = 23
+vgs_seq_read = 24
+vgs_seq_read = 25
+vgs_seq_read = 26
+vgs_seq_read = 27
+vgs_seq_read = 28
+vgs_seq_read = 29
+vgs_seq_read = 30
+vgs_seq_read = 31
+vgs_seq_read = 32
+vgs_seq_read = 33
+vgs_seq_read = 34
+vgs_seq_read = 35
+vgs_seq_read = 36
+vgs_seq_read = 37
+vgs_seq_read = 38
+vgs_seq_read = 39
+vgs_seq_read = 40
+vgs_seq_read = 41
+vgs_seq_read = 42
+vgs_seq_read = 43
+vgs_seq_read = -1
+call vgs_exit with exit code: 59
+Update the peak CPU clock rate: 329256Hz per frame.
+
+[RAM DUMP]
+F00000 00 00 00 00 FF FF FF FF - 00 00 00 00 FF FF FF FF  ................
+F00010 00 00 00 00 47 43 43 3A - 20 28 47 4E 55 29 20 31  ....GCC: (GNU) 1
+F00020 35 2E 32 2E 30 00 00 00 - 00 00 00 00 00 00 00 00  5.2.0...........
+F00030 00 00 00 00 00 00 00 00 - 00 00 00 00 FF FF FF FF  ................
+F00040 FF FF FF FF FF FF FF FF - FF FF FF FF FF FF FF FF  ................
+FFFF30 FF FF FF FF FF FF FF FF - FF FF FF A4 00 00 00 00  ................
+FFFF40 FF FF FF A4 00 00 02 36 - 00 00 01 2C 00 00 00 3B  .......6...,...;
+FFFF50 00 00 01 2C 00 00 02 36 - FF FF FF 6C 00 00 00 3B  ...,...6...l...;
+FFFF60 00 00 01 B8 FF FF FF 6C - FF FF FF 84 35 39 00 74  .......l....59.t
+FFFF70 FF FF FF 8C 00 00 10 84 - 00 00 00 3B 00 00 25 E5  ...........;..%.
+FFFF80 00 00 00 3B 00 00 25 D3 - FF FF FF FF 00 00 00 00  ...;..%.........
+FFFF90 00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00  ................
+FFFFA0 00 00 00 00 54 68 69 73 - 20 69 73 20 74 65 73 74  ....This is test
+FFFFB0 20 73 74 72 69 6E 67 2E - 00 01 01 01 01 01 01 01   string.........
+FFFFC0 01 01 01 01 01 01 01 01 - 01 01 01 01 01 01 01 01  ................
+FFFFF0 01 01 01 01 00 00 02 B6 - 00 00 00 00 00 00 00 00  ................
+
+[save.dat]
+000000 54 68 69 73 20 69 73 20 - 74 65 73 74 20 73 74 72  This is test str
+000010 69 6E 67 2E 00 01 01 01 - 01 01 01 01 01 01 01 01  ing.............
+000020 01 01 01 01 01 01 01 01 - 01 01 01 01 01 01 01 01  ................
+000030 01 01 01 01 01 01 01 01 - 01 01 01 01 01 01 01 01  ................
+000040 01 01 01 01 01 01 01 01 - 01 01 01 01 01 01 01 01  ................
+Size: 80 bytes
+
+[save010.dat]
+000000 00 01 02 03 04 05 06 07 - 08 09 0A 0B 0C 0D 0E 0F  ................
+000010 10 11 12 13 14 15 16 17 - 18 19 1A 1B 1C 1D 1E 1F  ................
+000020 20 21 22 23 24 25 26 27 - 28 29 2A 2B 2C 2D 2E 2F   !"#$%&'()*+,-./
+000030 30 31 32 33 34 35 36 37 - 38 39 3A 3B 3C 3D 3E 3F  0123456789:;<=>?
+000040 40 41 42 43 44 45 46 47 - 48 49 4A 4B 4C 4D 4E 4F  @ABCDEFGHIJKLMNO
+000050 50 51 52 53 54 55 56 57 - 58 59 5A 5B 5C 5D 5E 5F  PQRSTUVWXYZ[\]^_
+000060 60 61 62 63 64 65 66 67 - 68 69 6A 6B 6C 6D 6E 6F  `abcdefghijklmno
+000070 70 71 72 73 74 75 76 77 - 78 79 7A 7B 7C 7D 7E 7F  pqrstuvwxyz{|}~.
+000080 80 81 82 83 84 85 86 87 - 88 89 8A 8B 8C 8D 8E 8F  ................
+000090 90 91 92 93 94 95 96 97 - 98 99 9A 9B 9C 9D 9E 9F  ................
+0000A0 A0 A1 A2 A3 A4 A5 A6 A7 - A8 A9 AA AB AC AD AE AF  ................
+0000B0 B0 B1 B2 B3 B4 B5 B6 B7 - B8 B9 BA BB BC BD BE BF  ................
+0000C0 C0 C1 C2 C3 C4 C5 C6 C7 - C8 C9 CA CB CC CD CE CF  ................
+0000D0 D0 D1 D2 D3 D4 D5 D6 D7 - D8 D9 DA DB DC DD DE DF  ................
+0000E0 E0 E1 E2 E3 E4 E5 E6 E7 - E8 E9 EA EB EC ED EE EF  ................
+0000F0 F0 F1 F2 F3 F4 F5 F6 F7 - F8 F9 FA FB FC FD FE FF  ................
+000100 00 01 02 03 04 05 06 07 - 08 09 0A 0B 0C 0D 0E 0F  ................
+000110 10 11 12 13 14 15 16 17 - 18 19 1A 1B 1C 1D 1E 1F  ................
+000120 20 21 22 23 24 25 26 27 - 28 29 2A 2B               !"#$%&'()*+
+Size: 300 bytes
+
+Average MC68030 Clocks: 5.5MHz per second.
+Maximum MC68030 Clocks: 5.5MHz per second.
+RAM usage: 256/1048576 (0%)
+Detect exit: code=59
+Excpected!
