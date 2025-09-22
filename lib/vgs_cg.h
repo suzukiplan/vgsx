@@ -57,10 +57,10 @@ typedef struct {
     int32_t rotate;       // Rotate (-360 ~ 360)
     uint32_t scale;       // Scale (0: disabled or 1 ~ 400 percent)
     uint32_t reserved[9]; // Reserved
-} OAM;
+} ObjectAttributeMemory;
 
 #define OAM_MAX 1024
-#define OAM ((OAM*)0xD00000)
+#define OAM ((ObjectAttributeMemory*)0xD00000)
 
 // Palette Table
 // 16 x 16 x 2bits
