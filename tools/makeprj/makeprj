@@ -1,63 +1,99 @@
 #!/bin/sh
 
-cd "$(dirname "$0")"
-
-if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 name /path/to/project"
+if [ "$#" -ne 1 ]; then
+    echo "Usage: makeprj /path/to/project"
     exit 1
 fi
 
-if ! [[ "$2" =~ ^/ ]]; then
-    echo "Relative paths cannot be specified: $2"
+if [ -d $1 ]; then
+    echo "Directory $1 already exist."
     exit 1
 fi
 
-if [ -d $2 ]; then
-    echo "Directory $2 already exist."
-    exit 1
+mkdir -p "$1"
+export VGSX_Project_Path="$1"
+if ! [[ "$VGSX_Project_Path" =~ ^/ ]]; then
+    export VGSX_Project_Path="`realpath $1`"
 fi
 
-echo "Create directory: $2"
-mkdir -p "$2"
+echo "Project directory: $VGSX_Project_Path"
+echo "Create an initial repository for VGS-X game development in the above directory."
 
-echo "Create directory: $2/src"
-mkdir "$2/src"
+function ask_yes_no {
+  while true; do
+    /bin/echo -n "$* [y/n]: "
+    read ANS
+    case $ANS in
+      [Yy]*)
+        return 0
+        ;;  
+      [Nn]*)
+        return 1
+        ;;
+      *)
+        echo "Please input Y/N."
+        ;;
+    esac
+  done
+}
 
-echo "Create directory: $2/bmp"
-mkdir "$2/bmp"
+if ask_yes_no "Is that okay?"; then
+    cd "$(dirname "$0")"
+else
+    rmdir "$VGSX_Project_Path"
+    exit 0
+fi
 
-echo "Create directory: $2/vgm"
-mkdir "$2/vgm"
+echo "Create directory: $VGSX_Project_Path/src"
+mkdir "$VGSX_Project_Path/src"
 
-echo "Create directory: $2/wav"
-mkdir "$2/wav"
+echo "Create directory: $VGSX_Project_Path/bmp"
+mkdir "$VGSX_Project_Path/bmp"
 
-echo "Create file: $2/.clang-format"
-cp -p template/clang-format "$2/.clang-format"
+echo "Create directory: $VGSX_Project_Path/vgm"
+mkdir "$VGSX_Project_Path/vgm"
 
-echo "Create file: $2/.gitignore"
-cp -p template/gitignore "$2/.gitignore"
+echo "Create directory: $VGSX_Project_Path/wav"
+mkdir "$VGSX_Project_Path/wav"
 
-echo "Create file: $2/Makefile"
-cp -p template/Makefile "$2/Makefile"
+echo "Create file: $VGSX_Project_Path/.clang-format"
+cp -p template/clang-format "$VGSX_Project_Path/.clang-format"
 
-echo "Create file: $2/README.md"
-echo "# $1" > "$2/README.md"
+echo "Create file: $VGSX_Project_Path/.gitignore"
+cp -p template/gitignore "$VGSX_Project_Path/.gitignore"
 
-echo "Create file: $2/src/main.c"
-cp -p template/main.c "$2/src/main.c"
+echo "Create file: $VGSX_Project_Path/Makefile"
+cp -p template/Makefile "$VGSX_Project_Path/Makefile"
 
-echo "Create file: $2/bmp/font.bmp"
-cp -p template/font.bmp "$2/bmp/font.bmp"
+echo "Create file: $VGSX_Project_Path/README.md"
+cp -p template/README.md "$VGSX_Project_Path/README.md"
 
-echo "Create file: $2/vgm/sample.vgm"
-cp -p template/sample.vgm "$2/vgm/sample.vgm"
+echo "Create file: $VGSX_Project_Path/src/main.c"
+cp -p template/main.c "$VGSX_Project_Path/src/main.c"
 
-echo "Create file: $2/wav/sample.wav"
-cp -p template/sample.wav "$2/wav/sample.wav"
+echo "Create file: $VGSX_Project_Path/bmp/font.bmp"
+cp -p template/font.bmp "$VGSX_Project_Path/bmp/font.bmp"
+
+echo "Create file: $VGSX_Project_Path/vgm/sample.vgm"
+cp -p template/sample.vgm "$VGSX_Project_Path/vgm/sample.vgm"
+
+echo "Create file: $VGSX_Project_Path/wav/sample.wav"
+cp -p template/sample.wav "$VGSX_Project_Path/wav/sample.wav"
+
+echo "Create file: $VGSX_Project_Path/LICENSE-SDL2.txt"
+cp -p ../../LICENSE-SDL2.txt "$VGSX_Project_Path/LICENSE-SDL2.txt"
+
+echo "Create file: $VGSX_Project_Path/LICENSE-Musashi.txt"
+cp -p ../../LICENSE-Musashi.txt "$VGSX_Project_Path/LICENSE-Musashi.txt"
+
+echo "Create file: $VGSX_Project_Path/LICENSE-ymfm.txt"
+cp -p ../../LICENSE-ymfm.txt "$VGSX_Project_Path/LICENSE-ymfm.txt"
+
+echo "Create file: $VGSX_Project_Path/LICENSE-VGSX.txt"
+cp -p ../../LICENSE-VGSX.txt "$VGSX_Project_Path/LICENSE-VGSX.txt"
 
 echo "Setup git"
-cd "$2"
+cd "$VGSX_Project_Path"
 git init
 git branch -M master
 
@@ -69,4 +105,4 @@ git commit -m "Initial commit (empty VGS-X project)"
 echo "Try first build."
 make
 
-echo "$1 carted at: $2"
+echo "$1 carted at: $VGSX_Project_Path"

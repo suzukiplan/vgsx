@@ -57,13 +57,13 @@ typedef struct {
     int32_t rotate;       // Rotate (-360 ~ 360)
     uint32_t scale;       // Scale (0: disabled or 1 ~ 400 percent)
     uint32_t reserved[9]; // Reserved
-} OAM;
+} ObjectAttributeMemory;
 
 #define OAM_MAX 1024
-#define OAM ((OAM*)0xD00000)
+#define OAM ((ObjectAttributeMemory*)0xD00000)
 
 // Palette Table
-// 16 x 16 x 2bits
+// 16 x 16 x 4bits
 #define PALETTE ((uint32_t*)0xD10000)
 
 // VDP Register
@@ -112,6 +112,42 @@ extern "C" {
 #endif
 
 /**
+ * @brief Get the Name Table width in Character Pattern Mode.
+ * @return The Name Table width in Character Pattern Mode. (VGS-X returns 256)
+ */
+static inline int vgs_bg_width()
+{
+    return BG_WIDTH;
+}
+
+/**
+ * @brief Get the Name Table height in Character Pattern Mode.
+ * @return The Name Table height in Character Pattern Mode. (VGS-X returns 256)
+ */
+static inline int vgs_bg_height()
+{
+    return BG_HEIGHT;
+}
+
+/**
+ * @brief Get the Visible Name Table width in Character Pattern Mode.
+ * @return The Visible Name Table width in Character Pattern Mode. (VGS-X returns 40)
+ */
+static inline int vgs_chr_width()
+{
+    return VRAM_WIDTH >> 3;
+}
+
+/**
+ * @brief Get the Visible Name Table height in Character Pattern Mode.
+ * @return The Visible Name Table height in Character Pattern Mode. (VGS-X returns 25)
+ */
+static inline int vgs_chr_height()
+{
+    return VRAM_HEIGHT >> 3;
+}
+
+/**
  * @brief Display a character on the BG in Character Pattern Mode
  * @param n Number of BG (0 to 3)
  * @param x X-coordinate of nametable (0 to 255)
@@ -144,6 +180,34 @@ void vgs_cls_bg_all(uint32_t value);
  * @remark If the value is 0, a fast clear is performed.
  */
 void vgs_cls_bg(uint8_t n, uint32_t value);
+
+/**
+ * @brief BG Mode Switching: Bitmap or Character Pattern
+ * @param n Number of BG (0 to 3)
+ * @param isBitmap If TRUE is specified, switch to Bitmap Mode; if FALSE is specified, switch to Character Pattern Mode.
+ */
+static inline void vgs_draw_mode(uint8_t n, BOOL isBitmap)
+{
+    ((uint32_t*)0xD20028)[n & 3] = isBitmap;
+}
+
+/**
+ * @brief Get the display width in Bitmap Mode.
+ * @return The display width in Bitmap Mode. (VGS-X returns 320)
+ */
+static inline int vgs_draw_width()
+{
+    return VRAM_WIDTH;
+}
+
+/**
+ * @brief Get the display height in Bitmap Mode.
+ * @return The display height in Bitmap Mode. (VGS-X returns 200)
+ */
+static inline int vgs_draw_height()
+{
+    return VRAM_HEIGHT;
+}
 
 /**
  * @brief Draw a pixel on the BG in Bitmap Mode
@@ -204,6 +268,15 @@ void vgs_draw_boxf(uint8_t n, int32_t x1, int32_t y1, int32_t x2, int32_t y2, ui
 void vgs_draw_character(uint8_t n, int32_t x, int32_t y, BOOL draw0, uint8_t pal, uint16_t ptn);
 
 /**
+ * @brief Set sprite display priority
+ * @param bg Specify the BG number (0 to 3) displayed beneath the sprite.
+ */
+static inline void vgs_sprite_priority(uint8_t bg)
+{
+    VGS_VREG_SPOS = bg;
+}
+
+/**
  * @brief Set OAM attribute values in bulk
  * @param n Sprite number (0 to 1023)
  * @param visible TRUE: Visible, FALSE: Hidden
@@ -217,6 +290,15 @@ void vgs_draw_character(uint8_t n, int32_t x, int32_t y, BOOL draw0, uint8_t pal
  * @remark Individual parameters can be referenced and/or updated via OAM[n].
  */
 void vgs_sprite(uint16_t n, BOOL visible, int16_t x, int16_t y, uint8_t size, uint8_t pal, uint16_t ptn);
+
+/**
+ * @brief Get an OAM record
+ * @param n Sprite number (0 to 1023)
+ */
+static inline ObjectAttributeMemory* vgs_oam(uint16_t n)
+{
+    return &OAM[n];
+}
 
 #ifdef __cplusplus
 };

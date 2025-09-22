@@ -285,6 +285,7 @@ Remarks:
 ## Name Table
 
 - The Name Table is a 256x256 x 4bytes two-dimensional array of the [attributes](#attribute). 
+- The visible displayed area is 40x25 in the Name Table (256x256).
 - By setting character patterns and attribute data to it, graphics can be displayed on the background layer.
 - The Name Table has a four-layer structure, with BG1 displayed on top of BG0, BG2 on top of BG1, BG3 on top of BG2, and BG4 on top of BG3.
 
@@ -818,16 +819,23 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | Category | Function | Description |
 |:------|:---------|:------------|
 | system | `vgs_vsync` | Synchronize the [V-SYNC](#0xe00000in---v-sync) (screen output with 60fps) |
+| cg:bg | `vgs_bg_width` | Get the [Name Table](#name-table) width in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode). |
+| cg:bg | `vgs_bg_height` | Get the [Name Table](#name-table) height in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode). |
+| cg:bg | `vgs_chr_width` | Get the Visible [Name Table](#name-table) width in Character Pattern Mode.|
+| cg:bg | `vgs_chr_height` | Get the Visible [Name Table](#name-table) height in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode). |
 | cg:bg | `vgs_put_bg` | Display a character on the [BG](#name-table) in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode) |
 | cg:bg | `vgs_print_bg` | Display a string on the [BG](#name-table) in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode) |
 | cg:bg | `vgs_cls_bg_all` | [Clear](#0xd20038-0xd20048-clear-screen) all BGs |
 | cg:bg | `vgs_cls_bg` | [Clear](#0xd20038-0xd20048-clear-screen) a specific BG |
-| cg:sp | `vgs_sprite` | Set [OAM](#oam-object-attribute-memory) attribute values in bulk |
+| cg:bmp | `vgs_draw_mode` | [BG Mode](#0xd20028-0xd20034-bitmap-mode) Switching: Bitmap or Character Pattern |
 | cg:bmp | `vgs_draw_pixel` | Draw a [pixel](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
 | cg:bmp | `vgs_draw_line` | Draw a [line](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
 | cg:bmp | `vgs_draw_box` | Draw a [rectangle](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
 | cg:bmp | `vgs_draw_boxf` | Draw a [filled-rectangle](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
 | cg:bmp | `vgs_draw_character` | Draw a [character-pattern](#character-pattern) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
+| cg:sp | `vgs_sprite_priority` | Set sprite display priority. |
+| cg:sp | `vgs_sprite` | Set [OAM](#oam-object-attribute-memory) attribute values in bulk |
+| cg:sp | `vgs_oam` | Get an [OAM](#oam-object-attribute-memory) record. |
 | bgm | `vgs_bgm_play` | Play [background music](#0xe01000o---play-vgm) |
 | sfx | `vgs_sfx_play` | Play [sound effect](#0xe01100o---play-sfx) |
 | save | `vgs_save` | Save [save data](#0xe030xxio---savedata). |
@@ -906,6 +914,7 @@ vgs_putlog("d32=%d, u32=%u, str=%s", (int32_t)123, (uint32_t)456, "text");
 | [bin2var](#bin2var) | Convert binary files to C language code |
 | [bmp2chr](#bmp2chr) | Make [CHR](#character-pattern) data from .bmp file |
 | [bmp2pal](#bmp2pal) | Make initial [palette](#palette) from .bmp file |
+| [csv2var](#csv2var) | Convert Tiled Map Editor CSV format to binary format. |
 | [makeprj](#makeprj) | Create a new project |
 | [makerom](#makerom) | Make ROM file from Program and Assets |
 | [vgmplay](#vgmplay) | Play a .vgm file from the command line |
@@ -940,8 +949,18 @@ Converts a binary file into program code for a const uint8_t array in C language
 For example, it comes in handy when you want to use files such as stage map data, scenario scripts and text, or proprietary image formats within your program.
 
 ```
-bin2var /path/to/binary.rom
+bin2var /path/to/binary.rom [u8|u16|u16l|u16b]
 ```
+
+Remarks
+
+- The conversion results are output to standard output, so please redirect them for use.
+- `u8` : Output input file as numerical values in uint8_t (default)
+- `u16` : Output input file as numerical values in uint16_t (default)
+- `u16l` : Input files shall be in little-endian (equivalent to `u16`).
+- `u16b` : Input files shall be in big-endian.
+
+> The `u16b` option is provided for cases where you wish to use binary files created in big-endian environments, such as the X68000, with VGS-X.
 
 ## bmp2chr
 
@@ -968,6 +987,23 @@ Generates initial [Palette](#palette) data for VGS-X from 256-color .bmp (Window
 usage: bmp2pal input.bmp palette.dat
 ```
 
+## csv2var
+
+Path: [./tools/csv2var](./tools/csv2var/)
+
+Convert Tiled Map Editor CSV format to binary format.
+
+```
+usage: csv2var input.csv [u8|u16]
+```
+
+Remarks
+
+- This is designed to work only with CSV format for layerless Tiled Map Editor; operation with other formats is undefined.
+- The conversion results are output to standard output, so please redirect them for use.
+- `u8` : Output input file as numerical values in uint8_t (default)
+- `u16` : Output input file as numerical values in uint16_t (default)
+
 ## makeprj
 
 Path: [./tools/makeprj](./tools/makeprj/)
@@ -975,15 +1011,27 @@ Path: [./tools/makeprj](./tools/makeprj/)
 Create a new game project.
 
 ```
-Usage: ./tools/makeprj/makeprj name /path/to/project
+Usage: makeprj /path/to/project
 ```
 
 Remarks:
 
-- The [makeprj command](./tools/makeprj/makeprj) is a simple shell script.
+- The `makeprj` command is a [simple shell script](./tools/makeprj/makeprj).
 - The project path must specify a directory that does not exist.
-- The project name specified in `name` is only used for the header output in README.md, so it can be changed later.
+- Project directories created with the `makeprj` command are initialized with Git and include the latest master branch of the suzukiplan/vgsx repository as a submodule at the time of command execution. This ensures compatibility even if VGS-X specifications change. Of course, you can also update the vgsx submodule to the latest state within your game project repository.
 - You can rename or move the project's root directory later without any issues.
+
+The steps to update VGS-X to the latest version in your project are as follows:
+
+```bash
+cd /path/to/your_project
+cd vgsx
+git pull origin master
+cd ..
+git commit -m "update submodule" vgsx
+```
+
+> Please note that since submodule initialization always occurs within `make all`, you must commit any submodule updates beforehand.
 
 ## makerom
 
@@ -1017,6 +1065,9 @@ usage: vgmplay /path/to/bgm.vgm
 
 # License
 
+- [SDL2](https://www.libsdl.org/)
+  - Copyright (C) 1997-2025 Sam Lantinga <slouken@libsdl.org>
+  - License: [ZLIB License](./LICENSE-SDL2.txt)
 - MC680x0 Emulator - [Musashi](https://github.com/kstenerud/Musashi)
   - Copyright © 1998-2001 Karl Stenerud
   - License: [MIT](./LICENSE-Musashi.txt)

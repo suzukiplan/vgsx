@@ -23,10 +23,10 @@ struct GlobalVariables {
 
 void game_init(void)
 {
-    VGS_VREG_CLSA = 0;
-    VGS_VREG_BMP0 = TRUE;
-    VGS_VREG_BMP1 = TRUE;
-    VGS_VREG_SPOS = 0;
+    vgs_cls_bg_all(0);
+    vgs_draw_mode(0, TRUE);
+    vgs_draw_mode(1, TRUE);
+    vgs_sprite_priority(0);
 
     for (int i = 0; i < 8; i++) {
         uint32_t c1 = 0x0F * i + 0x0F;
@@ -35,14 +35,19 @@ void game_init(void)
         c2 |= c1;
         c2 <<= 8;
         c2 |= c1;
-        vgs_draw_box(1, i, i, VRAM_WIDTH - i - 1, VRAM_HEIGHT - i - 1, c2);
+        vgs_draw_box(1, i, i, vgs_draw_width() - i - 1, vgs_draw_height() - i - 1, c2);
     }
-    vgs_draw_boxf(0, 8, 8, VRAM_WIDTH - 9, VRAM_HEIGHT - 9, 0x0F2F60);
+    vgs_draw_boxf(0, 8, 8, vgs_draw_width() - 9, vgs_draw_height() - 9, 0x0F2F60);
 
     vgs_memset(&g, 0, sizeof(g));
-    g.player.x = ((VRAM_WIDTH - 16) / 2) << 8;
-    g.player.y = ((VRAM_HEIGHT - 16) / 2) << 8;
+    g.player.x = ((vgs_draw_width() - 16) / 2) << 8;
+    g.player.y = ((vgs_draw_height() - 16) / 2) << 8;
     vgs_sprite(O_PLAYER, TRUE, g.player.x >> 8, g.player.y >> 8, 1, 0, P_PLAYER);
+}
+
+void print_center(int diff_y, const char* text)
+{
+    vgs_print_bg(2, (vgs_chr_width() - vgs_strlen(text)) / 2, vgs_chr_height() / 2 + diff_y, 0, text);
 }
 
 BOOL game_main(void)
@@ -52,8 +57,8 @@ BOOL game_main(void)
     // Game Over
     if (g.player.collision) {
         if (!g.gameover) {
-            vgs_print_bg(2, 15, 11, 0, "GAME  OVER");
-            vgs_print_bg(2, 11, 13, 0, "PRESS START BUTTON");
+            print_center(-1, "GAME  OVER");
+            print_center(+1, "PRESS START BUTTON");
             g.gameover = TRUE;
         }
         return VGS_KEY_START ? FALSE : TRUE;
@@ -62,10 +67,10 @@ BOOL game_main(void)
     // Turn left or right
     if (VGS_KEY_LEFT) {
         g.player.degree -= 5;
-        OAM[O_PLAYER].rotate = g.player.degree;
+        vgs_oam(O_PLAYER)->rotate = g.player.degree;
     } else if (VGS_KEY_RIGHT) {
         g.player.degree += 5;
-        OAM[O_PLAYER].rotate = g.player.degree;
+        vgs_oam(O_PLAYER)->rotate = g.player.degree;
     }
 
     // Set max speed
@@ -92,15 +97,15 @@ BOOL game_main(void)
 
     int32_t ox = g.player.x >> 8;
     int32_t oy = g.player.y >> 8;
-    OAM[O_PLAYER].x = ox;
-    OAM[O_PLAYER].y = oy;
+    vgs_oam(O_PLAYER)->x = ox;
+    vgs_oam(O_PLAYER)->y = oy;
     vgs_draw_pixel(0, ox + 7, oy + 7, 0xF10);
     vgs_draw_pixel(0, ox + 8, oy + 7, 0xF30);
     vgs_draw_pixel(0, ox + 7, oy + 8, 0xF30);
     vgs_draw_pixel(0, ox + 8, oy + 8, 0xF50);
 
     // Collision check
-    g.player.collision = ox < 4 || oy < 4 || VRAM_WIDTH - 20 < ox || VRAM_HEIGHT - 20 < oy;
+    g.player.collision = ox < 4 || oy < 4 || vgs_draw_width() - 20 < ox || vgs_draw_height() - 20 < oy;
     return TRUE;
 }
 

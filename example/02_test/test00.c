@@ -138,6 +138,13 @@ int main(int argc, char* argv)
     vgs_putlog("vgs_hitchk(10,10,10,10,20,20,10,10) = %d", expect32d(vgs_hitchk(10, 10, 10, 10, 20, 20, 10, 10), (int32_t)FALSE));
     vgs_putlog("vgs_hitchk(10,10,10,10,15,15,10,10) = %d", expect32d(vgs_hitchk(10, 10, 10, 10, 15, 15, 10, 10), (int32_t)TRUE));
 
+    vgs_putlog("vgs_bg_width() = %d", expect32d(vgs_bg_width(), 256));
+    vgs_putlog("vgs_bg_height() = %d", expect32d(vgs_bg_height(), 256));
+    vgs_putlog("vgs_chr_width() = %d", expect32d(vgs_chr_width(), 40));
+    vgs_putlog("vgs_chr_height() = %d", expect32d(vgs_chr_height(), 25));
+    vgs_putlog("vgs_draw_width() = %d", expect32d(vgs_draw_width(), 320));
+    vgs_putlog("vgs_draw_height() = %d", expect32d(vgs_draw_height(), 200));
+
     int32_t ret = 0;
     for (int i = 0; i < sizeof(buf); i++) {
         if (buf[i] == 0x01) {

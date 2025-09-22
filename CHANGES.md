@@ -1,5 +1,18 @@
 # Changes
 
+## Version 0.9.0
+
+- CRT: Renamed the OAM structure to ObjectAttributeMemory to avoid name conflicts with `#define` literals. **(Disruptive)**
+- CRT: Added the sprite functions: `vgs_sprite_priority` and `vgs_oam`
+- CRT: Added a bitmap function: `vgs_draw_mode`
+- CRT: Added the getting screen width functions: `vgs_bg_width`,  `vgs_bg_height`,  `vgs_chr_width`, `vgs_chr_width`, `vgs_draw_width` and `vgs_draw_height`
+- Toolchain: Supports 16-bit format output with `bin2var`.
+- Toolchain: Added `csv2var`, a tool to convert Tiled Map Editor CSV files.
+- Toolchain: Place the license file using the `makeprj` command.
+- Toolchain: The `makeprj` command now supports specifying relative paths.
+- Toolchain: Perform verification before executing processing with the `makeprj` command.
+- Toolchain: Remove the `name` option from the `makeprj` command. **(Disruptive)**
+
 ## Version 0.8.0
 
 - CRT: Added a math function: `vgs_hitchk`
