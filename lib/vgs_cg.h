@@ -63,7 +63,7 @@ typedef struct {
 #define OAM ((ObjectAttributeMemory*)0xD00000)
 
 // Palette Table
-// 16 x 16 x 2bits
+// 16 x 16 x 4bits
 #define PALETTE ((uint32_t*)0xD10000)
 
 // VDP Register
