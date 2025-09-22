@@ -1,5 +1,9 @@
 # Changes
 
+## Version 0.10.0
+
+- CRT: Added a bitmap function: `vgs_read_pixel`
+
 ## Version 0.9.0
 
 - CRT: Renamed the OAM structure to ObjectAttributeMemory to avoid name conflicts with `#define` literals. **(Disruptive)**

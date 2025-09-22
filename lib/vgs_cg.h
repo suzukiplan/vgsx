@@ -210,6 +210,15 @@ static inline int vgs_draw_height()
 }
 
 /**
+ * @brief Read a pixel on the BG in Bitmap Mode
+ * @param n Number of BG (0 to 3)
+ * @param x X-coordinate of VRAM (0 to 319)
+ * @param y Y-coordinate of VRAM (0 to 199)
+ * @return A pixel (RGB888 color format)
+ */
+uint32_t vgs_read_pixel(uint8_t n, int32_t x, int32_t y);
+
+/**
  * @brief Draw a pixel on the BG in Bitmap Mode
  * @param n Number of BG (0 to 3)
  * @param x X-coordinate of VRAM (0 to 319)
