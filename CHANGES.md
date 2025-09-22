@@ -3,6 +3,7 @@
 ## Version 0.10.0
 
 - CRT: Added a bitmap function: `vgs_read_pixel`
+- CRT: Added the functions: `vgs_scroll`,  `vgs_scroll_x` and  `vgs_scroll_y`
 
 ## Version 0.9.0
 

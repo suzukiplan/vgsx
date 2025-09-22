@@ -277,6 +277,39 @@ void vgs_draw_boxf(uint8_t n, int32_t x1, int32_t y1, int32_t x2, int32_t y2, ui
 void vgs_draw_character(uint8_t n, int32_t x, int32_t y, BOOL draw0, uint8_t pal, uint16_t ptn);
 
 /**
+ * @brief Scroll BG (X)
+ * @param n Number of BG (0 to 3)
+ * @param sx X-coordinate
+ */
+static inline void vgs_scroll_x(uint8_t n, int32_t sx)
+{
+    ((uint32_t*)0xD20008)[n & 3] = sx;
+}
+
+/**
+ * @brief Scroll BG (Y)
+ * @param n Number of BG (0 to 3)
+ * @param sy Y-coordinate
+ */
+static inline void vgs_scroll_y(uint8_t n, int32_t sy)
+{
+    ((uint32_t*)0xD20018)[n & 3] = sy;
+}
+
+/**
+ * @brief Scroll BG
+ * @param n Number of BG (0 to 3)
+ * @param sx X-coordinate
+ * @param sy Y-coordinate
+ */
+static inline void vgs_scroll(uint8_t n, int32_t sx, int32_t sy)
+{
+    n &= 3;
+    ((uint32_t*)0xD20008)[n] = sx;
+    ((uint32_t*)0xD20018)[n] = sy;
+}
+
+/**
  * @brief Set sprite display priority
  * @param bg Specify the BG number (0 to 3) displayed beneath the sprite.
  */
