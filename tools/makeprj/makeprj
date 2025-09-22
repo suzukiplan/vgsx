@@ -80,6 +80,9 @@ cp -p template/sample.vgm "$VGSX_Project_Path/vgm/sample.vgm"
 echo "Create file: $VGSX_Project_Path/wav/sample.wav"
 cp -p template/sample.wav "$VGSX_Project_Path/wav/sample.wav"
 
+echo "Create file: $VGSX_Project_Path/LICENSE-SDL2.txt"
+cp -p ../../LICENSE-SDL2.txt "$VGSX_Project_Path/LICENSE-SDL2.txt"
+
 echo "Create file: $VGSX_Project_Path/LICENSE-Musashi.txt"
 cp -p ../../LICENSE-Musashi.txt "$VGSX_Project_Path/LICENSE-Musashi.txt"
 
