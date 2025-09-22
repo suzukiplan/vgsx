@@ -45,6 +45,11 @@ void game_init(void)
     vgs_sprite(O_PLAYER, TRUE, g.player.x >> 8, g.player.y >> 8, 1, 0, P_PLAYER);
 }
 
+void print_center(int diff_y, const char* text)
+{
+    vgs_print_bg(2, (vgs_chr_width() - vgs_strlen(text)) / 2, vgs_chr_height() / 2 + diff_y, 0, text);
+}
+
 BOOL game_main(void)
 {
     vgs_vsync();
@@ -52,8 +57,8 @@ BOOL game_main(void)
     // Game Over
     if (g.player.collision) {
         if (!g.gameover) {
-            vgs_print_bg(2, (vgs_chr_width() - 10) / 2, vgs_chr_height() / 2 - 1, 0, "GAME  OVER");
-            vgs_print_bg(2, (vgs_chr_width() - 18) / 2, vgs_chr_height() / 2 + 1, 0, "PRESS START BUTTON");
+            print_center(-1, "GAME  OVER");
+            print_center(+1, "PRESS START BUTTON");
             g.gameover = TRUE;
         }
         return VGS_KEY_START ? FALSE : TRUE;
