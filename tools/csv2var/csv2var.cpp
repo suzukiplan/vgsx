@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <vector>
+#include <stdint.h>
 
 std::vector<int> binary;
 
