@@ -1012,6 +1012,18 @@ Remarks:
 - The project name specified in `name` is only used for the header output in README.md, so it can be changed later.
 - You can rename or move the project's root directory later without any issues.
 
+The steps to update VGS-X to the latest version in your project are as follows:
+
+```bash
+cd /path/to/your_project
+cd vgsx
+git pull origin master
+cd ..
+git commit -m "update submodule" vgsx
+```
+
+> Please note that since submodule initialization always occurs within `make all`, you must commit any submodule updates beforehand.
+
 ## makerom
 
 Path: [./tools/makerom](./tools/makerom/)
