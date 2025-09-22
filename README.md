@@ -960,6 +960,8 @@ Remarks
 - `u16l` : Input files shall be in little-endian (equivalent to `u16`).
 - `u16b` : Input files shall be in big-endian.
 
+> The `u16b` option is provided for cases where you wish to use binary files created in big-endian environments, such as the X68000, with VGS-X.
+
 ## bmp2chr
 
 Path: [./tools/bmp2chr](./tools/bmp2chr/)
