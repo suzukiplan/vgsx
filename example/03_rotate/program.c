@@ -62,10 +62,10 @@ BOOL game_main(void)
     // Turn left or right
     if (VGS_KEY_LEFT) {
         g.player.degree -= 5;
-        OAM[O_PLAYER].rotate = g.player.degree;
+        vgs_oam(O_PLAYER)->rotate = g.player.degree;
     } else if (VGS_KEY_RIGHT) {
         g.player.degree += 5;
-        OAM[O_PLAYER].rotate = g.player.degree;
+        vgs_oam(O_PLAYER)->rotate = g.player.degree;
     }
 
     // Set max speed
@@ -92,8 +92,8 @@ BOOL game_main(void)
 
     int32_t ox = g.player.x >> 8;
     int32_t oy = g.player.y >> 8;
-    OAM[O_PLAYER].x = ox;
-    OAM[O_PLAYER].y = oy;
+    vgs_oam(O_PLAYER)->x = ox;
+    vgs_oam(O_PLAYER)->y = oy;
     vgs_draw_pixel(0, ox + 7, oy + 7, 0xF10);
     vgs_draw_pixel(0, ox + 8, oy + 7, 0xF30);
     vgs_draw_pixel(0, ox + 7, oy + 8, 0xF30);

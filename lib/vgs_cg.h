@@ -218,6 +218,15 @@ void vgs_draw_character(uint8_t n, int32_t x, int32_t y, BOOL draw0, uint8_t pal
  */
 void vgs_sprite(uint16_t n, BOOL visible, int16_t x, int16_t y, uint8_t size, uint8_t pal, uint16_t ptn);
 
+/**
+ * @brief Get an OAM record
+ * @param n Sprite number (0 to 1023)
+ */
+static inline ObjectAttributeMemory* vgs_oam(uint16_t n)
+{
+    return &OAM[n];
+}
+
 #ifdef __cplusplus
 };
 #endif
