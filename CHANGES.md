@@ -4,6 +4,7 @@
 
 - CRT: Added a bitmap function: `vgs_read_pixel`
 - CRT: Added the functions: `vgs_scroll`,  `vgs_scroll_x` and  `vgs_scroll_y`
+- CRT: Added the gamepad functions.
 
 ## Version 0.9.0
 

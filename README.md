@@ -842,6 +842,23 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | cg:sp | `vgs_oam` | Get an [OAM](#oam-object-attribute-memory) record. |
 | bgm | `vgs_bgm_play` | Play [background music](#0xe01000o---play-vgm) |
 | sfx | `vgs_sfx_play` | Play [sound effect](#0xe01100o---play-sfx) |
+| gamepad | `vgs_key_up` | Check if the up directional pad is pressed. |
+| gamepad | `vgs_key_down` | Check if the down directional pad is pressed. |
+| gamepad | `vgs_key_left` | Check if the left directional pad is pressed. |
+| gamepad | `vgs_key_right` | Check if the right directional pad is pressed. |
+| gamepad | `vgs_key_a` | Check if the A button is pressed. |
+| gamepad | `vgs_key_b` | Check if the B button is pressed. |
+| gamepad | `vgs_key_x` | Check if the X button is pressed. |
+| gamepad | `vgs_key_y` | Check if the Y button is pressed. |
+| gamepad | `vgs_key_code` | Retrieve the state of the directional pad and ABXY buttons being pressed in `uint8_t` code format. |
+| gamepad | `vgs_key_code_up` | Key code check: D-pad Up |
+| gamepad | `vgs_key_code_down` | Key code check: D-pad Down |
+| gamepad | `vgs_key_code_left` | Key code check: D-pad Left |
+| gamepad | `vgs_key_code_right` | Key code check: D-pad Right |
+| gamepad | `vgs_key_code_a` | Key code check: A button |
+| gamepad | `vgs_key_code_b` | Key code check: B button |
+| gamepad | `vgs_key_code_x` | Key code check: X button |
+| gamepad | `vgs_key_code_y` | Key code check: Y button |
 | save | `vgs_save` | Save [save data](#0xe030xxio---savedata). |
 | save | `vgs_load` | Load [save data](#0xe030xxio---savedata).　|
 | save | `vgs_save_check` | Check the size of [save data](#0xe030xxio---savedata).　|

@@ -9,6 +9,7 @@ LIBCOBJ += vgs_string.o
 LIBCOBJ += vgs_math.o
 LIBCOBJ += vgs_ctype.o
 LIBCOBJ += vgs_save.o
+LIBCOBJ += vgs_key.o
 
 all: libc.a liblog.a
 	cp -p vgs_io.h ../src
