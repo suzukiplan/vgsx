@@ -56,6 +56,15 @@ cp -p template/sample.vgm "$2/vgm/sample.vgm"
 echo "Create file: $2/wav/sample.wav"
 cp -p template/sample.wav "$2/wav/sample.wav"
 
+echo "Create file: $2/LICENSE-Musashi.txt"
+cp -p ../../LICENSE-Musashi.txt "$2/LICENSE-Musashi.txt"
+
+echo "Create file: $2/LICENSE-ymfm.txt"
+cp -p ../../LICENSE-ymfm.txt "$2/LICENSE-ymfm.txt"
+
+echo "Create file: $2/LICENSE-VGSX.txt"
+cp -p ../../LICENSE-VGSX.txt "$2/LICENSE-VGSX.txt"
+
 echo "Setup git"
 cd "$2"
 git init

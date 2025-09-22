@@ -5,6 +5,7 @@
 - CRT: Renamed the OAM structure to ObjectAttributeMemory to avoid name conflicts with `#define` literals. **(Disruptive)**
 - Toolchain: Supports 16-bit format output with `bin2var`.
 - Toolchain: Added `csv2var`, a tool to convert Tiled Map Editor CSV files.
+- Toolchain: Place the license file using the `makeprj` command.
 
 ## Version 0.8.0
 
