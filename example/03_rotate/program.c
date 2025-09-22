@@ -35,13 +35,13 @@ void game_init(void)
         c2 |= c1;
         c2 <<= 8;
         c2 |= c1;
-        vgs_draw_box(1, i, i, VRAM_WIDTH - i - 1, VRAM_HEIGHT - i - 1, c2);
+        vgs_draw_box(1, i, i, vgs_draw_width() - i - 1, vgs_draw_height() - i - 1, c2);
     }
-    vgs_draw_boxf(0, 8, 8, VRAM_WIDTH - 9, VRAM_HEIGHT - 9, 0x0F2F60);
+    vgs_draw_boxf(0, 8, 8, vgs_draw_width() - 9, vgs_draw_height() - 9, 0x0F2F60);
 
     vgs_memset(&g, 0, sizeof(g));
-    g.player.x = ((VRAM_WIDTH - 16) / 2) << 8;
-    g.player.y = ((VRAM_HEIGHT - 16) / 2) << 8;
+    g.player.x = ((vgs_draw_width() - 16) / 2) << 8;
+    g.player.y = ((vgs_draw_height() - 16) / 2) << 8;
     vgs_sprite(O_PLAYER, TRUE, g.player.x >> 8, g.player.y >> 8, 1, 0, P_PLAYER);
 }
 
@@ -52,8 +52,8 @@ BOOL game_main(void)
     // Game Over
     if (g.player.collision) {
         if (!g.gameover) {
-            vgs_print_bg(2, 15, 11, 0, "GAME  OVER");
-            vgs_print_bg(2, 11, 13, 0, "PRESS START BUTTON");
+            vgs_print_bg(2, (vgs_chr_width() - 10) / 2, vgs_chr_height() / 2 - 1, 0, "GAME  OVER");
+            vgs_print_bg(2, (vgs_chr_width() - 18) / 2, vgs_chr_height() / 2 + 1, 0, "PRESS START BUTTON");
             g.gameover = TRUE;
         }
         return VGS_KEY_START ? FALSE : TRUE;
@@ -100,7 +100,7 @@ BOOL game_main(void)
     vgs_draw_pixel(0, ox + 8, oy + 8, 0xF50);
 
     // Collision check
-    g.player.collision = ox < 4 || oy < 4 || VRAM_WIDTH - 20 < ox || VRAM_HEIGHT - 20 < oy;
+    g.player.collision = ox < 4 || oy < 4 || vgs_draw_width() - 20 < ox || vgs_draw_height() - 20 < oy;
     return TRUE;
 }
 
