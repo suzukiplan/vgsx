@@ -1008,6 +1008,7 @@ Remarks:
 
 - The [makeprj command](./tools/makeprj/makeprj) is a simple shell script.
 - The project path must specify a directory that does not exist.
+- Project directories created with the `makeprj` command are initialized with Git and include the latest master branch of the suzukiplan/vgsx repository as a submodule at the time of command execution. This ensures compatibility even if VGS-X specifications change. Of course, you can also update the vgsx submodule to the latest state within your game project repository.
 - The project name specified in `name` is only used for the header output in README.md, so it can be changed later.
 - You can rename or move the project's root directory later without any issues.
 
