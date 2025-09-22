@@ -1,5 +1,10 @@
 # Changes
 
+## Version 0.9.0
+
+- Toolchain: Supports 16-bit format output with `bin2var`.
+- Toolchain: Added `csv2var`, a tool to convert Tiled Map Editor CSV files.
+
 ## Version 0.8.0
 
 - CRT: Added a math function: `vgs_hitchk`

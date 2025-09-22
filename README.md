@@ -906,6 +906,7 @@ vgs_putlog("d32=%d, u32=%u, str=%s", (int32_t)123, (uint32_t)456, "text");
 | [bin2var](#bin2var) | Convert binary files to C language code |
 | [bmp2chr](#bmp2chr) | Make [CHR](#character-pattern) data from .bmp file |
 | [bmp2pal](#bmp2pal) | Make initial [palette](#palette) from .bmp file |
+| [csv2var](#csv2var) | Convert Tiled Map Editor CSV format to binary format. |
 | [makeprj](#makeprj) | Create a new project |
 | [makerom](#makerom) | Make ROM file from Program and Assets |
 | [vgmplay](#vgmplay) | Play a .vgm file from the command line |
@@ -940,8 +941,16 @@ Converts a binary file into program code for a const uint8_t array in C language
 For example, it comes in handy when you want to use files such as stage map data, scenario scripts and text, or proprietary image formats within your program.
 
 ```
-bin2var /path/to/binary.rom
+bin2var /path/to/binary.rom [u8|u16|u16l|u16b]
 ```
+
+Remarks
+
+- The conversion results are output to standard output, so please redirect them for use.
+- `u8` : Output input file as numerical values in uint8_t (default)
+- `u16` : Output input file as numerical values in uint16_t (default)
+- `u16l` : Input files shall be in little-endian (equivalent to `u16`).
+- `u16b` : Input files shall be in big-endian.
 
 ## bmp2chr
 
@@ -967,6 +976,23 @@ Generates initial [Palette](#palette) data for VGS-X from 256-color .bmp (Window
 ```
 usage: bmp2pal input.bmp palette.dat
 ```
+
+## csv2var
+
+Path: [./tools/csv2var](./tools/csv2var/)
+
+Convert Tiled Map Editor CSV format to binary format.
+
+```
+usage: csv2var input.csv [u8|u16]
+```
+
+Remarks
+
+- This is designed to work only with CSV format for layerless Tiled Map Editor; operation with other formats is undefined.
+- The conversion results are output to standard output, so please redirect them for use.
+- `u8` : Output input file as numerical values in uint8_t (default)
+- `u16` : Output input file as numerical values in uint16_t (default)
 
 ## makeprj
 
