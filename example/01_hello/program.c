@@ -16,24 +16,29 @@ int main(int argc, char* argv[])
     vgs_draw_mode(2, TRUE);  // BG2: Bitmap Mode
     vgs_draw_mode(3, FALSE); // BG3: Character Pattern Mode
     VGS_VREG_SPOS = 3;       // Sprite: Displayed on top of BG3
-    vgs_print_bg(3, 11, 12, 0, "HELLO VGS-X WORLD!");
+    const char* text = "HELLO VGS-X WORLD!";
+    vgs_print_bg(3,
+                 (vgs_chr_width() - vgs_strlen(text)) / 2,
+                 12,
+                 0,
+                 text);
 
     uint32_t col = 1;
     int ptr = 0;
-    for (int y = 0; y < VRAM_HEIGHT; y++) {
-        vgs_draw_line(0, 0, y, VRAM_WIDTH - 1, y, col++);
+    for (int y = 0; y < vgs_draw_height(); y++) {
+        vgs_draw_line(0, 0, y, vgs_draw_width() - 1, y, col++);
     }
 
-    for (int x = -1; x < VRAM_WIDTH; x += 32) {
+    for (int x = -1; x < vgs_draw_width(); x += 32) {
         draw_star(x, 55);
         draw_star(x + 5, 120);
     }
 
-    for (int x = -15; x < VRAM_WIDTH; x += 15) {
+    for (int x = -15; x < vgs_draw_width(); x += 15) {
         vgs_draw_box(2, x, 45, x + 5, 40, 0x00FFFF);
     }
 
-    for (int x = VRAM_WIDTH + 3; -10 < x; x -= 15) {
+    for (int x = vgs_draw_width() + 3; -10 < x; x -= 15) {
         vgs_draw_box(2, x, 150, x + 5, 155, 0x00FFFF);
     }
 
@@ -41,21 +46,21 @@ int main(int argc, char* argv[])
     vgs_draw_boxf(2, 11 * 8 - 8 + 1, 12 * 8 - 8 + 1, 11 * 8 + 19 * 8 - 1, 12 * 8 + 16 - 1, 0x102040);
     vgs_draw_box(2, 11 * 8 - 8 - 2, 12 * 8 - 8 - 2, 11 * 8 + 19 * 8 + 2, 12 * 8 + 16 + 2, 0xCFCF00);
     vgs_draw_box(2, 11 * 8 - 8 - 4, 12 * 8 - 8 - 4, 11 * 8 + 19 * 8 + 4, 12 * 8 + 16 + 4, 0x7F7F00);
-    vgs_draw_boxf(2, 0, 0, VRAM_WIDTH - 1, 7, 0x00010101);
+    vgs_draw_boxf(2, 0, 0, vgs_draw_width() - 1, 7, 0x00010101);
 
-    for (int y = 0; y < VRAM_HEIGHT; y++) {
-        vgs_draw_pixel(1, vgs_rand() % VRAM_WIDTH, y, vgs_rand32());
+    for (int y = 0; y < vgs_draw_height(); y++) {
+        vgs_draw_pixel(1, vgs_rand() % vgs_draw_width(), y, vgs_rand32());
     }
 
     vgs_draw_box(2, 20, 90, 20 + 23, 90 + 23, 0xF02020);
     vgs_sprite(0, TRUE, 20, 90, 2, 0, '1');
-    vgs_draw_box(2, VRAM_WIDTH - 20 - 32, 86, VRAM_WIDTH - 20 - 32 + 31, 86 + 31, 0xF02020);
-    vgs_sprite(1, TRUE, VRAM_WIDTH - 20 - 32, 86, 3, 0, 'A');
+    vgs_draw_box(2, vgs_draw_width() - 20 - 32, 86, vgs_draw_width() - 20 - 32 + 31, 86 + 31, 0xF02020);
+    vgs_sprite(1, TRUE, vgs_draw_width() - 20 - 32, 86, 3, 0, 'A');
     vgs_oam(1)->scale = 10;
 
-    vgs_sprite(2, TRUE, VRAM_WIDTH / 2 - 32 - 8, 20, 0, 0, 'V');
-    vgs_sprite(3, TRUE, VRAM_WIDTH / 2 - 4, 20, 0, 0, 'G');
-    vgs_sprite(4, TRUE, VRAM_WIDTH / 2 + 32, 20, 0, 0, 'S');
+    vgs_sprite(2, TRUE, vgs_draw_width() / 2 - 32 - 8, 20, 0, 0, 'V');
+    vgs_sprite(3, TRUE, vgs_draw_width() / 2 - 4, 20, 0, 0, 'G');
+    vgs_sprite(4, TRUE, vgs_draw_width() / 2 + 32, 20, 0, 0, 'S');
     vgs_oam(2)->scale = 300;
     vgs_oam(2)->rotate = 90;
     vgs_oam(3)->scale = 200;
@@ -64,7 +69,7 @@ int main(int argc, char* argv[])
     vgs_oam(4)->rotate = 150;
     int sa[4] = {10, 10, 10, 10};
 
-    const int32_t baseX = 120;
+    const int32_t baseX = (vgs_draw_width() - (10 << 3)) / 2;
     const int32_t baseY = 140;
     vgs_sprite(5, TRUE, baseX, baseY, 9, 0, 256);                   // gamepad
     vgs_sprite(6, FALSE, baseX + 14, baseY + 31, 0, 0, 256 + 101);  // up button
@@ -81,7 +86,7 @@ int main(int argc, char* argv[])
     while (1) {
         vgs_vsync();
         VGS_VREG_SY1 = 1;
-        vgs_draw_pixel(1, vgs_rand() % VRAM_WIDTH, 0, vgs_rand32());
+        vgs_draw_pixel(1, vgs_rand() % vgs_draw_width(), 0, vgs_rand32());
         // vgs_draw_character(1, vgs_rand() % 320 - 4, 0, FALSE, 0, 0x20 + (vgs_rand() & 0x3F));
         vgs_oam(0)->rotate += 3;
 

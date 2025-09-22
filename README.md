@@ -285,6 +285,7 @@ Remarks:
 ## Name Table
 
 - The Name Table is a 256x256 x 4bytes two-dimensional array of the [attributes](#attribute). 
+- The visible displayed area is 40x25 in the Name Table (256x256).
 - By setting character patterns and attribute data to it, graphics can be displayed on the background layer.
 - The Name Table has a four-layer structure, with BG1 displayed on top of BG0, BG2 on top of BG1, BG3 on top of BG2, and BG4 on top of BG3.
 
@@ -818,6 +819,10 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | Category | Function | Description |
 |:------|:---------|:------------|
 | system | `vgs_vsync` | Synchronize the [V-SYNC](#0xe00000in---v-sync) (screen output with 60fps) |
+| cg:bg | `vgs_bg_width` | Get the [Name Table](#name-table) width in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode). |
+| cg:bg | `vgs_bg_height` | Get the [Name Table](#name-table) height in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode). |
+| cg:bg | `vgs_chr_width` | Get the Visible [Name Table](#name-table) width in Character Pattern Mode.|
+| cg:bg | `vgs_chr_height` | Get the Visible [Name Table](#name-table) height in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode). |
 | cg:bg | `vgs_put_bg` | Display a character on the [BG](#name-table) in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode) |
 | cg:bg | `vgs_print_bg` | Display a string on the [BG](#name-table) in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode) |
 | cg:bg | `vgs_cls_bg_all` | [Clear](#0xd20038-0xd20048-clear-screen) all BGs |

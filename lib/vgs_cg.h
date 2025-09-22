@@ -112,6 +112,42 @@ extern "C" {
 #endif
 
 /**
+ * @brief Get the Name Table width in Character Pattern Mode.
+ * @return The Name Table width in Character Pattern Mode. (VGS-X returns 256)
+ */
+static inline int vgs_bg_width()
+{
+    return BG_WIDTH;
+}
+
+/**
+ * @brief Get the Name Table height in Character Pattern Mode.
+ * @return The Name Table height in Character Pattern Mode. (VGS-X returns 256)
+ */
+static inline int vgs_bg_height()
+{
+    return BG_HEIGHT;
+}
+
+/**
+ * @brief Get the Visible Name Table width in Character Pattern Mode.
+ * @return The Visible Name Table width in Character Pattern Mode. (VGS-X returns 40)
+ */
+static inline int vgs_chr_width()
+{
+    return VRAM_WIDTH >> 3;
+}
+
+/**
+ * @brief Get the Visible Name Table height in Character Pattern Mode.
+ * @return The Visible Name Table height in Character Pattern Mode. (VGS-X returns 25)
+ */
+static inline int vgs_chr_height()
+{
+    return VRAM_HEIGHT >> 3;
+}
+
+/**
  * @brief Display a character on the BG in Character Pattern Mode
  * @param n Number of BG (0 to 3)
  * @param x X-coordinate of nametable (0 to 255)
@@ -153,6 +189,24 @@ void vgs_cls_bg(uint8_t n, uint32_t value);
 static inline void vgs_draw_mode(uint8_t n, BOOL isBitmap)
 {
     ((uint32_t*)0xD20028)[n & 3] = isBitmap;
+}
+
+/**
+ * @brief Get the display width in Bitmap Mode.
+ * @return The display width in Bitmap Mode. (VGS-X returns 320)
+ */
+static inline int vgs_draw_width()
+{
+    return VRAM_WIDTH;
+}
+
+/**
+ * @brief Get the display height in Bitmap Mode.
+ * @return The display height in Bitmap Mode. (VGS-X returns 200)
+ */
+static inline int vgs_draw_height()
+{
+    return VRAM_HEIGHT;
 }
 
 /**
