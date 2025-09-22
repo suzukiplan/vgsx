@@ -1,20 +1,19 @@
 #!/bin/sh
 
-if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 name /path/to/project"
+if [ "$#" -ne 1 ]; then
+    echo "Usage: makeprj /path/to/project"
     exit 1
 fi
 
-if [ -d $2 ]; then
-    echo "Directory $2 already exist."
+if [ -d $1 ]; then
+    echo "Directory $1 already exist."
     exit 1
 fi
 
-mkdir -p "$2"
-
-export VGSX_Project_Path="$2"
+mkdir -p "$1"
+export VGSX_Project_Path="$1"
 if ! [[ "$VGSX_Project_Path" =~ ^/ ]]; then
-    export VGSX_Project_Path="`realpath $2`"
+    export VGSX_Project_Path="`realpath $1`"
 fi
 
 echo "Project directory: $VGSX_Project_Path"
@@ -67,7 +66,7 @@ echo "Create file: $VGSX_Project_Path/Makefile"
 cp -p template/Makefile "$VGSX_Project_Path/Makefile"
 
 echo "Create file: $VGSX_Project_Path/README.md"
-echo "# $1" > "$VGSX_Project_Path/README.md"
+cp -p template/README.md "$VGSX_Project_Path/README.md"
 
 echo "Create file: $VGSX_Project_Path/src/main.c"
 cp -p template/main.c "$VGSX_Project_Path/src/main.c"
