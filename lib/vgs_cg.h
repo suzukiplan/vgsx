@@ -146,6 +146,16 @@ void vgs_cls_bg_all(uint32_t value);
 void vgs_cls_bg(uint8_t n, uint32_t value);
 
 /**
+ * @brief BG Mode Switching: Bitmap or Character Pattern
+ * @param n Number of BG (0 to 3)
+ * @param isBitmap If TRUE is specified, switch to Bitmap Mode; if FALSE is specified, switch to Character Pattern Mode.
+ */
+static inline void vgs_draw_mode(uint8_t n, BOOL isBitmap)
+{
+    ((uint32_t*)0xD20028)[n & 3] = isBitmap;
+}
+
+/**
  * @brief Draw a pixel on the BG in Bitmap Mode
  * @param n Number of BG (0 to 3)
  * @param x X-coordinate of VRAM (0 to 319)

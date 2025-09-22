@@ -23,9 +23,9 @@ struct GlobalVariables {
 
 void game_init(void)
 {
-    VGS_VREG_CLSA = 0;
-    VGS_VREG_BMP0 = TRUE;
-    VGS_VREG_BMP1 = TRUE;
+    vgs_cls_bg_all(0);
+    vgs_draw_mode(0, TRUE);
+    vgs_draw_mode(1, TRUE);
     VGS_VREG_SPOS = 0;
 
     for (int i = 0; i < 8; i++) {
