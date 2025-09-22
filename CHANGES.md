@@ -10,7 +10,8 @@
 - Toolchain: Added `csv2var`, a tool to convert Tiled Map Editor CSV files.
 - Toolchain: Place the license file using the `makeprj` command.
 - Toolchain: The `makeprj` command now supports specifying relative paths.
-- Perform verification before executing processing with the `makeprj` command.
+- Toolchain: Perform verification before executing processing with the `makeprj` command.
+- Toolchain: Remove the `name` option from the `makeprj` command. **(Disruptive)**
 
 ## Version 0.8.0
 
