@@ -63,8 +63,9 @@ int main(int argc, char* argv[])
     }
     cp = strchr(varName, '.');
     if (cp) *cp = 0;
+    printf("#include <vgs.h>\n\n");
     if (isU8) {
-        printf("const unsigned char rom_%s[%d] = {\n", varName, size);
+        printf("const uint8_t rom_%s[%d] = {\n", varName, size);
         bool firstLine = true;
         while (1) {
             unsigned char buf[16];
@@ -88,11 +89,12 @@ int main(int argc, char* argv[])
             }
         }
     } else {
-        printf("const unsigned short rom_%s[%d] = {\n", varName, size / 2);
+        printf("const uint16_t rom_%s[%d] = {\n", varName, size / 2);
         bool firstLine = true;
         while (1) {
             unsigned short buf[8];
             int readSize = (int)fread(buf, 1, sizeof(buf), fp);
+            readSize /= 2;
             if (readSize < 1) {
                 printf("\n");
                 break;

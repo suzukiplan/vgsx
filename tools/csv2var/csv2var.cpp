@@ -65,7 +65,8 @@ int main(int argc, char* argv[])
     if (cp) *cp = 0;
     int size = (int)binary.size();
     int offset = 0;
-    printf("const unsigned %s csv_%s[%d] = {\n", isU8 ? "char" : "short", varName, size);
+    printf("#include <vgs.h>\n\n");
+    printf("const %s csv_%s[%d] = {\n", isU8 ? "uint8_t" : "uint16_t", varName, size);
     bool firstLine = true;
     while (1) {
         unsigned char buf[16];
