@@ -15,7 +15,7 @@ int main(int argc, char* argv[])
     vgs_draw_mode(1, TRUE);  // BG1: Bitmap Mode
     vgs_draw_mode(2, TRUE);  // BG2: Bitmap Mode
     vgs_draw_mode(3, FALSE); // BG3: Character Pattern Mode
-    VGS_VREG_SPOS = 3;       // Sprite: Displayed on top of BG3
+    vgs_sprite_priority(3);  // Sprite: Displayed on top of BG3
     const char* text = "HELLO VGS-X WORLD!";
     vgs_print_bg(3,
                  (vgs_chr_width() - vgs_strlen(text)) / 2,

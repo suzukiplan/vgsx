@@ -3,7 +3,7 @@
 ## Version 0.9.0
 
 - CRT: Renamed the OAM structure to ObjectAttributeMemory to avoid name conflicts with `#define` literals. **(Disruptive)**
-- CRT: Added a sprite function: `vgs_oam`
+- CRT: Added the sprite functions: `vgs_sprite_priority` and `vgs_oam`
 - CRT: Added a bitmap function: `vgs_draw_mode`
 - CRT: Added the getting screen width functions: `vgs_bg_width`,  `vgs_bg_height`,  `vgs_chr_width`, `vgs_chr_width`, `vgs_draw_width` and `vgs_draw_height`
 - Toolchain: Supports 16-bit format output with `bin2var`.

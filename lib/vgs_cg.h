@@ -268,6 +268,15 @@ void vgs_draw_boxf(uint8_t n, int32_t x1, int32_t y1, int32_t x2, int32_t y2, ui
 void vgs_draw_character(uint8_t n, int32_t x, int32_t y, BOOL draw0, uint8_t pal, uint16_t ptn);
 
 /**
+ * @brief Set sprite display priority
+ * @param bg Specify the BG number (0 to 3) displayed beneath the sprite.
+ */
+static inline void vgs_sprite_priority(uint8_t bg)
+{
+    VGS_VREG_SPOS = bg;
+}
+
+/**
  * @brief Set OAM attribute values in bulk
  * @param n Sprite number (0 to 1023)
  * @param visible TRUE: Visible, FALSE: Hidden

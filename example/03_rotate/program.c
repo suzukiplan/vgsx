@@ -26,7 +26,7 @@ void game_init(void)
     vgs_cls_bg_all(0);
     vgs_draw_mode(0, TRUE);
     vgs_draw_mode(1, TRUE);
-    VGS_VREG_SPOS = 0;
+    vgs_sprite_priority(0);
 
     for (int i = 0; i < 8; i++) {
         uint32_t c1 = 0x0F * i + 0x0F;
