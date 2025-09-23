@@ -758,8 +758,8 @@ Reading `0xE02104` to `0xE02114` allows you to obtain the button identifiers for
 
 (Button Identifiers and Strings)
 
-| Button Identifer | `#define` name | Button Name String|
-|:----------------:|:---------------|
+| Button Identifer | `#define` name | Button Name String |
+|:----------------:|:---------------|:-------------------|
 | 0 | VGS_BUTTON_ID_UNKNOWN | `"UNKNOWN"` |
 | 1 | VGS_BUTTON_ID_A | `"A"` |
 | 2 | VGS_BUTTON_ID_B | `"B"` |
