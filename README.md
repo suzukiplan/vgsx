@@ -744,8 +744,8 @@ switch (gamepadType) {
 }
 ```
 
-| Key Identifer |
-|:----------------:|
+| Key Identifer | `#define` name |
+|:----------------:|:---------------|
 | 0 | VGS_KEY_ID_UNKNOWN |
 | 1 | VGS_KEY_ID_KEYBOARD |
 | 2 | VGS_KEY_ID_XBOX |
