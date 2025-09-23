@@ -16,13 +16,17 @@ int main(int argc, char* argv[])
     vgs_draw_mode(2, TRUE);  // BG2: Bitmap Mode
     vgs_draw_mode(3, FALSE); // BG3: Character Pattern Mode
     vgs_sprite_priority(3);  // Sprite: Displayed on top of BG3
-    const char* text = "HELLO VGS-X WORLD!";
+    const char* text = "Hello VGS-X World!";
     vgs_print_bg(3,
                  (vgs_chr_width() - vgs_strlen(text)) / 2,
                  12,
                  0,
                  text);
 
+    vgs_print_bg(3, 0, 20, 0, "The VGS-X is a 16-bits game console,");
+    vgs_print_bg(3, 0, 21, 0, "powered by MC68030 and YM series chips.");
+    vgs_print_bg(3, 0, 22, 0, "It's surprisingly easy to develop games,");
+    vgs_print_bg(3, 0, 23, 0, "compatibility can be easily maintained.");
     uint32_t col = 1;
     int ptr = 0;
     for (int y = 0; y < vgs_draw_height(); y++) {
