@@ -1,0 +1,8 @@
+program.elf
+program.rom
+program.o
+*.chr
+*.pal
+screen.bmp
+save*.dat
+palette.bin
