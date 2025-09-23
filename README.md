@@ -625,7 +625,7 @@ Remarks:
 
 - The upper 24 bits of `Argument` are ignored.
 - The `Source` must be either a Program Address (0x000000 to Size-of-Program) or a RAM Address (0xF00000 to 0xFFFFFF).
-- If the search results fall outside the valid address range, 0 is entered; if an address is found, the found address is entered.
+- If the search results fall outside the valid address range, 0 is entered; if a search data is found, the found index is entered.
 - Please note that performing searches not expected to yield results can result in significant overhead.
 
 ### 0xE00100-0xE00118[io] - Angle
