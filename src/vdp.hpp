@@ -56,7 +56,11 @@ class VDP
         uint32_t g_col;               // R24: Graphic Draw - Color (RGB888)
         uint32_t g_opt;               // R25: Graphic Draw - Option
         uint32_t g_exe;               // R26: Graphic Draw - Execute
-        uint32_t reserved[229];       // Reserved
+        uint32_t skip0;               // R27: Skip Rendering BG0
+        uint32_t skip1;               // R28: Skip Rendering BG1
+        uint32_t skip2;               // R29: Skip Rendering BG2
+        uint32_t skip3;               // R30: Skip Rendering BG3
+        uint32_t reserved[225];       // Reserved
     } Register;
 
     typedef struct {
@@ -175,7 +179,9 @@ class VDP
             this->ctx.display[i] = this->ctx.palette[0][0];
         }
         for (int i = 0; i < VDP_BG_NUM; i++) {
-            this->renderBG(i);
+            if (0 == ((uint32_t*)&this->ctx.reg.skip0)[i]) {
+                this->renderBG(i);
+            }
             if (i == this->ctx.reg.spos) {
                 this->renderSprites();
             }

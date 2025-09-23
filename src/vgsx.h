@@ -32,6 +32,32 @@
 class VGSX
 {
   public:
+    enum class GamepadType {
+        Unknown,
+        Keyboard,
+        XBOX,
+        NintendoSwitch,
+        PlayStation,
+    };
+
+    enum class ButtonId {
+        Unknown = 0, // (Error case)
+        A,           // XBOX, Nintendo Switch, Keyboard
+        B,           // XBOX, Nintendo Switch
+        X,           // XBOX, Nintendo Switch, Keyboard
+        Y,           // XBOX, Nintendo Switch
+        Z,           // Keyboard
+        S,           // Keyboard
+        Cross,       // PlayStation
+        Circle,      // PlayStation
+        Triangle,    // PlayStation
+        Square,      // PlayStation
+        Start,       // XBOX
+        Space,       // Keyboard
+        Plus,        // Nintendo Switch
+        Options,     // PlayStation
+    };
+
     typedef struct {
         const uint8_t* data;
         size_t size;
@@ -87,6 +113,7 @@ class VGSX
         SaveData save;
         SequencialData sqw;
         SequencialData sqr;
+        ButtonId getNameId;
     } ctx;
 
     struct KeyStatus {
@@ -99,8 +126,6 @@ class VGSX
         uint8_t x;
         uint8_t y;
         uint8_t start;
-        int8_t axisX;
-        int8_t axisY;
     } key;
 
     enum class LogLevel {
@@ -133,9 +158,16 @@ class VGSX
     int32_t getExitCode() { return this->exitCode; }
     void putlog(LogLevel level, const char* format, ...);
     void setLogCallback(void (*callback)(LogLevel level, const char* msg)) { this->logCallback = callback; }
+    inline void setGamepadType(GamepadType type) { this->gamepadType = type; }
+    ButtonId getButtonIdA();
+    ButtonId getButtonIdB();
+    ButtonId getButtonIdX();
+    ButtonId getButtonIdY();
+    ButtonId getButtonIdStart();
 
   private:
     void (*logCallback)(LogLevel level, const char* msg);
+    GamepadType gamepadType;
     bool exitFlag;
     int32_t exitCode;
     char lastError[256];

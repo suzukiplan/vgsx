@@ -80,12 +80,12 @@ uint32_t vgs_strlen(const char* str)
 {
     VGS_OUT_DMA_SOURCE = (uint32_t)str;
     VGS_OUT_DMA_ARGUMENT = 0;
-    const char* end = (const char*)VGS_IO_DMA_EXECUTE;
-    return end ? (uint32_t)(end - str) : 0;
+    return (uint32_t)VGS_IO_DMA_EXECUTE;
 }
 
 char* vgs_strchr(const char* str, int c)
 {
+    c &= 0xFF;
     while (*str) {
         if (c == *str) {
             return (char*)str;
@@ -158,4 +158,15 @@ char* vgs_strstr(const char* str1, const char* str2)
         str1++;
     }
     return NULL;
+}
+
+char* vgs_strcpy(char* dest, const char* src)
+{
+    vgs_memcpy(dest, src, vgs_strlen(src) + 1);
+    return dest;
+}
+
+char* vgs_strcat(char* dest, const char* src)
+{
+    return vgs_strcpy(&dest[vgs_strlen(dest)], src);
 }

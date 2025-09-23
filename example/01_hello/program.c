@@ -85,7 +85,7 @@ int main(int argc, char* argv[])
     vgs_bgm_play(0);
     while (1) {
         vgs_vsync();
-        VGS_VREG_SY1 = 1;
+        vgs_scroll_y(1, 1);
         vgs_draw_pixel(1, vgs_rand() % vgs_draw_width(), 0, vgs_rand32());
         // vgs_draw_character(1, vgs_rand() % 320 - 4, 0, FALSE, 0, 0x20 + (vgs_rand() & 0x3F));
         vgs_oam(0)->rotate += 3;
@@ -104,15 +104,15 @@ int main(int argc, char* argv[])
                 vgs_oam(i + 1)->rotate += i * 3;
             }
         }
-        vgs_oam(6)->visible = VGS_KEY_UP;
-        vgs_oam(7)->visible = VGS_KEY_DOWN;
-        vgs_oam(8)->visible = VGS_KEY_LEFT;
-        vgs_oam(9)->visible = VGS_KEY_RIGHT;
-        vgs_oam(10)->visible = VGS_KEY_START;
-        vgs_oam(11)->visible = VGS_KEY_A;
-        vgs_oam(12)->visible = VGS_KEY_B;
-        vgs_oam(13)->visible = VGS_KEY_X;
-        vgs_oam(14)->visible = VGS_KEY_Y;
+        vgs_oam(6)->visible = vgs_key_up();
+        vgs_oam(7)->visible = vgs_key_down();
+        vgs_oam(8)->visible = vgs_key_left();
+        vgs_oam(9)->visible = vgs_key_right();
+        vgs_oam(10)->visible = vgs_key_start();
+        vgs_oam(11)->visible = vgs_key_a();
+        vgs_oam(12)->visible = vgs_key_b();
+        vgs_oam(13)->visible = vgs_key_x();
+        vgs_oam(14)->visible = vgs_key_y();
     }
 
     return 0;

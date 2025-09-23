@@ -121,6 +121,24 @@ int vgs_strncmp(const char* str1, const char* str2, int n);
  */
 char* vgs_strstr(const char* str1, const char* str2);
 
+/**
+ * @brief Copy the string.
+ * @param dest Destination buffer
+ * @param src Source buffer
+ * @return the same value as dest.
+ * @remark Use with caution to avoid buffer overwrites.
+ */
+char* vgs_strcpy(char* dest, const char* src);
+
+/**
+ * @brief Concatenate two strings.
+ * @param dest Concatenated string.
+ * @param src Source string for concatenation.
+ * @return the same value as dest.
+ * @remark Use with caution to avoid buffer overwrites.
+ */
+char* vgs_strcat(char* dest, const char* src);
+
 #ifdef __cplusplus
 };
 #endif

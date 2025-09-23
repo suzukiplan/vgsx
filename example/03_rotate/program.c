@@ -11,6 +11,9 @@ enum OamIndex {
 
 struct GlobalVariables {
     BOOL gameover;
+    BOOL open_flag;
+    BOOL playback_replay;
+    uint8_t key_code;
     struct Player {
         int32_t x;
         int32_t y;
@@ -26,7 +29,7 @@ void game_init(void)
     vgs_cls_bg_all(0);
     vgs_draw_mode(0, TRUE);
     vgs_draw_mode(1, TRUE);
-    vgs_sprite_priority(0);
+    vgs_sprite_priority(1);
 
     for (int i = 0; i < 8; i++) {
         uint32_t c1 = 0x0F * i + 0x0F;
@@ -39,7 +42,7 @@ void game_init(void)
     }
     vgs_draw_boxf(0, 8, 8, vgs_draw_width() - 9, vgs_draw_height() - 9, 0x0F2F60);
 
-    vgs_memset(&g, 0, sizeof(g));
+    vgs_memset(&g.player, 0, sizeof(g.player));
     g.player.x = ((vgs_draw_width() - 16) / 2) << 8;
     g.player.y = ((vgs_draw_height() - 16) / 2) << 8;
     vgs_sprite(O_PLAYER, TRUE, g.player.x >> 8, g.player.y >> 8, 1, 0, P_PLAYER);
@@ -57,26 +60,61 @@ BOOL game_main(void)
     // Game Over
     if (g.player.collision) {
         if (!g.gameover) {
+            char buf[80];
             print_center(-1, "GAME  OVER");
-            print_center(+1, "PRESS START BUTTON");
+            vgs_strcpy(buf, "PUSH ");
+            vgs_strcat(buf, vgs_button_name(vgs_button_id_start()));
+            vgs_strcat(buf, " TO TRY AGAIN");
+            print_center(+1, buf);
+            vgs_strcpy(buf, "PUSH ");
+            vgs_strcat(buf, vgs_button_name(vgs_button_id_y()));
+            vgs_strcat(buf, " TO PLAYBACK RETRY");
+            print_center(+2, buf);
             g.gameover = TRUE;
+            if (!g.playback_replay) {
+                vgs_seq_commit();
+            }
         }
-        return VGS_KEY_START ? FALSE : TRUE;
+        g.open_flag = FALSE;
+        g.playback_replay = vgs_key_y();
+        if (vgs_key_start() || g.playback_replay) {
+            g.gameover = FALSE;
+            return FALSE;
+        }
+        return TRUE;
+    }
+
+    // Open replay data
+    if (!g.open_flag) {
+        g.open_flag = TRUE;
+        if (g.playback_replay) {
+            vgs_seq_open_r(0);
+        } else {
+            vgs_seq_open_w(0);
+        }
+    }
+
+    // Acquire key_code
+    if (g.playback_replay) {
+        g.key_code = vgs_seq_read();
+    } else {
+        g.key_code = vgs_key_code();
+        vgs_seq_write(g.key_code);
     }
 
     // Turn left or right
-    if (VGS_KEY_LEFT) {
+    if (vgs_key_code_left(g.key_code)) {
         g.player.degree -= 5;
         vgs_oam(O_PLAYER)->rotate = g.player.degree;
-    } else if (VGS_KEY_RIGHT) {
+    } else if (vgs_key_code_right(g.key_code)) {
         g.player.degree += 5;
         vgs_oam(O_PLAYER)->rotate = g.player.degree;
     }
 
     // Set max speed
-    if (VGS_KEY_A) {
+    if (vgs_key_code_a(g.key_code)) {
         g.player.max_speed = 300;
-    } else if (VGS_KEY_B) {
+    } else if (vgs_key_code_b(g.key_code)) {
         g.player.max_speed = 80;
     } else {
         g.player.max_speed = 160;
@@ -99,18 +137,20 @@ BOOL game_main(void)
     int32_t oy = g.player.y >> 8;
     vgs_oam(O_PLAYER)->x = ox;
     vgs_oam(O_PLAYER)->y = oy;
-    vgs_draw_pixel(0, ox + 7, oy + 7, 0xF10);
-    vgs_draw_pixel(0, ox + 8, oy + 7, 0xF30);
-    vgs_draw_pixel(0, ox + 7, oy + 8, 0xF30);
-    vgs_draw_pixel(0, ox + 8, oy + 8, 0xF50);
+    vgs_draw_pixel(1, ox + 7, oy + 7, 0xF0F0F0);
+    vgs_draw_pixel(1, ox + 8, oy + 7, 0xA0A0A0);
+    vgs_draw_pixel(1, ox + 7, oy + 8, 0x808080);
+    vgs_draw_pixel(1, ox + 8, oy + 8, 0x505050);
 
     // Collision check
-    g.player.collision = ox < 4 || oy < 4 || vgs_draw_width() - 20 < ox || vgs_draw_height() - 20 < oy;
+    g.player.collision = vgs_read_pixel(1, ox + 7 + (vgs_cos(g.player.degree) * 8 / 256), oy + 7 + (vgs_sin(g.player.degree) * 8 / 256));
+    // ox < 4 || oy < 4 || vgs_draw_width() - 20 < ox || vgs_draw_height() - 20 < oy;
     return TRUE;
 }
 
 int main(int argc, char* argv[])
 {
+    vgs_memset(&g, 0, sizeof(g));
     while (TRUE) {
         game_init();
         while (game_main()) {

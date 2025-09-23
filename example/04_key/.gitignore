@@ -5,4 +5,4 @@ program.o
 *.pal
 screen.bmp
 save*.dat
-
+palette.bin

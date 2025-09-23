@@ -412,6 +412,10 @@ You can specify the magnification rate as a percentage on the `scale`, either 0 
 |0xD20060 |  R24 | G_COL    | [Bitmap Graphic Draw](#0xd2004c-0xd20068-bitmap-graphic-draw) |
 |0xD20064 |  R25 | G_OPT    | [Bitmap Graphic Draw](#0xd2004c-0xd20068-bitmap-graphic-draw) |
 |0xD20068 |  R26 | G_EXE    | [Bitmap Graphic Draw](#0xd2004c-0xd20068-bitmap-graphic-draw) |
+|0xD2006C | R27 | SKIP0 | [Skip Rendering BG0](#0xd2006c-0xd20078-skip-rendering-a-specific-bg) |
+|0xD20070 | R28 | SKIP1 | [Skip Rendering BG1](#0xd2006c-0xd20078-skip-rendering-a-specific-bg) |
+|0xD20074 | R29 | SKIP2 | [Skip Rendering BG2](#0xd2006c-0xd20078-skip-rendering-a-specific-bg) |
+|0xD20078 | R30 | SKIP3 | [Skip Rendering BG3](#0xd2006c-0xd20078-skip-rendering-a-specific-bg) |
 
 Please note that access to the VDP register must always be 4-byte aligned.
 
@@ -486,6 +490,14 @@ Remarks:
 
 > Please note that character drawing performance is not as good as in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode).
 
+### 0xD2006C-0xD20078: Skip Rendering a Specific BG
+
+Skip displaying a specified BG plane.
+
+This function only skips displaying information on the screen. Information that has already been drawn remains stored in VRAM, so you can read the pixel color using `vgs_read_pixel`.
+
+For example, we envision using this by skipping the rendering of specific background planes designated as “collision detection surfaces,” enabling collision detection via `vgs_read_pixel`.
+
 ## I/O Map
 
 I/O instructions in VGS-X can be executed by performing input/output operations on the memory area from 0xE00000 to 0xEFFFFF.
@@ -510,15 +522,23 @@ Note that all addresses and values for I/O instructions must be specified as 32-
 | 0xE00118 |  o  |  -  | [Angle: Get int-cos (-256 to 256)](#0xe00100-0xe00118io---angle) |
 | 0xE01000 |  -  |  o  | [Play VGM](#0xe01000o---play-vgm) |
 | 0xE01100 |  -  |  o  | [Play SFX](#0xe01100o---play-sfx) |
-| 0xE02000 |  o  |  -  | [Gamepad: D-pad - Up](#0xe200xxi---gamepad) |
-| 0xE02004 |  o  |  -  | [Gamepad: D-pad - Down](#0xe200xxi---gamepad) |
-| 0xE02008 |  o  |  -  | [Gamepad: D-pad - Left](#0xe200xxi---gamepad) |
-| 0xE0200C |  o  |  -  | [Gamepad: D-pad - Right](#0xe200xxi---gamepad) |
-| 0xE02010 |  o  |  -  | [Gamepad: A button](#0xe200xxi---gamepad) |
-| 0xE02014 |  o  |  -  | [Gamepad: B button](#0xe200xxi---gamepad) |
-| 0xE02018 |  o  |  -  | [Gamepad: X button](#0xe200xxi---gamepad) |
-| 0xE0201C |  o  |  -  | [Gamepad: Y button](#0xe200xxi---gamepad) |
-| 0xE02020 |  o  |  -  | [Gamepad: Start button](#0xe200xxi---gamepad) |
+| 0xE02000 |  o  |  -  | [Gamepad: D-pad - Up](#0xe020xxi---gamepad) |
+| 0xE02004 |  o  |  -  | [Gamepad: D-pad - Down](#0xe020xxi---gamepad) |
+| 0xE02008 |  o  |  -  | [Gamepad: D-pad - Left](#0xe020xxi---gamepad) |
+| 0xE0200C |  o  |  -  | [Gamepad: D-pad - Right](#0xe020xxi---gamepad) |
+| 0xE02010 |  o  |  -  | [Gamepad: A button](#0xe020xxi---gamepad) |
+| 0xE02014 |  o  |  -  | [Gamepad: B button](#0xe020xxi---gamepad) |
+| 0xE02018 |  o  |  -  | [Gamepad: X button](#0xe020xxi---gamepad) |
+| 0xE0201C |  o  |  -  | [Gamepad: Y button](#0xe020xxi---gamepad) |
+| 0xE02020 |  o  |  -  | [Gamepad: Start button](#0xe020xxi---gamepad) |
+| 0xE02100 |  o  |  o  | [Gamepad: Type](#0xe021xxio---gamepad-types) |
+| 0xE02104 |  o  |  -  | [Gamepad: Get Button ID of A button](#0xe021xxio---gamepad-types) |
+| 0xE02108 |  o  |  -  | [Gamepad: Get Button ID of B button](#0xe021xxio---gamepad-types) |
+| 0xE0210C |  o  |  -  | [Gamepad: Get Button ID of X button](#0xe021xxio---gamepad-types) |
+| 0xE02110 |  o  |  -  | [Gamepad: Get Button ID of Y button](#0xe021xxio---gamepad-types) |
+| 0xE02114 |  o  |  -  | [Gamepad: Get Button ID of Start button](#0xe021xxio---gamepad-types) |
+| 0xE02118 |  -  |  o  | [Gamepad: Get Button Name String (Button ID)](#0xe021xxio---gamepad-types) |
+| 0xE0211C |  -  |  o  | [Gamepad: Get Button Name String (RAM address)](#0xe021xxio---gamepad-types) |
 | 0xE03000 |  o  |  -  | [SaveData: Address](#0xe030xxio---savedata) |
 | 0xE03004 |  o  |  o  | [SaveData: Execute Save(out) or Load(in)](#0xe030xxio---savedata) |
 | 0xE03008 |  -  |  o  | [SaveData: Check Size](#0xe030xxio---savedata) |
@@ -605,7 +625,7 @@ Remarks:
 
 - The upper 24 bits of `Argument` are ignored.
 - The `Source` must be either a Program Address (0x000000 to Size-of-Program) or a RAM Address (0xF00000 to 0xFFFFFF).
-- If the search results fall outside the valid address range, 0 is entered; if an address is found, the found address is entered.
+- If the search results fall outside the valid address range, 0 is entered; if a search data is found, the found index is entered.
 - Please note that performing searches not expected to yield results can result in significant overhead.
 
 ### 0xE00100-0xE00118[io] - Angle
@@ -683,7 +703,7 @@ You can encode to the .wav format compatible with VGS-X by specifying the follow
 ffmpeg -i input.mp3 -acodec pcm_s16le -ar 44100 -ac 2 sfx.wav
 ```
 
-### 0xE200xx[i] - Gamepad
+### 0xE020xx[i] - Gamepad
 
 The VGS-X can capture button inputs from the `D-pad`, `ABXY` buttons, and `Start` button as shown in the diagram below.
 
@@ -701,12 +721,69 @@ The following table shows the button assignments for a typical gamepad:
 
 | VGS-X and XBOX | PC Keybord | Switch | PlayStation | 
 |:-:|:-:|:-:|:-:|
-|D-pad| Cursor | D-pad | D-pad |
 | `A` | `Z` | `B` | `Cross` |
 | `B` | `X` | `A` | `Circle` |
-| `X` | `A` | `Y` | `Rectangle` |
+| `X` | `A` | `Y` | `Square` |
 | `Y` | `S` | `X` | `Triangle` |
 | `Start` | `Space` | `Plus` | `Options` |
+
+### 0xE021xx[io] - Gamepad Types
+
+VGS-X supports input from either a PC keyboard, Xbox controller, PlayStation controller, or Nintendo Switch controller.
+
+Reading `0xE02100` allows you to obtain the type of gamepad currently connected.
+
+```c
+uint32_t gamepadType = VGS_KEY_TYPE;
+switch (gamepadType) {
+    case VGS_KEY_ID_KEYBOARD: vgs_putlog("Keyboard connected!"); break;
+    case VGS_KEY_ID_XBOX: vgs_putlog("XBOX gamepad connected!"); break;
+    case VGS_KEY_ID_SWITCH: vgs_putlog("Switch gamepad connected!"); break;
+    case VGS_KEY_ID_PS: vgs_putlog("PlayStation gamepad connected!"); break;
+    default: vgs_putlog("Unknown gamepad connected!");
+}
+```
+
+| Key Identifer | `#define` name |
+|:----------------:|:---------------|
+| 0 | VGS_KEY_ID_UNKNOWN |
+| 1 | VGS_KEY_ID_KEYBOARD |
+| 2 | VGS_KEY_ID_XBOX |
+| 3 | VGS_KEY_ID_SWITCH |
+| 4 | VGS_KEY_ID_PS |
+
+> Additionally, you can overwrite the type of currently connected gamepad by writing a key identifier to `0xE02100`. (This is intended for **debugging purposes only**.)
+
+Reading `0xE02104` to `0xE02114` allows you to obtain the button identifiers for the currently connected gamepad's ABXY or Start buttons.
+
+(Button Identifiers and Strings)
+
+| Button Identifer | `#define` name | Button Name String |
+|:----------------:|:---------------|:-------------------|
+| 0 | VGS_BUTTON_ID_UNKNOWN | `"UNKNOWN"` |
+| 1 | VGS_BUTTON_ID_A | `"A"` |
+| 2 | VGS_BUTTON_ID_B | `"B"` |
+| 3 | VGS_BUTTON_ID_X | `"X"` |
+| 4 | VGS_BUTTON_ID_Y | `"Y"` |
+| 5 | VGS_BUTTON_ID_Z | `"Z"` |
+| 6 | VGS_BUTTON_ID_S | `"S"` |
+| 7 | VGS_BUTTON_ID_CROSS | `"CROSS"` |
+| 8 | VGS_BUTTON_ID_CIRCLE | `"CIRCLE"` |
+| 9 | VGS_BUTTON_ID_TRIANGLE | `"TRIANGLE"` |
+| 10 | VGS_BUTTON_ID_SQUARE | `"SQUARE"` |
+| 11 | VGS_BUTTON_ID_START | `"START"` |
+| 12 | VGS_BUTTON_ID_SPACE | `"SPACE"` |
+| 13 | VGS_BUTTON_ID_PLUS | `"+"` |
+| 14 | VGS_BUTTON_ID_OPTIONS | `"OPTIONS"` |
+
+You can retrieve the Button Name String by setting the button ID to `0xE02108` and then specifying the address of RAM with at least 12 bytes of allocated space at `0xE0211C`.
+
+```c
+char buf[12];
+VGS_OUT_KEY_BUTTON_ID = 14;
+VGS_OUT_KEY_BUTTON_NAME = (uint32_t)buf;
+// buf will be "OPTIONS\0"
+```
 
 ### 0xE030xx[io] - SaveData
 
@@ -828,16 +905,39 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | cg:bg | `vgs_cls_bg_all` | [Clear](#0xd20038-0xd20048-clear-screen) all BGs |
 | cg:bg | `vgs_cls_bg` | [Clear](#0xd20038-0xd20048-clear-screen) a specific BG |
 | cg:bmp | `vgs_draw_mode` | [BG Mode](#0xd20028-0xd20034-bitmap-mode) Switching: Bitmap or Character Pattern |
+| cg:bmp | `vgs_read_pixel` | Read a [pixel](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode)|
 | cg:bmp | `vgs_draw_pixel` | Draw a [pixel](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
 | cg:bmp | `vgs_draw_line` | Draw a [line](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
 | cg:bmp | `vgs_draw_box` | Draw a [rectangle](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
 | cg:bmp | `vgs_draw_boxf` | Draw a [filled-rectangle](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
 | cg:bmp | `vgs_draw_character` | Draw a [character-pattern](#character-pattern) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
+| cg:bg+bmp | `vgs_skip_bg` | [Skip Rendering a Specific BG](#0xd2006c-0xd20078-skip-rendering-a-specific-bg) |
+| cg:bg+bmp | `vgs_scroll` | [Scroll](#0xd20008-0xd20024-hardware-scroll) BG |
+| cg:bg+bmp | `vgs_scroll_x` | [Scroll](#0xd20008-0xd20024-hardware-scroll) BG (X) |
+| cg:bg+bmp | `vgs_scroll_y` | [Scroll](#0xd20008-0xd20024-hardware-scroll) BG (Y) |
 | cg:sp | `vgs_sprite_priority` | Set sprite display priority. |
 | cg:sp | `vgs_sprite` | Set [OAM](#oam-object-attribute-memory) attribute values in bulk |
+| cg:sp | `vgs_sprite_hide_all` | Make all sprites invisible. |
 | cg:sp | `vgs_oam` | Get an [OAM](#oam-object-attribute-memory) record. |
 | bgm | `vgs_bgm_play` | Play [background music](#0xe01000o---play-vgm) |
 | sfx | `vgs_sfx_play` | Play [sound effect](#0xe01100o---play-sfx) |
+| gamepad | `vgs_key_up` | Check if the up directional pad is pressed. |
+| gamepad | `vgs_key_down` | Check if the down directional pad is pressed. |
+| gamepad | `vgs_key_left` | Check if the left directional pad is pressed. |
+| gamepad | `vgs_key_right` | Check if the right directional pad is pressed. |
+| gamepad | `vgs_key_a` | Check if the A button is pressed. |
+| gamepad | `vgs_key_b` | Check if the B button is pressed. |
+| gamepad | `vgs_key_x` | Check if the X button is pressed. |
+| gamepad | `vgs_key_y` | Check if the Y button is pressed. |
+| gamepad | `vgs_key_code` | Retrieve the state of the directional pad and ABXY buttons being pressed in `uint8_t` code format. |
+| gamepad | `vgs_key_code_up` | Key code check: D-pad Up |
+| gamepad | `vgs_key_code_down` | Key code check: D-pad Down |
+| gamepad | `vgs_key_code_left` | Key code check: D-pad Left |
+| gamepad | `vgs_key_code_right` | Key code check: D-pad Right |
+| gamepad | `vgs_key_code_a` | Key code check: A button |
+| gamepad | `vgs_key_code_b` | Key code check: B button |
+| gamepad | `vgs_key_code_x` | Key code check: X button |
+| gamepad | `vgs_key_code_y` | Key code check: Y button |
 | save | `vgs_save` | Save [save data](#0xe030xxio---savedata). |
 | save | `vgs_load` | Load [save data](#0xe030xxio---savedata).　|
 | save | `vgs_save_check` | Check the size of [save data](#0xe030xxio---savedata).　|
@@ -866,6 +966,8 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | string | `vgs_stricmp` | Case-insensitive string comparison. |
 | string | `vgs_strncmp` | Comparing strings of a specific length |
 | string | `vgs_strstr` | Search for a specific string in a string |
+| string | `vgs_strcpy` | Copy the string. |
+| string | `vgs_strcat` | Concatenate two strings. |
 | ctype | `vgs_atoi` | Convert a string to an integer. |
 | ctype | `vgs_isdigit` | Check if a character is a number |
 | ctype | `vgs_isupper` | Check if a character is an uppercase |

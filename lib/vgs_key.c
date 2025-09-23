@@ -22,16 +22,25 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#pragma once
-#include "vgs_bgm.h"
-#include "vgs_cg.h"
-#include "vgs_ctype.h"
-#include "vgs_io.h"
-#include "vgs_key.h"
-#include "vgs_math.h"
-#include "vgs_save.h"
-#include "vgs_sfx.h"
-#include "vgs_stdint.h"
-#include "vgs_stdlib.h"
-#include "vgs_string.h"
-#include "vgs_system.h"
+#include <vgs.h>
+
+uint8_t vgs_key_code(void)
+{
+    uint8_t result = vgs_key_up() ? VGS_KEY_BIT_UP : 0;
+    if (vgs_key_down()) { result |= VGS_KEY_BIT_DOWN; }
+    if (vgs_key_left()) { result |= VGS_KEY_BIT_LEFT; }
+    if (vgs_key_right()) { result |= VGS_KEY_BIT_RIGHT; }
+    if (vgs_key_a()) { result |= VGS_KEY_BIT_A; }
+    if (vgs_key_b()) { result |= VGS_KEY_BIT_B; }
+    if (vgs_key_x()) { result |= VGS_KEY_BIT_X; }
+    if (vgs_key_y()) { result |= VGS_KEY_BIT_Y; }
+    return result;
+}
+
+const char* vgs_button_name(uint32_t buttonId)
+{
+    static char buf[12];
+    VGS_OUT_BUTTON_ID = buttonId;
+    VGS_OUT_BUTTON_NAME = (uint32_t)buf;
+    return buf;
+}

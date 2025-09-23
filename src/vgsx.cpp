@@ -76,6 +76,28 @@ typedef struct {
     uint32_t sh_entsize;
 } Elf32_Shdr;
 
+static std::string getButtonIdString(VGSX::ButtonId buttonId)
+{
+    switch (buttonId) {
+        case VGSX::ButtonId::Unknown: return "UNKNOWN";
+        case VGSX::ButtonId::A: return "A";
+        case VGSX::ButtonId::B: return "B";
+        case VGSX::ButtonId::X: return "X";
+        case VGSX::ButtonId::Y: return "Y";
+        case VGSX::ButtonId::Z: return "Z";
+        case VGSX::ButtonId::S: return "S";
+        case VGSX::ButtonId::Cross: return "CROSS";
+        case VGSX::ButtonId::Circle: return "CIRCLE";
+        case VGSX::ButtonId::Triangle: return "TRIANGLE";
+        case VGSX::ButtonId::Square: return "SQUARE";
+        case VGSX::ButtonId::Start: return "START";
+        case VGSX::ButtonId::Space: return "SPACE";
+        case VGSX::ButtonId::Plus: return "+";
+        case VGSX::ButtonId::Options: return "OPTIONS";
+    }
+    return "";
+}
+
 static uint16_t b2h16(uint16_t n)
 {
     uint8_t* ptr = (uint8_t*)&n;
@@ -186,6 +208,7 @@ extern "C" void m68k_write_memory_32(uint32_t address, uint32_t value)
 
 VGSX::VGSX()
 {
+    this->gamepadType = GamepadType::Keyboard;
     this->logCallback = nullptr;
     memset(&this->ctx, 0, sizeof(this->ctx));
     memset(&this->key, 0, sizeof(this->key));
@@ -670,6 +693,20 @@ uint32_t VGSX::inPort(uint32_t address)
                 return 0xFFFFFFFF;
             }
             return this->ctx.sqr.buffer[this->ctx.sqr.readOffset++];
+
+        case VGS_ADDR_KEY_TYPE:
+            switch (this->gamepadType) {
+                case GamepadType::Keyboard: return VGS_KEY_ID_KEYBOARD;
+                case GamepadType::XBOX: return VGS_KEY_ID_XBOX;
+                case GamepadType::NintendoSwitch: return VGS_KEY_ID_SWITCH;
+                case GamepadType::PlayStation: return VGS_KEY_ID_PS;
+                default: return VGS_KEY_ID_UNKNOWN;
+            }
+        case VGS_ADDR_BUTTON_ID_A: return static_cast<uint32_t>(this->getButtonIdA());
+        case VGS_ADDR_BUTTON_ID_B: return static_cast<uint32_t>(this->getButtonIdB());
+        case VGS_ADDR_BUTTON_ID_X: return static_cast<uint32_t>(this->getButtonIdX());
+        case VGS_ADDR_BUTTON_ID_Y: return static_cast<uint32_t>(this->getButtonIdY());
+        case VGS_ADDR_BUTTON_ID_START: return static_cast<uint32_t>(this->getButtonIdStart());
     }
     return 0xFFFFFFFF;
 }
@@ -800,6 +837,43 @@ void VGSX::outPort(uint32_t address, uint32_t value)
             return;
         }
 
+        case VGS_ADDR_KEY_TYPE:
+            switch (value) {
+                case VGS_KEY_ID_KEYBOARD: this->gamepadType = GamepadType::Keyboard; return;
+                case VGS_KEY_ID_XBOX: this->gamepadType = GamepadType::XBOX; return;
+                case VGS_KEY_ID_SWITCH: this->gamepadType = GamepadType::NintendoSwitch; return;
+                case VGS_KEY_ID_PS: this->gamepadType = GamepadType::PlayStation; return;
+                default: this->gamepadType = GamepadType::Unknown; return;
+            }
+
+        case VGS_ADDR_BUTTON_ID:
+            switch (value) {
+                case VGS_BUTTON_ID_A: this->ctx.getNameId = ButtonId::A; return;
+                case VGS_BUTTON_ID_B: this->ctx.getNameId = ButtonId::B; return;
+                case VGS_BUTTON_ID_X: this->ctx.getNameId = ButtonId::X; return;
+                case VGS_BUTTON_ID_Y: this->ctx.getNameId = ButtonId::Y; return;
+                case VGS_BUTTON_ID_Z: this->ctx.getNameId = ButtonId::Z; return;
+                case VGS_BUTTON_ID_S: this->ctx.getNameId = ButtonId::S; return;
+                case VGS_BUTTON_ID_CROSS: this->ctx.getNameId = ButtonId::Cross; return;
+                case VGS_BUTTON_ID_CIRCLE: this->ctx.getNameId = ButtonId::Circle; return;
+                case VGS_BUTTON_ID_TRIANGLE: this->ctx.getNameId = ButtonId::Triangle; return;
+                case VGS_BUTTON_ID_SQUARE: this->ctx.getNameId = ButtonId::Square; return;
+                case VGS_BUTTON_ID_START: this->ctx.getNameId = ButtonId::Start; return;
+                case VGS_BUTTON_ID_SPACE: this->ctx.getNameId = ButtonId::Space; return;
+                case VGS_BUTTON_ID_PLUS: this->ctx.getNameId = ButtonId::Plus; return;
+                case VGS_BUTTON_ID_OPTIONS: this->ctx.getNameId = ButtonId::Options; return;
+                default: this->ctx.getNameId = ButtonId::Unknown; return;
+            }
+        case VGS_ADDR_BUTTON_NAME: {
+            uint32_t addr = value & 0x00FFFFFF;
+            if (0xF00000 <= addr && addr + 16 < 0xFFFFFF) {
+                addr &= 0x0FFFFF;
+                auto str = getButtonIdString(this->ctx.getNameId);
+                memcpy(&this->ctx.ram[addr], str.c_str(), str.length() + 1);
+            }
+            return;
+        }
+
         case 0xE7FFFC: // Exit
             this->exitFlag = true;
             this->exitCode = (int32_t)value;
@@ -812,24 +886,30 @@ void VGSX::dmaMemcpy()
     const uint32_t size = this->ctx.dma.argument;
     uint32_t destination = this->ctx.dma.destination & 0x00FFFFFF;
     uint32_t source = this->ctx.dma.source & 0x00FFFFFF;
-    // validate destination
-    if (0xF00000 <= destination && destination + size <= 0xFFFFFF) {
-        // validate source
-        if (source < this->ctx.programSize) {
-            if (source + size <= this->ctx.programSize) {
-                // Execute copy from ROM to RAM
-                memcpy(&this->ctx.ram[destination & 0x0FFFFF],
-                       &this->ctx.program[source],
-                       size);
-                return;
-            }
-        } else if (0xF00000 <= source) {
-            if (source + size <= 0xFFFFFF) {
-                // Execute copy from RAM to RAM
-                memmove(&this->ctx.ram[destination & 0x0FFFFF],
-                        &this->ctx.ram[source & 0x0FFFFF],
-                        size);
-                return;
+
+    // putlog(LogLevel::I, "DMA_copy: dest=0x%06X, src=0x%06X, size=%u", destination, source, size);
+
+    // validate size
+    if (size < 0x100000) {
+        // validate destination
+        if (0xF00000 <= destination && destination + size <= 0xFFFFFF) {
+            // validate source
+            if (source < this->ctx.programSize) {
+                if (source + size <= this->ctx.programSize) {
+                    // Execute copy from ROM to RAM
+                    memcpy(&this->ctx.ram[destination & 0x0FFFFF],
+                           &this->ctx.program[source],
+                           size);
+                    return;
+                }
+            } else if (0xF00000 <= source) {
+                if (source + size <= 0xFFFFFF) {
+                    // Execute copy from RAM to RAM
+                    memmove(&this->ctx.ram[destination & 0x0FFFFF],
+                            &this->ctx.ram[source & 0x0FFFFF],
+                            size);
+                    return;
+                }
             }
         }
     }
@@ -841,11 +921,17 @@ void VGSX::dmaMemset()
     uint32_t destination = this->ctx.dma.destination & 0x00FFFFFF;
     const uint8_t c = this->ctx.dma.source & 0xFF;
     const uint32_t size = this->ctx.dma.argument;
-    // validate destination
-    if (0xF00000 <= destination && destination + size <= 0xFFFFFF) {
-        // Bulk set to RAM
-        memset(&this->ctx.ram[destination & 0x0FFFFF], c, size);
-        return;
+
+    // putlog(LogLevel::I, "DMA_set: dest=0x%06X, char=0x%02X, size=%u", destination, c, size);
+
+    // validate size
+    if (size < 0x100000) {
+        // validate destination
+        if (0xF00000 <= destination && destination + size <= 0xFFFFFF) {
+            // Bulk set to RAM
+            memset(&this->ctx.ram[destination & 0x0FFFFF], c, size);
+            return;
+        }
     }
     putlog(LogLevel::W, "Ignored an invalid DMA_set(0x%06X, 0x%02X, %u)", destination, c, size);
 }
@@ -854,24 +940,84 @@ uint32_t VGSX::dmaSearch()
 {
     uint8_t search = this->ctx.dma.argument & 0xFF;
     uint32_t ptr = this->ctx.dma.source & 0x00FFFFFF;
+    uint32_t result = 0;
+
+    // putlog(LogLevel::I, "DMA_search(0x%06X, 0x%02X)", ptr, search);
+
     // validate source
     if (ptr < this->ctx.programSize) {
         // Search from ROM
-        for (; ptr < this->ctx.programSize; ptr++) {
+        for (; ptr < this->ctx.programSize; ptr++, result++) {
             if (this->ctx.program[ptr] == search) {
-                return ptr; // found
+                return result; // found
             }
         }
         return 0; // not found
     } else if (0xF00000 <= ptr && ptr < 0xFFFFFF) {
         // Search from RAM
-        for (; ptr < 0xFFFFFF; ptr++) {
+        ptr &= 0x0FFFFF;
+        for (; ptr < 0x1000000; ptr++, result++) {
             if (this->ctx.ram[ptr] == search) {
-                return ptr; // found
+                return result; // found
             }
         }
         return 0; // not found
     }
     putlog(LogLevel::W, "Ignored an invalid DMA_search(0x%06X, 0x%02X)", ptr, search);
     return 0;
+}
+
+VGSX::ButtonId VGSX::getButtonIdA()
+{
+    switch (this->gamepadType) {
+        case GamepadType::Keyboard: return ButtonId::Z;
+        case GamepadType::XBOX: return ButtonId::A;
+        case GamepadType::NintendoSwitch: return ButtonId::B;
+        case GamepadType::PlayStation: return ButtonId::Cross;
+        default: return ButtonId::Unknown;
+    }
+}
+
+VGSX::ButtonId VGSX::getButtonIdB()
+{
+    switch (this->gamepadType) {
+        case GamepadType::Keyboard: return ButtonId::X;
+        case GamepadType::XBOX: return ButtonId::B;
+        case GamepadType::NintendoSwitch: return ButtonId::A;
+        case GamepadType::PlayStation: return ButtonId::Circle;
+        default: return ButtonId::Unknown;
+    }
+}
+
+VGSX::ButtonId VGSX::getButtonIdX()
+{
+    switch (this->gamepadType) {
+        case GamepadType::Keyboard: return ButtonId::A;
+        case GamepadType::XBOX: return ButtonId::X;
+        case GamepadType::NintendoSwitch: return ButtonId::Y;
+        case GamepadType::PlayStation: return ButtonId::Square;
+        default: return ButtonId::Unknown;
+    }
+}
+
+VGSX::ButtonId VGSX::getButtonIdY()
+{
+    switch (this->gamepadType) {
+        case GamepadType::Keyboard: return ButtonId::S;
+        case GamepadType::XBOX: return ButtonId::Y;
+        case GamepadType::NintendoSwitch: return ButtonId::X;
+        case GamepadType::PlayStation: return ButtonId::Triangle;
+        default: return ButtonId::Unknown;
+    }
+}
+
+VGSX::ButtonId VGSX::getButtonIdStart()
+{
+    switch (this->gamepadType) {
+        case GamepadType::Keyboard: return ButtonId::Space;
+        case GamepadType::XBOX: return ButtonId::Start;
+        case GamepadType::NintendoSwitch: return ButtonId::Plus;
+        case GamepadType::PlayStation: return ButtonId::Options;
+        default: return ButtonId::Unknown;
+    }
 }
