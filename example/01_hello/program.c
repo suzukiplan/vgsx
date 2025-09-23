@@ -74,18 +74,19 @@ int main(int argc, char* argv[])
     int sa[4] = {10, 10, 10, 10};
 
     const int32_t baseX = (vgs_draw_width() - (10 << 3)) / 2;
-    const int32_t baseY = 140;
-    vgs_sprite(5, TRUE, baseX, baseY, 9, 0, 256);                   // gamepad
-    vgs_sprite(6, FALSE, baseX + 14, baseY + 31, 0, 0, 256 + 101);  // up button
-    vgs_sprite(7, FALSE, baseX + 14, baseY + 43, 0, 0, 256 + 101);  // down button
-    vgs_sprite(8, FALSE, baseX + 7, baseY + 38, 0, 0, 256 + 100);   // left button
-    vgs_sprite(9, FALSE, baseX + 19, baseY + 38, 0, 0, 256 + 100);  // right button
-    vgs_sprite(10, FALSE, baseX + 33, baseY + 48, 1, 0, 256 + 102); // start button
-    vgs_sprite(11, FALSE, baseX + 61, baseY + 44, 0, 0, 256 + 106); // A button
-    vgs_sprite(12, FALSE, baseX + 68, baseY + 36, 0, 0, 256 + 106); // B button
-    vgs_sprite(13, FALSE, baseX + 54, baseY + 36, 0, 0, 256 + 106); // X button
-    vgs_sprite(14, FALSE, baseX + 61, baseY + 28, 0, 0, 256 + 106); // Y button
+    const int32_t baseY = 100;
+    vgs_sprite(5, TRUE, baseX, baseY, 9, 0, 128);                   // gamepad
+    vgs_sprite(6, FALSE, baseX + 14, baseY + 31, 0, 0, 128 + 101);  // up button
+    vgs_sprite(7, FALSE, baseX + 14, baseY + 43, 0, 0, 128 + 101);  // down button
+    vgs_sprite(8, FALSE, baseX + 7, baseY + 38, 0, 0, 128 + 100);   // left button
+    vgs_sprite(9, FALSE, baseX + 19, baseY + 38, 0, 0, 128 + 100);  // right button
+    vgs_sprite(10, FALSE, baseX + 33, baseY + 48, 1, 0, 128 + 102); // start button
+    vgs_sprite(11, FALSE, baseX + 61, baseY + 44, 0, 0, 128 + 106); // A button
+    vgs_sprite(12, FALSE, baseX + 68, baseY + 36, 0, 0, 128 + 106); // B button
+    vgs_sprite(13, FALSE, baseX + 54, baseY + 36, 0, 0, 128 + 106); // X button
+    vgs_sprite(14, FALSE, baseX + 61, baseY + 28, 0, 0, 128 + 106); // Y button
 
+    vgs_draw_boxf(2, baseX - 8, baseY + 20, baseX + 88, baseY + 58, 1);
     vgs_bgm_play(0);
     while (1) {
         vgs_vsync();
