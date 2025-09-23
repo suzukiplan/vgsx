@@ -2,6 +2,7 @@
 
 ## Version 0.10.0
 
+- Core: Implemented Gamepad's Type and Name interfaces.
 - Core: Added the Skip Rendering a Specific BG function.
 - CRT: Added a function: `vgs_skip_bg`
 - CRT: Added a bitmap function: `vgs_read_pixel`

@@ -186,6 +186,7 @@ extern "C" void m68k_write_memory_32(uint32_t address, uint32_t value)
 
 VGSX::VGSX()
 {
+    this->gamepadType = GamepadType::Keyboard;
     this->logCallback = nullptr;
     memset(&this->ctx, 0, sizeof(this->ctx));
     memset(&this->key, 0, sizeof(this->key));
@@ -874,4 +875,59 @@ uint32_t VGSX::dmaSearch()
     }
     putlog(LogLevel::W, "Ignored an invalid DMA_search(0x%06X, 0x%02X)", ptr, search);
     return 0;
+}
+
+VGSX::GamepadKeyName VGSX::getKeyNameA()
+{
+    switch (this->gamepadType) {
+        case GamepadType::Keyboard: return GamepadKeyName::Z;
+        case GamepadType::XBOX: return GamepadKeyName::A;
+        case GamepadType::NintendoSwitch: return GamepadKeyName::B;
+        case GamepadType::PlayStation: return GamepadKeyName::Cross;
+        default: return GamepadKeyName::Unknown;
+    }
+}
+
+VGSX::GamepadKeyName VGSX::getKeyNameB()
+{
+    switch (this->gamepadType) {
+        case GamepadType::Keyboard: return GamepadKeyName::X;
+        case GamepadType::XBOX: return GamepadKeyName::B;
+        case GamepadType::NintendoSwitch: return GamepadKeyName::A;
+        case GamepadType::PlayStation: return GamepadKeyName::Circle;
+        default: return GamepadKeyName::Unknown;
+    }
+}
+
+VGSX::GamepadKeyName VGSX::getKeyNameX()
+{
+    switch (this->gamepadType) {
+        case GamepadType::Keyboard: return GamepadKeyName::A;
+        case GamepadType::XBOX: return GamepadKeyName::X;
+        case GamepadType::NintendoSwitch: return GamepadKeyName::Y;
+        case GamepadType::PlayStation: return GamepadKeyName::Square;
+        default: return GamepadKeyName::Unknown;
+    }
+}
+
+VGSX::GamepadKeyName VGSX::getKeyNameY()
+{
+    switch (this->gamepadType) {
+        case GamepadType::Keyboard: return GamepadKeyName::S;
+        case GamepadType::XBOX: return GamepadKeyName::Y;
+        case GamepadType::NintendoSwitch: return GamepadKeyName::X;
+        case GamepadType::PlayStation: return GamepadKeyName::Triangle;
+        default: return GamepadKeyName::Unknown;
+    }
+}
+
+VGSX::GamepadKeyName VGSX::getKeyNameStart()
+{
+    switch (this->gamepadType) {
+        case GamepadType::Keyboard: return GamepadKeyName::Space;
+        case GamepadType::XBOX: return GamepadKeyName::Start;
+        case GamepadType::NintendoSwitch: return GamepadKeyName::Plus;
+        case GamepadType::PlayStation: return GamepadKeyName::Options;
+        default: return GamepadKeyName::Unknown;
+    }
 }

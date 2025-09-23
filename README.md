@@ -716,7 +716,7 @@ The following table shows the button assignments for a typical gamepad:
 |D-pad| Cursor | D-pad | D-pad |
 | `A` | `Z` | `B` | `Cross` |
 | `B` | `X` | `A` | `Circle` |
-| `X` | `A` | `Y` | `Rectangle` |
+| `X` | `A` | `Y` | `Square` |
 | `Y` | `S` | `X` | `Triangle` |
 | `Start` | `Space` | `Plus` | `Options` |
 
