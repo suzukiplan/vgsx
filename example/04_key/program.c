@@ -10,7 +10,7 @@ enum KeyID {
 
 static void put(enum KeyID id)
 {
-    static int pos = 4;
+    static int pos = 5;
     VGS_IO_KEY_TYPE = VGS_KEY_ID_KEYBOARD;
     for (int i = 0; i < 4; i++) {
         VGS_IO_KEY_TYPE = i + 1;
@@ -22,7 +22,7 @@ static void put(enum KeyID id)
             case KeyID_Y: buttonId = vgs_button_id_y(); break;
             case KeyID_START: buttonId = vgs_button_id_start(); break;
         }
-        vgs_print_bg(0, i * 9, pos, 0, vgs_button_name(buttonId));
+        vgs_print_bg(0, 2 + i * 9, pos, 0, vgs_button_name(buttonId));
     }
     pos++;
     if (26 <= pos) {
@@ -41,9 +41,9 @@ int main(int argc, char* argv[])
     } prev;
     vgs_memset(&prev, 0, sizeof(prev));
 
-    vgs_print_bg(0, 0, 0, 0, "PUSH BUTTON");
-    vgs_print_bg(0, 0, 2, 0, "KEYBOARD XBOX     SWITCH   PS");
-    vgs_print_bg(0, 0, 3, 0, "-------- -------- -------- --------");
+    vgs_print_bg(0, 2, 1, 0, "PUSH BUTTON");
+    vgs_print_bg(0, 2, 3, 0, "KEYBOARD XBOX     SWITCH   PS");
+    vgs_print_bg(0, 2, 4, 0, "-------- -------- -------- --------");
 
     while (TRUE) {
         vgs_vsync();
