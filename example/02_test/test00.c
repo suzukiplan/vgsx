@@ -168,6 +168,13 @@ int main(int argc, char* argv)
     }
     vgs_putlog("vgs_seq_read = %d", expect32d(vgs_seq_read(), -1));
 
+    vgs_putlog("vgs_key_type = %d", expect32d(vgs_key_type(), VGS_KEY_ID_KEYBOARD));
+    vgs_putlog("vgs_button_id_a = %d (%s key)", expect32d(vgs_button_id_a(), VGS_BUTTON_ID_Z), vgs_button_name(VGS_BUTTON_ID_Z));
+    vgs_putlog("vgs_button_id_b = %d (%s key)", expect32d(vgs_button_id_b(), VGS_BUTTON_ID_X), vgs_button_name(VGS_BUTTON_ID_X));
+    vgs_putlog("vgs_button_id_x = %d (%s key)", expect32d(vgs_button_id_x(), VGS_BUTTON_ID_A), vgs_button_name(VGS_BUTTON_ID_A));
+    vgs_putlog("vgs_button_id_y = %d (%s key)", expect32d(vgs_button_id_y(), VGS_BUTTON_ID_S), vgs_button_name(VGS_BUTTON_ID_S));
+    vgs_putlog("vgs_button_id_start = %d (%s key)", expect32d(vgs_button_id_start(), VGS_BUTTON_ID_SPACE), vgs_button_name(VGS_BUTTON_ID_SPACE));
+
     vgs_putlog("call vgs_exit with exit code: %d", ret);
     vgs_exit(ret);
     vgs_putlog("return 456 (this message will not shown)");

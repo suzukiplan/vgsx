@@ -156,6 +156,49 @@ static inline BOOL vgs_key_code_x(uint8_t code) { return code & VGS_KEY_BIT_X ? 
  */
 static inline BOOL vgs_key_code_y(uint8_t code) { return code & VGS_KEY_BIT_Y ? TRUE : FALSE; }
 
+/**
+ * @brief Get the type of connected gamepad.
+ * @return VGS_KEY_ID_*
+ */
+static inline uint32_t vgs_key_type(void) { return VGS_IO_KEY_TYPE; }
+
+/**
+ * @brief Get the button identifier for the A button on the connected gamepad.
+ * @return VGS_BUTTON_ID_*
+ */
+static inline uint32_t vgs_button_id_a(void) { return VGS_IN_BUTTON_ID_A; }
+
+/**
+ * @brief Get the button identifier for the B button on the connected gamepad.
+ * @return VGS_BUTTON_ID_*
+ */
+static inline uint32_t vgs_button_id_b(void) { return VGS_IN_BUTTON_ID_B; }
+
+/**
+ * @brief Get the button identifier for the X button on the connected gamepad.
+ * @return VGS_BUTTON_ID_*
+ */
+static inline uint32_t vgs_button_id_x(void) { return VGS_IN_BUTTON_ID_X; }
+
+/**
+ * @brief Get the button identifier for the Y button on the connected gamepad.
+ * @return VGS_BUTTON_ID_*
+ */
+static inline uint32_t vgs_button_id_y(void) { return VGS_IN_BUTTON_ID_Y; }
+
+/**
+ * @brief Get the button identifier for the START button on the connected gamepad.
+ * @return VGS_BUTTON_ID_*
+ */
+static inline uint32_t vgs_button_id_start(void) { return VGS_IN_BUTTON_ID_START; }
+
+/**
+ * @brief Get the name string of the button identifier.
+ * @param buttonId Button identifier for retrieving the name string.
+ * @return a name string terminated by 0.
+ */
+const char* vgs_button_name(uint32_t buttonId);
+
 #ifdef __cplusplus
 };
 #endif

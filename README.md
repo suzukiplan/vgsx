@@ -522,15 +522,23 @@ Note that all addresses and values for I/O instructions must be specified as 32-
 | 0xE00118 |  o  |  -  | [Angle: Get int-cos (-256 to 256)](#0xe00100-0xe00118io---angle) |
 | 0xE01000 |  -  |  o  | [Play VGM](#0xe01000o---play-vgm) |
 | 0xE01100 |  -  |  o  | [Play SFX](#0xe01100o---play-sfx) |
-| 0xE02000 |  o  |  -  | [Gamepad: D-pad - Up](#0xe200xxi---gamepad) |
-| 0xE02004 |  o  |  -  | [Gamepad: D-pad - Down](#0xe200xxi---gamepad) |
-| 0xE02008 |  o  |  -  | [Gamepad: D-pad - Left](#0xe200xxi---gamepad) |
-| 0xE0200C |  o  |  -  | [Gamepad: D-pad - Right](#0xe200xxi---gamepad) |
-| 0xE02010 |  o  |  -  | [Gamepad: A button](#0xe200xxi---gamepad) |
-| 0xE02014 |  o  |  -  | [Gamepad: B button](#0xe200xxi---gamepad) |
-| 0xE02018 |  o  |  -  | [Gamepad: X button](#0xe200xxi---gamepad) |
-| 0xE0201C |  o  |  -  | [Gamepad: Y button](#0xe200xxi---gamepad) |
-| 0xE02020 |  o  |  -  | [Gamepad: Start button](#0xe200xxi---gamepad) |
+| 0xE02000 |  o  |  -  | [Gamepad: D-pad - Up](#0xe020xxi---gamepad) |
+| 0xE02004 |  o  |  -  | [Gamepad: D-pad - Down](#0xe020xxi---gamepad) |
+| 0xE02008 |  o  |  -  | [Gamepad: D-pad - Left](#0xe020xxi---gamepad) |
+| 0xE0200C |  o  |  -  | [Gamepad: D-pad - Right](#0xe020xxi---gamepad) |
+| 0xE02010 |  o  |  -  | [Gamepad: A button](#0xe020xxi---gamepad) |
+| 0xE02014 |  o  |  -  | [Gamepad: B button](#0xe020xxi---gamepad) |
+| 0xE02018 |  o  |  -  | [Gamepad: X button](#0xe020xxi---gamepad) |
+| 0xE0201C |  o  |  -  | [Gamepad: Y button](#0xe020xxi---gamepad) |
+| 0xE02020 |  o  |  -  | [Gamepad: Start button](#0xe020xxi---gamepad) |
+| 0xE02100 |  o  |  o  | [Gamepad: Type](#0xe021xxio---gamepad-types) |
+| 0xE02104 |  o  |  -  | [Gamepad: Get Button ID of A button](#0xe021xxio---gamepad-types) |
+| 0xE02108 |  o  |  -  | [Gamepad: Get Button ID of B button](#0xe021xxio---gamepad-types) |
+| 0xE0210C |  o  |  -  | [Gamepad: Get Button ID of X button](#0xe021xxio---gamepad-types) |
+| 0xE02110 |  o  |  -  | [Gamepad: Get Button ID of Y button](#0xe021xxio---gamepad-types) |
+| 0xE02114 |  o  |  -  | [Gamepad: Get Button ID of Start button](#0xe021xxio---gamepad-types) |
+| 0xE02118 |  -  |  o  | [Gamepad: Get Button Name String (Button ID)](#0xe021xxio---gamepad-types) |
+| 0xE0211C |  -  |  o  | [Gamepad: Get Button Name String (RAM address)](#0xe021xxio---gamepad-types) |
 | 0xE03000 |  o  |  -  | [SaveData: Address](#0xe030xxio---savedata) |
 | 0xE03004 |  o  |  o  | [SaveData: Execute Save(out) or Load(in)](#0xe030xxio---savedata) |
 | 0xE03008 |  -  |  o  | [SaveData: Check Size](#0xe030xxio---savedata) |
@@ -695,7 +703,7 @@ You can encode to the .wav format compatible with VGS-X by specifying the follow
 ffmpeg -i input.mp3 -acodec pcm_s16le -ar 44100 -ac 2 sfx.wav
 ```
 
-### 0xE200xx[i] - Gamepad
+### 0xE020xx[i] - Gamepad
 
 The VGS-X can capture button inputs from the `D-pad`, `ABXY` buttons, and `Start` button as shown in the diagram below.
 
@@ -713,12 +721,69 @@ The following table shows the button assignments for a typical gamepad:
 
 | VGS-X and XBOX | PC Keybord | Switch | PlayStation | 
 |:-:|:-:|:-:|:-:|
-|D-pad| Cursor | D-pad | D-pad |
 | `A` | `Z` | `B` | `Cross` |
 | `B` | `X` | `A` | `Circle` |
 | `X` | `A` | `Y` | `Square` |
 | `Y` | `S` | `X` | `Triangle` |
 | `Start` | `Space` | `Plus` | `Options` |
+
+### 0xE021xx[io] - Gamepad Types
+
+VGS-X supports input from either a PC keyboard, Xbox controller, PlayStation controller, or Nintendo Switch controller.
+
+Reading `0xE02100` allows you to obtain the type of gamepad currently connected.
+
+```c
+uint32_t gamepadType = VGS_KEY_TYPE;
+switch (gamepadType) {
+    case VGS_KEY_ID_KEYBOARD: vgs_putlog("Keyboard connected!"); break;
+    case VGS_KEY_ID_XBOX: vgs_putlog("XBOX gamepad connected!"); break;
+    case VGS_KEY_ID_SWITCH: vgs_putlog("Switch gamepad connected!"); break;
+    case VGS_KEY_ID_PS: vgs_putlog("PlayStation gamepad connected!"); break;
+    default: vgs_putlog("Unknown gamepad connected!");
+}
+```
+
+| Key Identifer |
+|:----------------:|
+| 0 | VGS_KEY_ID_UNKNOWN |
+| 1 | VGS_KEY_ID_KEYBOARD |
+| 2 | VGS_KEY_ID_XBOX |
+| 3 | VGS_KEY_ID_SWITCH |
+| 4 | VGS_KEY_ID_PS |
+
+> Additionally, you can overwrite the type of currently connected gamepad by writing a key identifier to `0xE02100`. (This is intended for **debugging purposes only**.)
+
+Reading `0xE02104` to `0xE02114` allows you to obtain the button identifiers for the currently connected gamepad's ABXY or Start buttons.
+
+(Button Identifiers and Strings)
+
+| Button Identifer | `#define` name | Button Name String|
+|:----------------:|:---------------|
+| 0 | VGS_BUTTON_ID_UNKNOWN | `"UNKNOWN"` |
+| 1 | VGS_BUTTON_ID_A | `"A"` |
+| 2 | VGS_BUTTON_ID_B | `"B"` |
+| 3 | VGS_BUTTON_ID_X | `"X"` |
+| 4 | VGS_BUTTON_ID_Y | `"Y"` |
+| 5 | VGS_BUTTON_ID_Z | `"Z"` |
+| 6 | VGS_BUTTON_ID_S | `"S"` |
+| 7 | VGS_BUTTON_ID_CROSS | `"CROSS"` |
+| 8 | VGS_BUTTON_ID_CIRCLE | `"CIRCLE"` |
+| 9 | VGS_BUTTON_ID_TRIANGLE | `"TRIANGLE"` |
+| 10 | VGS_BUTTON_ID_SQUARE | `"SQUARE"` |
+| 11 | VGS_BUTTON_ID_START | `"START"` |
+| 12 | VGS_BUTTON_ID_SPACE | `"SPACE"` |
+| 13 | VGS_BUTTON_ID_PLUS | `"+"` |
+| 14 | VGS_BUTTON_ID_OPTIONS | `"OPTIONS"` |
+
+You can retrieve the Button Name String by setting the button ID to `0xE02108` and then specifying the address of RAM with at least 12 bytes of allocated space at `0xE0211C`.
+
+```c
+char buf[12];
+VGS_OUT_KEY_BUTTON_ID = 14;
+VGS_OUT_KEY_BUTTON_NAME = (uint32_t)buf;
+// buf will be "OPTIONS\0"
+```
 
 ### 0xE030xx[io] - SaveData
 

@@ -36,3 +36,11 @@ uint8_t vgs_key_code(void)
     if (vgs_key_y()) { result |= VGS_KEY_BIT_Y; }
     return result;
 }
+
+const char* vgs_button_name(uint32_t buttonId)
+{
+    static char buf[12];
+    VGS_OUT_BUTTON_ID = buttonId;
+    VGS_OUT_BUTTON_NAME = (uint32_t)buf;
+    return buf;
+}

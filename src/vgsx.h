@@ -33,28 +33,29 @@ class VGSX
 {
   public:
     enum class GamepadType {
+        Unknown,
         Keyboard,
         XBOX,
         NintendoSwitch,
         PlayStation,
     };
 
-    enum class GamepadKeyName {
-        Unknown,  // (Error case)
-        A,        // XBOX, Nintendo Switch, Keyboard
-        B,        // XBOX, Nintendo Switch
-        X,        // XBOX, Nintendo Switch, Keyboard
-        Y,        // XBOX, Nintendo Switch
-        Z,        // Keyboard
-        S,        // Keyboard
-        Cross,    // PlayStation
-        Circle,   // PlayStation
-        Triangle, // PlayStation
-        Square,   // PlayStation
-        Start,    // XBOX
-        Space,    // Keyboard
-        Plus,     // Nintendo Switch
-        Options,  // PlayStation
+    enum class ButtonId {
+        Unknown = 0, // (Error case)
+        A,           // XBOX, Nintendo Switch, Keyboard
+        B,           // XBOX, Nintendo Switch
+        X,           // XBOX, Nintendo Switch, Keyboard
+        Y,           // XBOX, Nintendo Switch
+        Z,           // Keyboard
+        S,           // Keyboard
+        Cross,       // PlayStation
+        Circle,      // PlayStation
+        Triangle,    // PlayStation
+        Square,      // PlayStation
+        Start,       // XBOX
+        Space,       // Keyboard
+        Plus,        // Nintendo Switch
+        Options,     // PlayStation
     };
 
     typedef struct {
@@ -112,6 +113,7 @@ class VGSX
         SaveData save;
         SequencialData sqw;
         SequencialData sqr;
+        ButtonId getNameId;
     } ctx;
 
     struct KeyStatus {
@@ -134,7 +136,6 @@ class VGSX
     };
 
     VDP vdp;
-    GamepadType gamepadType;
     void* vgmHelper;
 
     VGSX();
@@ -157,14 +158,16 @@ class VGSX
     int32_t getExitCode() { return this->exitCode; }
     void putlog(LogLevel level, const char* format, ...);
     void setLogCallback(void (*callback)(LogLevel level, const char* msg)) { this->logCallback = callback; }
-    GamepadKeyName getKeyNameA();
-    GamepadKeyName getKeyNameB();
-    GamepadKeyName getKeyNameX();
-    GamepadKeyName getKeyNameY();
-    GamepadKeyName getKeyNameStart();
+    inline void setGamepadType(GamepadType type) { this->gamepadType = type; }
+    ButtonId getButtonIdA();
+    ButtonId getButtonIdB();
+    ButtonId getButtonIdX();
+    ButtonId getButtonIdY();
+    ButtonId getButtonIdStart();
 
   private:
     void (*logCallback)(LogLevel level, const char* msg);
+    GamepadType gamepadType;
     bool exitFlag;
     int32_t exitCode;
     char lastError[256];

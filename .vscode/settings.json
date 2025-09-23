@@ -51,6 +51,7 @@
         "algorithm": "cpp",
         "vgs_save.h": "c",
         "vgs_io.h": "c",
-        "stdint.h": "c"
+        "stdint.h": "c",
+        "vgs_stdint.h": "c"
     }
 }

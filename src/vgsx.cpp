@@ -76,6 +76,28 @@ typedef struct {
     uint32_t sh_entsize;
 } Elf32_Shdr;
 
+static std::string getButtonIdString(VGSX::ButtonId buttonId)
+{
+    switch (buttonId) {
+        case VGSX::ButtonId::Unknown: return "UNKNOWN";
+        case VGSX::ButtonId::A: return "A";
+        case VGSX::ButtonId::B: return "B";
+        case VGSX::ButtonId::X: return "X";
+        case VGSX::ButtonId::Y: return "Y";
+        case VGSX::ButtonId::Z: return "Z";
+        case VGSX::ButtonId::S: return "S";
+        case VGSX::ButtonId::Cross: return "CROSS";
+        case VGSX::ButtonId::Circle: return "CIRCLE";
+        case VGSX::ButtonId::Triangle: return "TRIANGLE";
+        case VGSX::ButtonId::Square: return "SQUARE";
+        case VGSX::ButtonId::Start: return "START";
+        case VGSX::ButtonId::Space: return "SPACE";
+        case VGSX::ButtonId::Plus: return "+";
+        case VGSX::ButtonId::Options: return "OPTIONS";
+    }
+    return "";
+}
+
 static uint16_t b2h16(uint16_t n)
 {
     uint8_t* ptr = (uint8_t*)&n;
@@ -671,6 +693,20 @@ uint32_t VGSX::inPort(uint32_t address)
                 return 0xFFFFFFFF;
             }
             return this->ctx.sqr.buffer[this->ctx.sqr.readOffset++];
+
+        case VGS_ADDR_KEY_TYPE:
+            switch (this->gamepadType) {
+                case GamepadType::Keyboard: return VGS_KEY_ID_KEYBOARD;
+                case GamepadType::XBOX: return VGS_KEY_ID_XBOX;
+                case GamepadType::NintendoSwitch: return VGS_KEY_ID_SWITCH;
+                case GamepadType::PlayStation: return VGS_KEY_ID_PS;
+                default: return VGS_KEY_ID_UNKNOWN;
+            }
+        case VGS_ADDR_BUTTON_ID_A: return static_cast<uint32_t>(this->getButtonIdA());
+        case VGS_ADDR_BUTTON_ID_B: return static_cast<uint32_t>(this->getButtonIdB());
+        case VGS_ADDR_BUTTON_ID_X: return static_cast<uint32_t>(this->getButtonIdX());
+        case VGS_ADDR_BUTTON_ID_Y: return static_cast<uint32_t>(this->getButtonIdY());
+        case VGS_ADDR_BUTTON_ID_START: return static_cast<uint32_t>(this->getButtonIdStart());
     }
     return 0xFFFFFFFF;
 }
@@ -801,6 +837,43 @@ void VGSX::outPort(uint32_t address, uint32_t value)
             return;
         }
 
+        case VGS_ADDR_KEY_TYPE:
+            switch (value) {
+                case VGS_KEY_ID_KEYBOARD: this->gamepadType = GamepadType::Keyboard; return;
+                case VGS_KEY_ID_XBOX: this->gamepadType = GamepadType::XBOX; return;
+                case VGS_KEY_ID_SWITCH: this->gamepadType = GamepadType::NintendoSwitch; return;
+                case VGS_KEY_ID_PS: this->gamepadType = GamepadType::PlayStation; return;
+                default: this->gamepadType = GamepadType::Unknown; return;
+            }
+
+        case VGS_ADDR_BUTTON_ID:
+            switch (value) {
+                case VGS_BUTTON_ID_A: this->ctx.getNameId = ButtonId::A; return;
+                case VGS_BUTTON_ID_B: this->ctx.getNameId = ButtonId::B; return;
+                case VGS_BUTTON_ID_X: this->ctx.getNameId = ButtonId::X; return;
+                case VGS_BUTTON_ID_Y: this->ctx.getNameId = ButtonId::Y; return;
+                case VGS_BUTTON_ID_Z: this->ctx.getNameId = ButtonId::Z; return;
+                case VGS_BUTTON_ID_S: this->ctx.getNameId = ButtonId::S; return;
+                case VGS_BUTTON_ID_CROSS: this->ctx.getNameId = ButtonId::Cross; return;
+                case VGS_BUTTON_ID_CIRCLE: this->ctx.getNameId = ButtonId::Circle; return;
+                case VGS_BUTTON_ID_TRIANGLE: this->ctx.getNameId = ButtonId::Triangle; return;
+                case VGS_BUTTON_ID_SQUARE: this->ctx.getNameId = ButtonId::Square; return;
+                case VGS_BUTTON_ID_START: this->ctx.getNameId = ButtonId::Start; return;
+                case VGS_BUTTON_ID_SPACE: this->ctx.getNameId = ButtonId::Space; return;
+                case VGS_BUTTON_ID_PLUS: this->ctx.getNameId = ButtonId::Plus; return;
+                case VGS_BUTTON_ID_OPTIONS: this->ctx.getNameId = ButtonId::Options; return;
+                default: this->ctx.getNameId = ButtonId::Unknown; return;
+            }
+        case VGS_ADDR_BUTTON_NAME: {
+            uint32_t addr = value & 0x00FFFFFF;
+            if (0xF00000 <= addr && addr + 16 < 0xFFFFFF) {
+                addr &= 0x0FFFFF;
+                auto str = getButtonIdString(this->ctx.getNameId);
+                memcpy(&this->ctx.ram[addr], str.c_str(), str.length() + 1);
+            }
+            return;
+        }
+
         case 0xE7FFFC: // Exit
             this->exitFlag = true;
             this->exitCode = (int32_t)value;
@@ -877,57 +950,57 @@ uint32_t VGSX::dmaSearch()
     return 0;
 }
 
-VGSX::GamepadKeyName VGSX::getKeyNameA()
+VGSX::ButtonId VGSX::getButtonIdA()
 {
     switch (this->gamepadType) {
-        case GamepadType::Keyboard: return GamepadKeyName::Z;
-        case GamepadType::XBOX: return GamepadKeyName::A;
-        case GamepadType::NintendoSwitch: return GamepadKeyName::B;
-        case GamepadType::PlayStation: return GamepadKeyName::Cross;
-        default: return GamepadKeyName::Unknown;
+        case GamepadType::Keyboard: return ButtonId::Z;
+        case GamepadType::XBOX: return ButtonId::A;
+        case GamepadType::NintendoSwitch: return ButtonId::B;
+        case GamepadType::PlayStation: return ButtonId::Cross;
+        default: return ButtonId::Unknown;
     }
 }
 
-VGSX::GamepadKeyName VGSX::getKeyNameB()
+VGSX::ButtonId VGSX::getButtonIdB()
 {
     switch (this->gamepadType) {
-        case GamepadType::Keyboard: return GamepadKeyName::X;
-        case GamepadType::XBOX: return GamepadKeyName::B;
-        case GamepadType::NintendoSwitch: return GamepadKeyName::A;
-        case GamepadType::PlayStation: return GamepadKeyName::Circle;
-        default: return GamepadKeyName::Unknown;
+        case GamepadType::Keyboard: return ButtonId::X;
+        case GamepadType::XBOX: return ButtonId::B;
+        case GamepadType::NintendoSwitch: return ButtonId::A;
+        case GamepadType::PlayStation: return ButtonId::Circle;
+        default: return ButtonId::Unknown;
     }
 }
 
-VGSX::GamepadKeyName VGSX::getKeyNameX()
+VGSX::ButtonId VGSX::getButtonIdX()
 {
     switch (this->gamepadType) {
-        case GamepadType::Keyboard: return GamepadKeyName::A;
-        case GamepadType::XBOX: return GamepadKeyName::X;
-        case GamepadType::NintendoSwitch: return GamepadKeyName::Y;
-        case GamepadType::PlayStation: return GamepadKeyName::Square;
-        default: return GamepadKeyName::Unknown;
+        case GamepadType::Keyboard: return ButtonId::A;
+        case GamepadType::XBOX: return ButtonId::X;
+        case GamepadType::NintendoSwitch: return ButtonId::Y;
+        case GamepadType::PlayStation: return ButtonId::Square;
+        default: return ButtonId::Unknown;
     }
 }
 
-VGSX::GamepadKeyName VGSX::getKeyNameY()
+VGSX::ButtonId VGSX::getButtonIdY()
 {
     switch (this->gamepadType) {
-        case GamepadType::Keyboard: return GamepadKeyName::S;
-        case GamepadType::XBOX: return GamepadKeyName::Y;
-        case GamepadType::NintendoSwitch: return GamepadKeyName::X;
-        case GamepadType::PlayStation: return GamepadKeyName::Triangle;
-        default: return GamepadKeyName::Unknown;
+        case GamepadType::Keyboard: return ButtonId::S;
+        case GamepadType::XBOX: return ButtonId::Y;
+        case GamepadType::NintendoSwitch: return ButtonId::X;
+        case GamepadType::PlayStation: return ButtonId::Triangle;
+        default: return ButtonId::Unknown;
     }
 }
 
-VGSX::GamepadKeyName VGSX::getKeyNameStart()
+VGSX::ButtonId VGSX::getButtonIdStart()
 {
     switch (this->gamepadType) {
-        case GamepadType::Keyboard: return GamepadKeyName::Space;
-        case GamepadType::XBOX: return GamepadKeyName::Start;
-        case GamepadType::NintendoSwitch: return GamepadKeyName::Plus;
-        case GamepadType::PlayStation: return GamepadKeyName::Options;
-        default: return GamepadKeyName::Unknown;
+        case GamepadType::Keyboard: return ButtonId::Space;
+        case GamepadType::XBOX: return ButtonId::Start;
+        case GamepadType::NintendoSwitch: return ButtonId::Plus;
+        case GamepadType::PlayStation: return ButtonId::Options;
+        default: return ButtonId::Unknown;
     }
 }
