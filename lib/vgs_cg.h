@@ -334,6 +334,17 @@ static inline void vgs_sprite_priority(uint8_t bg)
 void vgs_sprite(uint16_t n, BOOL visible, int16_t x, int16_t y, uint8_t size, uint8_t pal, uint16_t ptn);
 
 /**
+ * @brief Make all sprites invisible.
+ * @remark This function resets the visible flag for all OAM records.
+ */
+static inline void vgs_sprite_hide_all(void)
+{
+    for (int i = 0; i < OAM_MAX; i++) {
+        OAM[i].visible = FALSE;
+    }
+}
+
+/**
  * @brief Get an OAM record
  * @param n Sprite number (0 to 1023)
  */

@@ -3,6 +3,7 @@
 ## Version 0.10.0
 
 - CRT: Added a bitmap function: `vgs_read_pixel`
+- CRT: Added a sprite function: `vgs_sprite_hide_all`
 - CRT: Added the functions: `vgs_scroll`,  `vgs_scroll_x` and  `vgs_scroll_y`
 - CRT: Added the gamepad functions.
 

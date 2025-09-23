@@ -839,6 +839,7 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | cg:bg+bmp | `vgs_scroll_y` | [Scroll](#0xd20008-0xd20024-hardware-scroll) BG (Y) |
 | cg:sp | `vgs_sprite_priority` | Set sprite display priority. |
 | cg:sp | `vgs_sprite` | Set [OAM](#oam-object-attribute-memory) attribute values in bulk |
+| cg:sp | `vgs_sprite_hide_all` | Make all sprites invisible. |
 | cg:sp | `vgs_oam` | Get an [OAM](#oam-object-attribute-memory) record. |
 | bgm | `vgs_bgm_play` | Play [background music](#0xe01000o---play-vgm) |
 | sfx | `vgs_sfx_play` | Play [sound effect](#0xe01100o---play-sfx) |
