@@ -95,6 +95,7 @@ typedef struct {
 #define VGS_VREG_G_COL *((uint32_t*)0xD20060)
 #define VGS_VREG_G_OPT *((uint32_t*)0xD20064)
 #define VGS_VREG_G_EXE *((uint32_t*)0xD20068)
+#define VGS_VREG_SKIP_BG ((uint32_t*)0xD2006C)
 #define VGS_VREG_SKIP_BG0 *((uint32_t*)0xD2006C)
 #define VGS_VREG_SKIP_BG1 *((uint32_t*)0xD20070)
 #define VGS_VREG_SKIP_BG2 *((uint32_t*)0xD20074)
@@ -149,6 +150,16 @@ static inline int vgs_chr_width()
 static inline int vgs_chr_height()
 {
     return VRAM_HEIGHT >> 3;
+}
+
+/**
+ * @brief Skip Rendering a Specific BG
+ * @param n Number of BG (0 to 3)
+ * @param skip Specify TRUE to skip, FALSE to not skip.
+ */
+static inline void vgs_skip_bg(uint8_t n, BOOL skip)
+{
+    VGS_VREG_SKIP_BG[n & 3] = skip;
 }
 
 /**
