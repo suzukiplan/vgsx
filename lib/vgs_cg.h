@@ -64,42 +64,42 @@ typedef struct {
 
 // Palette Table
 // 16 x 16 x 4bits
-#define PALETTE ((uint32_t*)0xD10000)
+#define PALETTE ((volatile uint32_t*)0xD10000)
 
 // VDP Register
-#define VGS_VREG_SKIP *((uint32_t*)0xD20000)
-#define VGS_VREG_SPOS *((uint32_t*)0xD20004)
-#define VGS_VREG_SX0 *((uint32_t*)0xD20008)
-#define VGS_VREG_SX1 *((uint32_t*)0xD2000C)
-#define VGS_VREG_SX2 *((uint32_t*)0xD20010)
-#define VGS_VREG_SX3 *((uint32_t*)0xD20014)
-#define VGS_VREG_SY0 *((uint32_t*)0xD20018)
-#define VGS_VREG_SY1 *((uint32_t*)0xD2001C)
-#define VGS_VREG_SY2 *((uint32_t*)0xD20020)
-#define VGS_VREG_SY3 *((uint32_t*)0xD20024)
-#define VGS_VREG_BMP0 *((uint32_t*)0xD20028)
-#define VGS_VREG_BMP1 *((uint32_t*)0xD2002C)
-#define VGS_VREG_BMP2 *((uint32_t*)0xD20030)
-#define VGS_VREG_BMP3 *((uint32_t*)0xD20034)
-#define VGS_VREG_CLSA *((uint32_t*)0xD20038)
-#define VGS_VREG_CLS ((uint32_t*)0xD2003C)
-#define VGS_VREG_CLS0 *((uint32_t*)0xD2003C)
-#define VGS_VREG_CLS1 *((uint32_t*)0xD20040)
-#define VGS_VREG_CLS2 *((uint32_t*)0xD20044)
-#define VGS_VREG_CLS3 *((uint32_t*)0xD20048)
-#define VGS_VREG_G_BG *((uint32_t*)0xD2004C)
-#define VGS_VREG_G_X1 *((uint32_t*)0xD20050)
-#define VGS_VREG_G_Y1 *((uint32_t*)0xD20054)
-#define VGS_VREG_G_X2 *((uint32_t*)0xD20058)
-#define VGS_VREG_G_Y2 *((uint32_t*)0xD2005C)
-#define VGS_VREG_G_COL *((uint32_t*)0xD20060)
-#define VGS_VREG_G_OPT *((uint32_t*)0xD20064)
-#define VGS_VREG_G_EXE *((uint32_t*)0xD20068)
-#define VGS_VREG_SKIP_BG ((uint32_t*)0xD2006C)
-#define VGS_VREG_SKIP_BG0 *((uint32_t*)0xD2006C)
-#define VGS_VREG_SKIP_BG1 *((uint32_t*)0xD20070)
-#define VGS_VREG_SKIP_BG2 *((uint32_t*)0xD20074)
-#define VGS_VREG_SKIP_BG3 *((uint32_t*)0xD20078)
+#define VGS_VREG_SKIP *((volatile uint32_t*)0xD20000)
+#define VGS_VREG_SPOS *((volatile uint32_t*)0xD20004)
+#define VGS_VREG_SX0 *((volatile uint32_t*)0xD20008)
+#define VGS_VREG_SX1 *((volatile uint32_t*)0xD2000C)
+#define VGS_VREG_SX2 *((volatile uint32_t*)0xD20010)
+#define VGS_VREG_SX3 *((volatile uint32_t*)0xD20014)
+#define VGS_VREG_SY0 *((volatile uint32_t*)0xD20018)
+#define VGS_VREG_SY1 *((volatile uint32_t*)0xD2001C)
+#define VGS_VREG_SY2 *((volatile uint32_t*)0xD20020)
+#define VGS_VREG_SY3 *((volatile uint32_t*)0xD20024)
+#define VGS_VREG_BMP0 *((volatile uint32_t*)0xD20028)
+#define VGS_VREG_BMP1 *((volatile uint32_t*)0xD2002C)
+#define VGS_VREG_BMP2 *((volatile uint32_t*)0xD20030)
+#define VGS_VREG_BMP3 *((volatile uint32_t*)0xD20034)
+#define VGS_VREG_CLSA *((volatile uint32_t*)0xD20038)
+#define VGS_VREG_CLS ((volatile uint32_t*)0xD2003C)
+#define VGS_VREG_CLS0 *((volatile uint32_t*)0xD2003C)
+#define VGS_VREG_CLS1 *((volatile uint32_t*)0xD20040)
+#define VGS_VREG_CLS2 *((volatile uint32_t*)0xD20044)
+#define VGS_VREG_CLS3 *((volatile uint32_t*)0xD20048)
+#define VGS_VREG_G_BG *((volatile uint32_t*)0xD2004C)
+#define VGS_VREG_G_X1 *((volatile uint32_t*)0xD20050)
+#define VGS_VREG_G_Y1 *((volatile uint32_t*)0xD20054)
+#define VGS_VREG_G_X2 *((volatile uint32_t*)0xD20058)
+#define VGS_VREG_G_Y2 *((volatile uint32_t*)0xD2005C)
+#define VGS_VREG_G_COL *((volatile uint32_t*)0xD20060)
+#define VGS_VREG_G_OPT *((volatile uint32_t*)0xD20064)
+#define VGS_VREG_G_EXE *((volatile uint32_t*)0xD20068)
+#define VGS_VREG_SKIP_BG ((volatile uint32_t*)0xD2006C)
+#define VGS_VREG_SKIP_BG0 *((volatile uint32_t*)0xD2006C)
+#define VGS_VREG_SKIP_BG1 *((volatile uint32_t*)0xD20070)
+#define VGS_VREG_SKIP_BG2 *((volatile uint32_t*)0xD20074)
+#define VGS_VREG_SKIP_BG3 *((volatile uint32_t*)0xD20078)
 
 // Graphic Draw Function Identifer
 #define VGS_DRAW_PIXEL 0
@@ -203,7 +203,7 @@ void vgs_cls_bg(uint8_t n, uint32_t value);
  */
 static inline void vgs_draw_mode(uint8_t n, BOOL isBitmap)
 {
-    ((uint32_t*)0xD20028)[n & 3] = isBitmap;
+    ((volatile uint32_t*)0xD20028)[n & 3] = isBitmap;
 }
 
 /**
@@ -298,7 +298,7 @@ void vgs_draw_character(uint8_t n, int32_t x, int32_t y, BOOL draw0, uint8_t pal
  */
 static inline void vgs_scroll_x(uint8_t n, int32_t sx)
 {
-    ((uint32_t*)0xD20008)[n & 3] = sx;
+    ((volatile uint32_t*)0xD20008)[n & 3] = sx;
 }
 
 /**
@@ -308,7 +308,7 @@ static inline void vgs_scroll_x(uint8_t n, int32_t sx)
  */
 static inline void vgs_scroll_y(uint8_t n, int32_t sy)
 {
-    ((uint32_t*)0xD20018)[n & 3] = sy;
+    ((volatile uint32_t*)0xD20018)[n & 3] = sy;
 }
 
 /**
@@ -320,8 +320,8 @@ static inline void vgs_scroll_y(uint8_t n, int32_t sy)
 static inline void vgs_scroll(uint8_t n, int32_t sx, int32_t sy)
 {
     n &= 3;
-    ((uint32_t*)0xD20008)[n] = sx;
-    ((uint32_t*)0xD20018)[n] = sy;
+    ((volatile uint32_t*)0xD20008)[n] = sx;
+    ((volatile uint32_t*)0xD20018)[n] = sy;
 }
 
 /**

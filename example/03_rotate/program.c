@@ -60,9 +60,16 @@ BOOL game_main(void)
     // Game Over
     if (g.player.collision) {
         if (!g.gameover) {
+            char buf[80];
             print_center(-1, "GAME  OVER");
-            print_center(+1, "PRESS START BUTTON");
-            print_center(+2, "PRESS Y TO PLAYBACK RETRY");
+            vgs_strcpy(buf, "PUSH ");
+            vgs_strcat(buf, vgs_button_name(vgs_button_id_start()));
+            vgs_strcat(buf, " TO TRY AGAIN");
+            print_center(+1, buf);
+            vgs_strcpy(buf, "PUSH ");
+            vgs_strcat(buf, vgs_button_name(vgs_button_id_y()));
+            vgs_strcat(buf, " TO PLAYBACK RETRY");
+            print_center(+2, buf);
             g.gameover = TRUE;
             if (!g.playback_replay) {
                 vgs_seq_commit();

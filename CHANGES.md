@@ -2,12 +2,14 @@
 
 ## Version 0.10.0
 
+- Fixed a critical bug related to DMA.
 - Core: Implemented Gamepad's Type and Name interfaces.
 - Core: Added the Skip Rendering a Specific BG function.
 - CRT: Added a function: `vgs_skip_bg`
 - CRT: Added a bitmap function: `vgs_read_pixel`
 - CRT: Added a sprite function: `vgs_sprite_hide_all`
 - CRT: Added the functions: `vgs_scroll`,  `vgs_scroll_x` and  `vgs_scroll_y`
+- CRT: Added the string functions: `vgs_strcpy` and `vgs_strcat`
 - CRT: Added the gamepad functions.
 
 ## Version 0.9.0

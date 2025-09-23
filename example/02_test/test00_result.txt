@@ -1,21 +1,21 @@
 [info] M68K_REG_PC = 0x0002AC
-[info] .program:1 offset=8192, va=0x000000, pa=0x000000, fs=10627, ms=10627, flg=5
+[info] .program:1 offset=8192, va=0x000000, pa=0x000000, fs=11136, ms=11136, flg=5
 [info] .program:1 offset=24576, va=0xF00000, pa=0xF00000, fs=20, ms=72, flg=6
 [info] .section:0 flags=0, addr=0x000000, offset=0x000000, size=0, link=0, info=0
-[info] .section:1 flags=6, addr=0x000000, offset=0x002000, size=1968, link=0, info=0
-[info] .section:1 flags=6, addr=0x0007B0, offset=0x0027B0, size=6, link=0, info=0
-[info] .section:1 flags=6, addr=0x0007B6, offset=0x0027B6, size=12, link=0, info=0
-[info] .section:1 flags=6, addr=0x0007C2, offset=0x0027C2, size=5738, link=0, info=0
-[info] .section:1 flags=2, addr=0x001E2C, offset=0x003E2C, size=4, link=0, info=0
-[info] .section:1 flags=50, addr=0x001E30, offset=0x003E30, size=2899, link=0, info=0
+[info] .section:1 flags=6, addr=0x000000, offset=0x002000, size=2144, link=0, info=0
+[info] .section:1 flags=6, addr=0x000860, offset=0x002860, size=6, link=0, info=0
+[info] .section:1 flags=6, addr=0x000866, offset=0x002866, size=12, link=0, info=0
+[info] .section:1 flags=6, addr=0x000872, offset=0x002872, size=5966, link=0, info=0
+[info] .section:1 flags=2, addr=0x001FC0, offset=0x003FC0, size=4, link=0, info=0
+[info] .section:1 flags=50, addr=0x001FC4, offset=0x003FC4, size=3004, link=0, info=0
 [info] .section:1 flags=3, addr=0xF00000, offset=0x006000, size=4, link=0, info=0
 [info] .section:1 flags=3, addr=0xF00004, offset=0x006004, size=8, link=0, info=0
 [info] .section:1 flags=3, addr=0xF0000C, offset=0x00600C, size=8, link=0, info=0
 [info] .section:8 flags=3, addr=0xF00014, offset=0x006014, size=52, link=0, info=0
 [info] .section:1 flags=48, addr=0x000000, offset=0x006014, size=18, link=0, info=0
-[info] .section:2 flags=0, addr=0x000000, offset=0x006028, size=1248, link=13, info=43
-[info] .section:3 flags=0, addr=0x000000, offset=0x006508, size=708, link=0, info=0
-[info] .section:3 flags=0, addr=0x000000, offset=0x0067CC, size=118, link=0, info=0
+[info] .section:2 flags=0, addr=0x000000, offset=0x006028, size=1280, link=13, info=43
+[info] .section:3 flags=0, addr=0x000000, offset=0x006528, size=730, link=0, info=0
+[info] .section:3 flags=0, addr=0x000000, offset=0x006802, size=118, link=0, info=0
 Load succeed.
 Start main loop.
 length of "This is test string." = 20
@@ -429,8 +429,10 @@ vgs_button_id_b = 3 (X key)
 vgs_button_id_x = 1 (A key)
 vgs_button_id_y = 6 (S key)
 vgs_button_id_start = 12 (SPACE key)
+vgs_strcpy(buf,"Test of strcpy!")
+vgs_strcat(buf,"Hoge hoge.")
 call vgs_exit with exit code: 59
-Update the peak CPU clock rate: 335312Hz per frame.
+Update the peak CPU clock rate: 337664Hz per frame.
 
 [RAM DUMP]
 F00000 00 00 00 00 FF FF FF FF - 00 00 00 00 FF FF FF FF  ................
@@ -439,15 +441,15 @@ F00020 35 2E 32 2E 30 00 00 00 - 00 00 00 00 00 00 00 00  5.2.0...........
 F00030 00 00 00 00 00 00 00 00 - 00 00 00 00 53 50 41 43  ............SPAC
 F00040 45 00 00 00 03 00 00 01 - FF FF FF FF FF FF FF FF  E...............
 F00050 FF FF FF FF FF FF FF FF - FF FF FF FF FF FF FF FF  ................
-FFFF30 FF FF FF FF FF FF FF FF - FF FF FF A4 00 00 00 00  ................
-FFFF40 FF FF FF A4 00 F0 00 3C - 00 00 00 3B 00 F0 00 3C  .......<...;...<
-FFFF50 00 00 02 36 FF FF FF 68 - 00 00 00 3B 00 00 01 B8  ...6...h...;....
-FFFF60 FF FF FF 68 FF FF FF 80 - 35 39 00 70 FF FF FF 88  ...h....59.p....
-FFFF70 00 00 11 E0 00 00 00 3B - 00 00 29 39 00 00 00 3B  .......;..)9...;
-FFFF80 00 00 29 17 00 00 00 0C - 00 F0 00 3C 00 00 00 00  ..)........<....
+FFFF30 FF FF FF FF 00 00 06 FC - 00 00 00 00 00 00 06 FC  ................
+FFFF40 00 00 02 36 FF FF FF 58 - 00 F0 00 3C 00 F0 00 3C  ...6...X...<...<
+FFFF50 00 00 00 3B 00 00 02 36 - 00 00 02 36 FF FF FF 70  ...;...6...6...p
+FFFF60 00 00 00 3B 00 00 01 B8 - FF FF FF 70 FF FF FF 88  ...;.......p....
+FFFF70 35 39 00 DE FF FF FF A4 - 00 00 12 F4 00 00 00 3B  59.............;
+FFFF80 00 00 2B 36 00 00 00 3B - 00 00 00 00 00 00 00 00  ..+6...;........
 FFFF90 00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00  ................
-FFFFA0 00 00 00 00 54 68 69 73 - 20 69 73 20 74 65 73 74  ....This is test
-FFFFB0 20 73 74 72 69 6E 67 2E - 00 01 01 01 01 01 01 01   string.........
+FFFFA0 00 00 00 00 54 65 73 74 - 20 6F 66 20 73 74 72 63  ....Test of strc
+FFFFB0 70 79 21 48 6F 67 65 20 - 68 6F 67 65 2E 00 01 01  py!Hoge hoge....
 FFFFC0 01 01 01 01 01 01 01 01 - 01 01 01 01 01 01 01 01  ................
 FFFFF0 01 01 01 01 00 00 02 B6 - 00 00 00 00 00 00 00 00  ................
 

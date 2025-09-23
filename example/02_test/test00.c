@@ -175,6 +175,14 @@ int main(int argc, char* argv)
     vgs_putlog("vgs_button_id_y = %d (%s key)", expect32d(vgs_button_id_y(), VGS_BUTTON_ID_S), vgs_button_name(VGS_BUTTON_ID_S));
     vgs_putlog("vgs_button_id_start = %d (%s key)", expect32d(vgs_button_id_start(), VGS_BUTTON_ID_SPACE), vgs_button_name(VGS_BUTTON_ID_SPACE));
 
+    vgs_putlog("vgs_strcpy(buf,\"Test of strcpy!\")");
+    vgs_strcpy(buf, "Test of strcpy!");
+    expect32d(vgs_strcmp(buf, "Test of strcpy!"), 0);
+
+    vgs_putlog("vgs_strcat(buf,\"Hoge hoge.\")");
+    vgs_strcat(buf, "Hoge hoge.");
+    expect32d(vgs_strcmp(buf, "Test of strcpy!Hoge hoge."), 0);
+
     vgs_putlog("call vgs_exit with exit code: %d", ret);
     vgs_exit(ret);
     vgs_putlog("return 456 (this message will not shown)");

@@ -886,24 +886,30 @@ void VGSX::dmaMemcpy()
     const uint32_t size = this->ctx.dma.argument;
     uint32_t destination = this->ctx.dma.destination & 0x00FFFFFF;
     uint32_t source = this->ctx.dma.source & 0x00FFFFFF;
-    // validate destination
-    if (0xF00000 <= destination && destination + size <= 0xFFFFFF) {
-        // validate source
-        if (source < this->ctx.programSize) {
-            if (source + size <= this->ctx.programSize) {
-                // Execute copy from ROM to RAM
-                memcpy(&this->ctx.ram[destination & 0x0FFFFF],
-                       &this->ctx.program[source],
-                       size);
-                return;
-            }
-        } else if (0xF00000 <= source) {
-            if (source + size <= 0xFFFFFF) {
-                // Execute copy from RAM to RAM
-                memmove(&this->ctx.ram[destination & 0x0FFFFF],
-                        &this->ctx.ram[source & 0x0FFFFF],
-                        size);
-                return;
+
+    // putlog(LogLevel::I, "DMA_copy: dest=0x%06X, src=0x%06X, size=%u", destination, source, size);
+
+    // validate size
+    if (size < 0x100000) {
+        // validate destination
+        if (0xF00000 <= destination && destination + size <= 0xFFFFFF) {
+            // validate source
+            if (source < this->ctx.programSize) {
+                if (source + size <= this->ctx.programSize) {
+                    // Execute copy from ROM to RAM
+                    memcpy(&this->ctx.ram[destination & 0x0FFFFF],
+                           &this->ctx.program[source],
+                           size);
+                    return;
+                }
+            } else if (0xF00000 <= source) {
+                if (source + size <= 0xFFFFFF) {
+                    // Execute copy from RAM to RAM
+                    memmove(&this->ctx.ram[destination & 0x0FFFFF],
+                            &this->ctx.ram[source & 0x0FFFFF],
+                            size);
+                    return;
+                }
             }
         }
     }
@@ -915,11 +921,17 @@ void VGSX::dmaMemset()
     uint32_t destination = this->ctx.dma.destination & 0x00FFFFFF;
     const uint8_t c = this->ctx.dma.source & 0xFF;
     const uint32_t size = this->ctx.dma.argument;
-    // validate destination
-    if (0xF00000 <= destination && destination + size <= 0xFFFFFF) {
-        // Bulk set to RAM
-        memset(&this->ctx.ram[destination & 0x0FFFFF], c, size);
-        return;
+
+    // putlog(LogLevel::I, "DMA_set: dest=0x%06X, char=0x%02X, size=%u", destination, c, size);
+
+    // validate size
+    if (size < 0x100000) {
+        // validate destination
+        if (0xF00000 <= destination && destination + size <= 0xFFFFFF) {
+            // Bulk set to RAM
+            memset(&this->ctx.ram[destination & 0x0FFFFF], c, size);
+            return;
+        }
     }
     putlog(LogLevel::W, "Ignored an invalid DMA_set(0x%06X, 0x%02X, %u)", destination, c, size);
 }
@@ -928,20 +940,25 @@ uint32_t VGSX::dmaSearch()
 {
     uint8_t search = this->ctx.dma.argument & 0xFF;
     uint32_t ptr = this->ctx.dma.source & 0x00FFFFFF;
+    uint32_t result = 0;
+
+    // putlog(LogLevel::I, "DMA_search(0x%06X, 0x%02X)", ptr, search);
+
     // validate source
     if (ptr < this->ctx.programSize) {
         // Search from ROM
-        for (; ptr < this->ctx.programSize; ptr++) {
+        for (; ptr < this->ctx.programSize; ptr++, result++) {
             if (this->ctx.program[ptr] == search) {
-                return ptr; // found
+                return result; // found
             }
         }
         return 0; // not found
     } else if (0xF00000 <= ptr && ptr < 0xFFFFFF) {
         // Search from RAM
-        for (; ptr < 0xFFFFFF; ptr++) {
+        ptr &= 0x0FFFFF;
+        for (; ptr < 0x1000000; ptr++, result++) {
             if (this->ctx.ram[ptr] == search) {
-                return ptr; // found
+                return result; // found
             }
         }
         return 0; // not found
