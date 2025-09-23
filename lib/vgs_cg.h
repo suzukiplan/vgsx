@@ -95,6 +95,10 @@ typedef struct {
 #define VGS_VREG_G_COL *((uint32_t*)0xD20060)
 #define VGS_VREG_G_OPT *((uint32_t*)0xD20064)
 #define VGS_VREG_G_EXE *((uint32_t*)0xD20068)
+#define VGS_VREG_SKIP_BG0 *((uint32_t*)0xD2006C)
+#define VGS_VREG_SKIP_BG1 *((uint32_t*)0xD20070)
+#define VGS_VREG_SKIP_BG2 *((uint32_t*)0xD20074)
+#define VGS_VREG_SKIP_BG3 *((uint32_t*)0xD20078)
 
 // Graphic Draw Function Identifer
 #define VGS_DRAW_PIXEL 0
