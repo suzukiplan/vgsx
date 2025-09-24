@@ -1,4 +1,4 @@
-# VGS-X [![CircleCI](https://dl.circleci.com/status-badge/img/gh/suzukiplan/vgsx/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/suzukiplan/vgsx/tree/master)
+# VGS-X
 
 ## WIP
 
