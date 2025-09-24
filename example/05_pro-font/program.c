@@ -114,7 +114,7 @@ const ProportionalInfo pinfo[] = {
     {1, 0, 6}, // a
     {1, 0, 5}, // b
     {1, 0, 5}, // c
-    {1, 0, 5}, // d
+    {1, 0, 6}, // d
     {1, 0, 5}, // e
     {1, 0, 5}, // f
     {1, 1, 6}, // g
@@ -135,9 +135,9 @@ const ProportionalInfo pinfo[] = {
     {1, 0, 6}, // u
     {0, 0, 6}, // v
     {0, 0, 6}, // w
-    {1, 0, 5}, // x
+    {0, 0, 6}, // x
     {1, 2, 5}, // y
-    {1, 0, 5}, // z
+    {0, 0, 6}, // z
     {3, 0, 5}, // {
     {2, 0, 2}, // |
     {0, 0, 4}, // }
@@ -152,6 +152,7 @@ void pfont_render(uint8_t n, int32_t x, int32_t y, const char* text)
         if (c < 0x80) {
             vgs_draw_character(n, x - pinfo[c].dx, y + pinfo[c].dy, FALSE, 0, c);
             x += pinfo[c].width;
+            vgs_vsync();
         }
     }
 }
@@ -173,7 +174,6 @@ int main(int argc, char* argv[])
     pfont_render(0, 8, 148, "An interface that allows mechanical initialization while enabling");
     pfont_render(0, 8, 158, "subsequent updates to proportional definitions would likely be");
     pfont_render(0, 8, 168, "PERFECT!");
-    vgs_scroll_y(0, 7);
     while (TRUE) {
         vgs_vsync();
     }
