@@ -966,6 +966,13 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | gamepad | `vgs_key_code_b` | Key code check: B button |
 | gamepad | `vgs_key_code_x` | Key code check: X button |
 | gamepad | `vgs_key_code_y` | Key code check: Y button |
+| gamepad | `vgs_key_type` | Get the [Gamepad Type](#0xe021xxio---gamepad-types) currently connected.|
+| gamepad | `vgs_button_id_a` | Get the [Button ID](#0xe021xxio---gamepad-types) for the A button on the connected gamepad. |
+| gamepad | `vgs_button_id_b` | Get the [Button ID](#0xe021xxio---gamepad-types) for the B button on the connected gamepad. |
+| gamepad | `vgs_button_id_x` | Get the [Button ID](#0xe021xxio---gamepad-types) for the X button on the connected gamepad. |
+| gamepad | `vgs_button_id_y` | Get the [Button ID](#0xe021xxio---gamepad-types) for the Y button on the connected gamepad. |
+| gamepad | `vgs_button_id_start` | Get the [Button ID](#0xe021xxio---gamepad-types) for the Start button on the connected gamepad. |
+| gamepad | `vgs_button_name` | Get the [Name String](#0xe021xxio---gamepad-types) of the button identifier. |
 | save | `vgs_save` | Save [save data](#0xe030xxio---savedata). |
 | save | `vgs_load` | Load [save data](#0xe030xxio---savedata).　|
 | save | `vgs_save_check` | Check the size of [save data](#0xe030xxio---savedata).　|
