@@ -9,6 +9,11 @@ void draw_star(int x, int y)
     vgs_draw_line(0, x - 10, y + 7, x + 10, y + 7, 0xF0F000);
 }
 
+void center_print(int y, const char* text)
+{
+    vgs_pfont_print(0, (vgs_draw_width() - vgs_pfont_strlen(text)) / 2, y, 0, 0, text);
+}
+
 int main(int argc, char* argv[])
 {
     vgs_draw_mode(0, TRUE);  // BG0: Bitmap Mode
@@ -16,6 +21,8 @@ int main(int argc, char* argv[])
     vgs_draw_mode(2, TRUE);  // BG2: Bitmap Mode
     vgs_draw_mode(3, FALSE); // BG3: Character Pattern Mode
     vgs_sprite_priority(3);  // Sprite: Displayed on top of BG3
+    vgs_pfont_init(0);
+
     const char* text = "Hello VGS-X World!";
     vgs_print_bg(3,
                  (vgs_chr_width() - vgs_strlen(text)) / 2,
@@ -23,10 +30,6 @@ int main(int argc, char* argv[])
                  0,
                  text);
 
-    vgs_print_bg(3, 0, 20, 0, "The VGS-X is a 16-bits game console,");
-    vgs_print_bg(3, 0, 21, 0, "powered by MC68030 and YM series chips.");
-    vgs_print_bg(3, 0, 22, 0, "It's surprisingly easy to develop games,");
-    vgs_print_bg(3, 0, 23, 0, "compatibility can be easily maintained.");
     uint32_t col = 1;
     int ptr = 0;
     for (int y = 0; y < vgs_draw_height(); y++) {
@@ -87,6 +90,12 @@ int main(int argc, char* argv[])
     vgs_sprite(14, FALSE, baseX + 61, baseY + 28, 0, 0, 128 + 106); // Y button
 
     vgs_draw_boxf(2, baseX - 8, baseY + 20, baseX + 88, baseY + 58, 1);
+
+    center_print(160, "The VGS-X is a 16-bits game console,");
+    center_print(170, "powered by MC68030 and YM series FM sound chips.");
+    center_print(180, "It's surprisingly easy to develop games,");
+    center_print(190, "compatibility can be easily maintained.");
+
     vgs_bgm_play(0);
     while (1) {
         vgs_vsync();
