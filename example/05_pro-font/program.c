@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
     y += 16;
     vgs_pfont_print(0, lx, y, 0, 0, "Additionally, the pixel length of the string displayed by the");
     y += 10;
-    vgs_pfont_print(0, lx, y, 0, 0, "vgs_pfont_print() function can be obtained using the");
+    vgs_pfont_print(0, lx, y, 0, 0, "vgs_pfont_print() function can be acquired using the");
     y += 10;
     vgs_pfont_print(0, lx, y, 0, 0, "vgs_pfont_strlen() function.");
 
