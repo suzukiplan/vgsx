@@ -137,10 +137,18 @@ void vgs_pfont_print(uint8_t n, int32_t x, int32_t y, uint8_t pal, uint16_t ptn,
 {
     int32_t dx, dy, width;
     for (; *text && x < VRAM_WIDTH; text++) {
-        vgs_pfont_get((uint8_t)*text, &dx, &dy, &width);
+        uint8_t c = (uint8_t)*text;
+        if (c < 0x80) {
+            vgs_pfont_get(c, &dx, &dy, &width);
+        } else {
+            width = 0;
+        }
         if (0 < width) {
-            vgs_draw_character(n, x + dx, y + dy, FALSE, pal, ptn + *text);
+            vgs_draw_character(n, x + dx, y + dy, FALSE, pal, ptn + c);
             x += width;
+        } else {
+            vgs_draw_character(n, x, y, FALSE, pal, ptn + c);
+            x += 8;
         }
     }
 }
@@ -150,8 +158,17 @@ int32_t vgs_pfont_strlen(const char* text)
     int32_t result = 0;
     int32_t dx, dy, width;
     for (; *text; text++) {
-        vgs_pfont_get((uint8_t)*text, &dx, &dy, &width);
-        result += width;
+        uint8_t c = (uint8_t)*text;
+        if (c < 0x80) {
+            vgs_pfont_get(c, &dx, &dy, &width);
+        } else {
+            width = 0;
+        }
+        if (0 < width) {
+            result += width;
+        } else {
+            result += 8;
+        }
     }
     return 0 < result ? result - 1 : result;
 }
