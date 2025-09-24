@@ -1193,6 +1193,8 @@ Play a .vgm file from the command line.
 usage: vgmplay /path/to/bgm.vgm
 ```
 
+> This command is not built by default, so please build it as needed before use.
+
 # License
 
 - [SDL2](https://www.libsdl.org/)
