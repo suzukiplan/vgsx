@@ -976,11 +976,11 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | save | `vgs_save` | Save [save data](#0xe030xxio---savedata). |
 | save | `vgs_load` | Load [save data](#0xe030xxio---savedata).　|
 | save | `vgs_save_check` | Check the size of [save data](#0xe030xxio---savedata).　|
-| save | `vgs_seq_open_w` | Open a large sequencial file for write. |
-| save | `vgs_seq_write` | Write a byte data to a large sequencial file. |
-| save | `vgs_seq_commit` | Commit a large sequencial file for write. |
-| save | `vgs_seq_open_r` | Open a large sequencial file for write. |
-| save | `vgs_seq_read` | Read a byte data to a large sequencial file. |
+| save | `vgs_seq_open_w` | Open a [Large Sequencial File](#0xe031xxio---large-sequencial-file-io) for write. |
+| save | `vgs_seq_write` | Write a byte data to a [Large Sequencial File](#0xe031xxio---large-sequencial-file-io). |
+| save | `vgs_seq_commit` | Commit a [Large Sequencial File](#0xe031xxio---large-sequencial-file-io) for write. |
+| save | `vgs_seq_open_r` | Open a [Large Sequencial File](#0xe031xxio---large-sequencial-file-io) for write. |
+| save | `vgs_seq_read` | Read a byte data to a [Large Sequencial File](#0xe031xxio---large-sequencial-file-io). |
 
 ### (Standard Functions)
 
