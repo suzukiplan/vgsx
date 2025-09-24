@@ -1,5 +1,11 @@
 # Changes
 
+## Version 0.11.0
+
+- Core: Added the Propotional Font functions
+- CRT: Added the bitmap functions: `vgs_pfont_init`, `vgs_pfont_get`, `vgs_pfont_set`, `vgs_pfont_print` and `vgs_pfont_strlen`
+- bugfix: The option to not draw the number 0 in `vgs_draw_character` does not render as intended.
+
 ## Version 0.10.0
 
 - Fixed a critical bug related to DMA.

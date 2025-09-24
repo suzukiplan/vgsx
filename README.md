@@ -416,6 +416,11 @@ You can specify the magnification rate as a percentage on the `scale`, either 0 
 |0xD20070 | R28 | SKIP1 | [Skip Rendering BG1](#0xd2006c-0xd20078-skip-rendering-a-specific-bg) |
 |0xD20074 | R29 | SKIP2 | [Skip Rendering BG2](#0xd2006c-0xd20078-skip-rendering-a-specific-bg) |
 |0xD20078 | R30 | SKIP3 | [Skip Rendering BG3](#0xd2006c-0xd20078-skip-rendering-a-specific-bg) |
+|0xD2007C | R31 | PF_INIT | Initialize the [Propotional Font](#0xd2007c-0xd2008c-propotional-font) coodinates. |
+|0xD20080 | R32 | PF_PTN | [Propotional Font](#0xd2007c-0xd2008c-propotional-font) pattern number |
+|0xD20084 | R33 | PF_DX | [Propotional Font](#0xd2007c-0xd2008c-propotional-font) diff-X |
+|0xD20088 | R34 | PF_DY | [Propotional Font](#0xd2007c-0xd2008c-propotional-font) diff-Y |
+|0xD2008C | R35 | PF_WIDTH | [Propotional Font](#0xd2007c-0xd2008c-propotional-font) width |
 
 Please note that access to the VDP register must always be 4-byte aligned.
 
@@ -497,6 +502,18 @@ Skip displaying a specified BG plane.
 This function only skips displaying information on the screen. Information that has already been drawn remains stored in VRAM, so you can read the pixel color using `vgs_read_pixel`.
 
 For example, we envision using this by skipping the rendering of specific background planes designated as “collision detection surfaces,” enabling collision detection via `vgs_read_pixel`.
+
+### 0xD2007C-0xD2008C: Propotional Font
+
+- Setting the starting character pattern number to `0xD2007C (PF_INIT)` initializes the coordinate information for proportional fonts.
+- Set the ASCII code (0x00 to 0x7F) of the proportional font to be loaded or updated to `0xD20080 (PF_PTN)`.
+- `0xD20084 (PF_DX)`: Read or Update a X-coodinate difference of `PF_PTN`
+- `0xD20088 (PF_DY)`: Read or Update a Y-coodinate difference of `PF_PTN`
+- `0xD2008C (PF_WIDTH)`: Read or Update a width of `PF_PTN`
+
+See the example of usage: [./example/05_pro-font/program.c](./example/05_pro-font/program.c)
+
+![usage](./example/05_pro-font/screen.png)
 
 ## I/O Map
 
@@ -911,6 +928,11 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | cg:bmp | `vgs_draw_box` | Draw a [rectangle](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
 | cg:bmp | `vgs_draw_boxf` | Draw a [filled-rectangle](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
 | cg:bmp | `vgs_draw_character` | Draw a [character-pattern](#character-pattern) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
+| cg:bmp | `vgs_pfont_init` | [Proportional Font](#0xd2007c-0xd2008c-propotional-font) Initialization. |
+| cg:bmp | `vgs_pfont_get` | Acquiring [Proportional Font](#0xd2007c-0xd2008c-propotional-font) Information. |
+| cg:bmp | `vgs_pfont_set` | Setting [Proportional Font](#0xd2007c-0xd2008c-propotional-font) Information. |
+| cg:bmp | `vgs_pfont_print` | Drawing strings using [Proportional Font](#0xd2007c-0xd2008c-propotional-font) |
+| cg:bmp | `vgs_pfont_strlen` | Width of a string displayed in a [Proportional Font](#0xd2007c-0xd2008c-propotional-font) (in pixels). |
 | cg:bg+bmp | `vgs_skip_bg` | [Skip Rendering a Specific BG](#0xd2006c-0xd20078-skip-rendering-a-specific-bg) |
 | cg:bg+bmp | `vgs_scroll` | [Scroll](#0xd20008-0xd20024-hardware-scroll) BG |
 | cg:bg+bmp | `vgs_scroll_x` | [Scroll](#0xd20008-0xd20024-hardware-scroll) BG (X) |
