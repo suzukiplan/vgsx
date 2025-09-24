@@ -674,16 +674,16 @@ static inline void graphicDrawCharacter(VDP* vdp)
             uint32_t c0 = vdp->ctx.palette[pal][p0];
             uint32_t c1 = vdp->ctx.palette[pal][p1];
             if (0 <= x + j * 2 && x + j * 2 < 320) {
-                if (drawZero || p0) {
+                if (p0) {
                     vram[(y + i) * 320 + x + j * 2] = c0;
-                } else {
+                } else if (drawZero) {
                     vram[(y + i) * 320 + x + j * 2] = 0;
                 }
             }
             if (0 <= x + j * 2 + 1 && x + j * 2 + 1 < 320) {
-                if (drawZero || p1) {
+                if (p1) {
                     vram[(y + i) * 320 + x + j * 2 + 1] = c1;
-                } else {
+                } else if (drawZero) {
                     vram[(y + i) * 320 + x + j * 2 + 1] = 0;
                 }
             }
