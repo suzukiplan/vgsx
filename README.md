@@ -489,6 +489,8 @@ Drawing processing is executed when the execution identifier is written to `G_EX
 |☑︎|☑︎|☑︎|☑︎|☑︎|☑︎|-| `2` | Box |
 |☑︎|☑︎|☑︎|☑︎|☑︎|☑︎|-| `3` | Box Fill |
 |☑︎|☑︎|☑︎|-|-|☑︎|☑︎| `4` | CHR <sup>*2</sup> |
+|☑︎|☑︎|☑︎|-|-|☑︎|☑︎| `5` | JIS-X-0201 |
+|☑︎|☑︎|☑︎|-|-|☑︎|☑︎| `6` | JIS-X-0208 |
 
 Remarks:
 
@@ -939,6 +941,7 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | cg:bmp | `vgs_pfont_set` | Setting [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) Information. |
 | cg:bmp | `vgs_pfont_print` | Drawing strings using [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) |
 | cg:bmp | `vgs_pfont_strlen` | Width of a string displayed in a [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) (in pixels). |
+| cg:bmp | `vgs_k8x12_print` | Drawing strings using [k8x12 Japanese Font](#0xd2004c-0xd20068-bitmap-graphic-draw). |
 | cg:bg+bmp | `vgs_skip_bg` | [Skip Rendering a Specific BG](#0xd2006c-0xd20078-skip-rendering-a-specific-bg) |
 | cg:bg+bmp | `vgs_scroll` | [Scroll](#0xd20008-0xd20024-hardware-scroll) BG |
 | cg:bg+bmp | `vgs_scroll_x` | [Scroll](#0xd20008-0xd20024-hardware-scroll) BG (X) |
@@ -1213,6 +1216,9 @@ usage: vgmplay /path/to/bgm.vgm
 - FM Sound Chip Emulator - [ymfm](https://github.com/aaronsgiles/ymfm)
   - Copyright (c) 2021, Aaron Giles
   - License: [3-clause BSD](./LICENSE-ymfm.txt)
+- Japanese Font - [k8x12](https://littlelimit.net/k8x12.htm)
+  - Created by Num Makado
+  - License: [Free Software](./LICENSE-k8x12.txt)
 - [VGS-X](https://github.com/suzukiplan/vgsx) and VGS Standard Library for MC68030
   - Copyright (c) 2025 Yoji Suzuki.
   - License: [MIT](./LICENSE-VGSX.txt)

@@ -1,5 +1,9 @@
 # Changes
 
+## Version 0.12.0
+
+Supports Japanese display using k8x12.
+
 ## Version 0.11.0
 
 - Core: Added the Propotional Font functions

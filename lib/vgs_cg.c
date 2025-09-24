@@ -172,3 +172,43 @@ int32_t vgs_pfont_strlen(const char* text)
     }
     return 0 < result ? result - 1 : result;
 }
+
+void vgs_k8x12_print(uint8_t n, int32_t x, int32_t y, uint32_t col, const char* sjis)
+{
+    VGS_VREG_G_BG = n & 3;
+    VGS_VREG_G_Y1 = y;
+    VGS_VREG_G_COL = col;
+    while (*sjis) {
+        VGS_VREG_G_X1 = x;
+        uint16_t h = (uint8_t)*sjis;
+        if ((0x80 < h && h < 0xA0) || (0xE0 <= h && h < 0xF0)) {
+            uint8_t l = (uint8_t)sjis[1];
+            if (0 == l) {
+                return;
+            }
+            h -= h < 0x9F ? 0x71 : 0xB1;
+            h <<= 1;
+            h++;
+            if (l >= 0x7F) {
+                l -= 0x01;
+            }
+            if (l >= 0x9E) {
+                l -= 0x7D;
+                h++;
+            } else {
+                l -= 0x1f;
+            }
+            h = (h - 0x21) * 94;
+            h += l - 0x21;
+            VGS_VREG_G_OPT = h;
+            VGS_VREG_G_EXE = VGS_DRAW_JISX0208;
+            x += 8;
+            sjis += 2;
+        } else {
+            VGS_VREG_G_OPT = h;
+            VGS_VREG_G_EXE = VGS_DRAW_JISX0201;
+            x += 4;
+            sjis++;
+        }
+    }
+}
