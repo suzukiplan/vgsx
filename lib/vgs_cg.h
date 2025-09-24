@@ -112,6 +112,8 @@ typedef struct {
 #define VGS_DRAW_BOX 2
 #define VGS_DRAW_BOXF 3
 #define VGS_DRAW_CHR 4
+#define VGS_DRAW_JISX0201 5
+#define VGS_DRAW_JISX0208 6
 
 // DMA Function Identifer
 #define VGS_DMA_MEMCPY 0
@@ -430,6 +432,16 @@ void vgs_pfont_print(uint8_t n, int32_t x, int32_t y, uint8_t pal, uint16_t ptn,
  * @return Display width (in pixels).
  */
 int32_t vgs_pfont_strlen(const char* text);
+
+/**
+ * @brief Drawing strings using k8x12 Japanese Font
+ * @param n Number of BG (0 to 3)
+ * @param x X-coordinate
+ * @param y Y-coordinate
+ * @param col RGB888 color format
+ * @param sjis A pointer to a null-terminated buffer containing the Shift-JIS string to be displayed.
+ */
+void vgs_k8x12_print(uint8_t n, int32_t x, int32_t y, uint32_t col, const char* sjis);
 
 #ifdef __cplusplus
 };

@@ -32,12 +32,19 @@
 #define VDP_WIDTH 320  /* Width of the Screen */
 #define VDP_HEIGHT 200 /* Height of the Screen */
 
+extern "C" {
+extern const uint8_t k8x12_jisx0201[3072];   // 12x256
+extern const uint8_t k8x12_jisx0208[106032]; // 12x8836
+};
+
 class VDP;
 static inline void graphicDrawPixel(VDP* vdp);
 static inline void graphicDrawLine(VDP* vdp);
 static inline void graphicDrawBox(VDP* vdp);
 static inline void graphicDrawBoxFill(VDP* vdp);
 static inline void graphicDrawCharacter(VDP* vdp);
+static inline void graphicDrawJisX0201(VDP* vdp);
+static inline void graphicDrawJisX0208(VDP* vdp);
 
 class VDP
 {
@@ -271,7 +278,7 @@ class VDP
                     this->ctx.pinfo[i].width = 0;
                 }
             }
-            printf("%c: dx=%d, dy=%d, width=%d\n", isprint(i) ? i : '?', this->ctx.pinfo[i].dx, this->ctx.pinfo[i].dy, this->ctx.pinfo[i].width);
+            // printf("%c: dx=%d, dy=%d, width=%d\n", isprint(i) ? i : '?', this->ctx.pinfo[i].dx, this->ctx.pinfo[i].dy, this->ctx.pinfo[i].width);
         }
     }
 
@@ -303,8 +310,10 @@ class VDP
             graphicDrawBox,
             graphicDrawBoxFill,
             graphicDrawCharacter,
+            graphicDrawJisX0201,
+            graphicDrawJisX0208,
         };
-        if (op < 5) {
+        if (op < 7) {
             func[op](this);
         }
     }
@@ -773,6 +782,63 @@ static inline void graphicDrawCharacter(VDP* vdp)
                     vram[(y + i) * 320 + x + j * 2 + 1] = 0;
                 }
             }
+        }
+    }
+}
+
+static inline void graphicDrawJisX0201(VDP* vdp)
+{
+    uint32_t* vram = vdp->ctx.nametbl[vdp->ctx.reg.g_bg & 3];
+    int32_t x = (int32_t)vdp->ctx.reg.g_x1;
+    int32_t y = (int32_t)vdp->ctx.reg.g_y1;
+    uint32_t col = vdp->ctx.reg.g_col;
+    uint32_t code = (int32_t)vdp->ctx.reg.g_opt;
+    if (255 < code) {
+        return;
+    }
+    const uint8_t* ptn = &k8x12_jisx0201[code * 12];
+    for (int iy = 0; iy < 12; iy++) {
+        int p = ptn[iy];
+        if (y + iy < 0 || 200 <= y + iy) {
+            continue;
+        }
+        for (int ix = 0; ix < 4; ix++) {
+            if (x + ix < 0 || 320 <= x + ix) {
+                continue;
+            }
+            if (p & 0x80) {
+                vram[(y + iy) * 320 + x + ix] = col;
+            }
+            p <<= 1;
+        }
+    }
+}
+
+static inline void graphicDrawJisX0208(VDP* vdp)
+{
+    uint32_t* vram = vdp->ctx.nametbl[vdp->ctx.reg.g_bg & 3];
+    int32_t x = (int32_t)vdp->ctx.reg.g_x1;
+    int32_t y = (int32_t)vdp->ctx.reg.g_y1;
+    uint32_t col = vdp->ctx.reg.g_col;
+    uint32_t code = (int32_t)vdp->ctx.reg.g_opt;
+    printf("jisx0208: 0x%04X\n", code);
+    if (8835 < code) {
+        return;
+    }
+    const uint8_t* ptn = &k8x12_jisx0208[code * 12];
+    for (int iy = 0; iy < 12; iy++) {
+        int p = ptn[iy];
+        if (y + iy < 0 || 200 <= y + iy) {
+            continue;
+        }
+        for (int ix = 0; ix < 8; ix++) {
+            if (x + ix < 0 || 320 <= x + ix) {
+                continue;
+            }
+            if (p & 0x80) {
+                vram[(y + iy) * 320 + x + ix] = col;
+            }
+            p <<= 1;
         }
     }
 }

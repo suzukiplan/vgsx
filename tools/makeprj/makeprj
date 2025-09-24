@@ -89,6 +89,9 @@ cp -p ../../LICENSE-Musashi.txt "$VGSX_Project_Path/LICENSE-Musashi.txt"
 echo "Create file: $VGSX_Project_Path/LICENSE-ymfm.txt"
 cp -p ../../LICENSE-ymfm.txt "$VGSX_Project_Path/LICENSE-ymfm.txt"
 
+echo "Create file: $VGSX_Project_Path/LICENSE-k8x12.txt"
+cp -p ../../LICENSE-k8x12.txt "$VGSX_Project_Path/LICENSE-k8x12.txt"
+
 echo "Create file: $VGSX_Project_Path/LICENSE-VGSX.txt"
 cp -p ../../LICENSE-VGSX.txt "$VGSX_Project_Path/LICENSE-VGSX.txt"
 

@@ -10,6 +10,8 @@ CPP += -c
 OBJECTS = main.o
 OBJECTS += vgsx.o
 OBJECTS += vgs0math.o
+OBJECTS += k8x12_jisx0201.o
+OBJECTS += k8x12_jisx0208.o
 OBJECTS += m68kcpu.o
 OBJECTS += m68kops.o
 OBJECTS += m68kdasm.o
@@ -36,6 +38,12 @@ vgsx.o: ${CORE_PATH}/vgsx.cpp ${CORE_PATH}/vgsx.h ${CORE_PATH}/vdp.hpp ${CORE_PA
 
 vgs0math.o: ${CORE_PATH}/vgs0math.cpp
 	${CPP} $<
+
+k8x12_jisx0201.o: ${CORE_PATH}/k8x12_jisx0201.c
+	gcc -c $<
+
+k8x12_jisx0208.o: ${CORE_PATH}/k8x12_jisx0208.c
+	gcc -c $<
 
 m68kcpu.o: ${CORE_PATH}/musashi/m68kcpu.c
 	${CPP} -w $<
