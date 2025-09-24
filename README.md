@@ -46,6 +46,8 @@ VDP Features:
 - Number of [OAM](#oam-object-attribute-memory) (Sprites): 1,024
 - [Size of Sprite](#size-of-sprite): from 8x8 pixels to 256x256 pixels
 - Supports [rotation](#rotate-of-sprite) and [scaling](#scale-of-sprite) for each sprites
+- Supports the [Bitmap Graphic Draw](#0xd2004c-0xd20068-bitmap-graphic-draw) functions for [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode)
+- Supports the [Propotional Font](#0xd2007c-0xd2008c-propotional-font) functions for [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode)
 
 Games can be developed using the GCC; _GNU Compiler Collection_ for MC68k.
 
