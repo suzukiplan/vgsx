@@ -122,13 +122,13 @@ const ProportionalInfo pinfo[] = {
     {2, 0, 2}, // i
     {1, 1, 5}, // j
     {1, 0, 5}, // k
-    {2, 0, 3}, // l
+    {1, 0, 4}, // l
     {0, 0, 6}, // m
     {1, 0, 5}, // n
     {1, 0, 5}, // o
     // 0x70 ~ 0x7F
-    {1, 1, 5}, // p
-    {1, 1, 5}, // q
+    {1, 2, 5}, // p
+    {1, 2, 5}, // q
     {1, 0, 5}, // r
     {1, 0, 5}, // s
     {1, 0, 5}, // t
@@ -136,7 +136,7 @@ const ProportionalInfo pinfo[] = {
     {0, 0, 6}, // v
     {0, 0, 6}, // w
     {1, 0, 5}, // x
-    {1, 1, 5}, // y
+    {1, 2, 5}, // y
     {1, 0, 5}, // z
     {3, 0, 5}, // {
     {2, 0, 2}, // |
@@ -160,19 +160,20 @@ int main(int argc, char* argv[])
 {
     vgs_draw_mode(0, TRUE);
     pfont_render(0, 8, 8, "This is a test to display proportional fonts on the VGS-X.");
-    pfont_render(0, 8, 20, "This was implemented as a software feature, not hardware.");
-    pfont_render(0, 8, 32, "For all font images used, we simply define the display coordinate");
-    pfont_render(0, 8, 41, "offsets (dx, dy) and width information, then draw the character");
-    pfont_render(0, 8, 50, "images in Bitmap Mode.");
-    pfont_render(0, 8, 62, "Since proportional coordinate information varies depending on the");
-    pfont_render(0, 8, 71, "type of font image, I hesitated to implement this as a hardware");
-    pfont_render(0, 8, 80, "feature.");
-    pfont_render(0, 8, 92, "However, upon closer inspection, mechanically calculating propor-");
-    pfont_render(0, 8, 101, "tional coordinate information isn't difficult. Adjusting Y-coordi-");
-    pfont_render(0, 8, 110, "nates like `p` or `q` is a bit trickier, though.");
-    pfont_render(0, 8, 119, "An interface that allows mechanical initialization while enabling");
-    pfont_render(0, 8, 128, "subsequent updates to proportional definitions would likely be");
-    pfont_render(0, 8, 137, "PERFECT!");
+    pfont_render(0, 8, 24, "This was implemented as a software feature, not hardware.");
+    pfont_render(0, 8, 40, "For all font images used, we simply define the display coordinate");
+    pfont_render(0, 8, 50, "offsets (dx, dy) and width information, then draw the character");
+    pfont_render(0, 8, 60, "images in Bitmap Mode.");
+    pfont_render(0, 8, 76, "Since proportional coordinate information varies depending on the");
+    pfont_render(0, 8, 86, "type of font image, I hesitated to implement this as a hardware");
+    pfont_render(0, 8, 96, "feature.");
+    pfont_render(0, 8, 112, "However, upon closer inspection, mechanically calculating propor-");
+    pfont_render(0, 8, 122, "tional coordinate information isn't difficult. Adjusting Y-coordi-");
+    pfont_render(0, 8, 132, "nates like `g`, `j`, `p`, `q` or `y` is a bit trickier, though.");
+    pfont_render(0, 8, 148, "An interface that allows mechanical initialization while enabling");
+    pfont_render(0, 8, 158, "subsequent updates to proportional definitions would likely be");
+    pfont_render(0, 8, 168, "PERFECT!");
+    vgs_scroll_y(0, 7);
     while (TRUE) {
         vgs_vsync();
     }
