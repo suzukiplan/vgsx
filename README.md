@@ -510,8 +510,8 @@ For example, we envision using this by skipping the rendering of specific backgr
 - Setting the starting character pattern number to `0xD2007C (PF_INIT)` initializes the coordinate information for proportional fonts.
 - At `PF_INIT`, `PF_DX` and `PF_WIDTH` are initialized appropriately, but `PF_DY` is set to a fixed value determined by the character code.
   - `'_'`, `'.'`, `','`, `'g'` and `'j'` are `PF_DY = 1`
-  - `'p'`, `'q'` and `'y'` = `PF_DY = 2`
-  - other = `PF_DY = 0`
+  - `'p'`, `'q'` and `'y'` are `PF_DY = 2`
+  - Others are `PF_DY = 0`
 - Set the ASCII code (0x00 to 0x7F) of the proportional font to be loaded or updated to `0xD20080 (PF_PTN)`.
 - `0xD20084 (PF_DX)`: Read or Update a X-coodinate difference of `PF_PTN`
 - `0xD20088 (PF_DY)`: Read or Update a Y-coodinate difference of `PF_PTN`
