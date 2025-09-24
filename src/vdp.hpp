@@ -26,6 +26,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <math.h>
+#include <ctype.h>
 
 #define VDP_BG_NUM 4   /* Number of the BG plan */
 #define VDP_WIDTH 320  /* Width of the Screen */
@@ -60,7 +61,12 @@ class VDP
         uint32_t skip1;               // R28: Skip Rendering BG1
         uint32_t skip2;               // R29: Skip Rendering BG2
         uint32_t skip3;               // R30: Skip Rendering BG3
-        uint32_t reserved[225];       // Reserved
+        uint32_t pf_init;             // R31: Profotinaol Font - Initialize
+        uint32_t pf_ptn;              // R32: Profotinaol Font - Pattern
+        uint32_t pf_dx;               // R33: Profotinaol Font - diff X
+        uint32_t pf_dy;               // R34: Profotinaol Font - diff Y
+        uint32_t pf_width;            // R35: Profotinaol Font - width
+        uint32_t reserved[220];       // Reserved
     } Register;
 
     typedef struct {
@@ -74,12 +80,20 @@ class VDP
         uint32_t reserved[9]; // Reserved
     } OAM;
 
+    typedef struct {
+        int32_t dx;
+        int32_t dy;
+        int32_t width;
+        int32_t reserved;
+    } PropotionalInfo;
+
     struct Context {
         uint32_t display[VDP_WIDTH * VDP_HEIGHT]; // Virtual Display
         uint8_t ptn[65536][32];                   // Character Pattern (ROM)
         uint32_t nametbl[VDP_BG_NUM][65536];      // Name Table
         OAM oam[1024];                            // OAM
         uint32_t palette[16][16];                 // Palette
+        PropotionalInfo pinfo[0x80];              // Propotional Info
         Register reg;                             // Register
     } ctx;
 
@@ -115,6 +129,9 @@ class VDP
                     uint32_t* rawReg = (uint32_t*)&this->ctx.reg;
                     switch (index) {
                         case 26: return this->readPixel();
+                        case 33: return this->ctx.pinfo[this->ctx.reg.pf_ptn & 0x7F].dx;
+                        case 34: return this->ctx.pinfo[this->ctx.reg.pf_ptn & 0x7F].dy;
+                        case 35: return this->ctx.pinfo[this->ctx.reg.pf_ptn & 0x7F].width;
                     }
                     return rawReg[index];
                 }
@@ -163,6 +180,10 @@ class VDP
                         case 17: this->cls(2, value); break;
                         case 18: this->cls(3, value); break;
                         case 26: this->graphicDraw(value); break;
+                        case 31: this->setupPropotional(value & 0xFFFF); break;
+                        case 33: this->ctx.pinfo[this->ctx.reg.pf_ptn & 0x7F].dx = value; break;
+                        case 34: this->ctx.pinfo[this->ctx.reg.pf_ptn & 0x7F].dy = value; break;
+                        case 35: this->ctx.pinfo[this->ctx.reg.pf_ptn & 0x7F].width = value; break;
                     }
                     return;
                 }
@@ -189,6 +210,71 @@ class VDP
     }
 
   private:
+    void setupPropotional(uint16_t ptn_start)
+    {
+        if (0x10000 - 0x80 < ptn_start) {
+            return;
+        }
+        uint8_t* ptn = this->ctx.ptn[ptn_start];
+        for (int i = 0; i < 0x80; i++) {
+            int sx = 8;
+            int ex = -1;
+            for (int y = 0; y < 8; y++) {
+                int px[8];
+                px[0] = (ptn[0] & 0xF0) >> 4;
+                px[1] = ptn[0] & 0x0F;
+                px[2] = (ptn[1] & 0xF0) >> 4;
+                px[3] = ptn[1] & 0x0F;
+                px[4] = (ptn[2] & 0xF0) >> 4;
+                px[5] = ptn[2] & 0x0F;
+                px[6] = (ptn[3] & 0xF0) >> 4;
+                px[7] = ptn[3] & 0x0F;
+                ptn += 4;
+                for (int x = 0; x < 8; x++) {
+                    if (px[x]) {
+                        if (x < sx) {
+                            sx = x;
+                        }
+                    }
+                    if (px[7 - x]) {
+                        if (ex < 7 - x) {
+                            ex = 7 - x;
+                        }
+                    }
+                }
+            }
+            if (0 < ex) {
+                this->ctx.pinfo[i].dx = -sx;
+                this->ctx.pinfo[i].width = (ex - sx) + 2;
+                switch (i) {
+                    case '_':
+                    case '.':
+                    case ',':
+                    case 'g':
+                    case 'j':
+                        this->ctx.pinfo[i].dy = 1;
+                        break;
+                    case 'p':
+                    case 'q':
+                    case 'y':
+                        this->ctx.pinfo[i].dy = 2;
+                        break;
+                    default:
+                        this->ctx.pinfo[i].dy = 0;
+                }
+            } else {
+                this->ctx.pinfo[i].dx = 0;
+                this->ctx.pinfo[i].dy = 0;
+                if (i == ' ' || i == '\t') {
+                    this->ctx.pinfo[i].width = 4; // space width
+                } else {
+                    this->ctx.pinfo[i].width = 0;
+                }
+            }
+            printf("%c: dx=%d, dy=%d, width=%d\n", isprint(i) ? i : '?', this->ctx.pinfo[i].dx, this->ctx.pinfo[i].dy, this->ctx.pinfo[i].width);
+        }
+    }
+
     inline void cls(uint32_t value)
     {
         for (int i = 0; i < 4; i++) {
@@ -674,16 +760,16 @@ static inline void graphicDrawCharacter(VDP* vdp)
             uint32_t c0 = vdp->ctx.palette[pal][p0];
             uint32_t c1 = vdp->ctx.palette[pal][p1];
             if (0 <= x + j * 2 && x + j * 2 < 320) {
-                if (drawZero || p0) {
+                if (p0) {
                     vram[(y + i) * 320 + x + j * 2] = c0;
-                } else {
+                } else if (drawZero) {
                     vram[(y + i) * 320 + x + j * 2] = 0;
                 }
             }
             if (0 <= x + j * 2 + 1 && x + j * 2 + 1 < 320) {
-                if (drawZero || p1) {
+                if (p1) {
                     vram[(y + i) * 320 + x + j * 2 + 1] = c1;
-                } else {
+                } else if (drawZero) {
                     vram[(y + i) * 320 + x + j * 2 + 1] = 0;
                 }
             }

@@ -46,6 +46,8 @@ VDP Features:
 - Number of [OAM](#oam-object-attribute-memory) (Sprites): 1,024
 - [Size of Sprite](#size-of-sprite): from 8x8 pixels to 256x256 pixels
 - Supports [rotation](#rotate-of-sprite) and [scaling](#scale-of-sprite) for each sprites
+- Supports the [Bitmap Graphic Draw](#0xd2004c-0xd20068-bitmap-graphic-draw) functions for [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode)
+- Supports the [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) functions for [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode)
 
 Games can be developed using the GCC; _GNU Compiler Collection_ for MC68k.
 
@@ -416,6 +418,11 @@ You can specify the magnification rate as a percentage on the `scale`, either 0 
 |0xD20070 | R28 | SKIP1 | [Skip Rendering BG1](#0xd2006c-0xd20078-skip-rendering-a-specific-bg) |
 |0xD20074 | R29 | SKIP2 | [Skip Rendering BG2](#0xd2006c-0xd20078-skip-rendering-a-specific-bg) |
 |0xD20078 | R30 | SKIP3 | [Skip Rendering BG3](#0xd2006c-0xd20078-skip-rendering-a-specific-bg) |
+|0xD2007C | R31 | PF_INIT | Initialize the [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) coodinates. |
+|0xD20080 | R32 | PF_PTN | [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) pattern number |
+|0xD20084 | R33 | PF_DX | [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) diff-X |
+|0xD20088 | R34 | PF_DY | [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) diff-Y |
+|0xD2008C | R35 | PF_WIDTH | [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) width |
 
 Please note that access to the VDP register must always be 4-byte aligned.
 
@@ -497,6 +504,22 @@ Skip displaying a specified BG plane.
 This function only skips displaying information on the screen. Information that has already been drawn remains stored in VRAM, so you can read the pixel color using `vgs_read_pixel`.
 
 For example, we envision using this by skipping the rendering of specific background planes designated as “collision detection surfaces,” enabling collision detection via `vgs_read_pixel`.
+
+### 0xD2007C-0xD2008C: Proportional Font
+
+- Setting the starting character pattern number to `0xD2007C (PF_INIT)` initializes the coordinate information for proportional fonts.
+- At `PF_INIT`, `PF_DX` and `PF_WIDTH` are initialized appropriately, but `PF_DY` is set to a fixed value determined by the character code.
+  - `'_'`, `'.'`, `','`, `'g'` and `'j'` are `PF_DY = 1`
+  - `'p'`, `'q'` and `'y'` are `PF_DY = 2`
+  - Others are `PF_DY = 0`
+- Set the ASCII code (0x00 to 0x7F) of the proportional font to be loaded or updated to `0xD20080 (PF_PTN)`.
+- `0xD20084 (PF_DX)`: Read or Update a X-coodinate difference of `PF_PTN`
+- `0xD20088 (PF_DY)`: Read or Update a Y-coodinate difference of `PF_PTN`
+- `0xD2008C (PF_WIDTH)`: Read or Update a width of `PF_PTN`
+
+See the example of usage: [./example/05_pro-font/program.c](./example/05_pro-font/program.c)
+
+![usage](./example/05_pro-font/screen.png)
 
 ## I/O Map
 
@@ -911,6 +934,11 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | cg:bmp | `vgs_draw_box` | Draw a [rectangle](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
 | cg:bmp | `vgs_draw_boxf` | Draw a [filled-rectangle](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
 | cg:bmp | `vgs_draw_character` | Draw a [character-pattern](#character-pattern) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
+| cg:bmp | `vgs_pfont_init` | [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) Initialization. |
+| cg:bmp | `vgs_pfont_get` | Acquiring [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) Information. |
+| cg:bmp | `vgs_pfont_set` | Setting [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) Information. |
+| cg:bmp | `vgs_pfont_print` | Drawing strings using [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) |
+| cg:bmp | `vgs_pfont_strlen` | Width of a string displayed in a [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) (in pixels). |
 | cg:bg+bmp | `vgs_skip_bg` | [Skip Rendering a Specific BG](#0xd2006c-0xd20078-skip-rendering-a-specific-bg) |
 | cg:bg+bmp | `vgs_scroll` | [Scroll](#0xd20008-0xd20024-hardware-scroll) BG |
 | cg:bg+bmp | `vgs_scroll_x` | [Scroll](#0xd20008-0xd20024-hardware-scroll) BG (X) |
@@ -938,14 +966,21 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | gamepad | `vgs_key_code_b` | Key code check: B button |
 | gamepad | `vgs_key_code_x` | Key code check: X button |
 | gamepad | `vgs_key_code_y` | Key code check: Y button |
+| gamepad | `vgs_key_type` | Get the [Gamepad Type](#0xe021xxio---gamepad-types) currently connected.|
+| gamepad | `vgs_button_id_a` | Get the [Button ID](#0xe021xxio---gamepad-types) for the A button on the connected gamepad. |
+| gamepad | `vgs_button_id_b` | Get the [Button ID](#0xe021xxio---gamepad-types) for the B button on the connected gamepad. |
+| gamepad | `vgs_button_id_x` | Get the [Button ID](#0xe021xxio---gamepad-types) for the X button on the connected gamepad. |
+| gamepad | `vgs_button_id_y` | Get the [Button ID](#0xe021xxio---gamepad-types) for the Y button on the connected gamepad. |
+| gamepad | `vgs_button_id_start` | Get the [Button ID](#0xe021xxio---gamepad-types) for the Start button on the connected gamepad. |
+| gamepad | `vgs_button_name` | Get the [Name String](#0xe021xxio---gamepad-types) of the button identifier. |
 | save | `vgs_save` | Save [save data](#0xe030xxio---savedata). |
 | save | `vgs_load` | Load [save data](#0xe030xxio---savedata).　|
 | save | `vgs_save_check` | Check the size of [save data](#0xe030xxio---savedata).　|
-| save | `vgs_seq_open_w` | Open a large sequencial file for write. |
-| save | `vgs_seq_write` | Write a byte data to a large sequencial file. |
-| save | `vgs_seq_commit` | Commit a large sequencial file for write. |
-| save | `vgs_seq_open_r` | Open a large sequencial file for write. |
-| save | `vgs_seq_read` | Read a byte data to a large sequencial file. |
+| save | `vgs_seq_open_w` | Open a [Large Sequencial File](#0xe031xxio---large-sequencial-file-io) for write. |
+| save | `vgs_seq_write` | Write a byte data to a [Large Sequencial File](#0xe031xxio---large-sequencial-file-io). |
+| save | `vgs_seq_commit` | Commit a [Large Sequencial File](#0xe031xxio---large-sequencial-file-io) for write. |
+| save | `vgs_seq_open_r` | Open a [Large Sequencial File](#0xe031xxio---large-sequencial-file-io) for write. |
+| save | `vgs_seq_read` | Read a byte data to a [Large Sequencial File](#0xe031xxio---large-sequencial-file-io). |
 
 ### (Standard Functions)
 
@@ -1164,6 +1199,8 @@ Play a .vgm file from the command line.
 ```
 usage: vgmplay /path/to/bgm.vgm
 ```
+
+> This command is not built by default, so please build it as needed before use.
 
 # License
 
