@@ -1,5 +1,9 @@
 # Changes
 
+## Version 0.15.0
+
+- Core+CRT: Added BGM pause, resume and fadeout functions
+
 ## Version 0.14.0
 
 - Core+CRT: Supports Alpha Blending for Sprites. (`OAM::alpha`)

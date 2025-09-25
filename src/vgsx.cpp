@@ -32,6 +32,8 @@
 
 VGSX vgsx;
 
+#define FADEOUT_FRAMES 100
+
 extern "C" {
 extern const unsigned short vgs0_rand16[65536];
 };
@@ -565,8 +567,21 @@ void VGSX::tickSound(int16_t* buf, int samples)
 {
     memset(buf, 0, samples * 2);
     auto helper = (VgmHelper*)this->vgmHelper;
-    if (helper) {
+    if (helper && !this->ctx.vgmPause) {
         helper->render(buf, samples);
+    }
+    if (this->ctx.vgmFadeout) {
+        for (int i = 0; i < samples; i++) {
+            int32_t w = buf[i];
+            w *= (FADEOUT_FRAMES - this->ctx.vgmFadeout);
+            w /= FADEOUT_FRAMES;
+            buf[i] = (int16_t)w;
+        }
+        this->ctx.vgmFadeout++;
+        if (FADEOUT_FRAMES <= this->ctx.vgmFadeout) {
+            delete helper;
+            this->vgmHelper = nullptr;
+        }
     }
     for (int i = 0; i < 0x100; i++) {
         if (this->ctx.sfxData[i].play) {
@@ -761,8 +776,23 @@ void VGSX::outPort(uint32_t address, uint32_t value)
                 }
                 helper = new VgmHelper(this->ctx.vgmData[value].data, this->ctx.vgmData[value].size, this->logCallback);
                 this->vgmHelper = helper;
+                this->ctx.vgmPause = false;
+                this->ctx.vgmFadeout = 0;
             }
             return;
+
+        case VGS_ADDR_VGM_PLAY_OPT:
+            switch (value) {
+                case VGS_VGM_OPT_PAUSE: this->ctx.vgmPause = true; break;
+                case VGS_VGM_OPT_RESUME: this->ctx.vgmPause = false; break;
+                case VGS_VGM_OPT_FADEOUT:
+                    if (0 == this->ctx.vgmFadeout) {
+                        this->ctx.vgmFadeout = 1;
+                    }
+                    break;
+            }
+            return;
+
         case VGS_ADDR_SFX_PLAY: // Play SFX
             value &= 0xFF;
             if (this->ctx.sfxData[value].data) {

@@ -24,6 +24,7 @@
  */
 #pragma once
 #include "vgs_stdint.h"
+#include "vgs_io.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,7 +34,22 @@ extern "C" {
  * @brief Play background music
  * @param n Number of Music (0 to 255)
  */
-void vgs_bgm_play(uint16_t n);
+static inline void vgs_bgm_play(uint16_t n) { VGS_OUT_VGM_PLAY = n; }
+
+/**
+ * @brief Pause background music
+ */
+static inline void vgs_bgm_pause(void) { VGS_OUT_VGM_PLAY_OPT = VGS_VGM_OPT_PAUSE; }
+
+/**
+ * @brief Resume background music
+ */
+static inline void vgs_bgm_resume(void) { VGS_OUT_VGM_PLAY_OPT = VGS_VGM_OPT_RESUME; }
+
+/**
+ * @brief Fadeout background music
+ */
+static inline void vgs_bgm_fadeout(void) { VGS_OUT_VGM_PLAY_OPT = VGS_VGM_OPT_FADEOUT; }
 
 #ifdef __cplusplus
 };

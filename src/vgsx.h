@@ -114,6 +114,8 @@ class VGSX
         SequencialData sqw;
         SequencialData sqr;
         ButtonId getNameId;
+        bool vgmPause;
+        uint32_t vgmFadeout;
     } ctx;
 
     struct KeyStatus {

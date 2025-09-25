@@ -16,11 +16,11 @@ void center_print(int y, const char* text)
 
 int main(int argc, char* argv[])
 {
-    vgs_draw_mode(0, TRUE);  // BG0: Bitmap Mode
-    vgs_draw_mode(1, TRUE);  // BG1: Bitmap Mode
-    vgs_draw_mode(2, TRUE);  // BG2: Bitmap Mode
-    vgs_draw_mode(3, FALSE); // BG3: Character Pattern Mode
-    vgs_sprite_priority(3);  // Sprite: Displayed on top of BG3
+    vgs_draw_mode(0, ON);   // BG0: Bitmap Mode
+    vgs_draw_mode(1, ON);   // BG1: Bitmap Mode
+    vgs_draw_mode(2, ON);   // BG2: Bitmap Mode
+    vgs_draw_mode(3, OFF);  // BG3: Character Pattern Mode
+    vgs_sprite_priority(3); // Sprite: Displayed on top of BG3
     vgs_pfont_init(0);
 
     const char* text = "Hello VGS-X World!";
@@ -60,14 +60,14 @@ int main(int argc, char* argv[])
     }
 
     vgs_draw_box(2, 20, 90, 20 + 23, 90 + 23, 0xF02020);
-    vgs_sprite(0, TRUE, 20, 90, 2, 0, '1');
+    vgs_sprite(0, ON, 20, 90, 2, 0, '1');
     vgs_draw_box(2, vgs_draw_width() - 20 - 32, 86, vgs_draw_width() - 20 - 32 + 31, 86 + 31, 0xF02020);
-    vgs_sprite(1, TRUE, vgs_draw_width() - 20 - 32, 86, 3, 0, 'A');
+    vgs_sprite(1, ON, vgs_draw_width() - 20 - 32, 86, 3, 0, 'A');
     vgs_oam(1)->scale = 10;
 
-    vgs_sprite(2, TRUE, vgs_draw_width() / 2 - 32 - 8, 20, 0, 0, 'V');
-    vgs_sprite(3, TRUE, vgs_draw_width() / 2 - 4, 20, 0, 0, 'G');
-    vgs_sprite(4, TRUE, vgs_draw_width() / 2 + 32, 20, 0, 0, 'S');
+    vgs_sprite(2, ON, vgs_draw_width() / 2 - 32 - 8, 20, 0, 0, 'V');
+    vgs_sprite(3, ON, vgs_draw_width() / 2 - 4, 20, 0, 0, 'G');
+    vgs_sprite(4, ON, vgs_draw_width() / 2 + 32, 20, 0, 0, 'S');
     vgs_oam(2)->scale = 300;
     vgs_oam(2)->rotate = 90;
     vgs_oam(3)->scale = 200;
@@ -78,16 +78,16 @@ int main(int argc, char* argv[])
 
     const int32_t baseX = (vgs_draw_width() - (10 << 3)) / 2;
     const int32_t baseY = 100;
-    vgs_sprite(5, TRUE, baseX, baseY, 9, 0, 128);                   // gamepad
-    vgs_sprite(6, FALSE, baseX + 14, baseY + 31, 0, 0, 128 + 101);  // up button
-    vgs_sprite(7, FALSE, baseX + 14, baseY + 43, 0, 0, 128 + 101);  // down button
-    vgs_sprite(8, FALSE, baseX + 7, baseY + 38, 0, 0, 128 + 100);   // left button
-    vgs_sprite(9, FALSE, baseX + 19, baseY + 38, 0, 0, 128 + 100);  // right button
-    vgs_sprite(10, FALSE, baseX + 33, baseY + 48, 1, 0, 128 + 102); // start button
-    vgs_sprite(11, FALSE, baseX + 61, baseY + 44, 0, 0, 128 + 106); // A button
-    vgs_sprite(12, FALSE, baseX + 68, baseY + 36, 0, 0, 128 + 106); // B button
-    vgs_sprite(13, FALSE, baseX + 54, baseY + 36, 0, 0, 128 + 106); // X button
-    vgs_sprite(14, FALSE, baseX + 61, baseY + 28, 0, 0, 128 + 106); // Y button
+    vgs_sprite(5, ON, baseX, baseY, 9, 0, 128);                   // gamepad
+    vgs_sprite(6, OFF, baseX + 14, baseY + 31, 0, 0, 128 + 101);  // up button
+    vgs_sprite(7, OFF, baseX + 14, baseY + 43, 0, 0, 128 + 101);  // down button
+    vgs_sprite(8, OFF, baseX + 7, baseY + 38, 0, 0, 128 + 100);   // left button
+    vgs_sprite(9, OFF, baseX + 19, baseY + 38, 0, 0, 128 + 100);  // right button
+    vgs_sprite(10, OFF, baseX + 33, baseY + 48, 1, 0, 128 + 102); // start button
+    vgs_sprite(11, OFF, baseX + 61, baseY + 44, 0, 0, 128 + 106); // A button
+    vgs_sprite(12, OFF, baseX + 68, baseY + 36, 0, 0, 128 + 106); // B button
+    vgs_sprite(13, OFF, baseX + 54, baseY + 36, 0, 0, 128 + 106); // X button
+    vgs_sprite(14, OFF, baseX + 61, baseY + 28, 0, 0, 128 + 106); // Y button
 
     vgs_draw_boxf(2, baseX - 8, baseY + 20, baseX + 88, baseY + 58, 1);
 
@@ -96,10 +96,10 @@ int main(int argc, char* argv[])
     center_print(180, "It's surprisingly easy to develop games,");
     center_print(190, "compatibility can be easily maintained.");
 
-    vgs_sprite(16, TRUE, 10, 40, 3, 0, 238);
-    vgs_sprite(17, TRUE, 30, 40, 3, 0, 238);
-    vgs_sprite(18, TRUE, 50, 40, 3, 0, 238);
-    vgs_sprite(19, TRUE, 70, 40, 3, 0, 238);
+    vgs_sprite(16, ON, 10, 40, 3, 0, 238);
+    vgs_sprite(17, ON, 30, 40, 3, 0, 238);
+    vgs_sprite(18, ON, 50, 40, 3, 0, 238);
+    vgs_sprite(19, ON, 70, 40, 3, 0, 238);
 
     vgs_oam(16)->alpha = 0xE0E0E0;
     vgs_oam(17)->alpha = 0xA0A0A0;
@@ -111,11 +111,15 @@ int main(int argc, char* argv[])
     vgs_oam(19)->mask = 0x4080FF;
 
     vgs_bgm_play(0);
+    BOOL prevA = OFF;
+    BOOL prevB = OFF;
+    BOOL prevX = OFF;
+    BOOL prevY = OFF;
     while (1) {
         vgs_vsync();
         vgs_scroll_y(1, 1);
         vgs_draw_pixel(1, vgs_rand() % vgs_draw_width(), 0, vgs_rand32());
-        // vgs_draw_character(1, vgs_rand() % 320 - 4, 0, FALSE, 0, 0x20 + (vgs_rand() & 0x3F));
+        // vgs_draw_character(1, vgs_rand() % 320 - 4, 0, OFF, 0, 0x20 + (vgs_rand() & 0x3F));
         vgs_oam(0)->rotate += 3;
 
         for (int i = 0; i < 4; i++) {
@@ -141,6 +145,22 @@ int main(int argc, char* argv[])
         vgs_oam(12)->visible = vgs_key_b();
         vgs_oam(13)->visible = vgs_key_x();
         vgs_oam(14)->visible = vgs_key_y();
+        if (!prevA && vgs_key_a()) {
+            vgs_bgm_pause();
+        }
+        if (!prevB && vgs_key_b()) {
+            vgs_bgm_resume();
+        }
+        if (!prevX && vgs_key_x()) {
+            vgs_bgm_fadeout();
+        }
+        if (!prevY && vgs_key_y()) {
+            vgs_bgm_play(0);
+        }
+        prevA = vgs_key_a();
+        prevB = vgs_key_b();
+        prevX = vgs_key_x();
+        prevY = vgs_key_y();
     }
 
     return 0;
