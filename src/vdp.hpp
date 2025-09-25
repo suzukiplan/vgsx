@@ -83,8 +83,9 @@ class VDP
         uint32_t attr;        // Attribute
         uint32_t size;        // Size (0: 8x8, 1: 16x16, 2: 24x24, 3: 32x32 ... 31: 256x256)
         int32_t rotate;       // Rotate (-360 ~ 360)
-        uint32_t scale;       // Scale (0: disabled or 1 ~ 400 percent)
-        uint32_t reserved[9]; // Reserved
+        uint32_t scale;       // Scale (0: disabled, or 1 ~ 400 percent)
+        uint32_t alpha;       // Alpha (0: disabled, or 0x000001 ~ 0xFFFFFF)
+        uint32_t reserved[8]; // Reserved
     } OAM;
 
     typedef struct {
@@ -495,7 +496,7 @@ class VDP
                         col = ((*ptnptr) & 0xF0) >> 4;
                     }
                     if (col) {
-                        this->ctx.display[dy * VDP_WIDTH + dx] = this->ctx.palette[pal][col];
+                        this->renderSpritePixel(dy * VDP_WIDTH + dx, this->ctx.palette[pal][col], oam->alpha);
                     }
                 }
             }
@@ -535,7 +536,7 @@ class VDP
                         col = ((*ptnptr) & 0xF0) >> 4;
                     }
                     if (col) {
-                        this->ctx.display[dy * VDP_WIDTH + dx] = this->ctx.palette[pal][col];
+                        this->renderSpritePixel(dy * VDP_WIDTH + dx, this->ctx.palette[pal][col], oam->alpha);
                     }
                 }
             }
@@ -567,9 +568,9 @@ class VDP
                     }
                     if (col) {
                         int ptr = dy * VDP_WIDTH + dx;
-                        this->ctx.display[ptr] = this->ctx.palette[pal][col];
+                        this->renderSpritePixel(ptr, this->ctx.palette[pal][col], oam->alpha);
                         if (dx < 319) {
-                            this->ctx.display[ptr + 1] = this->ctx.palette[pal][col];
+                            this->renderSpritePixel(ptr + 1, this->ctx.palette[pal][col], oam->alpha);
                         }
                     }
                 }
@@ -610,20 +611,48 @@ class VDP
                         col = ((*ptnptr) & 0xF0) >> 4;
                     }
                     if (col) {
-                        this->ctx.display[ddy * VDP_WIDTH + ddx] = this->ctx.palette[pal][col];
+                        this->renderSpritePixel(ddy * VDP_WIDTH + ddx, this->ctx.palette[pal][col], oam->alpha);
                         if (ddy < 199) {
-                            this->ctx.display[(ddy + 1) * VDP_WIDTH + ddx] = this->ctx.palette[pal][col];
+                            this->renderSpritePixel((ddy + 1) * VDP_WIDTH + ddx, this->ctx.palette[pal][col], oam->alpha);
                         }
                         if (ddx < 319) {
-                            this->ctx.display[ddy * VDP_WIDTH + ddx + 1] = this->ctx.palette[pal][col];
+                            this->renderSpritePixel(ddy * VDP_WIDTH + ddx + 1, this->ctx.palette[pal][col], oam->alpha);
                         }
                         if (ddy < 199 && ddx < 319) {
-                            this->ctx.display[(ddy + 1) * VDP_WIDTH + ddx + 1] = this->ctx.palette[pal][col];
+                            this->renderSpritePixel((ddy + 1) * VDP_WIDTH + ddx + 1, this->ctx.palette[pal][col], oam->alpha);
                         }
                     }
                 }
             }
         }
+    }
+
+    inline void renderSpritePixel(int displayAddress, uint32_t color, uint32_t alpha)
+    {
+        if (0 == alpha || 0xFFFFFF == (alpha & 0xFFFFFF)) {
+            this->ctx.display[displayAddress] = color;
+            return;
+        }
+        uint32_t src = this->ctx.display[displayAddress];
+        uint32_t ar = (alpha & 0xFF0000) >> 16;
+        uint32_t ag = (alpha & 0x00FF00) >> 8;
+        uint32_t ab = alpha & 0x0000FF;
+        uint32_t sr = (src & 0xFF0000) >> 16;
+        uint32_t sg = (src & 0x00FF00) >> 8;
+        uint32_t sb = src & 0x0000FF;
+        uint32_t dr = (color & 0xFF0000) >> 16;
+        uint32_t dg = (color & 0x00FF00) >> 8;
+        uint32_t db = color & 0x0000FF;
+        sr *= ar;
+        sg *= ag;
+        sb *= ab;
+        dr *= (255 - ar);
+        dg *= (255 - ag);
+        db *= (255 - ab);
+        uint32_t color2 = ((sr + dr) & 0x00FF00) << 8;
+        color2 |= (sg + dg) & 0x00FF00;
+        color2 |= ((sb + db) & 0x00FF00) >> 8;
+        this->ctx.display[displayAddress] = color2;
     }
 };
 

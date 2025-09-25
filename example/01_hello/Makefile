@@ -10,11 +10,12 @@ clean:
 execute: program.rom
 	${VGSX_ROOT}/tools/sdl2/vgsx program.rom
 
-program.rom: program.elf font.chr gamepad.chr palette.bin
+program.rom: program.elf font.chr gamepad.chr tama.chr palette.bin
 	${VGSX_ROOT}/tools/makerom/makerom \
 		-c palette.bin \
 		-g font.chr \
 		-g gamepad.chr \
+		-g tama.chr \
 		-b test.vgm \
 		-s test.wav \
 		-e program.elf \
@@ -27,6 +28,9 @@ font.chr: font.bmp
 	${VGSX_ROOT}/tools/bmp2chr/bmp2chr $< $@
 
 gamepad.chr: gamepad.bmp
+	${VGSX_ROOT}/tools/bmp2chr/bmp2chr $< $@
+
+tama.chr: tama.bmp
 	${VGSX_ROOT}/tools/bmp2chr/bmp2chr $< $@
 
 palette.bin: font.bmp
