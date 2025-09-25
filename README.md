@@ -617,10 +617,21 @@ The `vgs_print` function is defined in [log.h](./lib/log.h).
 
 | `Destination` | `Source` | `Argument` | `Execute` | Description |
 |:-:|:-:|:-:|:-:|:-|
+|-|☑︎|`target`| `in` | [Search](#dma-search) |
 |☑︎|☑︎|`size`| `out(0)` | [Copy](#dma-copy) |
 |☑︎|☑︎|`size`| `out(1)` | [Set](#dma-set) |
-|-|☑︎|`target`| `in` | [Search](#dma-search) |
 |☑︎|☑︎|-| `out(2)` | [UTF8 to SJIS](#dma-utf8-to-sjis-string) |
+
+#### DMA Search
+
+Search for the byte data specified by the lower 8 bits of `Argument` (target) starting from the address specified by `Source`.
+
+Remarks:
+
+- The upper 24 bits of `Argument` are ignored.
+- The `Source` must be either a Program Address (0x000000 to Size-of-Program) or a RAM Address (0xF00000 to 0xFFFFFF).
+- If the search results fall outside the valid address range, 0 is entered; if a search data is found, the found index is entered.
+- Please note that performing searches not expected to yield results can result in significant overhead.
 
 #### DMA Copy
 
@@ -642,17 +653,6 @@ Remarks:
 - The upper 24 bits of `Source` are ignored.
 - The `Destination` must be a RAM Address (0xF00000 to 0xFFFFFF).
 - If an invalid address range (including the result of the addition) is specified, DMA will not be executed.
-
-#### DMA Search
-
-Search for the byte data specified by the lower 8 bits of `Argument` (target) starting from the address specified by `Source`.
-
-Remarks:
-
-- The upper 24 bits of `Argument` are ignored.
-- The `Source` must be either a Program Address (0x000000 to Size-of-Program) or a RAM Address (0xF00000 to 0xFFFFFF).
-- If the search results fall outside the valid address range, 0 is entered; if a search data is found, the found index is entered.
-- Please note that performing searches not expected to yield results can result in significant overhead.
 
 #### DMA UTF8 to SJIS String
 
