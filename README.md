@@ -155,7 +155,7 @@ You can create a new project for developing your game by executing the [makeprj]
 
 ```bash
 # Create a new project: "My Game"
-~/vgsx/tools/makeprj/makeprj "My Game" ~/projects/MyGame
+~/vgsx/tools/makeprj/makeprj ~/projects/MyGame
 ```
 
 # Architecture Reference Manual
