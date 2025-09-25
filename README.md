@@ -616,7 +616,7 @@ The `vgs_print` function is defined in [log.h](./lib/log.h).
 ### 0xE00008-0xE00014[i/o] - Direct Memory Access
 
 | `Destination` | `Source` | `Argument` | `Execute` | Description |
-|:-:|:-:|:-:|:-|
+|:-:|:-:|:-:|:-:|:-|
 |☑︎|☑︎|`size`| `out(0)` | [Copy](#dma-copy) |
 |☑︎|☑︎|`size`| `out(1)` | [Set](#dma-set) |
 |-|☑︎|`target`| `in` | [Search](#dma-search) |
