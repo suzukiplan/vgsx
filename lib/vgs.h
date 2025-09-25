@@ -24,6 +24,7 @@
  */
 #pragma once
 #include "vgs_bgm.h"
+#include "vgs_bmpfont.h"
 #include "vgs_cg.h"
 #include "vgs_ctype.h"
 #include "vgs_io.h"
