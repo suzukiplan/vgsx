@@ -1,5 +1,5 @@
 /**
- * VGS Standard Library for MC68030
+ * VGS-X Code Mapper (UTF8 -> SJIS)
  * The MIT License (MIT)
  *
  * Copyright (c) 2025 Yoji Suzuki.
@@ -23,16 +23,6 @@
  * THE SOFTWARE.
  */
 #pragma once
-#include "vgs_bgm.h"
-#include "vgs_bmpfont.h"
-#include "vgs_cg.h"
-#include "vgs_ctype.h"
-#include "vgs_io.h"
-#include "vgs_key.h"
-#include "vgs_math.h"
-#include "vgs_save.h"
-#include "vgs_sfx.h"
-#include "vgs_stdint.h"
-#include "vgs_stdlib.h"
-#include "vgs_string.h"
-#include "vgs_system.h"
+#include <stdint.h>
+
+uint32_t utf8_to_sjis(uint32_t utf8);

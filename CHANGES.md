@@ -1,5 +1,11 @@
 # Changes
 
+## Version 0.13.0
+
+- Core: Added DMA functionality to convert Japanese UTF-8 strings to SJIS.
+- CRT: Added a string fcuntion: `vgs_sjis_from_utf8`
+- Example: Changed the source code for `example/06_k8x12` from SJIS to UTF-8 and modified it to use the conversion function.
+
 ## Version 0.12.0
 
 Supports Japanese display using k8x12.

@@ -170,3 +170,10 @@ char* vgs_strcat(char* dest, const char* src)
 {
     return vgs_strcpy(&dest[vgs_strlen(dest)], src);
 }
+
+void vgs_sjis_from_utf8(char* dest, const char* src)
+{
+    VGS_OUT_DMA_DESTINATION = (uint32_t)dest;
+    VGS_OUT_DMA_SOURCE = (uint32_t)src;
+    VGS_IO_DMA_EXECUTE = VGS_DMA_UTF8_TO_SJIS;
+}

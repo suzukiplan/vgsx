@@ -52,6 +52,7 @@
         "vgs_save.h": "c",
         "vgs_io.h": "c",
         "stdint.h": "c",
-        "vgs_stdint.h": "c"
+        "vgs_stdint.h": "c",
+        "map": "cpp"
     }
 }

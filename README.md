@@ -616,10 +616,22 @@ The `vgs_print` function is defined in [log.h](./lib/log.h).
 ### 0xE00008-0xE00014[i/o] - Direct Memory Access
 
 | `Destination` | `Source` | `Argument` | `Execute` | Description |
-|:-:|:-:|:-:|:-|
-|☑︎|☑︎|`size`| `out(0)` | [Copy](#dma-copy) |
-|☑︎|☑︎|`size`| [Set](#dma-set) |
+|:-:|:-:|:-:|:-:|:-|
 |-|☑︎|`target`| `in` | [Search](#dma-search) |
+|☑︎|☑︎|`size`| `out(0)` | [Copy](#dma-copy) |
+|☑︎|☑︎|`size`| `out(1)` | [Set](#dma-set) |
+|☑︎|☑︎|-| `out(2)` | [UTF8 to SJIS](#dma-utf8-to-sjis-string) |
+
+#### DMA Search
+
+Search for the byte data specified by the lower 8 bits of `Argument` (target) starting from the address specified by `Source`.
+
+Remarks:
+
+- The upper 24 bits of `Argument` are ignored.
+- The `Source` must be either a Program Address (0x000000 to Size-of-Program) or a RAM Address (0xF00000 to 0xFFFFFF).
+- If the search results fall outside the valid address range, 0 is entered; if a search data is found, the found index is entered.
+- Please note that performing searches not expected to yield results can result in significant overhead.
 
 #### DMA Copy
 
@@ -642,16 +654,11 @@ Remarks:
 - The `Destination` must be a RAM Address (0xF00000 to 0xFFFFFF).
 - If an invalid address range (including the result of the addition) is specified, DMA will not be executed.
 
-#### DMA Search
+#### DMA UTF8 to SJIS String
 
-Search for the byte data specified by the lower 8 bits of `Argument` (target) starting from the address specified by `Source`.
-
-Remarks:
-
-- The upper 24 bits of `Argument` are ignored.
+- Executing this DMA operation copies the zero-terminated UTF-8 string set in `Source`, converted to SJIS, to `Destination`.
 - The `Source` must be either a Program Address (0x000000 to Size-of-Program) or a RAM Address (0xF00000 to 0xFFFFFF).
-- If the search results fall outside the valid address range, 0 is entered; if a search data is found, the found index is entered.
-- Please note that performing searches not expected to yield results can result in significant overhead.
+- The `Destination` must be a RAM Address (0xF00000 to 0xFFFFFF).
 
 ### 0xE00100-0xE00118[io] - Angle
 
@@ -936,12 +943,6 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | cg:bmp | `vgs_draw_box` | Draw a [rectangle](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
 | cg:bmp | `vgs_draw_boxf` | Draw a [filled-rectangle](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
 | cg:bmp | `vgs_draw_character` | Draw a [character-pattern](#character-pattern) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
-| cg:bmp | `vgs_pfont_init` | [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) Initialization. |
-| cg:bmp | `vgs_pfont_get` | Acquiring [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) Information. |
-| cg:bmp | `vgs_pfont_set` | Setting [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) Information. |
-| cg:bmp | `vgs_pfont_print` | Drawing strings using [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) |
-| cg:bmp | `vgs_pfont_strlen` | Width of a string displayed in a [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) (in pixels). |
-| cg:bmp | `vgs_k8x12_print` | Drawing strings using [k8x12 Japanese Font](#0xd2004c-0xd20068-bitmap-graphic-draw). |
 | cg:bg+bmp | `vgs_skip_bg` | [Skip Rendering a Specific BG](#0xd2006c-0xd20078-skip-rendering-a-specific-bg) |
 | cg:bg+bmp | `vgs_scroll` | [Scroll](#0xd20008-0xd20024-hardware-scroll) BG |
 | cg:bg+bmp | `vgs_scroll_x` | [Scroll](#0xd20008-0xd20024-hardware-scroll) BG (X) |
@@ -950,6 +951,12 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | cg:sp | `vgs_sprite` | Set [OAM](#oam-object-attribute-memory) attribute values in bulk |
 | cg:sp | `vgs_sprite_hide_all` | Make all sprites invisible. |
 | cg:sp | `vgs_oam` | Get an [OAM](#oam-object-attribute-memory) record. |
+| bmpfont | `vgs_pfont_init` | [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) Initialization. |
+| bmpfont | `vgs_pfont_get` | Acquiring [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) Information. |
+| bmpfont | `vgs_pfont_set` | Setting [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) Information. |
+| bmpfont | `vgs_pfont_print` | Drawing strings using [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) |
+| bmpfont | `vgs_pfont_strlen` | Width of a string displayed in a [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) (in pixels). |
+| bmpfont | `vgs_k8x12_print` | Drawing strings using [k8x12 Japanese Font](#0xd2004c-0xd20068-bitmap-graphic-draw). |
 | bgm | `vgs_bgm_play` | Play [background music](#0xe01000o---play-vgm) |
 | sfx | `vgs_sfx_play` | Play [sound effect](#0xe01100o---play-sfx) |
 | gamepad | `vgs_key_up` | Check if the up directional pad is pressed. |
@@ -998,6 +1005,7 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | string | `vgs_memcpy` | High-speed memory copy using [DMA Copy](#dma-copy) |
 | string | `vgs_memset` | High-Speed bulk memory writing using [DMA Set](#dma-set)|
 | string | `vgs_strlen` | High-Speed string length retrieval using [DMA Search](#dma-search) |
+| string | `vgs_sjis_from_utf8` | [Convert UTF-8 string to SJIS using DMA](#dma-utf8-to-sjis-string). |
 | string | `vgs_strchr` | Search for specific characters in a string |
 | string | `vgs_strrchr` | Search for specific characters in a string that right to left |
 | string | `vgs_strcmp` | Compare strings |
@@ -1217,7 +1225,7 @@ usage: vgmplay /path/to/bgm.vgm
   - Copyright (c) 2021, Aaron Giles
   - License: [3-clause BSD](./LICENSE-ymfm.txt)
 - Japanese Font - [k8x12](https://littlelimit.net/k8x12.htm)
-  - Created by Num Makado
+  - Created by Num Kadoma
   - License: [Free Software](./LICENSE-k8x12.txt)
 - [VGS-X](https://github.com/suzukiplan/vgsx) and VGS Standard Library for MC68030
   - Copyright (c) 2025 Yoji Suzuki.
