@@ -110,6 +110,10 @@
 #define VGS_IN_SEQ_READ *((volatile uint32_t*)VGS_ADDR_SEQ_READ)
 #define VGS_OUT_EXIT *((volatile int32_t*)VGS_ADDR_EXIT)
 
+#define VGS_DMA_MEMCPY 0
+#define VGS_DMA_MEMSET 1
+#define VGS_DMA_UTF8_TO_SJIS 2
+
 #define VGS_KEY_ID_UNKNOWN 0
 #define VGS_KEY_ID_KEYBOARD 1
 #define VGS_KEY_ID_XBOX 2

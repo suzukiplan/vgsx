@@ -28,6 +28,7 @@
 #include "m68k.h"
 #include "vgmrender.hpp"
 #include "vgs_io.h"
+#include "utf8_to_sjis.h"
 
 VGSX vgsx;
 
@@ -733,6 +734,7 @@ void VGSX::outPort(uint32_t address, uint32_t value)
             switch (value) {
                 case 0: this->dmaMemcpy(); break;
                 case 1: this->dmaMemset(); break;
+                case 2: this->dmaU2S(); break;
             }
             return;
 
@@ -965,6 +967,69 @@ uint32_t VGSX::dmaSearch()
     }
     putlog(LogLevel::W, "Ignored an invalid DMA_search(0x%06X, 0x%02X)", ptr, search);
     return 0;
+}
+
+void VGSX::dmaU2S()
+{
+    uint32_t destination = this->ctx.dma.destination & 0x00FFFFFF;
+    uint32_t source = this->ctx.dma.source & 0x00FFFFFF;
+
+    // putlog(LogLevel::I, "DMA_u2s: dest=0x%06X, src=0x%06X", destination, source);
+
+    // validate destination
+    if (0xF00000 <= destination) {
+        // validate source
+        if (source < this->ctx.programSize) {
+            u2s(&this->ctx.ram[destination & 0x0FFFFF],
+                &this->ctx.program[source]);
+            return;
+        } else if (0xF00000 <= source) {
+            u2s(&this->ctx.ram[destination & 0x0FFFFF],
+                &this->ctx.ram[source & 0x0FFFFF]);
+            return;
+        }
+    }
+    putlog(LogLevel::W, "Ignored an invalid DMA_u2s(0x%06X, 0x%06X)", destination, source);
+}
+
+void VGSX::u2s(uint8_t* dest, const uint8_t* src)
+{
+    while (*src) {
+        if ((0b11000000 & *src) == 0b11000000) {
+            // Multi bytes character
+            int length;
+            if (0 == (*src & 0b00100000)) {
+                length = 2;
+            } else if (0 == (*src & 0b00010000)) {
+                length = 3;
+            } else if (0 == (*src & 0b00001000)) {
+                length = 4;
+            } else {
+                length = 1; // do not infinity loop
+            }
+            uint32_t mbcs = 0;
+            for (int i = 0; i < length; i++) {
+                mbcs <<= 8;
+                mbcs |= src[i];
+            }
+            uint32_t sjis = utf8_to_sjis(mbcs);
+            if (sjis) {
+                dest[0] = (sjis & 0xFF00) >> 8;
+                dest[1] = sjis & 0xFF;
+                dest += 2;
+            } else {
+                dest[0] = '?'; // not JIS
+                dest++;
+            }
+            src += length;
+        } else {
+            // Single Byte Character
+            *dest = *src;
+            dest++;
+            src++;
+        }
+    }
+    *dest = 0;
 }
 
 VGSX::ButtonId VGSX::getButtonIdA()

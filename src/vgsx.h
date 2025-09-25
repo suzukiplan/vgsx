@@ -176,6 +176,8 @@ class VGSX
     void dmaMemcpy();
     void dmaMemset();
     uint32_t dmaSearch();
+    void dmaU2S();
+    void u2s(uint8_t* dest, const uint8_t* src);
 };
 
 extern VGSX vgsx;

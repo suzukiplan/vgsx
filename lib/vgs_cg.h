@@ -115,10 +115,6 @@ typedef struct {
 #define VGS_DRAW_JISX0201 5
 #define VGS_DRAW_JISX0208 6
 
-// DMA Function Identifer
-#define VGS_DMA_MEMCPY 0
-#define VGS_DMA_MEMSET 1
-
 #ifdef __cplusplus
 extern "C" {
 #endif

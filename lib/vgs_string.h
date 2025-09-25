@@ -139,6 +139,14 @@ char* vgs_strcpy(char* dest, const char* src);
  */
 char* vgs_strcat(char* dest, const char* src);
 
+/**
+ * @brief Convert UTF-8 string to SJIS using DMA
+ * @param dest Destination String Buffer (SJIS)
+ * @param src Source String Bufffer (UTF-8)
+ * @remark Use with caution to avoid buffer overwrites.
+ */
+void vgs_sjis_from_utf8(char* dest, const char* src);
+
 #ifdef __cplusplus
 };
 #endif

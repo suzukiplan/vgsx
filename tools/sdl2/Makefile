@@ -12,6 +12,7 @@ OBJECTS += vgsx.o
 OBJECTS += vgs0math.o
 OBJECTS += k8x12_jisx0201.o
 OBJECTS += k8x12_jisx0208.o
+OBJECTS += utf8_to_sjis.o
 OBJECTS += m68kcpu.o
 OBJECTS += m68kops.o
 OBJECTS += m68kdasm.o
@@ -33,8 +34,11 @@ vgsx: ${OBJECTS}
 main.o: main.cpp ${CORE_PATH}/vgsx.h ${CORE_PATH}/vdp.hpp ${CORE_PATH}/vgmrender.hpp
 	${CPP} $<
 
-vgsx.o: ${CORE_PATH}/vgsx.cpp ${CORE_PATH}/vgsx.h ${CORE_PATH}/vdp.hpp ${CORE_PATH}/vgmrender.hpp
+vgsx.o: ${CORE_PATH}/vgsx.cpp ${CORE_PATH}/vgsx.h ${CORE_PATH}/vdp.hpp ${CORE_PATH}/vgmrender.hpp ${CORE_PATH}/utf8_to_sjis.h
 	${CPP} $<
+
+utf8_to_sjis.o: ${CORE_PATH}/utf8_to_sjis.cpp ${CORE_PATH}/utf8_to_sjis.h
+	${CPP} -w $<
 
 vgs0math.o: ${CORE_PATH}/vgs0math.cpp
 	${CPP} $<
