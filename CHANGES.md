@@ -2,7 +2,8 @@
 
 ## Version 0.14.0
 
-Supports alpha blending for sprites.
+- Core+CRT: Supports Alpha Blending for Sprites. (`OAM::alpha`)
+- Core+CRT: Supports Mask for Sprites. (`OAM::mask`)
 
 ## Version 0.13.0
 
