@@ -1,5 +1,10 @@
 # Changes
 
+## Version 0.14.0
+
+- Core+CRT: Supports Alpha Blending for Sprites. (`OAM::alpha`)
+- Core+CRT: Supports Mask for Sprites. (`OAM::mask`)
+
 ## Version 0.13.0
 
 - Core: Added DMA functionality to convert Japanese UTF-8 strings to SJIS.

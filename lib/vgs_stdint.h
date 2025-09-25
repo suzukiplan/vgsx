@@ -33,6 +33,8 @@ typedef signed long int32_t;
 typedef int BOOL;
 #define TRUE 1
 #define FALSE 0
+#define ON 1
+#define OFF 0
 
 #ifndef NULL
 #define NULL ((void*)0)

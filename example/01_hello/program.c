@@ -96,6 +96,20 @@ int main(int argc, char* argv[])
     center_print(180, "It's surprisingly easy to develop games,");
     center_print(190, "compatibility can be easily maintained.");
 
+    vgs_sprite(16, TRUE, 10, 40, 3, 0, 238);
+    vgs_sprite(17, TRUE, 30, 40, 3, 0, 238);
+    vgs_sprite(18, TRUE, 50, 40, 3, 0, 238);
+    vgs_sprite(19, TRUE, 70, 40, 3, 0, 238);
+
+    vgs_oam(16)->alpha = 0xE0E0E0;
+    vgs_oam(17)->alpha = 0xA0A0A0;
+    vgs_oam(18)->alpha = 0x707070;
+    vgs_oam(19)->alpha = 0x303030;
+    vgs_oam(16)->mask = 0xFFFF00;
+    vgs_oam(17)->mask = 0x00FFFF;
+    vgs_oam(18)->mask = 0xFF00FF;
+    vgs_oam(19)->mask = 0x4080FF;
+
     vgs_bgm_play(0);
     while (1) {
         vgs_vsync();
