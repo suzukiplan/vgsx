@@ -45,7 +45,7 @@ VDP Features:
 - [Character Pattern](#character-pattern) number: 65,536
 - Number of [OAM](#oam-object-attribute-memory) (Sprites): 1,024
 - [Size of Sprite](#size-of-sprite): from 8x8 pixels to 256x256 pixels
-- Supports [rotation](#rotate-of-sprite) and [scaling](#scale-of-sprite) for each sprites
+- Supports [rotation](#rotate-of-sprite), [scaling](#scale-of-sprite) and [alpha-blending](#alpha-blend-of-sprite) for each sprites
 - Supports the [Bitmap Graphic Draw](#0xd2004c-0xd20068-bitmap-graphic-draw) functions for [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode)
 - Supports the [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) functions for [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode)
 
@@ -326,7 +326,8 @@ typedef struct {
     uint32_t attr;         // Attribute
     uint32_t size;         // Size (0: 8x8, 1: 16x16, 2: 24x24, 3: 32x32 ... 31: 256x256)
     int32_t rotate;        // Rotate (-360 ~ 360)
-    uint32_t scale;        // Scale (0: disabled or 1 ~ 400 percent)
+    uint32_t scale;        // Scale (0: disabled, or 1 ~ 400 percent)
+    uint32_t alpha;        // Alpha Blend (0: disabled, or 0x000001 ~ 0xFFFFFF)
     uint32_t reserved[9];  // Reserved
 } OAM;
 ```
@@ -382,6 +383,18 @@ The Sprite rotation feature is useful when combined with the [Angle](#0xe00100-0
 ### (Scale of Sprite)
 
 You can specify the magnification rate as a percentage on the `scale`, either 0 (disabled) or within the range of 1 to 400.
+
+### (Alpha Blend of Sprite)
+
+You can perform alpha blending by setting the alpha component of the OAM to a non-zero value.
+
+For VGS-X, you can set different alpha values for each RGB color component.
+
+For example:
+
+- Providing 0xFF0000 draws only the red pigment
+- Providing 0x00FF00 draws only the green pigment
+- Providing 0x0000FF draws only the blue pigment
 
 ## VDP Register
 
