@@ -105,6 +105,10 @@ int main(int argc, char* argv[])
     vgs_oam(17)->alpha = 0xA0A0A0;
     vgs_oam(18)->alpha = 0x707070;
     vgs_oam(19)->alpha = 0x303030;
+    vgs_oam(16)->mask = 0xFFFF00;
+    vgs_oam(17)->mask = 0x00FFFF;
+    vgs_oam(18)->mask = 0xFF00FF;
+    vgs_oam(19)->mask = 0x4080FF;
 
     vgs_bgm_play(0);
     while (1) {

@@ -85,7 +85,8 @@ class VDP
         int32_t rotate;       // Rotate (-360 ~ 360)
         uint32_t scale;       // Scale (0: disabled, or 1 ~ 400 percent)
         uint32_t alpha;       // Alpha (0: disabled, or 0x000001 ~ 0xFFFFFF)
-        uint32_t reserved[8]; // Reserved
+        uint32_t mask;        // Mask (0: disabled, or RGB888)
+        uint32_t reserved[7]; // Reserved
     } OAM;
 
     typedef struct {
@@ -496,7 +497,7 @@ class VDP
                         col = ((*ptnptr) & 0xF0) >> 4;
                     }
                     if (col) {
-                        this->renderSpritePixel(dy * VDP_WIDTH + dx, this->ctx.palette[pal][col], oam->alpha);
+                        this->renderSpritePixel(dy * VDP_WIDTH + dx, this->ctx.palette[pal][col], oam->alpha, oam->mask);
                     }
                 }
             }
@@ -536,7 +537,7 @@ class VDP
                         col = ((*ptnptr) & 0xF0) >> 4;
                     }
                     if (col) {
-                        this->renderSpritePixel(dy * VDP_WIDTH + dx, this->ctx.palette[pal][col], oam->alpha);
+                        this->renderSpritePixel(dy * VDP_WIDTH + dx, this->ctx.palette[pal][col], oam->alpha, oam->mask);
                     }
                 }
             }
@@ -568,9 +569,9 @@ class VDP
                     }
                     if (col) {
                         int ptr = dy * VDP_WIDTH + dx;
-                        this->renderSpritePixel(ptr, this->ctx.palette[pal][col], oam->alpha);
+                        this->renderSpritePixel(ptr, this->ctx.palette[pal][col], oam->alpha, oam->mask);
                         if (dx < 319) {
-                            this->renderSpritePixel(ptr + 1, this->ctx.palette[pal][col], oam->alpha);
+                            this->renderSpritePixel(ptr + 1, this->ctx.palette[pal][col], oam->alpha, oam->mask);
                         }
                     }
                 }
@@ -611,15 +612,9 @@ class VDP
                         col = ((*ptnptr) & 0xF0) >> 4;
                     }
                     if (col) {
-                        this->renderSpritePixel(ddy * VDP_WIDTH + ddx, this->ctx.palette[pal][col], oam->alpha);
-                        if (ddy < 199) {
-                            this->renderSpritePixel((ddy + 1) * VDP_WIDTH + ddx, this->ctx.palette[pal][col], oam->alpha);
-                        }
+                        this->renderSpritePixel(ddy * VDP_WIDTH + ddx, this->ctx.palette[pal][col], oam->alpha, oam->mask);
                         if (ddx < 319) {
-                            this->renderSpritePixel(ddy * VDP_WIDTH + ddx + 1, this->ctx.palette[pal][col], oam->alpha);
-                        }
-                        if (ddy < 199 && ddx < 319) {
-                            this->renderSpritePixel((ddy + 1) * VDP_WIDTH + ddx + 1, this->ctx.palette[pal][col], oam->alpha);
+                            this->renderSpritePixel(ddy * VDP_WIDTH + ddx + 1, this->ctx.palette[pal][col], oam->alpha, oam->mask);
                         }
                     }
                 }
@@ -627,8 +622,11 @@ class VDP
         }
     }
 
-    inline void renderSpritePixel(int displayAddress, uint32_t color, uint32_t alpha)
+    inline void renderSpritePixel(int displayAddress, uint32_t color, uint32_t alpha, uint32_t mask)
     {
+        if (mask) {
+            color = mask;
+        }
         if (0 == alpha || 0xFFFFFF == (alpha & 0xFFFFFF)) {
             this->ctx.display[displayAddress] = color;
             return;

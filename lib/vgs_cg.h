@@ -57,7 +57,8 @@ typedef struct {
     int32_t rotate;       // Rotate (-360 ~ 360)
     uint32_t scale;       // Scale (0: disabled, or 1 ~ 400 percent)
     uint32_t alpha;       // Alpha Blend (0: disabled, or 0x000001 ~ 0xFFFFFF)
-    uint32_t reserved[8]; // Reserved
+    uint32_t mask;        // Mask (0: disabled, or RGB888)
+    uint32_t reserved[7]; // Reserved
 } ObjectAttributeMemory;
 
 #define OAM_MAX 1024
