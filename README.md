@@ -45,7 +45,7 @@ VDP Features:
 - [Character Pattern](#character-pattern) number: 65,536
 - Number of [OAM](#oam-object-attribute-memory) (Sprites): 1,024
 - [Size of Sprite](#size-of-sprite): from 8x8 pixels to 256x256 pixels
-- Supports [rotation](#rotate-of-sprite), [scaling](#scale-of-sprite) and [alpha-blending](#alpha-blend-of-sprite) for each sprites
+- Supports [rotation](#rotate-of-sprite), [scaling](#scale-of-sprite), [alpha-blend](#alpha-blend-of-sprite) and [mask] for each sprites
 - Supports the [Bitmap Graphic Draw](#0xd2004c-0xd20068-bitmap-graphic-draw) functions for [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode)
 - Supports the [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) functions for [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode)
 
@@ -328,7 +328,8 @@ typedef struct {
     int32_t rotate;        // Rotate (-360 ~ 360)
     uint32_t scale;        // Scale (0: disabled, or 1 ~ 400 percent)
     uint32_t alpha;        // Alpha Blend (0: disabled, or 0x000001 ~ 0xFFFFFF)
-    uint32_t reserved[9];  // Reserved
+    uint32_t mask;         // Mask (0: disabled, or RGB888)
+    uint32_t reserved[7];  // Reserved
 } OAM;
 ```
 
@@ -343,6 +344,8 @@ The specifications for each attribute are shown in the table below.
 | size    | 0 ~ 31         | [Size](#size-of-sprite) |
 | rotate  | -360 ~ 360     | [Rotate](#rotate-of-sprite) |
 | scale   | 0 ~ 400        | [Scale](#scale-of-sprite) |
+| alpha   | 0 or 0xRRGGBB  | [Alpha Blend](#alpha-blend-of-sprite) |
+| mask    | 0 or 0xRRGGBB  | [Mask](#mask-of-sprite) |
 | reserved| -              | Do not set a value other than zero. |
 
 ### (Size of Sprite)
@@ -395,6 +398,12 @@ For example:
 - Providing 0xFF0000 draws only the red pigment
 - Providing 0x00FF00 draws only the green pigment
 - Providing 0x0000FF draws only the blue pigment
+
+### (Mask of Sprite)
+
+Setting a non-zero value (in RGB888 format) to the mask fills the sprite with the specified solid color.
+
+_For example, combining the [Scale](#scale-of-sprite), [Alpha Blend](#alpha-blend-of-sprite), and Mask functions can be used to render the shadows of shoot 'em up aircraft._
 
 ## VDP Register
 
