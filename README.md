@@ -1225,7 +1225,7 @@ usage: vgmplay /path/to/bgm.vgm
   - Copyright (c) 2021, Aaron Giles
   - License: [3-clause BSD](./LICENSE-ymfm.txt)
 - Japanese Font - [k8x12](https://littlelimit.net/k8x12.htm)
-  - Created by Num Makado
+  - Created by Num Kadoma
   - License: [Free Software](./LICENSE-k8x12.txt)
 - [VGS-X](https://github.com/suzukiplan/vgsx) and VGS Standard Library for MC68030
   - Copyright (c) 2025 Yoji Suzuki.
