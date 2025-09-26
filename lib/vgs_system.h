@@ -34,6 +34,13 @@ extern "C" {
  */
 void vgs_vsync(void);
 
+static inline void vgs_vsync_n(int n)
+{
+    for (int i = 0; i < n; i++) {
+        vgs_vsync();
+    }
+}
+
 #ifdef __cplusplus
 };
 #endif
