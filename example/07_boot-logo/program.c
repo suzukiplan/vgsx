@@ -162,8 +162,6 @@ int main(int argc, char* argv[])
 
     vgs_cls_bg_all(1);
     vgs_sprite_hide_all();
-    while (ON) {
-        vgs_vsync();
-    }
+    vgs_vsync_n(30);
     return 0;
 }
