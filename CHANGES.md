@@ -8,6 +8,7 @@
 - Core+CRT: Added a Window function (`vgs_draw_window`)
 - Core+CRT: Added a Clear function (`vgs_draw_clear`)
 - CRT: Change the argument specification for `vgs_draw_box` and `vgs_draw_boxf` from (x1,y1,x2,y2) to (x,y,width,height) **(Disruptive)**
+- Fixed an issue where Alpha Blend did not function as intended.
 
 ## Version 0.14.0
 
