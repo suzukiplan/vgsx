@@ -31,6 +31,18 @@ extern "C" {
 #endif
 
 /**
+ * @brief Set master volume of background music
+ * @param m Master Volume (0 to 256)
+ */
+static inline void vgs_bgm_master_volume(uint32_t m) { VGS_IO_VGM_MASTER = m; }
+
+/**
+ * @brief Get master volume of background music
+ * @return Master Volume (0 to 256)
+ */
+static inline uint32_t vgs_bgm_master_volume_get(void) { return VGS_IO_VGM_MASTER; }
+
+/**
  * @brief Play background music
  * @param n Number of Music (0 to 255)
  */

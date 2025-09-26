@@ -4,6 +4,7 @@
 
 - Core+CRT: Added the BGM pause, resume and fadeout functions
 - Core+CRT: Added a SFX stop function
+- Core+CRT: Added functionality to set and get the Master Volume for BGM and SFX respectively.
 
 ## Version 0.14.0
 

@@ -476,6 +476,8 @@ void VGSX::reset(void)
     this->ctx.programSize = 0;
     this->ctx.randomIndex = 0;
     this->ctx.frameClocks = 0;
+    this->ctx.vgmMasterVolume = VGS_MASTER_VOLUME_MAX;
+    this->ctx.sfxMasterVolume = VGS_MASTER_VOLUME_MAX;
     this->vdp.reset();
     if (this->vgmHelper) {
         delete (VgmHelper*)this->vgmHelper;
@@ -570,6 +572,14 @@ void VGSX::tickSound(int16_t* buf, int samples)
     if (helper && !this->ctx.vgmPause) {
         helper->render(buf, samples);
     }
+    if (this->ctx.vgmMasterVolume < VGS_MASTER_VOLUME_MAX) {
+        for (int i = 0; i < samples; i++) {
+            int32_t w = buf[i];
+            w *= this->ctx.vgmMasterVolume;
+            w /= VGS_MASTER_VOLUME_MAX;
+            buf[i] = (int16_t)w;
+        }
+    }
     if (this->ctx.vgmFadeout) {
         for (int i = 0; i < samples; i++) {
             int32_t w = buf[i];
@@ -587,8 +597,12 @@ void VGSX::tickSound(int16_t* buf, int samples)
         if (this->ctx.sfxData[i].play) {
             for (int j = 0; j < samples; j++) {
                 if (this->ctx.sfxData[i].index < this->ctx.sfxData[i].count) {
-                    int w = buf[j];
-                    w += this->ctx.sfxData[i].data[this->ctx.sfxData[i].index];
+                    int w = this->ctx.sfxData[i].data[this->ctx.sfxData[i].index];
+                    if (this->ctx.sfxMasterVolume < VGS_MASTER_VOLUME_MAX) {
+                        w *= this->ctx.sfxMasterVolume;
+                        w /= VGS_MASTER_VOLUME_MAX;
+                    }
+                    w += buf[j];
                     if (32767 < w) {
                         w = 32767;
                     } else if (w < -32768) {
@@ -628,6 +642,9 @@ uint32_t VGSX::inPort(uint32_t address)
             return this->ctx.angle.degree;
         case VGS_ADDR_ANGLE_SIN: return (int32_t)(sin(this->ctx.angle.radian) * 256);
         case VGS_ADDR_ANGLE_COS: return (int32_t)(cos(this->ctx.angle.radian) * 256);
+
+        case VGS_ADDR_VGM_MASTER: return this->ctx.vgmMasterVolume;
+        case VGS_ADDR_SFX_MASTER: return this->ctx.sfxMasterVolume;
 
         case VGS_ADDR_KEY_UP: return this->key.up;
         case VGS_ADDR_KEY_DOWN: return this->key.down;
@@ -791,6 +808,14 @@ void VGSX::outPort(uint32_t address, uint32_t value)
                     }
                     break;
             }
+            return;
+
+        case VGS_ADDR_VGM_MASTER:
+            this->ctx.vgmMasterVolume = value < VGS_MASTER_VOLUME_MAX ? value : VGS_MASTER_VOLUME_MAX;
+            return;
+
+        case VGS_ADDR_SFX_MASTER:
+            this->ctx.sfxMasterVolume = value < VGS_MASTER_VOLUME_MAX ? value : VGS_MASTER_VOLUME_MAX;
             return;
 
         case VGS_ADDR_SFX_PLAY: // Play SFX

@@ -116,6 +116,8 @@ class VGSX
         ButtonId getNameId;
         bool vgmPause;
         uint32_t vgmFadeout;
+        uint32_t vgmMasterVolume;
+        uint32_t sfxMasterVolume;
     } ctx;
 
     struct KeyStatus {

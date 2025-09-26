@@ -568,10 +568,12 @@ Note that all addresses and values for I/O instructions must be specified as 32-
 | 0xE00110 |  o  |  o  | [Angle: Get/Set Degree (0 to 359)](#0xe00100-0xe00118io---angle) |
 | 0xE00114 |  o  |  -  | [Angle: Get int-sin (-256 to 256)](#0xe00100-0xe00118io---angle) |
 | 0xE00118 |  o  |  -  | [Angle: Get int-cos (-256 to 256)](#0xe00100-0xe00118io---angle) |
-| 0xE01000 |  -  |  o  | [Play VGM](#0xe010xxo---background-music-bgm) |
-| 0xE01004 |  -  |  o  | [VGM Playback Options](#0xe010xxo---background-music-bgm) |
+| 0xE01000 |  -  |  o  | [Play BGM](#0xe010xxo---background-music-bgm) |
+| 0xE01004 |  -  |  o  | [BGM Playback Options](#0xe010xxo---background-music-bgm) |
+| 0xE01008 |  o  |  o  | Set/Get the [BGM Master Volume](#0xe010xxo---background-music-bgm) |
 | 0xE01100 |  -  |  o  | [Play SFX](#0xe011xxo---sound-effect-sfx) |
 | 0xE01104 |  -  |  o  | [Stop SFX](#0xe011xxo---sound-effect-sfx) |
+| 0xE01108 |  o  |  o  | Set/Get the [SFX Master Volume](#0xe011xxo---sound-effect-sfx) |
 | 0xE02000 |  o  |  -  | [Gamepad: D-pad - Up](#0xe020xxi---gamepad) |
 | 0xE02004 |  o  |  -  | [Gamepad: D-pad - Down](#0xe020xxi---gamepad) |
 | 0xE02008 |  o  |  -  | [Gamepad: D-pad - Left](#0xe020xxi---gamepad) |
@@ -728,6 +730,8 @@ For a concrete example, please refer to the implementation in [./example/03_rota
 - Set 0 to 0xE01004 to pause BGM playback.
 - Set 1 to 0xE01004 to resume BGM playback.
 - Set 2 to 0xE01004 to fadeout the BGM.
+- Set BGM Master Volume to 0xE01008: 0=0%, 256=100% (default: 256)
+- Get BGM Master Volume from 0xE01008
 
 VGS-X can play VGM data compatible with the following chips (OPN, OPM and SSG) as BGM:
 
@@ -749,6 +753,8 @@ We recommend using [Furnace Tracker](https://github.com/tildearrow/furnace) to c
 
 - Set the .wav index value to 0xE01100 to play the sound effect (SFX).
 - Set the .wav index value to 0xE01104 to stop the SFX.
+- Set SFX Master Volume to 0xE01108: 0=0%, 256=100% (default: 256)
+- Get SFX Master Volume from 0xE01108
 
 Plays the SFX loaded at the index corresponding to the output value.
 
@@ -988,10 +994,14 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | bmpfont | `vgs_pfont_print` | Drawing strings using [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) |
 | bmpfont | `vgs_pfont_strlen` | Width of a string displayed in a [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) (in pixels). |
 | bmpfont | `vgs_k8x12_print` | Drawing strings using [k8x12 Japanese Font](#0xd2004c-0xd20068-bitmap-graphic-draw). |
+| bgm | `vgs_bgm_master_volume` | Set master volume of [background music](#0xe010xxo---background-music-bgm) |
+| bgm | `vgs_bgm_master_volume_get` | Get master volume of [background music](#0xe010xxo---background-music-bgm) |
 | bgm | `vgs_bgm_play` | Play [background music](#0xe010xxo---background-music-bgm) |
 | bgm | `vgs_bgm_pause` | Pause [background music](#0xe010xxo---background-music-bgm) |
 | bgm | `vgs_bgm_resume` | Resume [background music](#0xe010xxo---background-music-bgm) |
 | bgm | `vgs_bgm_fadeout` | Fadeout [background music](#0xe010xxo---background-music-bgm) |
+| sfx | `vgs_sfx_master_volume` | Set master volume of [sound effect](#0xe011xxo---sound-effect-sfx) |
+| sfx | `vgs_sfx_master_volume_get` | Get master volume of [sound effect](#0xe011xxo---sound-effect-sfx) |
 | sfx | `vgs_sfx_play` | Play [sound effect](#0xe011xxo---sound-effect-sfx) |
 | sfx | `vgs_sfx_stop` | Stop [sound effect](#0xe011xxo---sound-effect-sfx) |
 | sfx | `vgs_sfx_stop_all` | Stop the all of [sound effects](#0xe011xxo---sound-effect-sfx) |

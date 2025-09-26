@@ -30,6 +30,18 @@ extern "C" {
 #endif
 
 /**
+ * @brief Set master volume of sound effect
+ * @param m Master Volume (0 to 256)
+ */
+static inline void vgs_sfx_master_volume(uint32_t m) { VGS_IO_SFX_MASTER = m; }
+
+/**
+ * @brief Get master volume of sound effect
+ * @return Master Volume (0 to 256)
+ */
+static inline uint32_t vgs_sfx_master_volume_get(void) { return VGS_IO_SFX_MASTER; }
+
+/**
  * @brief Play sound effect
  * @param n Number of SFX (0 to 255)
  */
