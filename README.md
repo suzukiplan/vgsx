@@ -1,5 +1,7 @@
 # VGS-X
 
+![vgsx.png](./vgsx.png)
+
 ## WIP
 
 This project is still in the WIP; _Work In Progress_ phase.

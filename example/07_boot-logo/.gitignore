@@ -1,0 +1,7 @@
+program
+program.elf
+program.rom
+program.o
+screen.bmp
+palette.bin
+*.chr
