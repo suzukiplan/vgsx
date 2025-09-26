@@ -2,7 +2,8 @@
 
 ## Version 0.15.0
 
-- Core+CRT: Added BGM pause, resume and fadeout functions
+- Core+CRT: Added the BGM pause, resume and fadeout functions
+- Core+CRT: Added a SFX stop function
 
 ## Version 0.14.0
 

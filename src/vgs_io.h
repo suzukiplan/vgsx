@@ -41,6 +41,7 @@
 #define VGS_ADDR_VGM_PLAY 0xE01000
 #define VGS_ADDR_VGM_PLAY_OPT 0xE01004
 #define VGS_ADDR_SFX_PLAY 0xE01100
+#define VGS_ADDR_SFX_STOP 0xE01104
 #define VGS_ADDR_KEY_UP 0xE02000
 #define VGS_ADDR_KEY_DOWN 0xE02004
 #define VGS_ADDR_KEY_LEFT 0xE02008
@@ -85,6 +86,7 @@
 #define VGS_OUT_VGM_PLAY *((volatile uint32_t*)VGS_ADDR_VGM_PLAY)
 #define VGS_OUT_VGM_PLAY_OPT *((volatile uint32_t*)VGS_ADDR_VGM_PLAY_OPT)
 #define VGS_OUT_SFX_PLAY *((volatile uint32_t*)VGS_ADDR_SFX_PLAY)
+#define VGS_OUT_SFX_STOP *((volatile uint32_t*)VGS_ADDR_SFX_STOP)
 #define VGS_KEY_UP *((volatile uint32_t*)VGS_ADDR_KEY_UP)
 #define VGS_KEY_DOWN *((volatile uint32_t*)VGS_ADDR_KEY_DOWN)
 #define VGS_KEY_LEFT *((volatile uint32_t*)VGS_ADDR_KEY_LEFT)

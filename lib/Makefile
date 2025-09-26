@@ -2,7 +2,6 @@ CC = m68k-elf-gcc -m68030 -O2 -I./ -I../src -c
 
 LIBCOBJ = vgs_system.o
 LIBCOBJ += vgs_cg.o
-LIBCOBJ += vgs_sfx.o
 LIBCOBJ += vgs_stdlib.o
 LIBCOBJ += vgs_string.o
 LIBCOBJ += vgs_math.o

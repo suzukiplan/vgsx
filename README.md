@@ -571,6 +571,7 @@ Note that all addresses and values for I/O instructions must be specified as 32-
 | 0xE01000 |  -  |  o  | [Play VGM](#0xe010xxo---background-music-bgm) |
 | 0xE01004 |  -  |  o  | [VGM Playback Options](#0xe010xxo---background-music-bgm) |
 | 0xE01100 |  -  |  o  | [Play SFX](#0xe011xxo---sound-effect-sfx) |
+| 0xE01104 |  -  |  o  | [Stop SFX](#0xe011xxo---sound-effect-sfx) |
 | 0xE02000 |  o  |  -  | [Gamepad: D-pad - Up](#0xe020xxi---gamepad) |
 | 0xE02004 |  o  |  -  | [Gamepad: D-pad - Down](#0xe020xxi---gamepad) |
 | 0xE02008 |  o  |  -  | [Gamepad: D-pad - Left](#0xe020xxi---gamepad) |
@@ -745,6 +746,9 @@ Notes:
 We recommend using [Furnace Tracker](https://github.com/tildearrow/furnace) to create VGM data compatible with these FM sound chips.
 
 ### 0xE011xx[o] - Sound Effect (SFX)
+
+- Set the .wav index value to 0xE01100 to play the sound effect (SFX).
+- Set the .wav index value to 0xE01104 to stop the SFX.
 
 Plays the SFX loaded at the index corresponding to the output value.
 
@@ -989,6 +993,8 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | bgm | `vgs_bgm_resume` | Resume [background music](#0xe010xxo---background-music-bgm) |
 | bgm | `vgs_bgm_fadeout` | Fadeout [background music](#0xe010xxo---background-music-bgm) |
 | sfx | `vgs_sfx_play` | Play [sound effect](#0xe011xxo---sound-effect-sfx) |
+| sfx | `vgs_sfx_stop` | Stop [sound effect](#0xe011xxo---sound-effect-sfx) |
+| sfx | `vgs_sfx_stop_all` | Stop the all of [sound effects](#0xe011xxo---sound-effect-sfx) |
 | gamepad | `vgs_key_up` | Check if the up directional pad is pressed. |
 | gamepad | `vgs_key_down` | Check if the down directional pad is pressed. |
 | gamepad | `vgs_key_left` | Check if the left directional pad is pressed. |

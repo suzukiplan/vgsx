@@ -33,7 +33,23 @@ extern "C" {
  * @brief Play sound effect
  * @param n Number of SFX (0 to 255)
  */
-void vgs_sfx_play(uint8_t n);
+static inline void vgs_sfx_play(uint8_t n) { VGS_OUT_SFX_PLAY = n; }
+
+/**
+ * @brief Stop sound effect
+ * @param n Number of SFX (0 to 255)
+ */
+static inline void vgs_sfx_stop(uint8_t n) { VGS_OUT_SFX_STOP = n; }
+
+/**
+ * @brief Stop the all o0f sound effects
+ */
+static inline void vgs_sfx_stop_all()
+{
+    for (int i = 0; i < 256; i++) {
+        VGS_OUT_SFX_STOP = i;
+    }
+}
 
 #ifdef __cplusplus
 };

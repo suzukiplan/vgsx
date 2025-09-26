@@ -801,6 +801,10 @@ void VGSX::outPort(uint32_t address, uint32_t value)
             }
             return;
 
+        case VGS_ADDR_SFX_STOP:
+            this->ctx.sfxData[value & 0xFF].play = false;
+            return;
+
         case VGS_ADDR_SAVE_ADDRESS: // Save Data
             this->ctx.save.address = value;
             return;
