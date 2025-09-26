@@ -37,7 +37,7 @@ int main(int argc, char* argv[])
     uint32_t col = 1;
     int ptr = 0;
     for (int y = 0; y < vgs_draw_height(); y++) {
-        vgs_draw_line(0, 0, y, vgs_draw_width() - 1, y, col++);
+        vgs_draw_lineH(0, 0, y, vgs_draw_width(), col++);
     }
 
     for (int x = -1; x < vgs_draw_width(); x += 32) {
@@ -46,26 +46,26 @@ int main(int argc, char* argv[])
     }
 
     for (int x = -15; x < vgs_draw_width(); x += 15) {
-        vgs_draw_box(0, x, 45, x + 5, 40, 0x00FFFF);
+        vgs_draw_box(0, x, 40, 5, 5, 0x00FFFF);
     }
 
     for (int x = vgs_draw_width() + 3; -10 < x; x -= 15) {
-        vgs_draw_box(0, x, 150, x + 5, 155, 0x00FFFF);
+        vgs_draw_box(0, x, 150, 5, 5, 0x00FFFF);
     }
 
-    vgs_draw_box(0, 11 * 8 - 8, 12 * 8 - 8, 11 * 8 + 19 * 8, 12 * 8 + 16, 0xFFFF00);
-    vgs_draw_boxf(0, 11 * 8 - 8 + 1, 12 * 8 - 8 + 1, 11 * 8 + 19 * 8 - 1, 12 * 8 + 16 - 1, 0x102040);
-    vgs_draw_box(0, 11 * 8 - 8 - 2, 12 * 8 - 8 - 2, 11 * 8 + 19 * 8 + 2, 12 * 8 + 16 + 2, 0xCFCF00);
-    vgs_draw_box(0, 11 * 8 - 8 - 4, 12 * 8 - 8 - 4, 11 * 8 + 19 * 8 + 4, 12 * 8 + 16 + 4, 0x7F7F00);
-    vgs_draw_boxf(0, 0, 0, vgs_draw_width() - 1, 7, 0x00010101);
+    vgs_draw_box(0, 11 * 8 - 8, 12 * 8 - 8, 160, 24, 0xFFFF00);
+    vgs_draw_boxf(0, 11 * 8 - 8 + 1, 12 * 8 - 8 + 1, 158, 22, 0x102040);
+    vgs_draw_box(0, 11 * 8 - 8 - 2, 12 * 8 - 8 - 2, 164, 28, 0xCFCF00);
+    vgs_draw_box(0, 11 * 8 - 8 - 4, 12 * 8 - 8 - 4, 168, 32, 0x7F7F00);
+    vgs_draw_boxf(0, 0, 0, vgs_draw_width(), 8, 0x00010101);
 
     for (int y = 0; y < vgs_draw_height(); y++) {
         vgs_draw_pixel(1, vgs_rand() % vgs_draw_width(), y, vgs_rand32());
     }
 
-    vgs_draw_box(0, 20, 90, 20 + 23, 90 + 23, 0xF02020);
+    vgs_draw_box(0, 20, 90, 24, 24, 0xF02020);
     vgs_sprite(0, ON, 20, 90, 2, 0, '1');
-    vgs_draw_box(0, vgs_draw_width() - 20 - 32, 86, vgs_draw_width() - 20 - 32 + 31, 86 + 31, 0xF02020);
+    vgs_draw_box(0, vgs_draw_width() - 20 - 32, 86, 32, 32, 0xF02020);
     vgs_sprite(1, ON, vgs_draw_width() - 20 - 32, 86, 3, 0, 'A');
     vgs_oam(1)->scale = 10;
 
@@ -93,7 +93,7 @@ int main(int argc, char* argv[])
     vgs_sprite(13, OFF, baseX + 54, baseY + 36, 0, 0, 128 + 106); // X button
     vgs_sprite(14, OFF, baseX + 61, baseY + 28, 0, 0, 128 + 106); // Y button
 
-    vgs_draw_boxf(0, baseX - 8, baseY + 20, baseX + 88, baseY + 58, 1);
+    vgs_draw_boxf(0, baseX - 8, baseY + 20, 96, 40, 1);
 
     center_print(160, "The VGS-X is a 16-bits game console,");
     center_print(170, "powered by MC68030 and YM series FM sound chips.");
@@ -119,8 +119,14 @@ int main(int argc, char* argv[])
     BOOL prevB = OFF;
     BOOL prevX = OFF;
     BOOL prevY = OFF;
+    vgs_draw_window(0, 0, vgs_draw_height() / 2 - 1, vgs_draw_width(), 2);
+    int wh = 2;
     while (1) {
         vgs_vsync();
+        if (wh < 200) {
+            wh += 2;
+            vgs_draw_window(0, 0, vgs_draw_height() / 2 - wh / 2, vgs_draw_width(), wh);
+        }
         vgs_scroll_y(1, 1);
         vgs_draw_pixel(1, vgs_rand() % vgs_draw_width(), 0, vgs_rand32());
         // vgs_draw_character(1, vgs_rand() % 320 - 4, 0, OFF, 0, 0x20 + (vgs_rand() & 0x3F));
@@ -170,13 +176,13 @@ int main(int argc, char* argv[])
         if (vgs_key_right() && sfxmv < 256) vgs_sfx_master_volume(sfxmv++);
         if (vgs_key_left() && 0 < sfxmv) vgs_sfx_master_volume(sfxmv--);
 
-        vgs_cls_bg(2, 0); // todo: need specifiec rect clear function
+        vgs_draw_clear(2, 2, 2, 256, 8); // todo: need specifiec rect clear function
 
         if (vgs_bgm_master_volume_get()) {
-            vgs_draw_boxf(2, 2, 2, 2 + vgs_bgm_master_volume_get(), 4, 0xFFFF00);
+            vgs_draw_boxf(2, 2, 2, vgs_bgm_master_volume_get(), 2, 0xFFFF00);
         }
         if (vgs_sfx_master_volume_get()) {
-            vgs_draw_boxf(2, 2, 6, 2 + vgs_sfx_master_volume_get(), 8, 0x00FF00);
+            vgs_draw_boxf(2, 2, 6, vgs_sfx_master_volume_get(), 2, 0x00FF00);
         }
     }
 

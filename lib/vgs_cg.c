@@ -30,6 +30,16 @@ static uint32_t* _bg[4] = {
     BG2,
     BG3};
 
+void vgs_draw_window(uint8_t n, int32_t x, int32_t y, int32_t width, int32_t height)
+{
+    VGS_VREG_G_BG = n;
+    VGS_VREG_G_X1 = (uint32_t)x;
+    VGS_VREG_G_Y1 = (uint32_t)y;
+    VGS_VREG_G_X2 = (uint32_t)(x + width - 1);
+    VGS_VREG_G_Y2 = (uint32_t)(y + height - 1);
+    VGS_VREG_G_EXE = VGS_DRAW_WINDOW;
+}
+
 void vgs_put_bg(uint8_t n, uint8_t x, uint8_t y, uint32_t data)
 {
     uint16_t ptr = y;
@@ -87,26 +97,58 @@ void vgs_draw_line(uint8_t n, int32_t x1, int32_t y1, int32_t x2, int32_t y2, ui
     VGS_VREG_G_EXE = VGS_DRAW_LINE;
 }
 
-void vgs_draw_box(uint8_t n, int32_t x1, int32_t y1, int32_t x2, int32_t y2, uint32_t col)
+void vgs_draw_lineH(uint8_t n, int32_t x, int32_t y, int32_t width, uint32_t col)
 {
     VGS_VREG_G_BG = n;
-    VGS_VREG_G_X1 = (uint32_t)x1;
-    VGS_VREG_G_Y1 = (uint32_t)y1;
-    VGS_VREG_G_X2 = (uint32_t)x2;
-    VGS_VREG_G_Y2 = (uint32_t)y2;
+    VGS_VREG_G_X1 = (uint32_t)x;
+    VGS_VREG_G_Y1 = (uint32_t)y;
+    VGS_VREG_G_X2 = (uint32_t)(x + width - 1);
+    VGS_VREG_G_Y2 = (uint32_t)y;
+    VGS_VREG_G_COL = col;
+    VGS_VREG_G_EXE = VGS_DRAW_LINE;
+}
+
+void vgs_draw_lineV(uint8_t n, int32_t x, int32_t y, int32_t height, uint32_t col)
+{
+    VGS_VREG_G_BG = n;
+    VGS_VREG_G_X1 = (uint32_t)x;
+    VGS_VREG_G_Y1 = (uint32_t)y;
+    VGS_VREG_G_X2 = (uint32_t)x;
+    VGS_VREG_G_Y2 = (uint32_t)(y + height - 1);
+    VGS_VREG_G_COL = col;
+    VGS_VREG_G_EXE = VGS_DRAW_LINE;
+}
+
+void vgs_draw_box(uint8_t n, int32_t x, int32_t y, int32_t width, int32_t height, uint32_t col)
+{
+    VGS_VREG_G_BG = n;
+    VGS_VREG_G_X1 = (uint32_t)x;
+    VGS_VREG_G_Y1 = (uint32_t)y;
+    VGS_VREG_G_X2 = (uint32_t)(x + width - 1);
+    VGS_VREG_G_Y2 = (uint32_t)(y + height - 1);
     VGS_VREG_G_COL = col;
     VGS_VREG_G_EXE = VGS_DRAW_BOX;
 }
 
-void vgs_draw_boxf(uint8_t n, int32_t x1, int32_t y1, int32_t x2, int32_t y2, uint32_t col)
+void vgs_draw_boxf(uint8_t n, int32_t x, int32_t y, int32_t width, int32_t height, uint32_t col)
 {
     VGS_VREG_G_BG = n;
-    VGS_VREG_G_X1 = (uint32_t)x1;
-    VGS_VREG_G_Y1 = (uint32_t)y1;
-    VGS_VREG_G_X2 = (uint32_t)x2;
-    VGS_VREG_G_Y2 = (uint32_t)y2;
+    VGS_VREG_G_X1 = (uint32_t)x;
+    VGS_VREG_G_Y1 = (uint32_t)y;
+    VGS_VREG_G_X2 = (uint32_t)(x + width - 1);
+    VGS_VREG_G_Y2 = (uint32_t)(y + height - 1);
     VGS_VREG_G_COL = col;
     VGS_VREG_G_EXE = VGS_DRAW_BOXF;
+}
+
+void vgs_draw_clear(uint8_t n, int32_t x, int32_t y, int32_t width, int32_t height)
+{
+    VGS_VREG_G_BG = n;
+    VGS_VREG_G_X1 = (uint32_t)x;
+    VGS_VREG_G_Y1 = (uint32_t)y;
+    VGS_VREG_G_X2 = (uint32_t)(x + width - 1);
+    VGS_VREG_G_Y2 = (uint32_t)(y + height - 1);
+    VGS_VREG_G_EXE = VGS_DRAW_CLEAR;
 }
 
 void vgs_draw_character(uint8_t n, int32_t x, int32_t y, BOOL draw0, uint8_t pal, uint16_t ptn)

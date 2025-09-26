@@ -38,9 +38,9 @@ void game_init(void)
         c2 |= c1;
         c2 <<= 8;
         c2 |= c1;
-        vgs_draw_box(1, i, i, vgs_draw_width() - i - 1, vgs_draw_height() - i - 1, c2);
+        vgs_draw_box(1, i, i, vgs_draw_width() - i, vgs_draw_height() - i, c2);
     }
-    vgs_draw_boxf(0, 8, 8, vgs_draw_width() - 9, vgs_draw_height() - 9, 0x0F2F60);
+    vgs_draw_boxf(0, 8, 8, vgs_draw_width() - 16, vgs_draw_height() - 16, 0x0F2F60);
 
     vgs_memset(&g.player, 0, sizeof(g.player));
     g.player.x = ((vgs_draw_width() - 16) / 2) << 8;

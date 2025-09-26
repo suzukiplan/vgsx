@@ -5,6 +5,9 @@
 - Core+CRT: Added the BGM pause, resume and fadeout functions
 - Core+CRT: Added a SFX stop function
 - Core+CRT: Added functionality to set and get the Master Volume for BGM and SFX respectively.
+- Core+CRT: Added a Window function (`vgs_draw_window`)
+- Core+CRT: Added a Clear function (`vgs_draw_clear`)
+- CRT: Change the argument specification for `vgs_draw_box` and `vgs_draw_boxf` from (x1,y1,x2,y2) to (x,y,width,height) **(Disruptive)**
 
 ## Version 0.14.0
 
