@@ -2,6 +2,7 @@
 
 ## Version 0.15.0
 
+- Core+CRT: Added the boot BIOS
 - Core+CRT: Added the BGM pause, resume and fadeout functions
 - Core+CRT: Added a SFX stop function
 - Core+CRT: Added functionality to set and get the Master Volume for BGM and SFX respectively.
