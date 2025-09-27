@@ -1,5 +1,9 @@
 # Changes
 
+## Version 0.16.0
+
+- Update Boot Bios
+
 ## Version 0.15.0
 
 - Core+CRT: Added the boot BIOS

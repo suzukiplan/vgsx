@@ -36,7 +36,7 @@ VGSX vgsx;
 
 extern "C" {
 extern const unsigned short vgs0_rand16[65536];
-extern const uint8_t bios[38688];
+extern const uint8_t bios[38784];
 };
 
 typedef struct {
@@ -310,7 +310,7 @@ bool VGSX::loadRom(const void* data, size_t size)
     if (this->bootBios) {
         this->pendingRomData.data = (const uint8_t*)data;
         this->pendingRomData.size = (int)size;
-        return true;
+        return this->extractRom(bios, (int)sizeof(bios));
     } else {
         return this->extractRom((const uint8_t*)data, (int)size);
     }
@@ -654,7 +654,6 @@ void VGSX::tick(void)
 
     if (this->bootBios) {
         this->bootBios = false;
-        this->extractRom(bios, (int)sizeof(bios));
         this->ignoreReset = true;
     }
 

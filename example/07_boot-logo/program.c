@@ -1,5 +1,16 @@
 #include <vgs.h>
 
+struct Pixel {
+    BOOL exist;
+    int32_t x;
+    int32_t y;
+    int32_t vx;
+    int32_t vy;
+    uint32_t col;
+    int rate;
+} _pixel[8192];
+int _pnum = 0;
+
 void put_pfont_n(uint8_t n, int32_t x, int32_t y, uint8_t pal, uint16_t ptn, const char* text, int len)
 {
     int32_t dx, dy, width;
@@ -20,6 +31,7 @@ void put_pfont_n(uint8_t n, int32_t x, int32_t y, uint8_t pal, uint16_t ptn, con
     }
 }
 
+#if 0
 void ram_check()
 {
     static uint32_t checked = 0;
@@ -64,6 +76,29 @@ void ram_check()
         vgs_pfont_print(1, lx + (n - 220) * 3, 188, 0, 0, loading[(n & 0b11000) >> 3]);
     }
 }
+#endif
+
+void pixel_move()
+{
+    vgs_cls_bg(2, 0);
+    for (int i = 0; i < _pnum; i++) {
+        if (_pixel[i].exist) {
+            int x = _pixel[i].x >> 8;
+            int y = _pixel[i].y >> 8;
+            _pixel[i].exist = 0 < x && x < vgs_draw_width() && 0 < y && y < vgs_draw_height() && 0x020202 < _pixel[i].col;
+            if (_pixel[i].exist) {
+                vgs_draw_pixel(2, x, y, _pixel[i].col);
+                _pixel[i].x += _pixel[i].vx;
+                _pixel[i].y += _pixel[i].vy;
+                _pixel[i].vx *= _pixel[i].rate;
+                _pixel[i].vx /= 100;
+                _pixel[i].vy *= _pixel[i].rate;
+                _pixel[i].vy /= 100;
+                _pixel[i].col -= 0x030303;
+            }
+        }
+    }
+}
 
 int main(int argc, char* argv[])
 {
@@ -84,7 +119,7 @@ int main(int argc, char* argv[])
     vgs_bgm_play(0);
     int i = 0;
     while (logo_scale < 150) {
-        ram_check();
+        // ram_check();
         if (i < 100) {
             i++;
             uint32_t col = ((i / 2) << 8) | i;
@@ -102,7 +137,7 @@ int main(int argc, char* argv[])
     }
 
     while (100 != logo_scale || logo_rotate % 360) {
-        ram_check();
+        // ram_check();
         if (i < 80) {
             i++;
             uint32_t col = ((i / 2) << 8) | i;
@@ -135,20 +170,57 @@ int main(int argc, char* argv[])
     int alpha = 0x010101;
     vgs_oam(0)->alpha = alpha;
     vgs_oam(0)->mask = 0xFFFFFF;
-    while (len < 220) {
-        ram_check();
+    for (int i = 0; i < 168 / 8; i++) {
+        for (int j = 0; j < 168 / 8; j++) {
+            vgs_draw_character(2, (vgs_draw_width() - 168) / 2 + j * 8, (vgs_draw_height() - 168) / 2 + i * 8, OFF, 1, 128 + j + i * 21);
+        }
+    }
+    for (int i = 0; i < 168; i++) {
+        int y = (vgs_draw_height() - 168) / 2 + i;
+        for (int j = 0; j < 168; j += 2) {
+            int x = (vgs_draw_width() - 168) / 2 + j;
+            if (vgs_read_pixel(2, x, y) && _pnum < 8192) {
+                _pixel[_pnum].exist = ON;
+                _pixel[_pnum].x = x << 8;
+                _pixel[_pnum].y = y << 8;
+                int k = vgs_rand() % 360;
+                _pixel[_pnum].vx = vgs_cos(k) * 4;
+                _pixel[_pnum].vy = vgs_sin(k) * 4;
+                _pixel[_pnum].col = 0xFFFFFF;
+                _pixel[_pnum].rate = vgs_rand() % 8 + 92;
+                _pnum++;
+            }
+        }
+        if (0xF == (i & 0xF)) {
+            // ram_check();
+            vgs_vsync();
+        }
+    }
+    vgs_cls_bg(2, 0);
+
+    while (len < 250) {
+        // ram_check();
         len++;
         put_pfont_n(1, t0x, 50, 1, 0, t0, len);
         put_pfont_n(1, t1x, 60, 0, 0, t1, len / 2);
         put_pfont_n(1, ptx, 158, 1, 0, pt, len);
         put_pfont_n(1, vtx, 168, 1, 0, vt, len - vgs_strlen(pt));
         vgs_vsync();
-        if (len < 80) {
-            alpha += 0x020202;
+        if (len < 60) {
+            alpha += 0x030303;
             vgs_oam(0)->alpha = alpha;
-        } else if (len < 155) {
-            alpha -= 0x020202;
+        } else if (len < 115) {
+            alpha -= 0x030303;
             vgs_oam(0)->alpha = alpha;
+        } else if (len < 140) {
+            ;
+        } else if (len < 190) {
+            alpha += 0x040404;
+            vgs_oam(0)->alpha = alpha;
+        } else {
+            vgs_oam(0)->visible = OFF;
+            vgs_oam(1)->visible = OFF;
+            pixel_move();
         }
     }
 
@@ -157,6 +229,8 @@ int main(int argc, char* argv[])
         vgs_draw_lineH(3, 0, vgs_draw_height() / 2 + i, vgs_draw_width(), 1);
         vgs_draw_lineH(3, 0, i + 1, vgs_draw_width(), 1);
         vgs_draw_lineH(3, 0, vgs_draw_height() - i + 1, vgs_draw_width(), 1);
+        pixel_move();
+        // vgs_scroll_y(1, -1);
         vgs_vsync();
     }
 
