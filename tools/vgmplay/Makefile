@@ -10,6 +10,7 @@ CPP += -c
 OBJECTS = vgmplay.o
 OBJECTS += vgmplay_elf.o
 OBJECTS += vgsx.o
+OBJECTS += bios.o
 OBJECTS += vgs0math.o
 OBJECTS += k8x12_jisx0201.o
 OBJECTS += k8x12_jisx0208.o
@@ -43,6 +44,9 @@ vgsx.o: ${CORE_PATH}/vgsx.cpp ${CORE_PATH}/vgsx.h ${CORE_PATH}/vdp.hpp ${CORE_PA
 
 utf8_to_sjis.o: ${CORE_PATH}/utf8_to_sjis.cpp ${CORE_PATH}/utf8_to_sjis.h
 	${CPP} -w $<
+
+bios.o: ${CORE_PATH}/bios.c
+	gcc -c $<
 
 vgs0math.o: ${CORE_PATH}/vgs0math.cpp
 	${CPP} $<

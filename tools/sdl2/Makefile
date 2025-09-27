@@ -9,6 +9,7 @@ CPP += -I${CORE_PATH}/ymfm/src
 CPP += -c
 OBJECTS = main.o
 OBJECTS += vgsx.o
+OBJECTS += bios.o
 OBJECTS += vgs0math.o
 OBJECTS += k8x12_jisx0201.o
 OBJECTS += k8x12_jisx0208.o
@@ -36,6 +37,9 @@ main.o: main.cpp ${CORE_PATH}/vgsx.h ${CORE_PATH}/vdp.hpp ${CORE_PATH}/vgmrender
 
 vgsx.o: ${CORE_PATH}/vgsx.cpp ${CORE_PATH}/vgsx.h ${CORE_PATH}/vdp.hpp ${CORE_PATH}/vgmrender.hpp ${CORE_PATH}/utf8_to_sjis.h
 	${CPP} $<
+
+bios.o: ${CORE_PATH}/bios.c
+	gcc -c $<
 
 utf8_to_sjis.o: ${CORE_PATH}/utf8_to_sjis.cpp ${CORE_PATH}/utf8_to_sjis.h
 	${CPP} -w $<

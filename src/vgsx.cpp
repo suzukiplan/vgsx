@@ -36,6 +36,7 @@ VGSX vgsx;
 
 extern "C" {
 extern const unsigned short vgs0_rand16[65536];
+extern const uint8_t bios[38688];
 };
 
 typedef struct {
@@ -213,6 +214,9 @@ VGSX::VGSX()
 {
     this->gamepadType = GamepadType::Keyboard;
     this->logCallback = nullptr;
+    this->bootBios = true;
+    this->ignoreReset = false;
+    memset(&this->pendingRomData, 0, sizeof(pendingRomData));
     memset(&this->ctx, 0, sizeof(this->ctx));
     memset(&this->key, 0, sizeof(this->key));
     m68k_set_cpu_type(M68K_CPU_TYPE_68030);
@@ -289,6 +293,92 @@ bool VGSX::loadPalette(const void* data, size_t size)
         }
         ptr += 4;
         size -= 4;
+    }
+    return true;
+}
+
+bool VGSX::loadRom(const void* data, size_t size)
+{
+    if (!data) {
+        this->setLastError("No data.");
+        return false;
+    }
+    if (size < 0x2000) {
+        this->setLastError("Invalid program size.");
+        return false;
+    }
+    if (this->bootBios) {
+        this->pendingRomData.data = (const uint8_t*)data;
+        this->pendingRomData.size = (int)size;
+        return true;
+    } else {
+        return this->extractRom((const uint8_t*)data, (int)size);
+    }
+}
+
+bool VGSX::extractRom(const uint8_t* program, int programSize)
+{
+    if (0 != memcmp(program, "VGSX", 4)) {
+        this->setLastError("Invalid ROM header.");
+        return false;
+    }
+    const uint8_t* ptr = program + 8;
+    programSize -= 8;
+    int pindex = 0;
+    int bindex = 0;
+    int sindex = 0;
+    while (0 < programSize) {
+        int size;
+        if (0 == memcmp(ptr, "ELF", 4)) {
+            memcpy(&size, ptr + 4, 4);
+            ptr += 8;
+            programSize -= 8 + size;
+            if (!this->loadProgram(ptr, size)) {
+                return false;
+            }
+            this->putlog(LogLevel::I, "ELF load succeed.");
+            ptr += size;
+        } else if (0 == memcmp(ptr, "PAL", 4)) {
+            memcpy(&size, ptr + 4, 4);
+            ptr += 8;
+            programSize -= 8 + size;
+            if (!vgsx.loadPalette(ptr, size)) {
+                return false;
+            }
+            this->putlog(LogLevel::I, "PAL load succeed.");
+            ptr += size;
+        } else if (0 == memcmp(ptr, "CHR", 4)) {
+            memcpy(&size, ptr + 4, 4);
+            ptr += 8;
+            programSize -= 8 + size;
+            if (!vgsx.loadPattern(pindex, ptr, size)) {
+                return false;
+            }
+            this->putlog(LogLevel::I, "CHR load succeed. (%d patterns)\n", size / 32);
+            pindex += size / 32;
+            ptr += size;
+        } else if (0 == memcmp(ptr, "VGM", 4)) {
+            memcpy(&size, ptr + 4, 4);
+            ptr += 8;
+            programSize -= 8 + size;
+            if (!vgsx.loadVgm(bindex++, ptr, size)) {
+                return false;
+            }
+            this->putlog(LogLevel::I, "VGM load succeed.");
+            ptr += size;
+        } else if (0 == memcmp(ptr, "WAV", 4)) {
+            memcpy(&size, ptr + 4, 4);
+            ptr += 8;
+            programSize -= 8 + size;
+            if (!vgsx.loadWav(sindex++, ptr, size)) {
+                return false;
+            }
+            this->putlog(LogLevel::I, "WAV load succeed.");
+            ptr += size;
+        } else {
+            this->setLastError("Unknown chunk: %c%c%c\n", ptr[0], ptr[1], ptr[2]);
+            return false;
+        }
     }
     return true;
 }
@@ -467,6 +557,9 @@ bool VGSX::loadWav(uint8_t index, const void* data, size_t size)
 
 void VGSX::reset(void)
 {
+    if (this->ignoreReset) {
+        return;
+    }
     m68k_pulse_reset();
     m68k_set_reg(M68K_REG_SP, 0);
     this->detectReferVSync = false;
@@ -558,11 +651,26 @@ void VGSX::tick(void)
 {
     this->detectReferVSync = false;
     this->ctx.frameClocks = 0;
+
+    if (this->bootBios) {
+        this->bootBios = false;
+        this->extractRom(bios, (int)sizeof(bios));
+        this->ignoreReset = true;
+    }
+
     while (!this->detectReferVSync && !this->exitFlag) {
         m68k_execute(4);
         this->ctx.frameClocks += 4;
     }
     this->vdp.render();
+
+    if (this->exitFlag && this->pendingRomData.data) {
+        this->ignoreReset = false;
+        this->exitFlag = false;
+        this->extractRom(this->pendingRomData.data, this->pendingRomData.size);
+        this->pendingRomData.data = nullptr;
+        this->pendingRomData.size = 0;
+    }
 }
 
 void VGSX::tickSound(int16_t* buf, int samples)

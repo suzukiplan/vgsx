@@ -1130,7 +1130,8 @@ This is a VGS-X emulator built using SDL2.
 It is primarily provided for debugging purposes during game development.
 
 ```
-usage: vgsx [-g /path/to/pattern.chr]
+usage: vgsx [-i]
+            [-g /path/to/pattern.chr]
             [-c /path/to/palette.bin]
             [-b /path/to/bgm.vgm]
             [-s /path/to/sfx.wav]
@@ -1138,6 +1139,7 @@ usage: vgsx [-g /path/to/pattern.chr]
             { /path/to/program.elf | /path/to/program.rom }
 ```
 
+- Specifying the `-i` option causes the application to launch after the boot logo appears. In this case, the file must be in the ROM format created by [`makerom`](#makerom) command.
 - The `-g`, `-b`, and `-s` options can be specified multiple times.
 - Program file (`.elf`) or ROM file (`rom`) are automatically identified based on the header information in the file header.
 - The `-x` option is intended for use in testing environments such as CI. If the exit code specified by the user program matches the expected value, the process exits with 0; otherwise, it exits with -1. When this option is specified, SDL video and audio output is skipped.

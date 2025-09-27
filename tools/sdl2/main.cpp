@@ -89,7 +89,8 @@ static uint8_t* loadBinary(const char* path, int* size)
 
 static void put_usage()
 {
-    puts("usage: vgsx [-g /path/to/pattern.chr]");
+    puts("usage: vgsx [-i]");
+    puts("            [-g /path/to/pattern.chr]");
     puts("            [-c /path/to/palette.bin]");
     puts("            [-b /path/to/bgm.vgm]");
     puts("            [-s /path/to/sfx.wav]");
@@ -161,6 +162,8 @@ int main(int argc, char* argv[])
     uint8_t sindex = 0;
     bool consoleMode = false;
     int32_t expectedExitCode = 0;
+    bool isFirstOption = true;
+    vgsx.disableBootBios();
     for (int i = 1; i < argc; i++) {
         if ('-' == argv[i][0]) {
             switch (tolower(argv[i][1])) {
@@ -249,6 +252,14 @@ int main(int argc, char* argv[])
                     }
                     break;
                 }
+                case 'i':
+                    if (!isFirstOption) {
+                        puts("The `-i` option must be specified first.");
+                        put_usage();
+                        return 1;
+                    }
+                    vgsx.enableBootBios();
+                    break;
                 default:
                     put_usage();
                     return 1;
@@ -260,6 +271,7 @@ int main(int argc, char* argv[])
             }
             programPath = argv[i];
         }
+        isFirstOption = false;
     }
 
     if (!programPath) {
@@ -271,77 +283,17 @@ int main(int argc, char* argv[])
     int programSize;
     program = loadBinary(programPath, &programSize);
     if (0 == memcmp(program, "VGSX", 4)) {
-        const uint8_t* ptr = program + 8;
-        programSize -= 8;
-        pindex = 0;
-        bindex = 0;
-        sindex = 0;
-        while (0 < programSize) {
-            int size;
-            if (0 == memcmp(ptr, "ELF", 4)) {
-                memcpy(&size, ptr + 4, 4);
-                ptr += 8;
-                programSize -= 8 + size;
-                if (!vgsx.loadProgram(ptr, size)) {
-                    printf("ELF load failed: %s\n", vgsx.getLastError());
-                    exit(255);
-                }
-                puts("ELF load succeed.");
-                ptr += size;
-            } else if (0 == memcmp(ptr, "PAL", 4)) {
-                memcpy(&size, ptr + 4, 4);
-                ptr += 8;
-                programSize -= 8 + size;
-                if (!vgsx.loadPalette(ptr, size)) {
-                    printf("PAL load failed: %s\n", vgsx.getLastError());
-                    exit(255);
-                }
-                puts("PAL load succeed.");
-                ptr += size;
-            } else if (0 == memcmp(ptr, "CHR", 4)) {
-                memcpy(&size, ptr + 4, 4);
-                ptr += 8;
-                programSize -= 8 + size;
-                if (!vgsx.loadPattern(pindex, ptr, size)) {
-                    printf("CHR load failed: %s\n", vgsx.getLastError());
-                    exit(255);
-                }
-                printf("CHR load succeed. (%d patterns)\n", size / 32);
-                pindex += size / 32;
-                ptr += size;
-            } else if (0 == memcmp(ptr, "VGM", 4)) {
-                memcpy(&size, ptr + 4, 4);
-                ptr += 8;
-                programSize -= 8 + size;
-                if (!vgsx.loadVgm(bindex++, ptr, size)) {
-                    printf("VGM load failed: %s\n", vgsx.getLastError());
-                    exit(255);
-                }
-                puts("VGM load succeed.");
-                ptr += size;
-            } else if (0 == memcmp(ptr, "WAV", 4)) {
-                memcpy(&size, ptr + 4, 4);
-                ptr += 8;
-                programSize -= 8 + size;
-                if (!vgsx.loadWav(sindex++, ptr, size)) {
-                    printf("WAV load failed: %s\n", vgsx.getLastError());
-                    exit(255);
-                }
-                puts("WAV load succeed.");
-                ptr += size;
-            } else {
-                printf("Unknown chunk: %c%c%c\n", ptr[0], ptr[1], ptr[2]);
-                exit(255);
-            }
+        if (!vgsx.loadRom(program, programSize)) {
+            printf("Load failed: %s\n", vgsx.getLastError());
+            exit(255);
         }
     } else {
         if (!vgsx.loadProgram(program, programSize)) {
             printf("Load failed: %s\n", vgsx.getLastError());
             exit(255);
-        } else {
-            puts("Load succeed.");
         }
     }
+    puts("Load succeed.");
 
     SDL_AudioDeviceID audioDeviceId = 0;
     SDL_Window* window = nullptr;
