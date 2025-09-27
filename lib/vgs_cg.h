@@ -116,6 +116,8 @@ typedef struct {
 #define VGS_DRAW_CHR 4
 #define VGS_DRAW_JISX0201 5
 #define VGS_DRAW_JISX0208 6
+#define VGS_DRAW_CLEAR 7
+#define VGS_DRAW_WINDOW 8
 
 #ifdef __cplusplus
 extern "C" {
@@ -230,6 +232,16 @@ static inline int vgs_draw_height()
 }
 
 /**
+ * @brief Set a window to display only a specific rectangular area in Bitmap Mode.
+ * @param n Number of BG (0 to 3)
+ * @param x X-coordinate of VRAM (0 to 319)
+ * @param y Y-coordinate of VRAM (0 to 199)
+ * @param width Rectangle width (0 to 320)
+ * @param height Rectangle height (0 to 200)
+ */
+void vgs_draw_window(uint8_t n, int32_t x, int32_t y, int32_t width, int32_t height);
+
+/**
  * @brief Read a pixel on the BG in Bitmap Mode
  * @param n Number of BG (0 to 3)
  * @param x X-coordinate of VRAM (0 to 319)
@@ -261,28 +273,61 @@ void vgs_draw_pixel(uint8_t n, int32_t x, int32_t y, uint32_t col);
 void vgs_draw_line(uint8_t n, int32_t x1, int32_t y1, int32_t x2, int32_t y2, uint32_t col);
 
 /**
- * @brief Draw a rectangle on the BG in Bitmap Mode
+ * @brief Draw a horizontal line on the BG in Bitmap Mode
  * @param n Number of BG (0 to 3)
- * @param x1 X-coordinate of VRAM (0 to 319)
- * @param y1 Y-coordinate of VRAM (0 to 199)
- * @param x2 X-coordinate of VRAM (0 to 319)
- * @param y2 Y-coordinate of VRAM (0 to 199)
+ * @param x X-coordinate of VRAM (0 to 319)
+ * @param y Y-coordinate of VRAM (0 to 199)
+ * @param width Line width
  * @param col RGB888 color format
  * @remark Drawing outside the screen area will be skipped.
  */
-void vgs_draw_box(uint8_t n, int32_t x1, int32_t y1, int32_t x2, int32_t y2, uint32_t col);
+void vgs_draw_lineH(uint8_t n, int32_t x, int32_t y, int32_t width, uint32_t col);
+
+/**
+ * @brief Draw a vertical line on the BG in Bitmap Mode
+ * @param n Number of BG (0 to 3)
+ * @param x X-coordinate of VRAM (0 to 319)
+ * @param y Y-coordinate of VRAM (0 to 199)
+ * @param height Line height
+ * @param col RGB888 color format
+ * @remark Drawing outside the screen area will be skipped.
+ */
+void vgs_draw_lineV(uint8_t n, int32_t x, int32_t y, int32_t height, uint32_t col);
+
+/**
+ * @brief Draw a rectangle on the BG in Bitmap Mode
+ * @param n Number of BG (0 to 3)
+ * @param x X-coordinate of VRAM (0 to 319)
+ * @param y Y-coordinate of VRAM (0 to 199)
+ * @param width Rectangle width (0 to 320)
+ * @param height Rectangle height (0 to 200)
+ * @param col RGB888 color format
+ * @remark Drawing outside the screen area will be skipped.
+ */
+void vgs_draw_box(uint8_t n, int32_t x, int32_t y, int32_t width, int32_t height, uint32_t col);
 
 /**
  * @brief Draw a filled-rectangle on the BG in Bitmap Mode
  * @param n Number of BG (0 to 3)
- * @param x1 X-coordinate of VRAM (0 to 319)
- * @param y1 Y-coordinate of VRAM (0 to 199)
- * @param x2 X-coordinate of VRAM (0 to 319)
- * @param y2 Y-coordinate of VRAM (0 to 199)
+ * @param x X-coordinate of VRAM (0 to 319)
+ * @param y Y-coordinate of VRAM (0 to 199)
+ * @param width Rectangle width (0 to 320)
+ * @param height Rectangle height (0 to 200)
  * @param col RGB888 color format
  * @remark Drawing outside the screen area will be skipped.
  */
-void vgs_draw_boxf(uint8_t n, int32_t x1, int32_t y1, int32_t x2, int32_t y2, uint32_t col);
+void vgs_draw_boxf(uint8_t n, int32_t x, int32_t y, int32_t width, int32_t height, uint32_t col);
+
+/**
+ * @brief Zero clear a rectangle on the BG in Bitmap Mode
+ * @param n Number of BG (0 to 3)
+ * @param x X-coordinate of VRAM (0 to 319)
+ * @param y Y-coordinate of VRAM (0 to 199)
+ * @param width Rectangle width (0 to 320)
+ * @param height Rectangle height (0 to 200)
+ * @remark Drawing outside the screen area will be skipped.
+ */
+void vgs_draw_clear(uint8_t n, int32_t x, int32_t y, int32_t width, int32_t height);
 
 /**
  * @brief Draw a character-pattern on the BG in Bitmap Mode

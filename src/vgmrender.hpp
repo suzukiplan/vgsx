@@ -240,7 +240,6 @@ class VgmHelper
         this->offset = this->data_start;
         this->wait = 0;
         this->done = false;
-        parse_header();
     }
 
     ~VgmHelper()

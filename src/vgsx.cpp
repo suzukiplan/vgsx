@@ -32,8 +32,11 @@
 
 VGSX vgsx;
 
+#define FADEOUT_FRAMES 100
+
 extern "C" {
 extern const unsigned short vgs0_rand16[65536];
+extern const uint8_t bios[38688];
 };
 
 typedef struct {
@@ -211,6 +214,9 @@ VGSX::VGSX()
 {
     this->gamepadType = GamepadType::Keyboard;
     this->logCallback = nullptr;
+    this->bootBios = true;
+    this->ignoreReset = false;
+    memset(&this->pendingRomData, 0, sizeof(pendingRomData));
     memset(&this->ctx, 0, sizeof(this->ctx));
     memset(&this->key, 0, sizeof(this->key));
     m68k_set_cpu_type(M68K_CPU_TYPE_68030);
@@ -287,6 +293,92 @@ bool VGSX::loadPalette(const void* data, size_t size)
         }
         ptr += 4;
         size -= 4;
+    }
+    return true;
+}
+
+bool VGSX::loadRom(const void* data, size_t size)
+{
+    if (!data) {
+        this->setLastError("No data.");
+        return false;
+    }
+    if (size < 0x2000) {
+        this->setLastError("Invalid program size.");
+        return false;
+    }
+    if (this->bootBios) {
+        this->pendingRomData.data = (const uint8_t*)data;
+        this->pendingRomData.size = (int)size;
+        return true;
+    } else {
+        return this->extractRom((const uint8_t*)data, (int)size);
+    }
+}
+
+bool VGSX::extractRom(const uint8_t* program, int programSize)
+{
+    if (0 != memcmp(program, "VGSX", 4)) {
+        this->setLastError("Invalid ROM header.");
+        return false;
+    }
+    const uint8_t* ptr = program + 8;
+    programSize -= 8;
+    int pindex = 0;
+    int bindex = 0;
+    int sindex = 0;
+    while (0 < programSize) {
+        int size;
+        if (0 == memcmp(ptr, "ELF", 4)) {
+            memcpy(&size, ptr + 4, 4);
+            ptr += 8;
+            programSize -= 8 + size;
+            if (!this->loadProgram(ptr, size)) {
+                return false;
+            }
+            this->putlog(LogLevel::I, "ELF load succeed.");
+            ptr += size;
+        } else if (0 == memcmp(ptr, "PAL", 4)) {
+            memcpy(&size, ptr + 4, 4);
+            ptr += 8;
+            programSize -= 8 + size;
+            if (!vgsx.loadPalette(ptr, size)) {
+                return false;
+            }
+            this->putlog(LogLevel::I, "PAL load succeed.");
+            ptr += size;
+        } else if (0 == memcmp(ptr, "CHR", 4)) {
+            memcpy(&size, ptr + 4, 4);
+            ptr += 8;
+            programSize -= 8 + size;
+            if (!vgsx.loadPattern(pindex, ptr, size)) {
+                return false;
+            }
+            this->putlog(LogLevel::I, "CHR load succeed. (%d patterns)\n", size / 32);
+            pindex += size / 32;
+            ptr += size;
+        } else if (0 == memcmp(ptr, "VGM", 4)) {
+            memcpy(&size, ptr + 4, 4);
+            ptr += 8;
+            programSize -= 8 + size;
+            if (!vgsx.loadVgm(bindex++, ptr, size)) {
+                return false;
+            }
+            this->putlog(LogLevel::I, "VGM load succeed.");
+            ptr += size;
+        } else if (0 == memcmp(ptr, "WAV", 4)) {
+            memcpy(&size, ptr + 4, 4);
+            ptr += 8;
+            programSize -= 8 + size;
+            if (!vgsx.loadWav(sindex++, ptr, size)) {
+                return false;
+            }
+            this->putlog(LogLevel::I, "WAV load succeed.");
+            ptr += size;
+        } else {
+            this->setLastError("Unknown chunk: %c%c%c\n", ptr[0], ptr[1], ptr[2]);
+            return false;
+        }
     }
     return true;
 }
@@ -465,6 +557,9 @@ bool VGSX::loadWav(uint8_t index, const void* data, size_t size)
 
 void VGSX::reset(void)
 {
+    if (this->ignoreReset) {
+        return;
+    }
     m68k_pulse_reset();
     m68k_set_reg(M68K_REG_SP, 0);
     this->detectReferVSync = false;
@@ -474,6 +569,8 @@ void VGSX::reset(void)
     this->ctx.programSize = 0;
     this->ctx.randomIndex = 0;
     this->ctx.frameClocks = 0;
+    this->ctx.vgmMasterVolume = VGS_MASTER_VOLUME_MAX;
+    this->ctx.sfxMasterVolume = VGS_MASTER_VOLUME_MAX;
     this->vdp.reset();
     if (this->vgmHelper) {
         delete (VgmHelper*)this->vgmHelper;
@@ -554,26 +651,66 @@ void VGSX::tick(void)
 {
     this->detectReferVSync = false;
     this->ctx.frameClocks = 0;
+
+    if (this->bootBios) {
+        this->bootBios = false;
+        this->extractRom(bios, (int)sizeof(bios));
+        this->ignoreReset = true;
+    }
+
     while (!this->detectReferVSync && !this->exitFlag) {
         m68k_execute(4);
         this->ctx.frameClocks += 4;
     }
     this->vdp.render();
+
+    if (this->exitFlag && this->pendingRomData.data) {
+        this->ignoreReset = false;
+        this->exitFlag = false;
+        this->extractRom(this->pendingRomData.data, this->pendingRomData.size);
+        this->pendingRomData.data = nullptr;
+        this->pendingRomData.size = 0;
+    }
 }
 
 void VGSX::tickSound(int16_t* buf, int samples)
 {
     memset(buf, 0, samples * 2);
     auto helper = (VgmHelper*)this->vgmHelper;
-    if (helper) {
+    if (helper && !this->ctx.vgmPause) {
         helper->render(buf, samples);
+    }
+    if (this->ctx.vgmMasterVolume < VGS_MASTER_VOLUME_MAX) {
+        for (int i = 0; i < samples; i++) {
+            int32_t w = buf[i];
+            w *= this->ctx.vgmMasterVolume;
+            w /= VGS_MASTER_VOLUME_MAX;
+            buf[i] = (int16_t)w;
+        }
+    }
+    if (this->ctx.vgmFadeout) {
+        for (int i = 0; i < samples; i++) {
+            int32_t w = buf[i];
+            w *= (FADEOUT_FRAMES - this->ctx.vgmFadeout);
+            w /= FADEOUT_FRAMES;
+            buf[i] = (int16_t)w;
+        }
+        this->ctx.vgmFadeout++;
+        if (FADEOUT_FRAMES <= this->ctx.vgmFadeout) {
+            delete helper;
+            this->vgmHelper = nullptr;
+        }
     }
     for (int i = 0; i < 0x100; i++) {
         if (this->ctx.sfxData[i].play) {
             for (int j = 0; j < samples; j++) {
                 if (this->ctx.sfxData[i].index < this->ctx.sfxData[i].count) {
-                    int w = buf[j];
-                    w += this->ctx.sfxData[i].data[this->ctx.sfxData[i].index];
+                    int w = this->ctx.sfxData[i].data[this->ctx.sfxData[i].index];
+                    if (this->ctx.sfxMasterVolume < VGS_MASTER_VOLUME_MAX) {
+                        w *= this->ctx.sfxMasterVolume;
+                        w /= VGS_MASTER_VOLUME_MAX;
+                    }
+                    w += buf[j];
                     if (32767 < w) {
                         w = 32767;
                     } else if (w < -32768) {
@@ -613,6 +750,9 @@ uint32_t VGSX::inPort(uint32_t address)
             return this->ctx.angle.degree;
         case VGS_ADDR_ANGLE_SIN: return (int32_t)(sin(this->ctx.angle.radian) * 256);
         case VGS_ADDR_ANGLE_COS: return (int32_t)(cos(this->ctx.angle.radian) * 256);
+
+        case VGS_ADDR_VGM_MASTER: return this->ctx.vgmMasterVolume;
+        case VGS_ADDR_SFX_MASTER: return this->ctx.sfxMasterVolume;
 
         case VGS_ADDR_KEY_UP: return this->key.up;
         case VGS_ADDR_KEY_DOWN: return this->key.down;
@@ -761,14 +901,41 @@ void VGSX::outPort(uint32_t address, uint32_t value)
                 }
                 helper = new VgmHelper(this->ctx.vgmData[value].data, this->ctx.vgmData[value].size, this->logCallback);
                 this->vgmHelper = helper;
+                this->ctx.vgmPause = false;
+                this->ctx.vgmFadeout = 0;
             }
             return;
+
+        case VGS_ADDR_VGM_PLAY_OPT:
+            switch (value) {
+                case VGS_VGM_OPT_PAUSE: this->ctx.vgmPause = true; break;
+                case VGS_VGM_OPT_RESUME: this->ctx.vgmPause = false; break;
+                case VGS_VGM_OPT_FADEOUT:
+                    if (0 == this->ctx.vgmFadeout) {
+                        this->ctx.vgmFadeout = 1;
+                    }
+                    break;
+            }
+            return;
+
+        case VGS_ADDR_VGM_MASTER:
+            this->ctx.vgmMasterVolume = value < VGS_MASTER_VOLUME_MAX ? value : VGS_MASTER_VOLUME_MAX;
+            return;
+
+        case VGS_ADDR_SFX_MASTER:
+            this->ctx.sfxMasterVolume = value < VGS_MASTER_VOLUME_MAX ? value : VGS_MASTER_VOLUME_MAX;
+            return;
+
         case VGS_ADDR_SFX_PLAY: // Play SFX
             value &= 0xFF;
             if (this->ctx.sfxData[value].data) {
                 this->ctx.sfxData[value].index = 0;
                 this->ctx.sfxData[value].play = true;
             }
+            return;
+
+        case VGS_ADDR_SFX_STOP:
+            this->ctx.sfxData[value & 0xFF].play = false;
             return;
 
         case VGS_ADDR_SAVE_ADDRESS: // Save Data

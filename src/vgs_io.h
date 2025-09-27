@@ -39,7 +39,11 @@
 #define VGS_ADDR_ANGLE_SIN 0xE00114
 #define VGS_ADDR_ANGLE_COS 0xE00118
 #define VGS_ADDR_VGM_PLAY 0xE01000
+#define VGS_ADDR_VGM_PLAY_OPT 0xE01004
+#define VGS_ADDR_VGM_MASTER 0xE01008
 #define VGS_ADDR_SFX_PLAY 0xE01100
+#define VGS_ADDR_SFX_STOP 0xE01104
+#define VGS_ADDR_SFX_MASTER 0xE01108
 #define VGS_ADDR_KEY_UP 0xE02000
 #define VGS_ADDR_KEY_DOWN 0xE02004
 #define VGS_ADDR_KEY_LEFT 0xE02008
@@ -82,7 +86,11 @@
 #define VGS_IN_ANGLE_SIN *((volatile int32_t*)VGS_ADDR_ANGLE_SIN)
 #define VGS_IN_ANGLE_COS *((volatile int32_t*)VGS_ADDR_ANGLE_COS)
 #define VGS_OUT_VGM_PLAY *((volatile uint32_t*)VGS_ADDR_VGM_PLAY)
+#define VGS_OUT_VGM_PLAY_OPT *((volatile uint32_t*)VGS_ADDR_VGM_PLAY_OPT)
+#define VGS_IO_VGM_MASTER *((volatile uint32_t*)VGS_ADDR_VGM_MASTER)
 #define VGS_OUT_SFX_PLAY *((volatile uint32_t*)VGS_ADDR_SFX_PLAY)
+#define VGS_OUT_SFX_STOP *((volatile uint32_t*)VGS_ADDR_SFX_STOP)
+#define VGS_IO_SFX_MASTER *((volatile uint32_t*)VGS_ADDR_SFX_MASTER)
 #define VGS_KEY_UP *((volatile uint32_t*)VGS_ADDR_KEY_UP)
 #define VGS_KEY_DOWN *((volatile uint32_t*)VGS_ADDR_KEY_DOWN)
 #define VGS_KEY_LEFT *((volatile uint32_t*)VGS_ADDR_KEY_LEFT)
@@ -113,6 +121,11 @@
 #define VGS_DMA_MEMCPY 0
 #define VGS_DMA_MEMSET 1
 #define VGS_DMA_UTF8_TO_SJIS 2
+
+#define VGS_VGM_OPT_PAUSE 0
+#define VGS_VGM_OPT_RESUME 1
+#define VGS_VGM_OPT_FADEOUT 2
+#define VGS_MASTER_VOLUME_MAX 256
 
 #define VGS_KEY_ID_UNKNOWN 0
 #define VGS_KEY_ID_KEYBOARD 1

@@ -30,10 +30,38 @@ extern "C" {
 #endif
 
 /**
+ * @brief Set master volume of sound effect
+ * @param m Master Volume (0 to 256)
+ */
+static inline void vgs_sfx_master_volume(uint32_t m) { VGS_IO_SFX_MASTER = m; }
+
+/**
+ * @brief Get master volume of sound effect
+ * @return Master Volume (0 to 256)
+ */
+static inline uint32_t vgs_sfx_master_volume_get(void) { return VGS_IO_SFX_MASTER; }
+
+/**
  * @brief Play sound effect
  * @param n Number of SFX (0 to 255)
  */
-void vgs_sfx_play(uint8_t n);
+static inline void vgs_sfx_play(uint8_t n) { VGS_OUT_SFX_PLAY = n; }
+
+/**
+ * @brief Stop sound effect
+ * @param n Number of SFX (0 to 255)
+ */
+static inline void vgs_sfx_stop(uint8_t n) { VGS_OUT_SFX_STOP = n; }
+
+/**
+ * @brief Stop the all o0f sound effects
+ */
+static inline void vgs_sfx_stop_all()
+{
+    for (int i = 0; i < 256; i++) {
+        VGS_OUT_SFX_STOP = i;
+    }
+}
 
 #ifdef __cplusplus
 };

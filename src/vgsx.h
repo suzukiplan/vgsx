@@ -114,6 +114,10 @@ class VGSX
         SequencialData sqw;
         SequencialData sqr;
         ButtonId getNameId;
+        bool vgmPause;
+        uint32_t vgmFadeout;
+        uint32_t vgmMasterVolume;
+        uint32_t sfxMasterVolume;
     } ctx;
 
     struct KeyStatus {
@@ -140,6 +144,9 @@ class VGSX
 
     VGSX();
     ~VGSX();
+    void disableBootBios() { this->bootBios = false; }
+    void enableBootBios() { this->bootBios = true; }
+    bool loadRom(const void* data, size_t size);
     bool loadProgram(const void* data, size_t size);
     bool loadPattern(uint16_t index, const void* data, size_t size);
     bool loadPalette(const void* data, size_t size);
@@ -166,6 +173,13 @@ class VGSX
     ButtonId getButtonIdStart();
 
   private:
+    bool ignoreReset;
+    struct PendingRomData {
+        const uint8_t* data;
+        int size;
+    } pendingRomData;
+    bool bootBios;
+    bool extractRom(const uint8_t* program, int programSize);
     void (*logCallback)(LogLevel level, const char* msg);
     GamepadType gamepadType;
     bool exitFlag;

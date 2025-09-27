@@ -37,6 +37,17 @@ extern const uint8_t k8x12_jisx0201[3072];   // 12x256
 extern const uint8_t k8x12_jisx0208[106032]; // 12x8836
 };
 
+static inline int range(int n, int min, int max)
+{
+    if (n < min) {
+        n = min;
+    }
+    if (max < n) {
+        n = max;
+    }
+    return n;
+}
+
 class VDP;
 static inline void graphicDrawPixel(VDP* vdp);
 static inline void graphicDrawLine(VDP* vdp);
@@ -45,6 +56,8 @@ static inline void graphicDrawBoxFill(VDP* vdp);
 static inline void graphicDrawCharacter(VDP* vdp);
 static inline void graphicDrawJisX0201(VDP* vdp);
 static inline void graphicDrawJisX0208(VDP* vdp);
+static inline void graphicDrawClear(VDP* vdp);
+static inline void graphicDrawWindow(VDP* vdp);
 
 class VDP
 {
@@ -104,6 +117,10 @@ class VDP
         uint32_t palette[16][16];                 // Palette
         PropotionalInfo pinfo[0x80];              // Propotional Info
         Register reg;                             // Register
+        int wx1[VDP_BG_NUM];                      // BG Window X1
+        int wy1[VDP_BG_NUM];                      // BG Window Y1
+        int wx2[VDP_BG_NUM];                      // BG Window X2
+        int wy2[VDP_BG_NUM];                      // BG Window Y2
     } ctx;
 
     void reset()
@@ -112,6 +129,12 @@ class VDP
         memset(this->ctx.nametbl, 0, sizeof(this->ctx.nametbl));
         memset(this->ctx.oam, 0, sizeof(this->ctx.oam));
         memset(&this->ctx.reg, 0, sizeof(Register));
+        for (int i = 0; i < VDP_BG_NUM; i++) {
+            this->ctx.wx1[i] = 0;
+            this->ctx.wy1[i] = 0;
+            this->ctx.wx2[i] = VDP_WIDTH - 1;
+            this->ctx.wy2[i] = VDP_HEIGHT - 1;
+        }
     }
 
     uint32_t read(uint32_t address)
@@ -314,8 +337,10 @@ class VDP
             graphicDrawCharacter,
             graphicDrawJisX0201,
             graphicDrawJisX0208,
+            graphicDrawClear,
+            graphicDrawWindow,
         };
-        if (op < 7) {
+        if (op < 9) {
             func[op](this);
         }
     }
@@ -392,10 +417,14 @@ class VDP
     {
         if (this->ctx.reg.bmp[n]) {
             // Bitmap Mode
-            for (int dptr = 0; dptr < VDP_HEIGHT * VDP_WIDTH; dptr++) {
-                uint32_t col = this->ctx.nametbl[n][dptr];
-                if (col) {
-                    this->ctx.display[dptr] = col;
+            for (int y = this->ctx.wy1[n]; y <= this->ctx.wy2[n]; y++) {
+                int dptr = y * VDP_WIDTH + this->ctx.wx1[n];
+                for (int x = this->ctx.wx1[n]; x <= this->ctx.wx2[n]; x++) {
+                    uint32_t col = this->ctx.nametbl[n][dptr];
+                    if (col) {
+                        this->ctx.display[dptr] = col;
+                    }
+                    dptr++;
                 }
             }
         } else {
@@ -641,12 +670,12 @@ class VDP
         uint32_t dr = (color & 0xFF0000) >> 16;
         uint32_t dg = (color & 0x00FF00) >> 8;
         uint32_t db = color & 0x0000FF;
-        sr *= ar;
-        sg *= ag;
-        sb *= ab;
-        dr *= (255 - ar);
-        dg *= (255 - ag);
-        db *= (255 - ab);
+        sr *= (255 - ar);
+        sg *= (255 - ag);
+        sb *= (255 - ab);
+        dr *= ar;
+        dg *= ag;
+        db *= ab;
         uint32_t color2 = ((sr + dr) & 0x00FF00) << 8;
         color2 |= (sg + dg) & 0x00FF00;
         color2 |= ((sb + db) & 0x00FF00) >> 8;
@@ -868,4 +897,49 @@ static inline void graphicDrawJisX0208(VDP* vdp)
             p <<= 1;
         }
     }
+}
+
+static inline void graphicDrawClear(VDP* vdp)
+{
+    int x1 = range((int)vdp->ctx.reg.g_x1, 0, 319);
+    int y1 = range((int)vdp->ctx.reg.g_y1, 0, 199);
+    int x2 = range((int)vdp->ctx.reg.g_x2, 0, 319);
+    int y2 = range((int)vdp->ctx.reg.g_y2, 0, 199);
+    if (x2 < x1) {
+        int w = x1;
+        x1 = x2;
+        x2 = w;
+    }
+    if (y2 < y1) {
+        int w = y1;
+        y1 = y2;
+        y2 = w;
+    }
+    uint32_t* vram = &vdp->ctx.nametbl[vdp->ctx.reg.g_bg & 3][y1 * VDP_WIDTH];
+    for (int i = 0; i <= y2 - y1; i++, vram += VDP_WIDTH) {
+        memset(&vram[x1], 0, (x2 - x1 + 1) * 4);
+    }
+}
+
+static inline void graphicDrawWindow(VDP* vdp)
+{
+    int n = vdp->ctx.reg.g_bg & 3;
+    int x1 = range((int)vdp->ctx.reg.g_x1, 0, 319);
+    int y1 = range((int)vdp->ctx.reg.g_y1, 0, 199);
+    int x2 = range((int)vdp->ctx.reg.g_x2, 0, 319);
+    int y2 = range((int)vdp->ctx.reg.g_y2, 0, 199);
+    if (x2 < x1) {
+        int w = x1;
+        x1 = x2;
+        x2 = w;
+    }
+    if (y2 < y1) {
+        int w = y1;
+        y1 = y2;
+        y2 = w;
+    }
+    vdp->ctx.wx1[n] = x1;
+    vdp->ctx.wy1[n] = y1;
+    vdp->ctx.wx2[n] = x2;
+    vdp->ctx.wy2[n] = y2;
 }

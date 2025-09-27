@@ -24,16 +24,44 @@
  */
 #pragma once
 #include "vgs_stdint.h"
+#include "vgs_io.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /**
+ * @brief Set master volume of background music
+ * @param m Master Volume (0 to 256)
+ */
+static inline void vgs_bgm_master_volume(uint32_t m) { VGS_IO_VGM_MASTER = m; }
+
+/**
+ * @brief Get master volume of background music
+ * @return Master Volume (0 to 256)
+ */
+static inline uint32_t vgs_bgm_master_volume_get(void) { return VGS_IO_VGM_MASTER; }
+
+/**
  * @brief Play background music
  * @param n Number of Music (0 to 255)
  */
-void vgs_bgm_play(uint16_t n);
+static inline void vgs_bgm_play(uint16_t n) { VGS_OUT_VGM_PLAY = n; }
+
+/**
+ * @brief Pause background music
+ */
+static inline void vgs_bgm_pause(void) { VGS_OUT_VGM_PLAY_OPT = VGS_VGM_OPT_PAUSE; }
+
+/**
+ * @brief Resume background music
+ */
+static inline void vgs_bgm_resume(void) { VGS_OUT_VGM_PLAY_OPT = VGS_VGM_OPT_RESUME; }
+
+/**
+ * @brief Fadeout background music
+ */
+static inline void vgs_bgm_fadeout(void) { VGS_OUT_VGM_PLAY_OPT = VGS_VGM_OPT_FADEOUT; }
 
 #ifdef __cplusplus
 };

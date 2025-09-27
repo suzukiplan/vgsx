@@ -1,5 +1,7 @@
 # VGS-X
 
+![vgsx.png](./vgsx.png)
+
 ## WIP
 
 This project is still in the WIP; _Work In Progress_ phase.
@@ -29,8 +31,8 @@ Basic Features:
 - CPU: MC68030 _(unlimited clocks)_
 - Fully compatible with the [VGS Standard Library](#vgs-standard-library)
 - VDP: VGS-X Video
-- [BGM](#0xe01000o---play-vgm): .vgm format (YM2149, YM2151, YM2203, YM2608, YM2610 and YM2612)
-- [SFX](#0xe01100o---play-sfx): .wav format (44,100Hz, 16-bits, 2ch)
+- [BGM](#0xe010xxo---background-music-bgm): .vgm format (YM2149, YM2151, YM2203, YM2608, YM2610 and YM2612)
+- [SFX](#0xe011xxo---sound-effect-sfx): .wav format (44,100Hz, 16-bits, 2ch)
 - High speed [DMA; Direct Memory Access](#0xe00008-0xe00014io---direct-memory-access)
 - High speed [i-math (integer math)](#0xe00100-0xe00118io---angle) API
 - [Save Data](#0xe030xxio---savedata)
@@ -514,6 +516,8 @@ Drawing processing is executed when the execution identifier is written to `G_EX
 |☑︎|☑︎|☑︎|-|-|☑︎|☑︎| `4` | CHR <sup>*2</sup> |
 |☑︎|☑︎|☑︎|-|-|☑︎|☑︎| `5` | JIS-X-0201 |
 |☑︎|☑︎|☑︎|-|-|☑︎|☑︎| `6` | JIS-X-0208 |
+|☑︎|☑︎|☑︎|☑︎|☑︎|-|-| `7` | Clear |
+|☑︎|☑︎|☑︎|☑︎|☑︎|-|-| `8` | Window |
 
 Remarks:
 
@@ -568,8 +572,12 @@ Note that all addresses and values for I/O instructions must be specified as 32-
 | 0xE00110 |  o  |  o  | [Angle: Get/Set Degree (0 to 359)](#0xe00100-0xe00118io---angle) |
 | 0xE00114 |  o  |  -  | [Angle: Get int-sin (-256 to 256)](#0xe00100-0xe00118io---angle) |
 | 0xE00118 |  o  |  -  | [Angle: Get int-cos (-256 to 256)](#0xe00100-0xe00118io---angle) |
-| 0xE01000 |  -  |  o  | [Play VGM](#0xe01000o---play-vgm) |
-| 0xE01100 |  -  |  o  | [Play SFX](#0xe01100o---play-sfx) |
+| 0xE01000 |  -  |  o  | [Play BGM](#0xe010xxo---background-music-bgm) |
+| 0xE01004 |  -  |  o  | [BGM Playback Options](#0xe010xxo---background-music-bgm) |
+| 0xE01008 |  o  |  o  | Set/Get the [BGM Master Volume](#0xe010xxo---background-music-bgm) |
+| 0xE01100 |  -  |  o  | [Play SFX](#0xe011xxo---sound-effect-sfx) |
+| 0xE01104 |  -  |  o  | [Stop SFX](#0xe011xxo---sound-effect-sfx) |
+| 0xE01108 |  o  |  o  | Set/Get the [SFX Master Volume](#0xe011xxo---sound-effect-sfx) |
 | 0xE02000 |  o  |  -  | [Gamepad: D-pad - Up](#0xe020xxi---gamepad) |
 | 0xE02004 |  o  |  -  | [Gamepad: D-pad - Down](#0xe020xxi---gamepad) |
 | 0xE02008 |  o  |  -  | [Gamepad: D-pad - Left](#0xe020xxi---gamepad) |
@@ -720,9 +728,14 @@ For a concrete example, please refer to the implementation in [./example/03_rota
 
 ![03_rotate](./example/03_rotate/screen.png)
 
-### 0xE01000[o] - Play VGM
+### 0xE010xx[o] - Background Music (BGM)
 
-Plays the VGM loaded at the index corresponding to the output value.
+- Set the VGM index value to 0xE01000 to play the background music (BGM).
+- Set 0 to 0xE01004 to pause BGM playback.
+- Set 1 to 0xE01004 to resume BGM playback.
+- Set 2 to 0xE01004 to fadeout the BGM.
+- Set BGM Master Volume to 0xE01008: 0=0%, 256=100% (default: 256)
+- Get BGM Master Volume from 0xE01008
 
 VGS-X can play VGM data compatible with the following chips (OPN, OPM and SSG) as BGM:
 
@@ -740,7 +753,12 @@ Notes:
 
 We recommend using [Furnace Tracker](https://github.com/tildearrow/furnace) to create VGM data compatible with these FM sound chips.
 
-### 0xE01100[o] - Play SFX
+### 0xE011xx[o] - Sound Effect (SFX)
+
+- Set the .wav index value to 0xE01100 to play the sound effect (SFX).
+- Set the .wav index value to 0xE01104 to stop the SFX.
+- Set SFX Master Volume to 0xE01108: 0=0%, 256=100% (default: 256)
+- Get SFX Master Volume from 0xE01108
 
 Plays the SFX loaded at the index corresponding to the output value.
 
@@ -960,11 +978,15 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | cg:bg | `vgs_cls_bg_all` | [Clear](#0xd20038-0xd20048-clear-screen) all BGs |
 | cg:bg | `vgs_cls_bg` | [Clear](#0xd20038-0xd20048-clear-screen) a specific BG |
 | cg:bmp | `vgs_draw_mode` | [BG Mode](#0xd20028-0xd20034-bitmap-mode) Switching: Bitmap or Character Pattern |
+| cg:bmp | `vgs_draw_window` | Set a [window](#0xd2004c-0xd20068-bitmap-graphic-draw) to display only a specific rectangular area in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode). |
 | cg:bmp | `vgs_read_pixel` | Read a [pixel](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode)|
 | cg:bmp | `vgs_draw_pixel` | Draw a [pixel](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
 | cg:bmp | `vgs_draw_line` | Draw a [line](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
+| cg:bmp | `vgs_draw_lineH` | Draw a horizontal [line](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
+| cg:bmp | `vgs_draw_lineV` | Draw a vertical [line](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
 | cg:bmp | `vgs_draw_box` | Draw a [rectangle](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
 | cg:bmp | `vgs_draw_boxf` | Draw a [filled-rectangle](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
+| cg:bmp | `vgs_draw_clear` | [Clear](#0xd2004c-0xd20068-bitmap-graphic-draw) a specific rectangular area to zero. |
 | cg:bmp | `vgs_draw_character` | Draw a [character-pattern](#character-pattern) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode) |
 | cg:bg+bmp | `vgs_skip_bg` | [Skip Rendering a Specific BG](#0xd2006c-0xd20078-skip-rendering-a-specific-bg) |
 | cg:bg+bmp | `vgs_scroll` | [Scroll](#0xd20008-0xd20024-hardware-scroll) BG |
@@ -980,8 +1002,17 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | bmpfont | `vgs_pfont_print` | Drawing strings using [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) |
 | bmpfont | `vgs_pfont_strlen` | Width of a string displayed in a [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) (in pixels). |
 | bmpfont | `vgs_k8x12_print` | Drawing strings using [k8x12 Japanese Font](#0xd2004c-0xd20068-bitmap-graphic-draw). |
-| bgm | `vgs_bgm_play` | Play [background music](#0xe01000o---play-vgm) |
-| sfx | `vgs_sfx_play` | Play [sound effect](#0xe01100o---play-sfx) |
+| bgm | `vgs_bgm_master_volume` | Set master volume of [background music](#0xe010xxo---background-music-bgm) |
+| bgm | `vgs_bgm_master_volume_get` | Get master volume of [background music](#0xe010xxo---background-music-bgm) |
+| bgm | `vgs_bgm_play` | Play [background music](#0xe010xxo---background-music-bgm) |
+| bgm | `vgs_bgm_pause` | Pause [background music](#0xe010xxo---background-music-bgm) |
+| bgm | `vgs_bgm_resume` | Resume [background music](#0xe010xxo---background-music-bgm) |
+| bgm | `vgs_bgm_fadeout` | Fadeout [background music](#0xe010xxo---background-music-bgm) |
+| sfx | `vgs_sfx_master_volume` | Set master volume of [sound effect](#0xe011xxo---sound-effect-sfx) |
+| sfx | `vgs_sfx_master_volume_get` | Get master volume of [sound effect](#0xe011xxo---sound-effect-sfx) |
+| sfx | `vgs_sfx_play` | Play [sound effect](#0xe011xxo---sound-effect-sfx) |
+| sfx | `vgs_sfx_stop` | Stop [sound effect](#0xe011xxo---sound-effect-sfx) |
+| sfx | `vgs_sfx_stop_all` | Stop the all of [sound effects](#0xe011xxo---sound-effect-sfx) |
 | gamepad | `vgs_key_up` | Check if the up directional pad is pressed. |
 | gamepad | `vgs_key_down` | Check if the down directional pad is pressed. |
 | gamepad | `vgs_key_left` | Check if the left directional pad is pressed. |
@@ -1099,7 +1130,8 @@ This is a VGS-X emulator built using SDL2.
 It is primarily provided for debugging purposes during game development.
 
 ```
-usage: vgsx [-g /path/to/pattern.chr]
+usage: vgsx [-i]
+            [-g /path/to/pattern.chr]
             [-c /path/to/palette.bin]
             [-b /path/to/bgm.vgm]
             [-s /path/to/sfx.wav]
@@ -1107,6 +1139,7 @@ usage: vgsx [-g /path/to/pattern.chr]
             { /path/to/program.elf | /path/to/program.rom }
 ```
 
+- Specifying the `-i` option causes the application to launch after the boot logo appears. In this case, the file must be in the ROM format created by [`makerom`](#makerom) command.
 - The `-g`, `-b`, and `-s` options can be specified multiple times.
 - Program file (`.elf`) or ROM file (`rom`) are automatically identified based on the header information in the file header.
 - The `-x` option is intended for use in testing environments such as CI. If the exit code specified by the user program matches the expected value, the process exits with 0; otherwise, it exits with -1. When this option is specified, SDL video and audio output is skipped.
