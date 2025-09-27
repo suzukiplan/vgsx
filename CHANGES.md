@@ -2,6 +2,7 @@
 
 ## Version 0.16.0
 
+- Fixed a bug where the ELF32 NOBITS section header was expanded incorrectly, causing a buffer overflow.
 - Update Boot Bios
 
 ## Version 0.15.0
