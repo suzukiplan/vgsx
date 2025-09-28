@@ -189,7 +189,10 @@ static inline void vgs_skip_bg(uint8_t n, BOOL skip)
  * @param y Y-coordinate of nametable (0 to 255)
  * @param attr Attribute
  */
-void vgs_put_bg(uint8_t n, uint8_t x, uint8_t y, uint32_t attr);
+static inline void vgs_put_bg(uint8_t n, uint8_t x, uint8_t y, uint32_t attr)
+{
+    BG0[((n & 3) << 16) | (((int)y) << 8) | x] = attr;
+}
 
 /**
  * @brief Display string on the BG in Character Pattern Mode

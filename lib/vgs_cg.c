@@ -40,14 +40,6 @@ void vgs_draw_window(uint8_t n, int32_t x, int32_t y, int32_t width, int32_t hei
     VGS_VREG_G_EXE = VGS_DRAW_WINDOW;
 }
 
-void vgs_put_bg(uint8_t n, uint8_t x, uint8_t y, uint32_t data)
-{
-    uint16_t ptr = y;
-    ptr <<= 8;
-    ptr |= x;
-    _bg[n & 3][ptr] = data;
-}
-
 void vgs_print_bg(uint8_t n, uint8_t x, uint8_t y, uint8_t pal, const char* text)
 {
     uint32_t attr;
