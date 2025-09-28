@@ -84,8 +84,7 @@ void ram_check()
 
 void pixel_move()
 {
-    static int counter = 0;
-    counter++;
+    static int alpha = 0;
     vgs_cls_bg(2, 0);
     for (int i = 0; i < _pnum; i++) {
         if (_pixel[i].exist) {
@@ -104,19 +103,12 @@ void pixel_move()
                 _pixel[i].y += vy;
                 _pixel[i].col -= 0x030303;
                 _pixel[i].speed--;
-                if (32 == counter) {
-                    _pixel[i].degree += 180;
-                    _pixel[_pnum].speed = _pixel[_pnum].speedi;
-                } else if (64 == counter) {
-                    vgs_oam(0)->visible = ON;
-                    vgs_oam(0)->alpha = 0x404040;
-                } else if (72 == counter) {
-                    vgs_oam(1)->visible = ON;
-                    vgs_oam(1)->alpha = 0x202020;
-                }
             }
         }
     }
+    alpha += 0x000001;
+    vgs_oam(0)->visible = ON;
+    vgs_oam(0)->alpha = alpha;
 }
 
 int main(int argc, char* argv[])
@@ -253,7 +245,6 @@ int main(int argc, char* argv[])
         vgs_draw_lineH(3, 0, i + 1, vgs_draw_width(), 1);
         vgs_draw_lineH(3, 0, vgs_draw_height() - i + 1, vgs_draw_width(), 1);
         pixel_move();
-        // vgs_scroll_y(1, -1);
         vgs_vsync();
     }
 
