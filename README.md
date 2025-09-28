@@ -448,6 +448,8 @@ _For example, combining the [Scale](#scale-of-sprite), [Alpha Blend](#alpha-blen
 |0xD20084 | R33 | PF_DX | [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) diff-X |
 |0xD20088 | R34 | PF_DY | [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) diff-Y |
 |0xD2008C | R35 | PF_WIDTH | [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) width |
+|0xD20090 | R36 | CP_FR | [Copy Character Pattern (From)](#0xd20090-0xd20094-copy-character-pattern) |
+|0xD20094 | R37 | CP_TO | [Copy Character Pattern (To)](#0xd20090-0xd20094-copy-character-pattern) |
 
 Please note that access to the VDP register must always be 4-byte aligned.
 
@@ -549,6 +551,16 @@ For example, we envision using this by skipping the rendering of specific backgr
 See the example of usage: [./example/05_pro-font/program.c](./example/05_pro-font/program.c)
 
 ![usage](./example/05_pro-font/screen.png)
+
+### 0xD20090-0xD20094: Copy Character Pattern
+
+Copy the character pattern.
+
+After setting the source index to `0xD20090 (CP_FR)`, it is executed by setting the destination index to `0xD20094 (CP_TO)`.
+
+For example, it is intended for use in animations such as the ocean on a map.
+
+> _Please note that the copied state will be maintained even after resetting the VDP._
 
 ## I/O Map
 
@@ -969,6 +981,7 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | Category | Function | Description |
 |:------|:---------|:------------|
 | system | `vgs_vsync` | Synchronize the [V-SYNC](#0xe00000in---v-sync) (screen output with 60fps) |
+| cg | `vgs_copy_ptn` | [Copy Character Pattern](#0xd20090-0xd20094-copy-character-pattern). |
 | cg:bg | `vgs_bg_width` | Get the [Name Table](#name-table) width in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode). |
 | cg:bg | `vgs_bg_height` | Get the [Name Table](#name-table) height in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode). |
 | cg:bg | `vgs_chr_width` | Get the Visible [Name Table](#name-table) width in Character Pattern Mode.|
@@ -1268,6 +1281,48 @@ usage: vgmplay /path/to/bgm.vgm
 ```
 
 > This command is not built by default, so please build it as needed before use.
+
+# Runtime Implementation Guide
+
+## 1. Setup Your C++ Project
+
+1. Add the [core source code (./src)](./src/) to your C++ project. (For specific examples of the required core source code, refer to [./tools/sdl2/Makefile](./tools/sdl2/Makefile).)
+2. `#include "vgsx.h"`
+3. You can run the VGS-X emulator via the singleton instance `vgsx` of `VGSX` class.
+
+## 2. Load a game ROM
+
+First, call the `VGSX::enableBootBios` method or the `VGSX::disableBootBios` method to configure whether to boot the BIOS. Then, use the `VGSX::loadRom` method to load your ROM file created with the [`makerom`](#makerom) command.
+
+```c++
+vgsx.enableBootBios();
+vgsx.loadRom(romData, romSize);
+```
+
+Note that the romData area **must not be freed** while VGS-X is running.
+
+> Booting the BIOS is optional, but it is recommended that you boot it whenever possible.
+
+
+## 3. Main Loop Sequence
+
+While the result of the `VGSX::isExit` method is `false` (while the user program has not terminated), the game runs by repeatedly executing the following processing.
+
+1. Set `vgsx.key.{up|down|left|right|a|b|x|y|start}` to 1 if the [gamepad](#0xe020xxi---gamepad)'s button is pressed, 0 if not pressed.
+2. Execute one frame (60fps) of the MC68030 using the `VGSX::tick` method.
+3. The `VGSX::getDisplay` method retrieves the pixel data to be displayed and executes screen rendering.
+4. The `VGSX::tickSound` method executes the sound processor for one frame (60fps).
+
+## 4. VGSX::tick
+
+- `VGSX::tick` continuously advances the MC68030 by 4Hz intervals until the user program either inputs [V-SYNC](#0xe00000in---v-sync) or exits.
+- The execution interval of `VGSX::tick` must be 60 times per second.
+- When executing the `VGSX::tick` method and the `VGSX::tickSound` method in parallel on different threads, you must implement that exclusion control.
+
+## 5. VGS::tickSound
+
+- Typical OS sound APIs perform fixed-size buffering in a separate thread via callbacks, so the `VGSX::tickSound` method assumes it will be called within that callback.
+- The `VGSX::tickSound` method must be executed at intervals corresponding to the buffer size of the PCM (44100Hz, 16bits, 2ch) specified as an argument.
 
 # License
 

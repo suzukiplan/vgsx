@@ -1,4 +1,18 @@
 #include <vgs.h>
+#include <log.h>
+#define RAM_CHECK
+
+struct Pixel {
+    BOOL exist;
+    int32_t x;
+    int32_t y;
+    int32_t degree;
+    int32_t speed;
+    int32_t speedi;
+    uint32_t col;
+    int rate;
+} _pixel[8192];
+int _pnum = 0;
 
 void put_pfont_n(uint8_t n, int32_t x, int32_t y, uint8_t pal, uint16_t ptn, const char* text, int len)
 {
@@ -22,8 +36,10 @@ void put_pfont_n(uint8_t n, int32_t x, int32_t y, uint8_t pal, uint16_t ptn, con
 
 void ram_check()
 {
+#ifdef RAM_CHECK
     static uint32_t checked = 0;
     if (0 == checked) {
+        vgs_putlog("RAM Check Start.");
         vgs_k8x12_print(1, 4, 0, 0xFFFFFF, "RAM CHECK: ");
     }
     if (checked < 1024) {
@@ -63,6 +79,44 @@ void ram_check()
         vgs_draw_clear(1, lx, 188, vgs_draw_width() - lx, 12);
         vgs_pfont_print(1, lx + (n - 220) * 3, 188, 0, 0, loading[(n & 0b11000) >> 3]);
     }
+#endif
+}
+
+void pixel_move()
+{
+    static int counter = 0;
+    counter++;
+    vgs_cls_bg(2, 0);
+    for (int i = 0; i < _pnum; i++) {
+        if (_pixel[i].exist) {
+            int x = _pixel[i].x >> 8;
+            int y = _pixel[i].y >> 8;
+            _pixel[i].exist = 0 < x && x < vgs_draw_width() && 0 < y && y < vgs_draw_height() && 0x020202 < _pixel[i].col;
+            if (_pixel[i].exist) {
+                vgs_draw_pixel(2, x, y, _pixel[i].col);
+                int32_t vx = vgs_cos(_pixel[i].degree);
+                int32_t vy = vgs_sin(_pixel[i].degree);
+                vx *= _pixel[i].speed;
+                vx /= 100;
+                vy *= _pixel[i].speed;
+                vy /= 100;
+                _pixel[i].x += vx;
+                _pixel[i].y += vy;
+                _pixel[i].col -= 0x030303;
+                _pixel[i].speed--;
+                if (32 == counter) {
+                    _pixel[i].degree += 180;
+                    _pixel[_pnum].speed = _pixel[_pnum].speedi;
+                } else if (64 == counter) {
+                    vgs_oam(0)->visible = ON;
+                    vgs_oam(0)->alpha = 0x404040;
+                } else if (72 == counter) {
+                    vgs_oam(1)->visible = ON;
+                    vgs_oam(1)->alpha = 0x202020;
+                }
+            }
+        }
+    }
 }
 
 int main(int argc, char* argv[])
@@ -81,8 +135,8 @@ int main(int argc, char* argv[])
     int logo_rotate = 18;
     int logo_rotate_speed = 1;
 
-    vgs_bgm_play(0);
     int i = 0;
+    vgs_putlog("Boot ph.1");
     while (logo_scale < 150) {
         ram_check();
         if (i < 100) {
@@ -101,6 +155,7 @@ int main(int argc, char* argv[])
         vgs_vsync();
     }
 
+    vgs_putlog("Boot ph.2");
     while (100 != logo_scale || logo_rotate % 360) {
         ram_check();
         if (i < 80) {
@@ -135,7 +190,37 @@ int main(int argc, char* argv[])
     int alpha = 0x010101;
     vgs_oam(0)->alpha = alpha;
     vgs_oam(0)->mask = 0xFFFFFF;
-    while (len < 220) {
+    for (int i = 0; i < 168 / 8; i++) {
+        for (int j = 0; j < 168 / 8; j++) {
+            vgs_draw_character(2, (vgs_draw_width() - 168) / 2 + j * 8, (vgs_draw_height() - 168) / 2 + i * 8, OFF, 1, 128 + j + i * 21);
+        }
+    }
+    vgs_putlog("Boot ph.3");
+    for (int i = 0; i < 168; i++) {
+        int y = (vgs_draw_height() - 168) / 2 + i;
+        for (int j = 0; j < 168; j += 2) {
+            int x = (vgs_draw_width() - 168) / 2 + j;
+            if (vgs_read_pixel(2, x, y) && _pnum < 8192) {
+                _pixel[_pnum].exist = ON;
+                _pixel[_pnum].x = x << 8;
+                _pixel[_pnum].y = y << 8;
+                _pixel[_pnum].degree = vgs_rand() % 360;
+                _pixel[_pnum].speed = (vgs_rand() & 0x7F) + 50;
+                _pixel[_pnum].speedi = _pixel[_pnum].speed;
+                _pixel[_pnum].col = 0xFFFFFF;
+                _pixel[_pnum].rate = vgs_rand() % 8 + 92;
+                _pnum++;
+            }
+        }
+        if (0xF == (i & 0xF)) {
+            ram_check();
+            vgs_vsync();
+        }
+    }
+    vgs_cls_bg(2, 0);
+
+    vgs_putlog("Boot ph.4");
+    while (len < 250) {
         ram_check();
         len++;
         put_pfont_n(1, t0x, 50, 1, 0, t0, len);
@@ -143,25 +228,38 @@ int main(int argc, char* argv[])
         put_pfont_n(1, ptx, 158, 1, 0, pt, len);
         put_pfont_n(1, vtx, 168, 1, 0, vt, len - vgs_strlen(pt));
         vgs_vsync();
-        if (len < 80) {
-            alpha += 0x020202;
+        if (len < 60) {
+            alpha += 0x030303;
             vgs_oam(0)->alpha = alpha;
-        } else if (len < 155) {
-            alpha -= 0x020202;
+        } else if (len < 115) {
+            alpha -= 0x030303;
             vgs_oam(0)->alpha = alpha;
+        } else if (len < 140) {
+            ;
+        } else if (len < 190) {
+            alpha += 0x040404;
+            vgs_oam(0)->alpha = alpha;
+        } else {
+            vgs_oam(0)->visible = OFF;
+            vgs_oam(1)->visible = OFF;
+            pixel_move();
         }
     }
 
+    vgs_putlog("Boot ph.5");
     for (int i = 0; i < 100; i += 2) {
         vgs_draw_lineH(3, 0, vgs_draw_height() / 2 - i, vgs_draw_width(), 1);
         vgs_draw_lineH(3, 0, vgs_draw_height() / 2 + i, vgs_draw_width(), 1);
         vgs_draw_lineH(3, 0, i + 1, vgs_draw_width(), 1);
         vgs_draw_lineH(3, 0, vgs_draw_height() - i + 1, vgs_draw_width(), 1);
+        pixel_move();
+        // vgs_scroll_y(1, -1);
         vgs_vsync();
     }
 
     vgs_cls_bg_all(1);
     vgs_sprite_hide_all();
     vgs_vsync_n(30);
+    vgs_putlog("Boot finished");
     return 0;
 }

@@ -36,7 +36,7 @@ VGSX vgsx;
 
 extern "C" {
 extern const unsigned short vgs0_rand16[65536];
-extern const uint8_t bios[38688];
+extern const uint8_t bios[38984];
 };
 
 typedef struct {
@@ -79,6 +79,40 @@ typedef struct {
     uint32_t sh_addralign;
     uint32_t sh_entsize;
 } Elf32_Shdr;
+
+static std::string elf32_program_type(uint32_t type)
+{
+    switch (type) {
+        case 0: return "NULL";
+        case 1: return "LOAD";
+        case 2: return "DYNAMIC";
+        case 3: return "INTERP";
+        case 4: return "NOTE";
+        case 5: return "SHLIB";
+        case 6: return "PHDR";
+        case 7: return "TLS";
+        default: return std::to_string(type);
+    }
+}
+
+static std::string elf32_section_type(uint32_t type)
+{
+    switch (type) {
+        case 0: return "NULL";
+        case 1: return "PROGBITS";
+        case 2: return "SYMTAB";
+        case 3: return "STRTAB";
+        case 4: return "RELA";
+        case 5: return "HASH";
+        case 6: return "DYNAMIC";
+        case 7: return "NOTE";
+        case 8: return "NOBITS";
+        case 9: return "REL";
+        case 10: return "SHLIB";
+        case 11: return "DYNSYM";
+        default: return std::to_string(type);
+    }
+}
 
 static std::string getButtonIdString(VGSX::ButtonId buttonId)
 {
@@ -310,7 +344,7 @@ bool VGSX::loadRom(const void* data, size_t size)
     if (this->bootBios) {
         this->pendingRomData.data = (const uint8_t*)data;
         this->pendingRomData.size = (int)size;
-        return true;
+        return this->extractRom(bios, (int)sizeof(bios));
     } else {
         return this->extractRom((const uint8_t*)data, (int)size);
     }
@@ -421,13 +455,13 @@ bool VGSX::loadProgram(const void* data, size_t size)
 
     // Check EXEC
     if (header.e_type != 2) {
-        this->setLastError("Unsupported execution mode.");
+        this->setLastError("Unsupported execution mode (%d)", (int)header.e_type);
         return false;
     }
 
     // Check MC68000
     if (header.e_machine != 0x0004) {
-        this->setLastError("Unsupported machine model.");
+        this->setLastError("Unsupported machine model (%d)", (int)header.e_machine);
         return false;
     }
 
@@ -601,8 +635,8 @@ void VGSX::reset(void)
         ph.p_memsz = b2h32(ph.p_memsz);
         ph.p_flags = b2h32(ph.p_flags);
         ph.p_align = b2h32(ph.p_align);
-        putlog(LogLevel::I, ".program:%X offset=%d, va=0x%06X, pa=0x%06X, fs=%d, ms=%d, flg=%d",
-               ph.p_type,
+        putlog(LogLevel::I, ".program:%s offset=%d, va=0x%06X, pa=0x%06X, fs=%d, ms=%d, flg=%d",
+               elf32_program_type(ph.p_type).c_str(),
                ph.p_offset,
                ph.p_vaddr,
                ph.p_paddr,
@@ -631,19 +665,25 @@ void VGSX::reset(void)
         sh.sh_size = b2h32(sh.sh_size);
         sh.sh_link = b2h32(sh.sh_link);
         sh.sh_info = b2h32(sh.sh_info);
-        if (0xF00000 <= sh.sh_addr) {
-            memcpy(&this->ctx.ram[sh.sh_addr & 0xFFFFF],
-                   &this->ctx.elf[sh.sh_offset],
-                   sh.sh_size);
-        }
-        putlog(LogLevel::I, ".section:%X flags=%d, addr=0x%06X, offset=0x%06X, size=%d, link=%d, info=%d",
-               sh.sh_type,
+        putlog(LogLevel::I, ".section:%s flags=%d, addr=0x%06X, offset=0x%06X, size=%d, link=%d, info=%d",
+               elf32_section_type(sh.sh_type).c_str(),
                sh.sh_flags,
                sh.sh_addr,
                sh.sh_offset,
                sh.sh_size,
                sh.sh_link,
                sh.sh_info);
+        if (0xF00000 <= sh.sh_addr) {
+            if (sh.sh_type == 8) {
+                memset(&this->ctx.ram[sh.sh_addr & 0xFFFFF], 0, sh.sh_size);
+                putlog(LogLevel::I, "- RAM Cleared: 0x%X to 0x%X", sh.sh_addr, (sh.sh_addr) + sh.sh_size - 1);
+            } else {
+                memcpy(&this->ctx.ram[sh.sh_addr & 0xFFFFF],
+                       &this->ctx.elf[sh.sh_offset],
+                       sh.sh_size);
+                putlog(LogLevel::I, "- RAM Copied: 0x%X from ELF:0x%X (%u bytes)", sh.sh_addr, sh.sh_offset, sh.sh_size);
+            }
+        }
     }
 }
 
@@ -654,7 +694,6 @@ void VGSX::tick(void)
 
     if (this->bootBios) {
         this->bootBios = false;
-        this->extractRom(bios, (int)sizeof(bios));
         this->ignoreReset = true;
     }
 
