@@ -6,8 +6,9 @@ struct Pixel {
     BOOL exist;
     int32_t x;
     int32_t y;
-    int32_t vx;
-    int32_t vy;
+    int32_t degree;
+    int32_t speed;
+    int32_t speedi;
     uint32_t col;
     int rate;
 } _pixel[8192];
@@ -83,6 +84,8 @@ void ram_check()
 
 void pixel_move()
 {
+    static int counter = 0;
+    counter++;
     vgs_cls_bg(2, 0);
     for (int i = 0; i < _pnum; i++) {
         if (_pixel[i].exist) {
@@ -91,13 +94,26 @@ void pixel_move()
             _pixel[i].exist = 0 < x && x < vgs_draw_width() && 0 < y && y < vgs_draw_height() && 0x020202 < _pixel[i].col;
             if (_pixel[i].exist) {
                 vgs_draw_pixel(2, x, y, _pixel[i].col);
-                _pixel[i].x += _pixel[i].vx;
-                _pixel[i].y += _pixel[i].vy;
-                _pixel[i].vx *= _pixel[i].rate;
-                _pixel[i].vx /= 100;
-                _pixel[i].vy *= _pixel[i].rate;
-                _pixel[i].vy /= 100;
+                int32_t vx = vgs_cos(_pixel[i].degree);
+                int32_t vy = vgs_sin(_pixel[i].degree);
+                vx *= _pixel[i].speed;
+                vx /= 100;
+                vy *= _pixel[i].speed;
+                vy /= 100;
+                _pixel[i].x += vx;
+                _pixel[i].y += vy;
                 _pixel[i].col -= 0x030303;
+                _pixel[i].speed--;
+                if (32 == counter) {
+                    _pixel[i].degree += 180;
+                    _pixel[_pnum].speed = _pixel[_pnum].speedi;
+                } else if (64 == counter) {
+                    vgs_oam(0)->visible = ON;
+                    vgs_oam(0)->alpha = 0x404040;
+                } else if (72 == counter) {
+                    vgs_oam(1)->visible = ON;
+                    vgs_oam(1)->alpha = 0x202020;
+                }
             }
         }
     }
@@ -188,9 +204,9 @@ int main(int argc, char* argv[])
                 _pixel[_pnum].exist = ON;
                 _pixel[_pnum].x = x << 8;
                 _pixel[_pnum].y = y << 8;
-                int k = vgs_rand() % 360;
-                _pixel[_pnum].vx = vgs_cos(k) * 4;
-                _pixel[_pnum].vy = vgs_sin(k) * 4;
+                _pixel[_pnum].degree = vgs_rand() % 360;
+                _pixel[_pnum].speed = (vgs_rand() & 0x7F) + 50;
+                _pixel[_pnum].speedi = _pixel[_pnum].speed;
                 _pixel[_pnum].col = 0xFFFFFF;
                 _pixel[_pnum].rate = vgs_rand() % 8 + 92;
                 _pnum++;
