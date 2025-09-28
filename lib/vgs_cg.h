@@ -166,7 +166,7 @@ static inline int vgs_chr_height()
  * @param to Destination charaqcter pattern index
  * @param from Source charaqcter pattern index
  */
-static inline void vgs_copy_ptn(uint16_t to, uint16_t from)
+static inline void vgs_ptn_copy(uint16_t to, uint16_t from)
 {
     VGS_VREG_CP_FR = from;
     VGS_VREG_CP_TO = to;

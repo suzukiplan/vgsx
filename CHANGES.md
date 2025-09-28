@@ -3,6 +3,7 @@
 ## Version 0.17.0
 
 - Core: Update Boot Bios
+- CRT: Renamed a function: `vgs_copy_ptn` -> `vgs_ptn_copy` **(Disruptive)**
 
 ## Version 0.16.0
 
