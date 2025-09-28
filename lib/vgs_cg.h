@@ -107,6 +107,8 @@ typedef struct {
 #define VGS_VREG_PF_DX *((volatile int32_t*)0xD20084)
 #define VGS_VREG_PF_DY *((volatile int32_t*)0xD20088)
 #define VGS_VREG_PF_WIDTH *((volatile int32_t*)0xD2008C)
+#define VGS_VREG_CP_FR *((volatile int32_t*)0xD20090)
+#define VGS_VREG_CP_TO *((volatile int32_t*)0xD20094)
 
 // Graphic Draw Function Identifer
 #define VGS_DRAW_PIXEL 0
@@ -157,6 +159,17 @@ static inline int vgs_chr_width()
 static inline int vgs_chr_height()
 {
     return VRAM_HEIGHT >> 3;
+}
+
+/**
+ * @brief Copy Character Pattern.
+ * @param to Destination charaqcter pattern index
+ * @param from Source charaqcter pattern index
+ */
+static inline void vgs_copy_ptn(uint16_t to, uint16_t from)
+{
+    VGS_VREG_CP_FR = from;
+    VGS_VREG_CP_TO = to;
 }
 
 /**

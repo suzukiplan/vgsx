@@ -86,7 +86,9 @@ class VDP
         uint32_t pf_dx;               // R33: Profotinaol Font - diff X
         uint32_t pf_dy;               // R34: Profotinaol Font - diff Y
         uint32_t pf_width;            // R35: Profotinaol Font - width
-        uint32_t reserved[220];       // Reserved
+        uint32_t cp_fr;               // R36: Copy Character Pattern (From)
+        uint32_t cp_to;               // R37: Copy Character Pattern (To)
+        uint32_t reserved[218];       // Reserved
     } Register;
 
     typedef struct {
@@ -216,6 +218,7 @@ class VDP
                         case 33: this->ctx.pinfo[this->ctx.reg.pf_ptn & 0x7F].dx = value; break;
                         case 34: this->ctx.pinfo[this->ctx.reg.pf_ptn & 0x7F].dy = value; break;
                         case 35: this->ctx.pinfo[this->ctx.reg.pf_ptn & 0x7F].width = value; break;
+                        case 37: this->copyCharacterPattern(); break;
                     }
                     return;
                 }
@@ -242,6 +245,16 @@ class VDP
     }
 
   private:
+    void copyCharacterPattern()
+    {
+        this->ctx.reg.cp_fr &= 0xFFFF;
+        this->ctx.reg.cp_to &= 0xFFFF;
+        if (this->ctx.reg.cp_fr == this->ctx.reg.cp_to) {
+            return;
+        }
+        memcpy(this->ctx.ptn[this->ctx.reg.cp_to], this->ctx.ptn[this->ctx.reg.cp_fr], 32);
+    }
+
     void setupPropotional(uint16_t ptn_start)
     {
         if (0x10000 - 0x80 < ptn_start) {

@@ -2,8 +2,10 @@
 
 ## Version 0.16.0
 
-- Fixed a bug where the ELF32 NOBITS section header was expanded incorrectly, causing a buffer overflow.
-- Update Boot Bios
+- Core: Fixed a bug where the ELF32 NOBITS section header was expanded incorrectly, causing a buffer overflow.
+- Core: Update Boot Bios
+- Core: Added the Copy Character Pattern function.
+- CRT: Added a CG function: `vgs_copy_ptn`
 
 ## Version 0.15.0
 
