@@ -258,6 +258,6 @@ int main(int argc, char* argv[])
     vgs_sprite_hide_all();
     vgs_vsync_n(30);
     vgs_putlog("Boot finished");
-    while (ON) { vgs_vsync(); }
+    // while (ON) { vgs_vsync(); }
     return 0;
 }
