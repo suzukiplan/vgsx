@@ -49,6 +49,7 @@ void ram_check()
         if (checked < 1024) {
             vgs_strcat(buf, "KB");
         } else {
+            vgs_sfx_play(2);
             vgs_strcat(buf, "KB ... OK!");
         }
         vgs_draw_clear(1, 12 * 4, 0, 32 * 4, 12);
@@ -113,6 +114,7 @@ void pixel_move()
 
 int main(int argc, char* argv[])
 {
+    vgs_sfx_play(0);
     vgs_draw_mode(0, ON);
     vgs_draw_mode(1, ON);
     vgs_draw_mode(2, ON);
@@ -188,6 +190,7 @@ int main(int argc, char* argv[])
         }
     }
     vgs_putlog("Boot ph.3");
+    vgs_sfx_play(3);
     for (int i = 0; i < 168; i++) {
         int y = (vgs_draw_height() - 168) / 2 + i;
         for (int j = 0; j < 168; j += 2) {
@@ -232,6 +235,9 @@ int main(int argc, char* argv[])
             alpha += 0x040404;
             vgs_oam(0)->alpha = alpha;
         } else {
+            if (190 == len) {
+                vgs_sfx_play(1);
+            }
             vgs_oam(0)->visible = OFF;
             vgs_oam(1)->visible = OFF;
             pixel_move();
@@ -252,5 +258,6 @@ int main(int argc, char* argv[])
     vgs_sprite_hide_all();
     vgs_vsync_n(30);
     vgs_putlog("Boot finished");
+    while (ON) { vgs_vsync(); }
     return 0;
 }

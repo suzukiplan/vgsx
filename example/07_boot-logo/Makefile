@@ -1,4 +1,8 @@
 VGSX_ROOT = ../..
+SFX = sfx0.wav
+SFX += sfx1.wav
+SFX += sfx2.wav
+SFX += sfx3.wav
 
 all:
 	cd ${VGSX_ROOT}/tools && make
@@ -10,11 +14,12 @@ clean:
 execute: program.rom
 	${VGSX_ROOT}/tools/sdl2/vgsx program.rom
 
-program.rom: program.elf font.chr logo.chr palette.bin
+program.rom: program.elf font.chr logo.chr palette.bin ${SFX}
 	${VGSX_ROOT}/tools/makerom/makerom \
 		-c palette.bin \
 		-g font.chr \
 		-g logo.chr \
+		-s ${SFX} \
 		-e program.elf \
 		-o program.rom
 
