@@ -36,7 +36,7 @@ VGSX vgsx;
 
 extern "C" {
 extern const unsigned short vgs0_rand16[65536];
-extern const uint8_t bios[930296];
+extern const uint8_t bios[930188];
 };
 
 typedef struct {

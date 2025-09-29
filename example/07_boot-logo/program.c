@@ -8,7 +8,6 @@ struct Pixel {
     int32_t y;
     int32_t degree;
     int32_t speed;
-    int32_t speedi;
     uint32_t col;
     int rate;
 } _pixel[8192];
@@ -201,7 +200,6 @@ int main(int argc, char* argv[])
                 _pixel[_pnum].y = y << 8;
                 _pixel[_pnum].degree = vgs_rand() % 360;
                 _pixel[_pnum].speed = (vgs_rand() & 0x7F) + 50;
-                _pixel[_pnum].speedi = _pixel[_pnum].speed;
                 _pixel[_pnum].col = 0xFFFFFF;
                 _pixel[_pnum].rate = vgs_rand() % 8 + 92;
                 _pnum++;
