@@ -1311,7 +1311,7 @@ While the result of the `VGSX::isExit` method is `false` (while the user program
 1. Set `vgsx.key.{up|down|left|right|a|b|x|y|start}` to 1 if the [gamepad](#0xe020xxi---gamepad)'s button is pressed, 0 if not pressed.
 2. Execute one frame (60fps) of the MC68030 using the `VGSX::tick` method.
 3. The `VGSX::getDisplay` method retrieves the pixel data to be displayed and executes screen rendering.
-4. The `VGSX::tickSound` method executes the sound processor for one frame (60fps).
+4. The `VGSX::tickSound` method executes the sound processor for one frame (sound buffering interval).
 
 ## 4. VGSX::tick
 
