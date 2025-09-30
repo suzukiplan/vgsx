@@ -1,21 +1,25 @@
 [info] M68K_REG_PC = 0x0002AC
-[info] .program:1 offset=8192, va=0x000000, pa=0x000000, fs=11160, ms=11160, flg=5
-[info] .program:1 offset=24576, va=0xF00000, pa=0xF00000, fs=20, ms=72, flg=6
-[info] .section:0 flags=0, addr=0x000000, offset=0x000000, size=0, link=0, info=0
-[info] .section:1 flags=6, addr=0x000000, offset=0x002000, size=2168, link=0, info=0
-[info] .section:1 flags=6, addr=0x000878, offset=0x002878, size=6, link=0, info=0
-[info] .section:1 flags=6, addr=0x00087E, offset=0x00287E, size=12, link=0, info=0
-[info] .section:1 flags=6, addr=0x00088A, offset=0x00288A, size=5966, link=0, info=0
-[info] .section:1 flags=2, addr=0x001FD8, offset=0x003FD8, size=4, link=0, info=0
-[info] .section:1 flags=50, addr=0x001FDC, offset=0x003FDC, size=3004, link=0, info=0
-[info] .section:1 flags=3, addr=0xF00000, offset=0x006000, size=4, link=0, info=0
-[info] .section:1 flags=3, addr=0xF00004, offset=0x006004, size=8, link=0, info=0
-[info] .section:1 flags=3, addr=0xF0000C, offset=0x00600C, size=8, link=0, info=0
-[info] .section:8 flags=3, addr=0xF00014, offset=0x006014, size=52, link=0, info=0
-[info] .section:1 flags=48, addr=0x000000, offset=0x006014, size=18, link=0, info=0
-[info] .section:2 flags=0, addr=0x000000, offset=0x006028, size=1296, link=13, info=43
-[info] .section:3 flags=0, addr=0x000000, offset=0x006538, size=749, link=0, info=0
-[info] .section:3 flags=0, addr=0x000000, offset=0x006825, size=118, link=0, info=0
+[info] .program:LOAD offset=8192, va=0x000000, pa=0x000000, fs=11160, ms=11160, flg=5
+[info] .program:LOAD offset=24576, va=0xF00000, pa=0xF00000, fs=20, ms=72, flg=6
+[info] .section:NULL flags=0, addr=0x000000, offset=0x000000, size=0, link=0, info=0
+[info] .section:PROGBITS flags=6, addr=0x000000, offset=0x002000, size=2168, link=0, info=0
+[info] .section:PROGBITS flags=6, addr=0x000878, offset=0x002878, size=6, link=0, info=0
+[info] .section:PROGBITS flags=6, addr=0x00087E, offset=0x00287E, size=12, link=0, info=0
+[info] .section:PROGBITS flags=6, addr=0x00088A, offset=0x00288A, size=5966, link=0, info=0
+[info] .section:PROGBITS flags=2, addr=0x001FD8, offset=0x003FD8, size=4, link=0, info=0
+[info] .section:PROGBITS flags=50, addr=0x001FDC, offset=0x003FDC, size=3004, link=0, info=0
+[info] .section:PROGBITS flags=3, addr=0xF00000, offset=0x006000, size=4, link=0, info=0
+[info] - RAM Copied: 0xF00000 from ELF:0x6000 (4 bytes)
+[info] .section:PROGBITS flags=3, addr=0xF00004, offset=0x006004, size=8, link=0, info=0
+[info] - RAM Copied: 0xF00004 from ELF:0x6004 (8 bytes)
+[info] .section:PROGBITS flags=3, addr=0xF0000C, offset=0x00600C, size=8, link=0, info=0
+[info] - RAM Copied: 0xF0000C from ELF:0x600C (8 bytes)
+[info] .section:NOBITS flags=3, addr=0xF00014, offset=0x006014, size=52, link=0, info=0
+[info] - RAM Cleared: 0xF00014 to 0xF00047
+[info] .section:PROGBITS flags=48, addr=0x000000, offset=0x006014, size=18, link=0, info=0
+[info] .section:SYMTAB flags=0, addr=0x000000, offset=0x006028, size=1296, link=13, info=43
+[info] .section:STRTAB flags=0, addr=0x000000, offset=0x006538, size=749, link=0, info=0
+[info] .section:STRTAB flags=0, addr=0x000000, offset=0x006825, size=118, link=0, info=0
 Load succeed.
 Start main loop.
 length of "This is test string." = 20
@@ -436,10 +440,9 @@ Update the peak CPU clock rate: 337664Hz per frame.
 
 [RAM DUMP]
 F00000 00 00 00 00 FF FF FF FF - 00 00 00 00 FF FF FF FF  ................
-F00010 00 00 00 00 47 43 43 3A - 20 28 47 4E 55 29 20 31  ....GCC: (GNU) 1
-F00020 35 2E 32 2E 30 00 00 00 - 00 00 00 00 00 00 00 00  5.2.0...........
+F00010 00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00  ................
 F00030 00 00 00 00 00 00 00 00 - 00 00 00 00 53 50 41 43  ............SPAC
-F00040 45 00 00 00 03 00 00 01 - FF FF FF FF FF FF FF FF  E...............
+F00040 45 00 00 00 00 00 00 00 - FF FF FF FF FF FF FF FF  E...............
 F00050 FF FF FF FF FF FF FF FF - FF FF FF FF FF FF FF FF  ................
 FFFF30 FF FF FF FF 00 00 07 14 - 00 00 00 00 00 00 07 14  ................
 FFFF40 00 00 02 36 FF FF FF 58 - 00 F0 00 3C 00 F0 00 3C  ...6...X...<...<
@@ -485,6 +488,6 @@ Size: 300 bytes
 
 Average MC68030 Clocks: 5.6MHz per second.
 Maximum MC68030 Clocks: 5.6MHz per second.
-RAM usage: 272/1048576 (0%)
+RAM usage: 256/1048576 (0%)
 Detect exit: code=59
 Excpected!

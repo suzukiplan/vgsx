@@ -8,7 +8,6 @@ struct Pixel {
     int32_t y;
     int32_t degree;
     int32_t speed;
-    int32_t speedi;
     uint32_t col;
     int rate;
 } _pixel[8192];
@@ -49,6 +48,7 @@ void ram_check()
         if (checked < 1024) {
             vgs_strcat(buf, "KB");
         } else {
+            vgs_sfx_play(2);
             vgs_strcat(buf, "KB ... OK!");
         }
         vgs_draw_clear(1, 12 * 4, 0, 32 * 4, 12);
@@ -84,8 +84,7 @@ void ram_check()
 
 void pixel_move()
 {
-    static int counter = 0;
-    counter++;
+    static int alpha = 0;
     vgs_cls_bg(2, 0);
     for (int i = 0; i < _pnum; i++) {
         if (_pixel[i].exist) {
@@ -104,23 +103,17 @@ void pixel_move()
                 _pixel[i].y += vy;
                 _pixel[i].col -= 0x030303;
                 _pixel[i].speed--;
-                if (32 == counter) {
-                    _pixel[i].degree += 180;
-                    _pixel[_pnum].speed = _pixel[_pnum].speedi;
-                } else if (64 == counter) {
-                    vgs_oam(0)->visible = ON;
-                    vgs_oam(0)->alpha = 0x404040;
-                } else if (72 == counter) {
-                    vgs_oam(1)->visible = ON;
-                    vgs_oam(1)->alpha = 0x202020;
-                }
             }
         }
     }
+    alpha += 0x000001;
+    vgs_oam(0)->visible = ON;
+    vgs_oam(0)->alpha = alpha;
 }
 
 int main(int argc, char* argv[])
 {
+    vgs_sfx_play(0);
     vgs_draw_mode(0, ON);
     vgs_draw_mode(1, ON);
     vgs_draw_mode(2, ON);
@@ -196,6 +189,7 @@ int main(int argc, char* argv[])
         }
     }
     vgs_putlog("Boot ph.3");
+    vgs_sfx_play(3);
     for (int i = 0; i < 168; i++) {
         int y = (vgs_draw_height() - 168) / 2 + i;
         for (int j = 0; j < 168; j += 2) {
@@ -206,7 +200,6 @@ int main(int argc, char* argv[])
                 _pixel[_pnum].y = y << 8;
                 _pixel[_pnum].degree = vgs_rand() % 360;
                 _pixel[_pnum].speed = (vgs_rand() & 0x7F) + 50;
-                _pixel[_pnum].speedi = _pixel[_pnum].speed;
                 _pixel[_pnum].col = 0xFFFFFF;
                 _pixel[_pnum].rate = vgs_rand() % 8 + 92;
                 _pnum++;
@@ -240,6 +233,9 @@ int main(int argc, char* argv[])
             alpha += 0x040404;
             vgs_oam(0)->alpha = alpha;
         } else {
+            if (190 == len) {
+                vgs_sfx_play(1);
+            }
             vgs_oam(0)->visible = OFF;
             vgs_oam(1)->visible = OFF;
             pixel_move();
@@ -253,7 +249,6 @@ int main(int argc, char* argv[])
         vgs_draw_lineH(3, 0, i + 1, vgs_draw_width(), 1);
         vgs_draw_lineH(3, 0, vgs_draw_height() - i + 1, vgs_draw_width(), 1);
         pixel_move();
-        // vgs_scroll_y(1, -1);
         vgs_vsync();
     }
 
@@ -261,5 +256,6 @@ int main(int argc, char* argv[])
     vgs_sprite_hide_all();
     vgs_vsync_n(30);
     vgs_putlog("Boot finished");
+    // while (ON) { vgs_vsync(); }
     return 0;
 }

@@ -981,7 +981,7 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | Category | Function | Description |
 |:------|:---------|:------------|
 | system | `vgs_vsync` | Synchronize the [V-SYNC](#0xe00000in---v-sync) (screen output with 60fps) |
-| cg | `vgs_copy_ptn` | [Copy Character Pattern](#0xd20090-0xd20094-copy-character-pattern). |
+| cg | `vgs_ptn_copy` | [Copy Character Pattern](#0xd20090-0xd20094-copy-character-pattern). |
 | cg:bg | `vgs_bg_width` | Get the [Name Table](#name-table) width in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode). |
 | cg:bg | `vgs_bg_height` | Get the [Name Table](#name-table) height in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode). |
 | cg:bg | `vgs_chr_width` | Get the Visible [Name Table](#name-table) width in Character Pattern Mode.|
@@ -1311,7 +1311,7 @@ While the result of the `VGSX::isExit` method is `false` (while the user program
 1. Set `vgsx.key.{up|down|left|right|a|b|x|y|start}` to 1 if the [gamepad](#0xe020xxi---gamepad)'s button is pressed, 0 if not pressed.
 2. Execute one frame (60fps) of the MC68030 using the `VGSX::tick` method.
 3. The `VGSX::getDisplay` method retrieves the pixel data to be displayed and executes screen rendering.
-4. The `VGSX::tickSound` method executes the sound processor for one frame (60fps).
+4. The `VGSX::tickSound` method executes the sound processor for one frame (sound buffering interval).
 
 ## 4. VGSX::tick
 

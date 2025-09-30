@@ -1,5 +1,13 @@
 # Changes
 
+## Version 0.17.0
+
+- Core: Update Boot Bios
+- Core: Improve rotation rendering performance
+- CRT: Eliminate the risk of platform differences occurring between `vgs_sin` and `vgs_cos`
+- CRT: Renamed a function: `vgs_copy_ptn` -> `vgs_ptn_copy` **(Disruptive)**
+- CRT: Change `vgs_put_bg` to an inline function.
+
 ## Version 0.16.0
 
 - Core: Fixed a bug where the ELF32 NOBITS section header was expanded incorrectly, causing a buffer overflow.

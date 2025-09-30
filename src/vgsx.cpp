@@ -35,8 +35,10 @@ VGSX vgsx;
 #define FADEOUT_FRAMES 100
 
 extern "C" {
+extern const int vgsx_sin[360];
+extern const int vgsx_cos[360];
 extern const unsigned short vgs0_rand16[65536];
-extern const uint8_t bios[38984];
+extern const uint8_t bios[930188];
 };
 
 typedef struct {
@@ -778,17 +780,17 @@ uint32_t VGSX::inPort(uint32_t address)
             return vgs0_rand16[this->ctx.randomIndex];
         case VGS_ADDR_DMA_EXECUTE: return this->dmaSearch();
 
-        case VGS_ADDR_ANGLE_DEGREE: // atan2
-            this->ctx.angle.radian = atan2(this->ctx.angle.y2 - this->ctx.angle.y1,
-                                           this->ctx.angle.x2 - this->ctx.angle.x1);
-            this->ctx.angle.degree = (int32_t)(this->ctx.angle.radian * 180 / M_PI);
+        case VGS_ADDR_ANGLE_DEGREE: { // atan2
+            auto rad = atan2(this->ctx.angle.y2 - this->ctx.angle.y1, this->ctx.angle.x2 - this->ctx.angle.x1);
+            this->ctx.angle.degree = (int32_t)(rad * 180 / M_PI);
             this->ctx.angle.degree %= 360;
             if (this->ctx.angle.degree < 0) {
                 this->ctx.angle.degree += 360;
             }
             return this->ctx.angle.degree;
-        case VGS_ADDR_ANGLE_SIN: return (int32_t)(sin(this->ctx.angle.radian) * 256);
-        case VGS_ADDR_ANGLE_COS: return (int32_t)(cos(this->ctx.angle.radian) * 256);
+        }
+        case VGS_ADDR_ANGLE_SIN: return vgsx_sin[this->ctx.angle.degree];
+        case VGS_ADDR_ANGLE_COS: return vgsx_cos[this->ctx.angle.degree];
 
         case VGS_ADDR_VGM_MASTER: return this->ctx.vgmMasterVolume;
         case VGS_ADDR_SFX_MASTER: return this->ctx.sfxMasterVolume;
@@ -928,7 +930,6 @@ void VGSX::outPort(uint32_t address, uint32_t value)
             if (this->ctx.angle.degree < 0) {
                 this->ctx.angle.degree += 360;
             }
-            this->ctx.angle.radian = this->ctx.angle.degree * (M_PI / 180.0);
             return;
 
         case VGS_ADDR_VGM_PLAY: // Play VGM

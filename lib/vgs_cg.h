@@ -166,7 +166,7 @@ static inline int vgs_chr_height()
  * @param to Destination charaqcter pattern index
  * @param from Source charaqcter pattern index
  */
-static inline void vgs_copy_ptn(uint16_t to, uint16_t from)
+static inline void vgs_ptn_copy(uint16_t to, uint16_t from)
 {
     VGS_VREG_CP_FR = from;
     VGS_VREG_CP_TO = to;
@@ -189,7 +189,10 @@ static inline void vgs_skip_bg(uint8_t n, BOOL skip)
  * @param y Y-coordinate of nametable (0 to 255)
  * @param attr Attribute
  */
-void vgs_put_bg(uint8_t n, uint8_t x, uint8_t y, uint32_t attr);
+static inline void vgs_put_bg(uint8_t n, uint8_t x, uint8_t y, uint32_t attr)
+{
+    BG0[((n & 3) << 16) | (((int)y) << 8) | x] = attr;
+}
 
 /**
  * @brief Display string on the BG in Character Pattern Mode

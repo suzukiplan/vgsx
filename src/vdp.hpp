@@ -33,6 +33,8 @@
 #define VDP_HEIGHT 200 /* Height of the Screen */
 
 extern "C" {
+extern const int vgsx_sin[360];
+extern const int vgsx_cos[360];
 extern const uint8_t k8x12_jisx0201[3072];   // 12x256
 extern const uint8_t k8x12_jisx0208[106032]; // 12x8836
 };
@@ -586,15 +588,14 @@ class VDP
         } else if (0 == scale || 100 == scale) {
             // Rotate & None-scale
             int halfSize = size / 2;
-            double rad = angle * M_PI / 180.0;
             for (int py = 0; py < size; py++) {
                 int wy = flipV ? size - py - 1 : py;
                 for (int px = 0; px < size; px++) {
-                    int dy = oam->y + (py - halfSize) * sin(rad) + (px - halfSize) * cos(rad) + halfSize;
+                    int dy = oam->y + ((py - halfSize) * vgsx_sin[angle] + (px - halfSize) * vgsx_cos[angle]) / 256 + halfSize;
                     if (dy < 0 || VDP_HEIGHT <= dy) {
                         continue; // Out of screen top (check next line)
                     }
-                    int dx = oam->x + (px - halfSize) * sin(rad) - (py - halfSize) * cos(rad) + halfSize;
+                    int dx = oam->x + ((px - halfSize) * vgsx_sin[angle] - (py - halfSize) * vgsx_cos[angle]) / 256 + halfSize;
                     if (dx < 0 || VDP_WIDTH <= dx) {
                         continue; // Out of screen left (check next pixel)
                     }
@@ -625,7 +626,6 @@ class VDP
             ratio /= scaledSize;
             int offset = (size - scaledSize) / 2;
             int halfSize = scaledSize / 2;
-            double rad = angle * M_PI / 180.0;
             for (int dy = oam->y + offset, by = 0; by < scaledSize; dy++, by++) {
                 int py = (int)(by * ratio);
                 int wy = flipH ? size - py - 1 : py;
@@ -633,12 +633,12 @@ class VDP
                     // this->ctx.display[dy * VDP_WIDTH + dx] = 0xFF0000;
                     int px = (int)(bx * ratio);
                     int wx = flipH ? size - px - 1 : px;
-                    int ddy = (by - halfSize) * sin(rad) + (bx - halfSize) * cos(rad) + halfSize;
+                    int ddy = ((by - halfSize) * vgsx_sin[angle] + (bx - halfSize) * vgsx_cos[angle]) / 256 + halfSize;
                     ddy += oam->y + offset;
                     if (ddy < 0 || VDP_HEIGHT <= ddy) {
                         continue; // Out of screen top (check next line)
                     }
-                    int ddx = (bx - halfSize) * sin(rad) - (by - halfSize) * cos(rad) + halfSize;
+                    int ddx = ((bx - halfSize) * vgsx_sin[angle] - (by - halfSize) * vgsx_cos[angle]) / 256 + halfSize;
                     ddx += oam->x + offset;
                     if (ddx < 0 || VDP_WIDTH <= ddx) {
                         continue; // Out of screen left (check next pixel)
