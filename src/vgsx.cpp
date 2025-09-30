@@ -35,6 +35,8 @@ VGSX vgsx;
 #define FADEOUT_FRAMES 100
 
 extern "C" {
+extern const int vgsx_sin[360];
+extern const int vgsx_cos[360];
 extern const unsigned short vgs0_rand16[65536];
 extern const uint8_t bios[930188];
 };
@@ -787,8 +789,8 @@ uint32_t VGSX::inPort(uint32_t address)
                 this->ctx.angle.degree += 360;
             }
             return this->ctx.angle.degree;
-        case VGS_ADDR_ANGLE_SIN: return (int32_t)(sin(this->ctx.angle.radian) * 256);
-        case VGS_ADDR_ANGLE_COS: return (int32_t)(cos(this->ctx.angle.radian) * 256);
+        case VGS_ADDR_ANGLE_SIN: return vgsx_sin[this->ctx.angle.degree];
+        case VGS_ADDR_ANGLE_COS: return vgsx_cos[this->ctx.angle.degree];
 
         case VGS_ADDR_VGM_MASTER: return this->ctx.vgmMasterVolume;
         case VGS_ADDR_SFX_MASTER: return this->ctx.sfxMasterVolume;
