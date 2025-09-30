@@ -82,7 +82,6 @@ class VGSX
         int32_t x2;
         int32_t y2;
         int32_t degree;
-        double radian;
     } Angle;
 
     typedef struct {

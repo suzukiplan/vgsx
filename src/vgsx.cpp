@@ -780,15 +780,15 @@ uint32_t VGSX::inPort(uint32_t address)
             return vgs0_rand16[this->ctx.randomIndex];
         case VGS_ADDR_DMA_EXECUTE: return this->dmaSearch();
 
-        case VGS_ADDR_ANGLE_DEGREE: // atan2
-            this->ctx.angle.radian = atan2(this->ctx.angle.y2 - this->ctx.angle.y1,
-                                           this->ctx.angle.x2 - this->ctx.angle.x1);
-            this->ctx.angle.degree = (int32_t)(this->ctx.angle.radian * 180 / M_PI);
+        case VGS_ADDR_ANGLE_DEGREE: { // atan2
+            auto rad = atan2(this->ctx.angle.y2 - this->ctx.angle.y1, this->ctx.angle.x2 - this->ctx.angle.x1);
+            this->ctx.angle.degree = (int32_t)(rad * 180 / M_PI);
             this->ctx.angle.degree %= 360;
             if (this->ctx.angle.degree < 0) {
                 this->ctx.angle.degree += 360;
             }
             return this->ctx.angle.degree;
+        }
         case VGS_ADDR_ANGLE_SIN: return vgsx_sin[this->ctx.angle.degree];
         case VGS_ADDR_ANGLE_COS: return vgsx_cos[this->ctx.angle.degree];
 
@@ -930,7 +930,6 @@ void VGSX::outPort(uint32_t address, uint32_t value)
             if (this->ctx.angle.degree < 0) {
                 this->ctx.angle.degree += 360;
             }
-            this->ctx.angle.radian = this->ctx.angle.degree * (M_PI / 180.0);
             return;
 
         case VGS_ADDR_VGM_PLAY: // Play VGM
