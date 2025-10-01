@@ -16,8 +16,8 @@ void center_print(int y, const char* text)
 
 int main(int argc, char* argv[])
 {
-    uint32_t bgmmv = 256;
-    uint32_t sfxmv = 256;
+    int32_t bgmmv = 256;
+    int32_t sfxmv = 0;
     vgs_bgm_master_volume(bgmmv);
     vgs_sfx_master_volume(sfxmv);
     vgs_draw_mode(0, ON);   // BG0: Bitmap Mode
@@ -171,10 +171,10 @@ int main(int argc, char* argv[])
         prevB = vgs_key_b();
         prevX = vgs_key_x();
         prevY = vgs_key_y();
-        if (vgs_key_up() && bgmmv < 256) vgs_bgm_master_volume(bgmmv++);
-        if (vgs_key_down() && 0 < bgmmv) vgs_bgm_master_volume(bgmmv--);
-        if (vgs_key_right() && sfxmv < 256) vgs_sfx_master_volume(sfxmv++);
-        if (vgs_key_left() && 0 < sfxmv) vgs_sfx_master_volume(sfxmv--);
+        if (vgs_key_up() && bgmmv < 256) vgs_bgm_master_volume(++bgmmv);
+        if (vgs_key_down() && 0 < bgmmv) vgs_bgm_master_volume(--bgmmv);
+        if (vgs_key_right() && sfxmv < 256) vgs_sfx_master_volume(++sfxmv);
+        if (vgs_key_left() && 0 < sfxmv) vgs_sfx_master_volume(--sfxmv);
 
         vgs_draw_clear(2, 2, 2, 256, 8); // todo: need specifiec rect clear function
 

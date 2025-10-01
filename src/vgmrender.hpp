@@ -85,7 +85,7 @@ class vgm_chip_base
 
     // required methods for derived classes to implement
     virtual void write(uint32_t reg, uint8_t data) = 0;
-    virtual void generate(int32_t* left, int32_t* right) = 0;
+    virtual void generate(emulated_time output_start, emulated_time output_step, int32_t* left, int32_t* right) = 0;
 
     // write data to the ADPCM-A buffer
     void write_data(ymfm::access_class type, uint32_t base, uint32_t length, uint8_t const* src)
@@ -146,7 +146,7 @@ class vgm_chip : public vgm_chip_base, public ymfm::ymfm_interface
     }
 
     // generate one output sample of output
-    virtual void generate(int32_t* left, int32_t* right) override
+    virtual void generate(emulated_time output_start, emulated_time output_step, int32_t* left, int32_t* right) override
     {
         uint32_t addr1 = 0xffff, addr2 = 0xffff;
         uint8_t data1 = 0, data2 = 0;
@@ -168,7 +168,9 @@ class vgm_chip : public vgm_chip_base, public ymfm::ymfm_interface
         }
 
         // generate at the appropriate sample rate
-        m_chip.generate(&m_output);
+        for (; m_pos <= output_start; m_pos += m_step) {
+            m_chip.generate(&m_output);
+        }
 
         // add the final result to the buffer
         if (m_type == CHIP_YM2203) {
@@ -272,6 +274,8 @@ class VgmHelper
     uint32_t data_start;
     uint32_t extra_header;
     uint32_t loop_offset;
+    emulated_time output_pos = 0;
+    static const emulated_time output_step = 0x100000000ull / 44100;
 
     uint32_t parse_uint32()
     {
@@ -793,8 +797,9 @@ class VgmHelper
         outputs[0] = 0;
         outputs[1] = 0;
         for (auto& chip : active_chips) {
-            chip->generate(&outputs[0], &outputs[1]);
+            chip->generate(output_pos, output_step, &outputs[0], &outputs[1]);
         }
+        output_pos += output_step;
         for (int i = 0; i < 2; i++) {
             if (32767 < outputs[i]) {
                 outputs[i] = 32767;

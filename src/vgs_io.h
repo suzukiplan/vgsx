@@ -70,6 +70,7 @@
 #define VGS_ADDR_SEQ_OPEN_R 0xE03110
 #define VGS_ADDR_SEQ_READ 0xE03114
 #define VGS_ADDR_EXIT 0xE7FFFC
+#define VGS_ADDR_USER 0xE80000
 
 #define VGS_IN_VSYNC *((volatile uint32_t*)VGS_ADDR_VSYNC)
 #define VGS_OUT_CONSOLE *((volatile uint32_t*)VGS_ADDR_CONSOLE)
@@ -117,6 +118,7 @@
 #define VGS_OUT_SEQ_OPEN_R *((volatile uint32_t*)VGS_ADDR_SEQ_OPEN_R)
 #define VGS_IN_SEQ_READ *((volatile uint32_t*)VGS_ADDR_SEQ_READ)
 #define VGS_OUT_EXIT *((volatile int32_t*)VGS_ADDR_EXIT)
+#define VGS_IO_USER ((volatile int32_t*)VGS_ADDR_USER)
 
 #define VGS_DMA_MEMCPY 0
 #define VGS_DMA_MEMSET 1

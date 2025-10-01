@@ -53,6 +53,13 @@
         "vgs_io.h": "c",
         "stdint.h": "c",
         "vgs_stdint.h": "c",
-        "map": "cpp"
+        "map": "cpp",
+        "functional": "cpp",
+        "__tree": "cpp",
+        "charconv": "cpp",
+        "forward_list": "cpp",
+        "fstream": "cpp",
+        "iomanip": "cpp",
+        "iostream": "cpp"
     }
 }

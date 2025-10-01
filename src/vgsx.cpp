@@ -248,6 +248,8 @@ extern "C" void m68k_write_memory_32(uint32_t address, uint32_t value)
 
 VGSX::VGSX()
 {
+    this->subscribedInput = false;
+    this->subscribedOutput = false;
     this->gamepadType = GamepadType::Keyboard;
     this->logCallback = nullptr;
     this->bootBios = true;
@@ -890,6 +892,13 @@ uint32_t VGSX::inPort(uint32_t address)
         case VGS_ADDR_BUTTON_ID_Y: return static_cast<uint32_t>(this->getButtonIdY());
         case VGS_ADDR_BUTTON_ID_START: return static_cast<uint32_t>(this->getButtonIdStart());
     }
+    if (VGS_ADDR_USER <= address) {
+        if (!this->subscribedInput) {
+            putlog(LogLevel::W, "Ignored an user-defined I/O (IN:0x%X)", address);
+        } else {
+            return this->inputCallback(address);
+        }
+    }
     return 0xFFFFFFFF;
 }
 
@@ -1087,6 +1096,13 @@ void VGSX::outPort(uint32_t address, uint32_t value)
             this->exitFlag = true;
             this->exitCode = (int32_t)value;
             return;
+    }
+    if (VGS_ADDR_USER <= address) {
+        if (!this->subscribedOutput) {
+            putlog(LogLevel::W, "Ignored an user-defined I/O (OUT:0x%X = 0x%X)", address, value);
+        } else {
+            this->outputCallback(address, value);
+        }
     }
 }
 
@@ -1292,4 +1308,16 @@ VGSX::ButtonId VGSX::getButtonIdStart()
         case GamepadType::PlayStation: return ButtonId::Options;
         default: return ButtonId::Unknown;
     }
+}
+
+void VGSX::subscribeInput(std::function<uint32_t(uint32_t port)> callback)
+{
+    this->subscribedInput = true;
+    this->inputCallback = callback;
+}
+
+void VGSX::subscribeOutput(std::function<void(uint32_t port, uint32_t value)> callback)
+{
+    this->subscribedOutput = true;
+    this->outputCallback = callback;
 }

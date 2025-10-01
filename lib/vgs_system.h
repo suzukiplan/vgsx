@@ -34,11 +34,35 @@ extern "C" {
  */
 void vgs_vsync(void);
 
+/**
+ * @brief Synchronize V-SYNC for multiple times
+ * @param n Number of Synchronizations
+ */
 static inline void vgs_vsync_n(int n)
 {
     for (int i = 0; i < n; i++) {
         vgs_vsync();
     }
+}
+
+/**
+ * @brief User-Defined I/O (Input)
+ * @param port Port Number
+ * @return Input Value
+ */
+static inline uint32_t vgs_user_in(uint32_t port)
+{
+    return VGS_IO_USER[port & 0x7FFFC];
+}
+
+/**
+ * @brief User-Defined I/O (Output)
+ * @param port Port Number
+ * @param value Output Value
+ */
+static inline void vgs_user_out(uint32_t port, uint32_t value)
+{
+    VGS_IO_USER[port & 0x7FFFC] = value;
 }
 
 #ifdef __cplusplus
