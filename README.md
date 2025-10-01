@@ -616,6 +616,7 @@ Note that all addresses and values for I/O instructions must be specified as 32-
 | 0xE03110 |  o  |  -  | [Sequencial: Open for Read](#0xe031xxio---large-sequencial-file-io) |
 | 0xE03114 |  -  |  o  | [Sequencial: Read a Byte](#0xe031xxio---large-sequencial-file-io) |
 | 0xE7FFFC |  -  |  o  | [Exit](#0xe7fffcout---exit) |
+| 0xE80000 ~ 0xE8FFFC | o | o | [User-Defined I/O](#0xe8xxxxio---user-defined-io) |
 
 ### 0xE00000[in] - V-SYNC
 
@@ -949,6 +950,12 @@ Issuing an exit request for VGS-X.
 
 In the [Emulator for Debug (SDL2)](#vgs-x-emulator-for-debug), the value written here becomes the process exit code.
 
+### 0xE8XXXX[i/o] - User-Defined I/O
+
+Addresses from 0xE80000 to 0xE8FFFC can be used as user-defined I/O.
+
+For detailed usage instructions, refer to the [User-Defined I/O](#6-user-defined-io) section in the [Runtime Implementation Guide](#runtime-implementation-guide).
+
 # VGS Standard Library
 
 The **Video Game System Standard Library** is a specification for a C language library designed (standardized) to maintain source code compatibility for user programs across VGS-X and future VGS series as much as possible. This standard specification has been designed with the policy of comprehensively providing all the functions necessary for developing the “Typical 2D Games”.
@@ -981,6 +988,8 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | Category | Function | Description |
 |:------|:---------|:------------|
 | system | `vgs_vsync` | Synchronize the [V-SYNC](#0xe00000in---v-sync) (screen output with 60fps) |
+| system | `vgs_user_in` | [User-Defined I/O](#0xe8xxxxio---user-defined-io) (Input) |
+| system | `vgs_user_out` | [User-Defined I/O](#0xe8xxxxio---user-defined-io) (Output) |
 | cg | `vgs_ptn_copy` | [Copy Character Pattern](#0xd20090-0xd20094-copy-character-pattern). |
 | cg:bg | `vgs_bg_width` | Get the [Name Table](#name-table) width in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode). |
 | cg:bg | `vgs_bg_height` | Get the [Name Table](#name-table) height in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode). |
@@ -1323,6 +1332,25 @@ While the result of the `VGSX::isExit` method is `false` (while the user program
 
 - Typical OS sound APIs perform fixed-size buffering in a separate thread via callbacks, so the `VGSX::tickSound` method assumes it will be called within that callback.
 - The `VGSX::tickSound` method must be executed at intervals corresponding to the buffer size of the PCM (44100Hz, 16bits, 2ch) specified as an argument.
+
+## 6. User-Defined I/O
+
+When using user-defined I/O, describe the callback processing for when the user-defined I/O is executed using the `VGSX::subscribeInput` method or the `VGSX::subscribeOutput` method before calling the `VGSX::tick` method. 
+
+```c++
+// Subscribe Input
+vgsx.subscribeInput([](uint32_t port) {
+    uint32_t result = myInputFunction(port);
+    return result;
+});
+
+// Subscribe Output
+vgsx.subscribeOutput([](uint32_t port, uint32_t value) {
+    myOutputFunction(port, value);
+});
+```
+
+By utilizing user-defined I/O, you can implement native processing that cannot be implemented on the MC68k side, such as retrieving Steam leaderboards and unlocking achievements.
 
 # License
 

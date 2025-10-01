@@ -2,6 +2,7 @@
 
 ## Version 0.18.0
 
+- Core+CRT: Implemented User-Defined I/O.
 - Fixed an issue where the pitch of the music track was incorrect.
 
 ## Version 0.17.0

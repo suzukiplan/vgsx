@@ -27,6 +27,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <math.h>
+#include <functional>
 #include "vdp.hpp"
 
 class VGSX
@@ -170,8 +171,15 @@ class VGSX
     ButtonId getButtonIdX();
     ButtonId getButtonIdY();
     ButtonId getButtonIdStart();
+    void subscribeInput(std::function<uint32_t(uint32_t port)> callback);
+    void subscribeOutput(std::function<void(uint32_t port, uint32_t value)> callback);
 
   private:
+    bool subscribedInput;
+    bool subscribedOutput;
+    std::function<uint32_t(uint32_t port)> inputCallback;
+    std::function<void(uint32_t port, uint32_t value)> outputCallback;
+
     bool ignoreReset;
     struct PendingRomData {
         const uint8_t* data;
