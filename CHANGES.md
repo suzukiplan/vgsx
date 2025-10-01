@@ -1,5 +1,9 @@
 # Changes
 
+## Version 0.18.0
+
+- Fixed an issue where the pitch of the music track was incorrect.
+
 ## Version 0.17.0
 
 - Core: Update Boot Bios
