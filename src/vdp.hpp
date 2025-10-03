@@ -63,6 +63,61 @@ static inline void graphicDrawWindow(VDP* vdp);
 
 class VDP
 {
+  private:
+    class PatternRom
+    {
+      public:
+        int index;
+        const uint8_t* ptn;
+        int size;
+
+        PatternRom(int index, const uint8_t* ptn, int size)
+        {
+            this->index = index;
+            this->ptn = ptn;
+            this->size = size;
+        }
+    };
+
+    struct RomData {
+        std::vector<PatternRom*> ptn;
+        const uint8_t* pal;
+        size_t palSize;
+    } rom;
+
+    void resetPattern()
+    {
+        for (auto ptn : this->rom.ptn) {
+            int index = ptn->index;
+            const uint8_t* ptr = ptn->ptn;
+            int size = ptn->size;
+            while (0 < size) {
+                memcpy(&this->ctx.ptn[index++], ptr, 32);
+                ptr += 32;
+                size -= 32;
+            }
+        }
+    }
+
+    void resetPalette()
+    {
+        const uint8_t* ptr = this->rom.pal;
+        int size = (int)this->rom.palSize;
+        int pindex = 0;
+        int cindex = 0;
+        while (0 < size) {
+            memcpy(&this->ctx.palette[pindex][cindex], ptr, 4);
+            cindex++;
+            cindex &= 0x0F;
+            if (0 == cindex) {
+                pindex++;
+                pindex &= 0x0F;
+            }
+            ptr += 4;
+            size -= 4;
+        }
+    }
+
   public:
     typedef struct {
         uint32_t skip;                // R0: Skip Render
@@ -127,27 +182,6 @@ class VDP
         int wy2[VDP_BG_NUM];                      // BG Window Y2
     } ctx;
 
-    class PatternRom
-    {
-      public:
-        int index;
-        const uint8_t* ptn;
-        int size;
-
-        PatternRom(int index, const uint8_t* ptn, int size)
-        {
-            this->index = index;
-            this->ptn = ptn;
-            this->size = size;
-        }
-    };
-
-    struct RomData {
-        std::vector<PatternRom*> ptn;
-        const uint8_t* pal;
-        size_t palSize;
-    } rom;
-
     VDP()
     {
         this->rom.ptn.clear();
@@ -184,37 +218,10 @@ class VDP
         this->rom.ptn.push_back(new PatternRom(index, (const uint8_t*)ptn, (int)ptnSize));
     }
 
-    void resetPattern()
+    void setPalette(const void* pal, size_t palSize)
     {
-        for (auto ptn : this->rom.ptn) {
-            int index = ptn->index;
-            const uint8_t* ptr = ptn->ptn;
-            int size = ptn->size;
-            while (0 < size) {
-                memcpy(&this->ctx.ptn[index++], ptr, 32);
-                ptr += 32;
-                size -= 32;
-            }
-        }
-    }
-
-    void resetPalette()
-    {
-        const uint8_t* ptr = this->rom.pal;
-        int size = (int)this->rom.palSize;
-        int pindex = 0;
-        int cindex = 0;
-        while (0 < size) {
-            memcpy(&this->ctx.palette[pindex][cindex], ptr, 4);
-            cindex++;
-            cindex &= 0x0F;
-            if (0 == cindex) {
-                pindex++;
-                pindex &= 0x0F;
-            }
-            ptr += 4;
-            size -= 4;
-        }
+        this->rom.pal = (const uint8_t*)pal;
+        this->rom.palSize = palSize;
     }
 
     uint32_t read(uint32_t address)
