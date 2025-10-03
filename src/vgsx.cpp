@@ -400,6 +400,7 @@ bool VGSX::extractRom(const uint8_t* program, int programSize)
             return false;
         }
     }
+    this->reset();
     return true;
 }
 
