@@ -316,7 +316,6 @@ bool VGSX::loadPalette(const void* data, size_t size)
     const uint8_t* ptr = (const uint8_t*)data;
     this->vdp.rom.pal = ptr;
     this->vdp.rom.palSize = size;
-    this->vdp.resetPalette();
     return true;
 }
 
