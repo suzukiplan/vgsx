@@ -357,6 +357,7 @@ int main(int argc, char* argv[])
     if (!consoleMode) {
         SDL_PauseAudioDevice(audioDeviceId, 0);
     }
+    vgsx.reset();
     while (!quit && !vgsx.isExit()) {
         loopCount++;
         auto start = std::chrono::system_clock::now();
