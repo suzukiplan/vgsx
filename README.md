@@ -560,8 +560,6 @@ After setting the source index to `0xD20090 (CP_FR)`, it is executed by setting 
 
 For example, it is intended for use in animations such as the ocean on a map.
 
-> _Please note that the copied state will be maintained even after resetting the VDP._
-
 ## I/O Map
 
 I/O instructions in VGS-X can be executed by performing input/output operations on the memory area from 0xE00000 to 0xEFFFFF.
