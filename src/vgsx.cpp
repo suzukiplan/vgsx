@@ -299,12 +299,7 @@ bool VGSX::loadPattern(uint16_t index, const void* data, size_t size)
         this->setLastError("Invalid data size.");
         return false;
     }
-    const uint8_t* ptr = (const uint8_t*)data;
-    while (0 < size) {
-        memcpy(&this->vdp.ctx.ptn[index++], ptr, 32);
-        ptr += 32;
-        size -= 32;
-    }
+    this->vdp.addPattern(index, data, size);
     return true;
 }
 
@@ -318,20 +313,10 @@ bool VGSX::loadPalette(const void* data, size_t size)
         this->setLastError("Invalid data size.");
         return false;
     }
-    int pindex = 0;
-    int cindex = 0;
     const uint8_t* ptr = (const uint8_t*)data;
-    while (0 < size) {
-        memcpy(&this->vdp.ctx.palette[pindex][cindex], ptr, 4);
-        cindex++;
-        cindex &= 0x0F;
-        if (0 == cindex) {
-            pindex++;
-            pindex &= 0x0F;
-        }
-        ptr += 4;
-        size -= 4;
-    }
+    this->vdp.rom.pal = ptr;
+    this->vdp.rom.palSize = size;
+    this->vdp.resetPalette();
     return true;
 }
 

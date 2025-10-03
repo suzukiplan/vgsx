@@ -127,6 +127,34 @@ class VDP
         int wy2[VDP_BG_NUM];                      // BG Window Y2
     } ctx;
 
+    class PatternRom
+    {
+      public:
+        int index;
+        const uint8_t* ptn;
+        int size;
+
+        PatternRom(int index, const uint8_t* ptn, int size)
+        {
+            this->index = index;
+            this->ptn = ptn;
+            this->size = size;
+        }
+    };
+
+    struct RomData {
+        std::vector<PatternRom*> ptn;
+        const uint8_t* pal;
+        size_t palSize;
+    } rom;
+
+    VDP()
+    {
+        this->rom.ptn.clear();
+        this->rom.pal = nullptr;
+        this->rom.palSize = 0;
+    }
+
     void reset()
     {
         memset(this->ctx.display, 0, sizeof(this->ctx.display));
@@ -138,6 +166,46 @@ class VDP
             this->ctx.wy1[i] = 0;
             this->ctx.wx2[i] = VDP_WIDTH - 1;
             this->ctx.wy2[i] = VDP_HEIGHT - 1;
+        }
+        this->resetPattern();
+        this->resetPalette();
+    }
+
+    void addPattern(int index, const void* ptn, size_t ptnSize)
+    {
+        this->rom.ptn.push_back(new PatternRom(index, (const uint8_t*)ptn, (int)ptnSize));
+    }
+
+    void resetPattern()
+    {
+        for (auto ptn : this->rom.ptn) {
+            int index = ptn->index;
+            const uint8_t* ptr = ptn->ptn;
+            int size = ptn->size;
+            while (0 < size) {
+                memcpy(&this->ctx.ptn[index++], ptr, 32);
+                ptr += 32;
+                size -= 32;
+            }
+        }
+    }
+
+    void resetPalette()
+    {
+        const uint8_t* ptr = this->rom.pal;
+        int size = (int)this->rom.palSize;
+        int pindex = 0;
+        int cindex = 0;
+        while (0 < size) {
+            memcpy(&this->ctx.palette[pindex][cindex], ptr, 4);
+            cindex++;
+            cindex &= 0x0F;
+            if (0 == cindex) {
+                pindex++;
+                pindex &= 0x0F;
+            }
+            ptr += 4;
+            size -= 4;
         }
     }
 

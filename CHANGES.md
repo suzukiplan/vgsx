@@ -1,5 +1,9 @@
 # Changes
 
+## Version 0.19.0
+
+- Core: Changed the specification to initialize character patterns and palettes to their default state when resetting the VDP.
+
 ## Version 0.18.0
 
 - Core+CRT: Implemented User-Defined I/O.
