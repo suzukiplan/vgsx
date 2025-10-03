@@ -560,8 +560,6 @@ After setting the source index to `0xD20090 (CP_FR)`, it is executed by setting 
 
 For example, it is intended for use in animations such as the ocean on a map.
 
-> _Please note that the copied state will be maintained even after resetting the VDP._
-
 ## I/O Map
 
 I/O instructions in VGS-X can be executed by performing input/output operations on the memory area from 0xE00000 to 0xEFFFFF.
@@ -991,6 +989,8 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | system | `vgs_user_in` | [User-Defined I/O](#0xe8xxxxio---user-defined-io) (Input) |
 | system | `vgs_user_out` | [User-Defined I/O](#0xe8xxxxio---user-defined-io) (Output) |
 | cg | `vgs_ptn_copy` | [Copy Character Pattern](#0xd20090-0xd20094-copy-character-pattern). |
+| cg | `vgs_pal_get` | Get a color code from the [Palette](#palette). |
+| cg | `vgs_pal_set` | Set a color code to the [Palette](#palette). |
 | cg:bg | `vgs_bg_width` | Get the [Name Table](#name-table) width in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode). |
 | cg:bg | `vgs_bg_height` | Get the [Name Table](#name-table) height in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode). |
 | cg:bg | `vgs_chr_width` | Get the Visible [Name Table](#name-table) width in Character Pattern Mode.|
