@@ -3,6 +3,7 @@
 ## Version 0.19.0
 
 - Core: Changed the specification to initialize character patterns and palettes to their default state when resetting the VDP.
+- CRT: Added the cg functions: `vgs_pal_get` and `vgs_pal_set`
 
 ## Version 0.18.0
 

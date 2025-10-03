@@ -162,6 +162,29 @@ static inline int vgs_chr_height()
 }
 
 /**
+ * @brief Set a color code to the palette.
+ * @param pal Number of palette (0-15)
+ * @param col Number of color (0-15)
+ * @param rgb888 24bit color code (RGB888)
+ */
+static inline void vgs_pal_set(uint8_t pal, uint8_t col, uint32_t rgb888)
+{
+    PALETTE[((pal & 0x0F) << 4) | (col & 0x0F)] = rgb888;
+}
+
+/**
+ * @brief Get a color code from the palette.
+ * @param pal Number of palette (0-15)
+ * @param col Number of color (0-15)
+ * @return 24bit color code (RGB888)
+ */
+static inline uint32_t vgs_pal_get(uint8_t pal, uint8_t col)
+{
+
+    return PALETTE[((pal & 0x0F) << 4) | (col & 0x0F)];
+}
+
+/**
  * @brief Copy Character Pattern.
  * @param to Destination charaqcter pattern index
  * @param from Source charaqcter pattern index
