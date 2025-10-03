@@ -155,6 +155,14 @@ class VDP
         this->rom.palSize = 0;
     }
 
+    ~VDP()
+    {
+        for (auto ptn : this->rom.ptn) {
+            delete ptn;
+        }
+        this->rom.ptn.clear();
+    }
+
     void reset()
     {
         memset(this->ctx.display, 0, sizeof(this->ctx.display));
