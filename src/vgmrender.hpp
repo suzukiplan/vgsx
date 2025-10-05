@@ -146,9 +146,9 @@ class vgm_chip : public vgm_chip_base, public ymfm::ymfm_interface
         m_queue.push_back(std::make_pair(reg, data));
     }
 
-    virtual uint8_t read(uint32_t reg) override
+    virtual uint8_t read(uint32_t offset) override
     {
-        return ymfm_external_read(ymfm::ACCESS_IO, reg);
+        return m_chip.read(offset);
     }
 
     // generate one output sample of output
