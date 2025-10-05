@@ -898,26 +898,6 @@ By continuously writing data that encodes key input information into 1-byte unit
 
 You can create up to 256 sequential files.
 
-### 0xE032xx[io] - FM sound chip
-
-You can obtain information about the sound chip being used by the currently playing VGM.
-
-First, set the target Chip ID to `0xE03200`.
-
-| Chip ID | Chip Name |
-|:-------:|:---------:|
-| 0 | YM2149 (SSG) |
-| 1 | YM2151 (OPM) |
-| 2 | YM2203 (OPN) |
-| 3 | YM2608 (OPNA) |
-| 4 | YM2610 (OPNB) |
-| 5 | YM2612 (OPN2) |
-
-The following:
-
-- Entering `0xE03204`, will return 1 if the chip is in use, and 0 if it is not.
-- By setting the register offset to `0xE03208` and entering `0xE0320C`, you can obtain the current register value.
-
 #### (Write Large Sequencial File)
 
 ```c
@@ -965,6 +945,26 @@ Remarks:
 - You cannot read to multiple sequential files simultaneously.
 - It is possible to read and write to sequential files simultaneously. However, it is not possible to read and write to the same index file simultaneously.
 - Since loading is processed in memory, there is no overhead from disk I/O.
+
+### 0xE032xx[io] - FM sound chip
+
+You can obtain information about the sound chip being used by the currently playing VGM.
+
+First, set the target Chip ID to `0xE03200`.
+
+| Chip ID | Chip Name |
+|:-------:|:---------:|
+| 0 | YM2149 (SSG) |
+| 1 | YM2151 (OPM) |
+| 2 | YM2203 (OPN) |
+| 3 | YM2608 (OPNA) |
+| 4 | YM2610 (OPNB) |
+| 5 | YM2612 (OPN2) |
+
+The following:
+
+- Entering `0xE03204`, will return 1 if the chip is in use, and 0 if it is not.
+- By setting the register offset to `0xE03208` and entering `0xE0320C`, you can obtain the current register value.
 
 ### 0xE7FFFC[out] - Exit
 
