@@ -69,6 +69,10 @@
 #define VGS_ADDR_SEQ_COMMIT 0xE03108
 #define VGS_ADDR_SEQ_OPEN_R 0xE03110
 #define VGS_ADDR_SEQ_READ 0xE03114
+#define VGS_ADDR_FM_CHIP 0xE03200
+#define VGS_ADDR_FM_CHECK 0xE03204
+#define VGS_ADDR_FM_REG 0xE03208
+#define VGS_ADDR_FM_READ 0xE0320C
 #define VGS_ADDR_EXIT 0xE7FFFC
 #define VGS_ADDR_USER 0xE80000
 
@@ -117,6 +121,10 @@
 #define VGS_OUT_SEQ_COMMIT *((volatile uint32_t*)VGS_ADDR_SEQ_COMMIT)
 #define VGS_OUT_SEQ_OPEN_R *((volatile uint32_t*)VGS_ADDR_SEQ_OPEN_R)
 #define VGS_IN_SEQ_READ *((volatile uint32_t*)VGS_ADDR_SEQ_READ)
+#define VGS_OUT_FM_CHIP *((volatile uint32_t*)VGS_ADDR_FM_CHIP)
+#define VGS_IN_FM_CHECK *((volatile uint32_t*)VGS_ADDR_FM_CHECK)
+#define VGS_OUT_FM_REG *((volatile uint32_t*)VGS_ADDR_FM_REG)
+#define VGS_IN_FM_READ *((volatile uint32_t*)VGS_ADDR_FM_READ)
 #define VGS_OUT_EXIT *((volatile int32_t*)VGS_ADDR_EXIT)
 #define VGS_IO_USER ((volatile int32_t*)VGS_ADDR_USER)
 
@@ -150,3 +158,10 @@
 #define VGS_BUTTON_ID_SPACE 12
 #define VGS_BUTTON_ID_PLUS 13
 #define VGS_BUTTON_ID_OPTIONS 14
+
+#define VGS_FM_YM2149 0
+#define VGS_FM_YM2151 1
+#define VGS_FM_YM2203 2
+#define VGS_FM_YM2608 3
+#define VGS_FM_YM2610 4
+#define VGS_FM_YM2612 5

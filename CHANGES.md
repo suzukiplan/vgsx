@@ -1,5 +1,10 @@
 # Changes
 
+## Version 0.20.0
+
+- Core: Added FM sound source register acquisition interface.
+- CRT: Added the bgm functions: 
+
 ## Version 0.19.1
 
 - Tools: Fixed startup reset omission

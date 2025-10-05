@@ -874,6 +874,21 @@ uint32_t VGSX::inPort(uint32_t address)
         case VGS_ADDR_BUTTON_ID_X: return static_cast<uint32_t>(this->getButtonIdX());
         case VGS_ADDR_BUTTON_ID_Y: return static_cast<uint32_t>(this->getButtonIdY());
         case VGS_ADDR_BUTTON_ID_START: return static_cast<uint32_t>(this->getButtonIdStart());
+
+        case VGS_ADDR_FM_CHECK:
+            if (this->vgmHelper) {
+                auto helper = (VgmHelper*)this->vgmHelper;
+                return helper->available((chip_type)this->ctx.fmChip) ? 1 : 0;
+            } else {
+                return 0;
+            }
+        case VGS_ADDR_FM_READ:
+            if (this->vgmHelper) {
+                auto helper = (VgmHelper*)this->vgmHelper;
+                return helper->read((chip_type)this->ctx.fmChip, this->ctx.fmOffset);
+            } else {
+                return 0;
+            }
     }
     if (VGS_ADDR_USER <= address) {
         if (!this->subscribedInput) {
@@ -1075,7 +1090,15 @@ void VGSX::outPort(uint32_t address, uint32_t value)
             return;
         }
 
-        case 0xE7FFFC: // Exit
+        case VGS_ADDR_FM_CHIP:
+            this->ctx.fmChip = value;
+            return;
+
+        case VGS_ADDR_FM_REG:
+            this->ctx.fmOffset = value;
+            return;
+
+        case VGS_ADDR_EXIT:
             this->exitFlag = true;
             this->exitCode = (int32_t)value;
             return;

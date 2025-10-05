@@ -86,6 +86,7 @@ class vgm_chip_base
     // required methods for derived classes to implement
     virtual void write(uint32_t reg, uint8_t data) = 0;
     virtual void generate(emulated_time output_start, emulated_time output_step, int32_t* left, int32_t* right) = 0;
+    virtual uint8_t read(uint32_t reg) = 0;
 
     // write data to the ADPCM-A buffer
     void write_data(ymfm::access_class type, uint32_t base, uint32_t length, uint8_t const* src)
@@ -143,6 +144,11 @@ class vgm_chip : public vgm_chip_base, public ymfm::ymfm_interface
     virtual void write(uint32_t reg, uint8_t data) override
     {
         m_queue.push_back(std::make_pair(reg, data));
+    }
+
+    virtual uint8_t read(uint32_t reg)
+    {
+        return ymfm_external_read(m_type, reg);
     }
 
     // generate one output sample of output
@@ -266,6 +272,17 @@ class VgmHelper
             buf[cursor++] = l;
             buf[cursor++] = r;
         }
+    }
+
+    bool available(chip_type type)
+    {
+        return find_chip(type, 0) ? true : false;
+    }
+
+    uint8_t read(chip_type type, uint32_t offset)
+    {
+        vgm_chip_base* chip = find_chip(type, 0);
+        return chip ? chip->read(offset) : 0;
     }
 
     std::vector<std::unique_ptr<vgm_chip_base>> active_chips;

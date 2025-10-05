@@ -613,6 +613,10 @@ Note that all addresses and values for I/O instructions must be specified as 32-
 | 0xE03108 |  o  |  -  | [Sequencial: Commit](#0xe031xxio---large-sequencial-file-io) |
 | 0xE03110 |  o  |  -  | [Sequencial: Open for Read](#0xe031xxio---large-sequencial-file-io) |
 | 0xE03114 |  -  |  o  | [Sequencial: Read a Byte](#0xe031xxio---large-sequencial-file-io) |
+| 0xE03200 |  o  |  -  | [FM: Set a chip type.](#0xe032xxio---fm-sound-chip) |
+| 0xE03204 |  -  |  o  | [FM: Check the chip is available.](#0xe032xxio---fm-sound-chip) |
+| 0xE03208 |  o  |  -  | [FM: Set a register number.](#0xe032xxio---fm-sound-chip) |
+| 0xE0320C |  -  |  o  | [FM: Read a register value.](#0xe032xxio---fm-sound-chip) |
 | 0xE7FFFC |  -  |  o  | [Exit](#0xe7fffcout---exit) |
 | 0xE80000 ~ 0xE8FFFC | o | o | [User-Defined I/O](#0xe8xxxxio---user-defined-io) |
 
@@ -894,6 +898,26 @@ By continuously writing data that encodes key input information into 1-byte unit
 
 You can create up to 256 sequential files.
 
+### 0xE032xx[io] - FM sound chip
+
+You can obtain information about the sound chip being used by the currently playing VGM.
+
+First, set the target Chip ID to `0xE03200`.
+
+| Chip ID | Chip Name |
+|:-------:|:---------:|
+| 0 | YM2149 (SSG) |
+| 1 | YM2151 (OPM) |
+| 2 | YM2203 (OPN) |
+| 3 | YM2608 (OPNA) |
+| 4 | YM2610 (OPNB) |
+| 5 | YM2612 (OPN2) |
+
+The following:
+
+- Entering `0xE03204`, will return 1 if the chip is in use, and 0 if it is not.
+- By setting the register offset to `0xE03208` and entering `0xE0320C`, you can obtain the current register value.
+
 #### (Write Large Sequencial File)
 
 ```c
@@ -1030,6 +1054,8 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | bgm | `vgs_bgm_pause` | Pause [background music](#0xe010xxo---background-music-bgm) |
 | bgm | `vgs_bgm_resume` | Resume [background music](#0xe010xxo---background-music-bgm) |
 | bgm | `vgs_bgm_fadeout` | Fadeout [background music](#0xe010xxo---background-music-bgm) |
+| bgm | `vgs_bgm_chip_check` | Check the [FM sound chip](#0xe032xxio---fm-sound-chip) is available. |
+| bgm | `vgs_bgm_chip_read` | Get a regisgter value of the [FM sound chip](#0xe032xxio---fm-sound-chip). |
 | sfx | `vgs_sfx_master_volume` | Set master volume of [sound effect](#0xe011xxo---sound-effect-sfx) |
 | sfx | `vgs_sfx_master_volume_get` | Get master volume of [sound effect](#0xe011xxo---sound-effect-sfx) |
 | sfx | `vgs_sfx_play` | Play [sound effect](#0xe011xxo---sound-effect-sfx) |
