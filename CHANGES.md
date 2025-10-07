@@ -1,5 +1,9 @@
 # Changes
 
+## Version 0.20.0 **(Disruptive)**
+
+The FM sound chip specification has been changed to **support only the YM2612**.
+
 ## Version 0.19.1
 
 - Tools: Fixed startup reset omission

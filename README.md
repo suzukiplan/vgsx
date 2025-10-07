@@ -24,14 +24,14 @@ Changes after Version 0.1.0 can be found in [CHANGES.md](./CHANGES.md).
 
 ## About VGS-X
 
-The VGS-X is a 16-bit game console featuring an MC68030 processor, the FM sound chips, and a proprietary VDP optimized for MC68k architecture.
+The VGS-X is a 16-bit game console featuring an MC68030 processor, the YM2612(OPN) FM sound chip, and a proprietary VDP optimized for MC68k architecture.
 
 Basic Features:
 
 - CPU: MC68030 _(unlimited clocks)_
 - Fully compatible with the [VGS Standard Library](#vgs-standard-library)
 - VDP: VGS-X Video
-- [BGM](#0xe010xxo---background-music-bgm): .vgm format (YM2149, YM2151, YM2203, YM2608, YM2610 and YM2612)
+- [BGM](#0xe010xxo---background-music-bgm): .vgm format (YM2612)
 - [SFX](#0xe011xxo---sound-effect-sfx): .wav format (44,100Hz, 16-bits, 2ch)
 - High speed [DMA; Direct Memory Access](#0xe00008-0xe00014io---direct-memory-access)
 - High speed [i-math (integer math)](#0xe00100-0xe00118io---angle) API
@@ -748,21 +748,9 @@ For a concrete example, please refer to the implementation in [./example/03_rota
 - Set BGM Master Volume to 0xE01008: 0=0%, 256=100% (default: 256)
 - Get BGM Master Volume from 0xE01008
 
-VGS-X can play VGM data compatible with the following chips (OPN, OPM and SSG) as BGM:
+VGS-X can play VGM data compatible with the YM2612 (OPN2).
 
-- YM2149 (SSG)
-- YM2151 (OPM)
-- YM2203 (OPN)
-- YM2608 (OPNA) <sup>*1</sup>
-- YM2610 (OPNB/OPT)
-- YM2612 (OPN2) <sup>*2</sup>
-
-Notes:
-
-1. YM2608 (OPNA) rhythm sound playback is not supported.
-2. SN76489 (DCSG) playback is not supported.
-
-We recommend using [Furnace Tracker](https://github.com/tildearrow/furnace) to create VGM data compatible with these FM sound chips.
+We recommend using [Furnace Tracker](https://github.com/tildearrow/furnace) to create VGM data compatible with a YM2612(OPN2) FM sound chip.
 
 ### 0xE011xx[o] - Sound Effect (SFX)
 

@@ -118,6 +118,8 @@ class VGSX
         uint32_t vgmFadeout;
         uint32_t vgmMasterVolume;
         uint32_t sfxMasterVolume;
+        uint32_t fmChip;
+        uint32_t fmOffset;
     } ctx;
 
     struct KeyStatus {
@@ -140,7 +142,7 @@ class VGSX
     };
 
     VDP vdp;
-    void* vgmHelper;
+    void* vgmdrv;
 
     VGSX();
     ~VGSX();
