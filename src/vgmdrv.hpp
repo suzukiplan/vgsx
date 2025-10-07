@@ -184,7 +184,7 @@ class VgmDriver : public ymfm::ymfm_interface
                     snprintf(msg, sizeof(msg), "Detected %s: clocks=%uHz ", it->second.c_str(), clocks);
                     auto type = getChipType(it->second);
                     if (type != ChipType::Unsupported) {
-                        strcat(msg, "<supported>\n");
+                        strcat(msg, "<supported>");
                         this->clocks[type] = clocks;
                         switch (type) {
                             case ChipType::YM2612:
@@ -197,7 +197,7 @@ class VgmDriver : public ymfm::ymfm_interface
                             logCallback(false, msg);
                         }
                     } else {
-                        strcat(msg, "<unsupported!>\n");
+                        strcat(msg, "<unsupported!>");
                         detect_unsupported = true;
                         if (subscribedLog) {
                             logCallback(true, msg);
