@@ -24,7 +24,7 @@ Changes after Version 0.1.0 can be found in [CHANGES.md](./CHANGES.md).
 
 ## About VGS-X
 
-The VGS-X is a 16-bit game console featuring an MC68030 processor, the FM sound chips, and a proprietary VDP optimized for MC68k architecture.
+The VGS-X is a 16-bit game console featuring an MC68030 processor, the YM2612(OPN) FM sound chip, and a proprietary VDP optimized for MC68k architecture.
 
 Basic Features:
 
@@ -750,7 +750,7 @@ For a concrete example, please refer to the implementation in [./example/03_rota
 
 VGS-X can play VGM data compatible with the YM2612 (OPN2).
 
-We recommend using [Furnace Tracker](https://github.com/tildearrow/furnace) to create VGM data compatible with these FM sound chips.
+We recommend using [Furnace Tracker](https://github.com/tildearrow/furnace) to create VGM data compatible with a YM2612(OPN2) FM sound chip.
 
 ### 0xE011xx[o] - Sound Effect (SFX)
 
