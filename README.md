@@ -31,7 +31,7 @@ Basic Features:
 - CPU: MC68030 _(unlimited clocks)_
 - Fully compatible with the [VGS Standard Library](#vgs-standard-library)
 - VDP: VGS-X Video
-- [BGM](#0xe010xxo---background-music-bgm): .vgm format (YM2149, YM2151, YM2203, YM2608, YM2610 and YM2612)
+- [BGM](#0xe010xxo---background-music-bgm): .vgm format (YM2612)
 - [SFX](#0xe011xxo---sound-effect-sfx): .wav format (44,100Hz, 16-bits, 2ch)
 - High speed [DMA; Direct Memory Access](#0xe00008-0xe00014io---direct-memory-access)
 - High speed [i-math (integer math)](#0xe00100-0xe00118io---angle) API
@@ -613,10 +613,6 @@ Note that all addresses and values for I/O instructions must be specified as 32-
 | 0xE03108 |  o  |  -  | [Sequencial: Commit](#0xe031xxio---large-sequencial-file-io) |
 | 0xE03110 |  o  |  -  | [Sequencial: Open for Read](#0xe031xxio---large-sequencial-file-io) |
 | 0xE03114 |  -  |  o  | [Sequencial: Read a Byte](#0xe031xxio---large-sequencial-file-io) |
-| 0xE03200 |  o  |  -  | [FM: Set a chip type.](#0xe032xxio---fm-sound-chip) |
-| 0xE03204 |  -  |  o  | [FM: Check the chip is available.](#0xe032xxio---fm-sound-chip) |
-| 0xE03208 |  o  |  -  | [FM: Set a register number.](#0xe032xxio---fm-sound-chip) |
-| 0xE0320C |  -  |  o  | [FM: Read a register value.](#0xe032xxio---fm-sound-chip) |
 | 0xE7FFFC |  -  |  o  | [Exit](#0xe7fffcout---exit) |
 | 0xE80000 ~ 0xE8FFFC | o | o | [User-Defined I/O](#0xe8xxxxio---user-defined-io) |
 
@@ -752,19 +748,7 @@ For a concrete example, please refer to the implementation in [./example/03_rota
 - Set BGM Master Volume to 0xE01008: 0=0%, 256=100% (default: 256)
 - Get BGM Master Volume from 0xE01008
 
-VGS-X can play VGM data compatible with the following chips (OPN, OPM and SSG) as BGM:
-
-- YM2149 (SSG)
-- YM2151 (OPM)
-- YM2203 (OPN)
-- YM2608 (OPNA) <sup>*1</sup>
-- YM2610 (OPNB/OPT)
-- YM2612 (OPN2) <sup>*2</sup>
-
-Notes:
-
-1. YM2608 (OPNA) rhythm sound playback is not supported.
-2. SN76489 (DCSG) playback is not supported.
+VGS-X can play VGM data compatible with the YM2612 (OPN2).
 
 We recommend using [Furnace Tracker](https://github.com/tildearrow/furnace) to create VGM data compatible with these FM sound chips.
 
@@ -946,26 +930,6 @@ Remarks:
 - It is possible to read and write to sequential files simultaneously. However, it is not possible to read and write to the same index file simultaneously.
 - Since loading is processed in memory, there is no overhead from disk I/O.
 
-### 0xE032xx[io] - FM sound chip
-
-You can obtain information about the sound chip being used by the currently playing VGM.
-
-First, set the target Chip ID to `0xE03200`.
-
-| Chip ID | Chip Name |
-|:-------:|:---------:|
-| 0 | YM2149 (SSG) |
-| 1 | YM2151 (OPM) |
-| 2 | YM2203 (OPN) |
-| 3 | YM2608 (OPNA) |
-| 4 | YM2610 (OPNB) |
-| 5 | YM2612 (OPN2) |
-
-The following:
-
-- Entering `0xE03204`, will return 1 if the chip is in use, and 0 if it is not.
-- By setting the register offset to `0xE03208` and entering `0xE0320C`, you can obtain the current register value.
-
 ### 0xE7FFFC[out] - Exit
 
 Issuing an exit request for VGS-X.
@@ -1054,8 +1018,6 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | bgm | `vgs_bgm_pause` | Pause [background music](#0xe010xxo---background-music-bgm) |
 | bgm | `vgs_bgm_resume` | Resume [background music](#0xe010xxo---background-music-bgm) |
 | bgm | `vgs_bgm_fadeout` | Fadeout [background music](#0xe010xxo---background-music-bgm) |
-| bgm | `vgs_bgm_chip_check` | Check the [FM sound chip](#0xe032xxio---fm-sound-chip) is available. |
-| bgm | `vgs_bgm_chip_read` | Get a regisgter value of the [FM sound chip](#0xe032xxio---fm-sound-chip). |
 | sfx | `vgs_sfx_master_volume` | Set master volume of [sound effect](#0xe011xxo---sound-effect-sfx) |
 | sfx | `vgs_sfx_master_volume_get` | Get master volume of [sound effect](#0xe011xxo---sound-effect-sfx) |
 | sfx | `vgs_sfx_play` | Play [sound effect](#0xe011xxo---sound-effect-sfx) |

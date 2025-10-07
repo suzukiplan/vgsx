@@ -26,9 +26,9 @@
 #include <stdarg.h>
 #include "vgsx.h"
 #include "m68k.h"
-#include "vgmrender.hpp"
 #include "vgs_io.h"
 #include "utf8_to_sjis.h"
+#include "vgmdrv.hpp"
 
 VGSX vgsx;
 
@@ -248,6 +248,10 @@ extern "C" void m68k_write_memory_32(uint32_t address, uint32_t value)
 
 VGSX::VGSX()
 {
+    this->vgmdrv = new VgmDriver(44100, 2);
+    ((VgmDriver*)this->vgmdrv)->subscribeLog([&](bool isError, const char* msg) {
+        putlog(isError ? LogLevel::E : LogLevel::I, "%s", msg);
+    });
     this->subscribedInput = false;
     this->subscribedOutput = false;
     this->gamepadType = GamepadType::Keyboard;
@@ -264,9 +268,7 @@ VGSX::VGSX()
 
 VGSX::~VGSX()
 {
-    if (this->vgmHelper) {
-        delete (VgmHelper*)this->vgmHelper;
-    }
+    delete (VgmDriver*)this->vgmdrv;
 }
 
 void VGSX::setLastError(const char* format, ...)
@@ -593,10 +595,7 @@ void VGSX::reset(void)
     this->ctx.vgmMasterVolume = VGS_MASTER_VOLUME_MAX;
     this->ctx.sfxMasterVolume = VGS_MASTER_VOLUME_MAX;
     this->vdp.reset();
-    if (this->vgmHelper) {
-        delete (VgmHelper*)this->vgmHelper;
-        this->vgmHelper = nullptr;
-    }
+    ((VgmDriver*)this->vgmdrv)->reset();
     for (int i = 0; i < 0x100; i++) {
         this->ctx.sfxData[i].play = false;
     }
@@ -702,8 +701,8 @@ void VGSX::tick(void)
 void VGSX::tickSound(int16_t* buf, int samples)
 {
     memset(buf, 0, samples * 2);
-    auto helper = (VgmHelper*)this->vgmHelper;
-    if (helper && !this->ctx.vgmPause) {
+    auto helper = (VgmDriver*)this->vgmdrv;
+    if (!helper->isEnded() && !this->ctx.vgmPause) {
         helper->render(buf, samples);
     }
     if (this->ctx.vgmMasterVolume < VGS_MASTER_VOLUME_MAX) {
@@ -723,8 +722,7 @@ void VGSX::tickSound(int16_t* buf, int samples)
         }
         this->ctx.vgmFadeout++;
         if (FADEOUT_FRAMES <= this->ctx.vgmFadeout) {
-            delete helper;
-            this->vgmHelper = nullptr;
+            helper->setEnded();
         }
     }
     for (int i = 0; i < 0x100; i++) {
@@ -874,21 +872,6 @@ uint32_t VGSX::inPort(uint32_t address)
         case VGS_ADDR_BUTTON_ID_X: return static_cast<uint32_t>(this->getButtonIdX());
         case VGS_ADDR_BUTTON_ID_Y: return static_cast<uint32_t>(this->getButtonIdY());
         case VGS_ADDR_BUTTON_ID_START: return static_cast<uint32_t>(this->getButtonIdStart());
-
-        case VGS_ADDR_FM_CHECK:
-            if (this->vgmHelper) {
-                auto helper = (VgmHelper*)this->vgmHelper;
-                return helper->available((chip_type)this->ctx.fmChip) ? 1 : 0;
-            } else {
-                return 0;
-            }
-        case VGS_ADDR_FM_READ:
-            if (this->vgmHelper) {
-                auto helper = (VgmHelper*)this->vgmHelper;
-                return helper->read((chip_type)this->ctx.fmChip, this->ctx.fmOffset);
-            } else {
-                return 0;
-            }
     }
     if (VGS_ADDR_USER <= address) {
         if (!this->subscribedInput) {
@@ -942,12 +925,10 @@ void VGSX::outPort(uint32_t address, uint32_t value)
         case VGS_ADDR_VGM_PLAY: // Play VGM
             value &= 0xFFFF;
             if (this->ctx.vgmData[value].data) {
-                auto helper = (VgmHelper*)this->vgmHelper;
-                if (helper) {
-                    delete helper;
+                auto helper = (VgmDriver*)this->vgmdrv;
+                if (!helper->load(this->ctx.vgmData[value].data, this->ctx.vgmData[value].size)) {
+                    helper->setEnded();
                 }
-                helper = new VgmHelper(this->ctx.vgmData[value].data, this->ctx.vgmData[value].size, this->logCallback);
-                this->vgmHelper = helper;
                 this->ctx.vgmPause = false;
                 this->ctx.vgmFadeout = 0;
             }
@@ -1089,14 +1070,6 @@ void VGSX::outPort(uint32_t address, uint32_t value)
             }
             return;
         }
-
-        case VGS_ADDR_FM_CHIP:
-            this->ctx.fmChip = value;
-            return;
-
-        case VGS_ADDR_FM_REG:
-            this->ctx.fmOffset = value;
-            return;
 
         case VGS_ADDR_EXIT:
             this->exitFlag = true;

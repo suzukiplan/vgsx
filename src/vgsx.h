@@ -142,7 +142,7 @@ class VGSX
     };
 
     VDP vdp;
-    void* vgmHelper;
+    void* vgmdrv;
 
     VGSX();
     ~VGSX();

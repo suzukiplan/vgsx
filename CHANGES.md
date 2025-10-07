@@ -1,9 +1,8 @@
 # Changes
 
-## Version 0.20.0
+## Version 0.20.0 **(Disruptive)**
 
-- Core: Added FM sound source register acquisition interface.
-- CRT: Added the bgm functions: ``
+The FM sound chip specification has been changed to **support only the YM2612**.
 
 ## Version 0.19.1
 

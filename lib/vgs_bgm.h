@@ -63,29 +63,6 @@ static inline void vgs_bgm_resume(void) { VGS_OUT_VGM_PLAY_OPT = VGS_VGM_OPT_RES
  */
 static inline void vgs_bgm_fadeout(void) { VGS_OUT_VGM_PLAY_OPT = VGS_VGM_OPT_FADEOUT; }
 
-/**
- * @brief Check the FM sound chip is available.
- * @param chip Chip ID (0:SSG, 1: OPM, 2:OPN, 3:OPNA, 4:OPNB, 5:OPN2)
- */
-static inline int vgs_bgm_chip_check(int chip)
-{
-    VGS_OUT_FM_CHIP = chip;
-    return VGS_IN_FM_CHECK;
-}
-
-/**
- * @brief Get a regisgter value of the FM sound chip.
- * @param chip Chip ID (0:SSG, 1: OPM, 2:OPN, 3:OPNA, 4:OPNB, 5:OPN2)
- * @param offset Offset of the register.
- * @return A register value.
- */
-static inline uint32_t vgs_bgm_chip_read(int chip, uint32_t offset)
-{
-    VGS_OUT_FM_CHIP = chip;
-    VGS_OUT_FM_REG = offset;
-    return VGS_IN_FM_READ;
-}
-
 #ifdef __cplusplus
 };
 #endif
