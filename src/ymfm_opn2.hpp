@@ -56,6 +56,22 @@
 #include <string>
 #include <vector>
 
+#if !defined(YMFM_LIKELY)
+#if defined(__GNUC__) || defined(__clang__)
+#define YMFM_FORCE_INLINE inline __attribute__((always_inline))
+#define YMFM_HOT __attribute__((hot))
+#define YMFM_COLD __attribute__((cold))
+#define YMFM_LIKELY(x) __builtin_expect(!!(x), 1)
+#define YMFM_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#else
+#define YMFM_FORCE_INLINE inline
+#define YMFM_HOT
+#define YMFM_COLD
+#define YMFM_LIKELY(x) (x)
+#define YMFM_UNLIKELY(x) (x)
+#endif
+#endif
+
 namespace ymfm
 {
 
@@ -297,7 +313,7 @@ enum access_class : uint32_t {
 template <int NumOutputs>
 struct ymfm_output {
     // clear all outputs to 0
-    ymfm_output& clear()
+    YMFM_FORCE_INLINE ymfm_output& clear()
     {
         for (uint32_t index = 0; index < NumOutputs; index++)
             data[index] = 0;
@@ -305,7 +321,7 @@ struct ymfm_output {
     }
 
     // clamp all outputs to a 16-bit signed value
-    ymfm_output& clamp16()
+    YMFM_FORCE_INLINE ymfm_output& clamp16()
     {
         for (uint32_t index = 0; index < NumOutputs; index++)
             data[index] = clamp(data[index], -32768, 32767);
@@ -313,7 +329,7 @@ struct ymfm_output {
     }
 
     // run each output value through the floating-point processor
-    ymfm_output& roundtrip_fp()
+    YMFM_FORCE_INLINE ymfm_output& roundtrip_fp()
     {
         for (uint32_t index = 0; index < NumOutputs; index++)
             data[index] = ymfm::roundtrip_fp(data[index]);
@@ -322,6 +338,32 @@ struct ymfm_output {
 
     // internal state
     int32_t data[NumOutputs];
+};
+
+template <>
+struct ymfm_output<2> {
+    YMFM_FORCE_INLINE ymfm_output& clear()
+    {
+        data[0] = 0;
+        data[1] = 0;
+        return *this;
+    }
+
+    YMFM_FORCE_INLINE ymfm_output& clamp16()
+    {
+        data[0] = clamp(data[0], -32768, 32767);
+        data[1] = clamp(data[1], -32768, 32767);
+        return *this;
+    }
+
+    YMFM_FORCE_INLINE ymfm_output& roundtrip_fp()
+    {
+        data[0] = ymfm::roundtrip_fp(data[0]);
+        data[1] = ymfm::roundtrip_fp(data[1]);
+        return *this;
+    }
+
+    int32_t data[2];
 };
 
 // ======================> ymfm_saved_state
@@ -3228,38 +3270,46 @@ void ym2612::write(uint32_t offset, uint8_t data)
 //  generate - generate one sample of sound
 //-------------------------------------------------
 
-void ym2612::generate(output_data* output, uint32_t numsamples)
+YMFM_HOT void ym2612::generate(output_data* output, uint32_t numsamples)
 {
+    constexpr int32_t zero_discontinuity = 4; // dac_discontinuity(0)
+    auto& regs = m_fm.regs();
+    output_data temp;
     for (uint32_t samp = 0; samp < numsamples; samp++, output++) {
         // clock the system
         m_fm.clock(fm_engine::ALL_CHANNELS);
 
         // sum individual channels to apply DAC discontinuity on each
-        output->clear();
-        output_data temp;
+        int32_t* const dst = output->data;
+        dst[0] = 0;
+        dst[1] = 0;
 
         // first do FM-only channels; OPN2 is 9-bit with intermediate clipping
         int const last_fm_channel = m_dac_enable ? 5 : 6;
-        for (int chan = 0; chan < last_fm_channel; chan++) {
-            m_fm.output(temp.clear(), 5, 256, 1 << chan);
-            output->data[0] += dac_discontinuity(temp.data[0]);
-            output->data[1] += dac_discontinuity(temp.data[1]);
+        uint32_t chanmask = 1;
+        for (int chan = 0; chan < last_fm_channel; chan++, chanmask <<= 1) {
+            temp.clear();
+            m_fm.output(temp, 5, 256, chanmask);
+            dst[0] += dac_discontinuity(temp.data[0]);
+            dst[1] += dac_discontinuity(temp.data[1]);
         }
 
         // add in DAC
-        if (m_dac_enable) {
+        if (YMFM_LIKELY(m_dac_enable)) {
             // DAC enabled: start with DAC value then add the first 5 channels only
             int32_t dacval = dac_discontinuity(int16_t(m_dac_data << 7) >> 7);
-            output->data[0] += m_fm.regs().ch_output_0(0x102) ? dacval : dac_discontinuity(0);
-            output->data[1] += m_fm.regs().ch_output_1(0x102) ? dacval : dac_discontinuity(0);
+            dst[0] += regs.ch_output_0(0x102) ? dacval : zero_discontinuity;
+            dst[1] += regs.ch_output_1(0x102) ? dacval : zero_discontinuity;
         }
 
         // output is technically multiplexed rather than mixed, but that requires
         // a better sound mixer than we usually have, so just average over the six
         // channels; also apply a 64/65 factor to account for the discontinuity
         // adjustment above
-        output->data[0] = (output->data[0] * 128) * 64 / (6 * 65);
-        output->data[1] = (output->data[1] * 128) * 64 / (6 * 65);
+        constexpr int32_t scale_numer = 8192; // 128 * 64
+        constexpr int32_t scale_denom = 390;  // 6 * 65
+        dst[0] = static_cast<int32_t>((static_cast<int64_t>(dst[0]) * scale_numer) / scale_denom);
+        dst[1] = static_cast<int32_t>((static_cast<int64_t>(dst[1]) * scale_numer) / scale_denom);
     }
 }
 
