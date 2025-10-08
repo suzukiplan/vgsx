@@ -1,5 +1,12 @@
 # Changes
 
+## Version 0.22.0
+
+- optimize & refactor the VDP implementation
+- optimize the runtime speed of the Musashi (MC68k emulator)
+- optimize the runtime speed of the ymfm (YM2612 emulator)
+- code refactor
+
 ## Version 0.21.0
 
 Implementing Musashi as a single header.
