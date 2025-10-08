@@ -488,10 +488,7 @@ class VDP
 
     inline void bitmapScrollY(int bg, int vector)
     {
-        if (!this->ctx.reg.bmp[bg]) {
-            return; // Not Bitmap Mode
-        }
-        if (0 == vector) {
+        if (!this->ctx.reg.bmp[bg] || 0 == vector) {
             return;
         }
         if (VDP_HEIGHT <= vector || vector <= -VDP_HEIGHT) {
@@ -509,6 +506,21 @@ class VDP
             memmove(&vram[vector * VDP_WIDTH], vram, (VDP_HEIGHT - vector) * VDP_WIDTH * 4);
             memset(vram, 0, vector * VDP_WIDTH * 4);
         }
+    }
+
+    inline uint8_t readPatternPixel(uint16_t tile, int px, int py)
+    {
+        const uint8_t* data = this->ctx.ptn[tile];
+        data += (py & 7) << 2;
+        data += (px & 6) >> 1;
+        const uint8_t raw = *data;
+        return (px & 1) ? (raw & 0x0F) : (raw >> 4);
+    }
+
+    inline uint8_t readSpritePixel(uint16_t base, int psize, int px, int py)
+    {
+        const int tileOffset = ((py >> 3) * psize) + (px >> 3);
+        return readPatternPixel((base + tileOffset) & 0xFFFF, px & 7, py & 7);
     }
 
     inline void renderBG(int n)
@@ -533,36 +545,14 @@ class VDP
                 for (int dx = 0; dx < VDP_WIDTH; dx++) {
                     auto wx = (dx + this->ctx.reg.scrollX[n]) & 0x7FF;
                     auto attr = this->ctx.nametbl[n][(((wy >> 3) & 0xFF) << 8) | (wx >> 3) & 0xFF];
-                    bool flipH = (attr & 0x80000000) ? true : false;
-                    bool flipV = (attr & 0x40000000) ? true : false;
+                    const bool flipH = (attr & 0x80000000) != 0;
+                    const bool flipV = (attr & 0x40000000) != 0;
                     uint8_t pal = (attr & 0xF0000) >> 16;
-                    uint8_t* ptn = this->ctx.ptn[attr & 0xFFFF];
-                    if (flipV) {
-                        ptn += (7 - (wy & 0b111)) << 2;
-                    } else {
-                        ptn += (wy & 0b111) << 2;
-                    }
-                    if (flipH) {
-                        ptn += (7 - (wx & 0b111)) >> 1;
-                    } else {
-                        ptn += (wx & 0b111) >> 1;
-                    }
-                    uint8_t col = *ptn;
-                    if (flipH) {
-                        if (wx & 1) {
-                            col &= 0xF0;
-                            col >>= 4;
-                        } else {
-                            col &= 0x0F;
-                        }
-                    } else {
-                        if (wx & 1) {
-                            col &= 0x0F;
-                        } else {
-                            col &= 0xF0;
-                            col >>= 4;
-                        }
-                    }
+                    int px = wx & 7;
+                    int py = wy & 7;
+                    if (flipH) px = 7 - px;
+                    if (flipV) py = 7 - py;
+                    const uint8_t col = readPatternPixel(attr & 0xFFFF, px, py);
                     if (col) {
                         this->ctx.display[dptr] = this->ctx.palette[pal][col];
                     }
@@ -613,16 +603,8 @@ class VDP
                         break; // Out of screen right (end of rendering a line)
                     }
                     // Render Pixel
-                    int wx = flipH ? size - px - 1 : px;
-                    uint8_t* ptnptr = this->ctx.ptn[(ptn + wx / 8 + (wy / 8) * psize) & 0xFFFF];
-                    ptnptr += (wy & 0b0111) << 2;
-                    ptnptr += (wx & 0b0110) >> 1;
-                    int col;
-                    if (wx & 1) {
-                        col = (*ptnptr) & 0x0F;
-                    } else {
-                        col = ((*ptnptr) & 0xF0) >> 4;
-                    }
+                    const int wx = flipH ? size - px - 1 : px;
+                    const uint8_t col = readSpritePixel(ptn, psize, wx, wy);
                     if (col) {
                         this->renderSpritePixel(dy * VDP_WIDTH + dx, this->ctx.palette[pal][col], oam->alpha, oam->mask);
                     }
@@ -652,17 +634,8 @@ class VDP
                     }
                     // this->ctx.display[dy * VDP_WIDTH + dx] = 0xFF0000;
                     int px = (int)(bx * ratio);
-                    int wx = flipH ? size - px - 1 : px;
-                    // Render Pixel
-                    uint8_t* ptnptr = this->ctx.ptn[(ptn + wx / 8 + (wy / 8) * psize) & 0xFFFF];
-                    ptnptr += (wy & 0b0111) << 2;
-                    ptnptr += (wx & 0b0110) >> 1;
-                    int col;
-                    if (wx & 1) {
-                        col = (*ptnptr) & 0x0F;
-                    } else {
-                        col = ((*ptnptr) & 0xF0) >> 4;
-                    }
+                    const int wx = flipH ? size - px - 1 : px;
+                    const uint8_t col = readSpritePixel(ptn, psize, wx, wy);
                     if (col) {
                         this->renderSpritePixel(dy * VDP_WIDTH + dx, this->ctx.palette[pal][col], oam->alpha, oam->mask);
                     }
@@ -683,16 +656,8 @@ class VDP
                         continue; // Out of screen left (check next pixel)
                     }
                     // Render Pixel
-                    int wx = flipH ? size - px - 1 : px;
-                    uint8_t* ptnptr = this->ctx.ptn[(ptn + wx / 8 + (wy / 8) * psize) & 0xFFFF];
-                    ptnptr += (wy & 0b0111) << 2;
-                    ptnptr += (wx & 0b0110) >> 1;
-                    int col;
-                    if (wx & 1) {
-                        col = (*ptnptr) & 0x0F;
-                    } else {
-                        col = ((*ptnptr) & 0xF0) >> 4;
-                    }
+                    const int wx = flipH ? size - px - 1 : px;
+                    const uint8_t col = readSpritePixel(ptn, psize, wx, wy);
                     if (col) {
                         int ptr = dy * VDP_WIDTH + dx;
                         this->renderSpritePixel(ptr, this->ctx.palette[pal][col], oam->alpha, oam->mask);
@@ -727,15 +692,7 @@ class VDP
                         continue; // Out of screen left (check next pixel)
                     }
                     // Render Pixel
-                    uint8_t* ptnptr = this->ctx.ptn[(ptn + wx / 8 + (wy / 8) * psize) & 0xFFFF];
-                    ptnptr += (wy & 0b0111) << 2;
-                    ptnptr += (wx & 0b0110) >> 1;
-                    int col;
-                    if (wx & 1) {
-                        col = (*ptnptr) & 0x0F;
-                    } else {
-                        col = ((*ptnptr) & 0xF0) >> 4;
-                    }
+                    const uint8_t col = readSpritePixel(ptn, psize, wx, wy);
                     if (col) {
                         this->renderSpritePixel(ddy * VDP_WIDTH + ddx, this->ctx.palette[pal][col], oam->alpha, oam->mask);
                         if (ddx < 319) {
