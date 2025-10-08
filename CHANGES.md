@@ -1,5 +1,9 @@
 # Changes
 
+## Version 0.21.0
+
+Implementing Musashi as a single header.
+
 ## Version 0.20.0 **(Disruptive)**
 
 The FM sound chip specification has been changed to **support only the YM2612**.
