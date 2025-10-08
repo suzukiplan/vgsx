@@ -175,7 +175,7 @@ int main(int argc, char* argv[])
     int t0x = (vgs_draw_width() - vgs_pfont_strlen(t0)) / 2;
     const char* t1 = "Video Game System X";
     int t1x = (vgs_draw_width() - vgs_pfont_strlen(t1)) / 2;
-    const char* pt = "Powered by MC68030, YM2612(OPN) FM sound chip";
+    const char* pt = "Powered by MC68030, YM2612/OPN2 FM sound chip";
     int ptx = (vgs_draw_width() - vgs_pfont_strlen(pt)) / 2;
     const char* vt = "and SUZUKI PLAN Video Display Processor X";
     int vtx = (vgs_draw_width() - vgs_pfont_strlen(vt)) / 2;

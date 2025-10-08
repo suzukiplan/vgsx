@@ -25,7 +25,7 @@
 
 #include <stdarg.h>
 #include "vgsx.h"
-#include "m68k.h"
+#include "musashi.hpp"
 #include "vgs_io.h"
 #include "utf8_to_sjis.h"
 #include "vgmdrv.hpp"

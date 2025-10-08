@@ -14,10 +14,7 @@ OBJECTS += vgs0math.o
 OBJECTS += k8x12_jisx0201.o
 OBJECTS += k8x12_jisx0208.o
 OBJECTS += utf8_to_sjis.o
-OBJECTS += m68kcpu.o
-OBJECTS += m68kops.o
-OBJECTS += m68kdasm.o
-OBJECTS += softfloat.o
+OBJECTS += musashi.o
 
 all: vgmplay
 
@@ -51,14 +48,5 @@ k8x12_jisx0201.o: ${CORE_PATH}/k8x12_jisx0201.c
 k8x12_jisx0208.o: ${CORE_PATH}/k8x12_jisx0208.c
 	gcc -c $<
 
-m68kcpu.o: ${CORE_PATH}/musashi/m68kcpu.c
-	${CPP} -w $<
-
-m68kops.o: ${CORE_PATH}/musashi/m68kops.c
-	${CPP} -w $<
-
-m68kdasm.o: ${CORE_PATH}/musashi/m68kdasm.c
-	${CPP} -w $<
-
-softfloat.o: ${CORE_PATH}/musashi/softfloat/softfloat.c
+musashi.o: ${CORE_PATH}/musashi.cpp ${CORE_PATH}/musashi.hpp
 	${CPP} -w $<

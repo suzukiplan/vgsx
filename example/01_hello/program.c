@@ -96,7 +96,7 @@ int main(int argc, char* argv[])
     vgs_draw_boxf(0, baseX - 8, baseY + 20, 96, 40, 1);
 
     center_print(160, "The VGS-X is a 16-bits game console,");
-    center_print(170, "powered by MC68030 and YM series FM sound chips.");
+    center_print(170, "powered by MC68030 and YM2612/OPN2 FM sound chip.");
     center_print(180, "It's surprisingly easy to develop games,");
     center_print(190, "compatibility can be easily maintained.");
 
