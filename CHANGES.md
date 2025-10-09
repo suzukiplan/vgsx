@@ -1,5 +1,9 @@
 # Changes
 
+## Version 0.23.0
+
+- Added a Japanese Manual (README-jp.md)
+
 ## Version 0.22.0
 
 - optimize & refactor the VDP implementation
