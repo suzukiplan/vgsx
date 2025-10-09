@@ -1293,8 +1293,8 @@ vgsx.subscribeOutput([](uint32_t port, uint32_t value) {
   - Copyright (c) 2021, Aaron Giles
   - License: [3-clause BSD](./LICENSE-ymfm.txt)
 - Japanese Font - [k8x12](https://littlelimit.net/k8x12.htm)
-  - Num Kadoma 氏による制作
+  - Created by Num Kadoma
   - License: [Free Software](./LICENSE-k8x12.txt)
-- [VGS-X](https://github.com/suzukiplan/vgsx) と MC68030 用 VGS Standard Library
+- [VGS-X](https://github.com/suzukiplan/vgsx) and VGS Standard Library for MC68030
   - Copyright (c) 2025 Yoji Suzuki.
   - License: [MIT](./LICENSE-VGSX.txt)
