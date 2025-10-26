@@ -332,7 +332,9 @@ typedef struct {
     uint32_t scale;        // Scale (0: disabled, or 1 ~ 400 percent)
     uint32_t alpha;        // Alpha Blend (0: disabled, or 0x000001 ~ 0xFFFFFF)
     uint32_t mask;         // Mask (0: disabled, or RGB888)
-    uint32_t reserved[7];  // Reserved
+    uint32_t sly;         // Scale Lock (Y)
+    uint32_t slx;         // Scale Lock (X)
+    uint32_t reserved[5]; // Reserved
 } OAM;
 ```
 
@@ -349,6 +351,8 @@ The specifications for each attribute are shown in the table below.
 | scale   | 0 ~ 400        | [Scale](#scale-of-sprite) |
 | alpha   | 0 or 0xRRGGBB  | [Alpha Blend](#alpha-blend-of-sprite) |
 | mask    | 0 or 0xRRGGBB  | [Mask](#mask-of-sprite) |
+| sly     | 0 or 1         | Lock [Scale](#scale-of-sprite) (Y) |
+| slx     | 0 or 1         | Lock [Scale](#scale-of-sprite) (X) |
 | reserved| -              | Do not set a value other than zero. |
 
 ### (Size of Sprite)
@@ -388,7 +392,8 @@ The Sprite rotation feature is useful when combined with the [Angle](#0xe00100-0
 
 ### (Scale of Sprite)
 
-You can specify the magnification rate as a percentage on the `scale`, either 0 (disabled) or within the range of 1 to 400.
+- You can specify the magnification rate as a percentage on the `scale`, either 0 (disabled) or within the range of 1 to 400.
+- Setting either `slx` or `sly` to a value other than zero will prevent scaling of either the X or Y axis.
 
 ### (Alpha Blend of Sprite)
 

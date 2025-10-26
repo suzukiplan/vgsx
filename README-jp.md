@@ -320,7 +320,9 @@ typedef struct {
     uint32_t scale;        // 拡大率 (0: 無効, 1 ~ 400 %)
     uint32_t alpha;        // アルファブレンド (0: 無効, 0x000001 ~ 0xFFFFFF)
     uint32_t mask;         // マスク色 (0: 無効, RGB888)
-    uint32_t reserved[7];  // 予約領域
+    uint32_t sly;         // Scale Lock (Y)
+    uint32_t slx;         // Scale Lock (X)
+    uint32_t reserved[5]; // Reserved
 } OAM;
 ```
 
@@ -337,6 +339,8 @@ typedef struct {
 | scale | 0 ~ 400 | [Scale](#scale-of-sprite) |
 | alpha | 0 or 0xRRGGBB | [Alpha Blend](#alpha-blend-of-sprite) |
 | mask | 0 or 0xRRGGBB | [Mask](#mask-of-sprite) |
+| sly  | 0 or 1 | Lock [Scale](#scale-of-sprite) (Y) |
+| slx  | 0 or 1 | Lock [Scale](#scale-of-sprite) (X) |
 | reserved | - | 0 以外を設定しないでください |
 
 ### (Size of Sprite)
@@ -376,7 +380,8 @@ Size 3 Pattern Number Layout
 
 ### (Scale of Sprite)
 
-`scale` には 0（無効）または 1～400 の倍率（パーセンテージ）を指定できます。
+- `scale` には 0（無効）または 1～400 の倍率（パーセンテージ）を指定できます。
+- `slx` または `sly` のいずれかを 0 以外の値に設定すると、X 軸または Y 軸のいずれかのスケーリングが防止されます。
 
 ### (Alpha Blend of Sprite)
 

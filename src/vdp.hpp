@@ -158,7 +158,9 @@ class VDP
         uint32_t scale;       // Scale (0: disabled, or 1 ~ 400 percent)
         uint32_t alpha;       // Alpha (0: disabled, or 0x000001 ~ 0xFFFFFF)
         uint32_t mask;        // Mask (0: disabled, or RGB888)
-        uint32_t reserved[7]; // Reserved
+        uint32_t sly;         // Scale Lock (Y)
+        uint32_t slx;         // Scale Lock (X)
+        uint32_t reserved[5]; // Reserved
     } OAM;
 
     typedef struct {
@@ -612,20 +614,24 @@ class VDP
             }
         } else if (90 == angle && 0 != scale && 100 != scale) {
             // Scale & None-rotate
-            int scaledSize = size * scale / 100;
-            double ratio = size;
-            ratio /= scaledSize;
-            int offset = (size - scaledSize) / 2;
-            for (int dy = oam->y + offset, by = 0; by < scaledSize; dy++, by++) {
+            int scaledSizeX = oam->slx ? size : size * scale / 100;
+            int scaledSizeY = oam->sly ? size : size * scale / 100;
+            double ratioX = size;
+            ratioX /= scaledSizeX;
+            double ratioY = size;
+            ratioY /= scaledSizeY;
+            int offsetX = (size - scaledSizeX) / 2;
+            int offsetY = (size - scaledSizeY) / 2;
+            for (int dy = oam->y + offsetY, by = 0; by < scaledSizeY; dy++, by++) {
                 if (dy < 0) {
                     continue; // Out of screen top (check next line)
                 }
                 if (VDP_HEIGHT <= dy) {
                     break; // Out of screen bottom (end of rendering a sprite)
                 }
-                int py = (int)(by * ratio);
+                int py = (int)(by * ratioY);
                 int wy = flipH ? size - py - 1 : py;
-                for (int dx = oam->x + offset, bx = 0; bx < scaledSize; dx++, bx++) {
+                for (int dx = oam->x + offsetX, bx = 0; bx < scaledSizeX; dx++, bx++) {
                     if (dx < 0) {
                         continue; // Out of screen left (check next pixel)
                     }
@@ -633,7 +639,7 @@ class VDP
                         break; // Out of screen right (end of rendering a line)
                     }
                     // this->ctx.display[dy * VDP_WIDTH + dx] = 0xFF0000;
-                    int px = (int)(bx * ratio);
+                    int px = (int)(bx * ratioX);
                     const int wx = flipH ? size - px - 1 : px;
                     const uint8_t col = readSpritePixel(ptn, psize, wx, wy);
                     if (col) {
@@ -669,25 +675,30 @@ class VDP
             }
         } else {
             // Scale & Rotate
-            int scaledSize = size * scale / 100;
-            double ratio = size;
-            ratio /= scaledSize;
-            int offset = (size - scaledSize) / 2;
-            int halfSize = scaledSize / 2;
-            for (int dy = oam->y + offset, by = 0; by < scaledSize; dy++, by++) {
-                int py = (int)(by * ratio);
+            int scaledSizeX = oam->slx ? size : size * scale / 100;
+            int scaledSizeY = oam->sly ? size : size * scale / 100;
+            double ratioX = size;
+            ratioX /= scaledSizeX;
+            double ratioY = size;
+            ratioY /= scaledSizeY;
+            int offsetX = (size - scaledSizeX) / 2;
+            int offsetY = (size - scaledSizeY) / 2;
+            int halfSizeX = scaledSizeX / 2;
+            int halfSizeY = scaledSizeY / 2;
+            for (int dy = oam->y + offsetY, by = 0; by < scaledSizeY; dy++, by++) {
+                int py = (int)(by * ratioY);
                 int wy = flipH ? size - py - 1 : py;
-                for (int dx = oam->x + offset, bx = 0; bx < scaledSize; dx++, bx++) {
+                for (int dx = oam->x + offsetX, bx = 0; bx < scaledSizeX; dx++, bx++) {
                     // this->ctx.display[dy * VDP_WIDTH + dx] = 0xFF0000;
-                    int px = (int)(bx * ratio);
+                    int px = (int)(bx * ratioX);
                     int wx = flipH ? size - px - 1 : px;
-                    int ddy = ((by - halfSize) * vgsx_sin[angle] + (bx - halfSize) * vgsx_cos[angle]) / 256 + halfSize;
-                    ddy += oam->y + offset;
+                    int ddy = ((by - halfSizeY) * vgsx_sin[angle] + (bx - halfSizeX) * vgsx_cos[angle]) / 256 + halfSizeY;
+                    ddy += oam->y + offsetY;
                     if (ddy < 0 || VDP_HEIGHT <= ddy) {
                         continue; // Out of screen top (check next line)
                     }
-                    int ddx = ((bx - halfSize) * vgsx_sin[angle] - (by - halfSize) * vgsx_cos[angle]) / 256 + halfSize;
-                    ddx += oam->x + offset;
+                    int ddx = ((bx - halfSizeX) * vgsx_sin[angle] - (by - halfSizeY) * vgsx_cos[angle]) / 256 + halfSizeX;
+                    ddx += oam->x + offsetX;
                     if (ddx < 0 || VDP_WIDTH <= ddx) {
                         continue; // Out of screen left (check next pixel)
                     }

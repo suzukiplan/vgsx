@@ -1,5 +1,9 @@
 # Changes
 
+## Version 0.24.0
+
+- Added slx and sly (Scale Lock X/Y) to OAM.
+
 ## Version 0.23.0
 
 - Added a Japanese Manual (README-jp.md)
