@@ -568,12 +568,12 @@ class VDP
     inline void renderSprites()
     {
         for (int i = 1023; 0 <= i; i--) {
-            if (this->ctx.oam[i].visible && this->ctx.oam[i].pri) {
+            if (this->ctx.oam[i].visible && !this->ctx.oam[i].pri) {
                 renderSprite(&this->ctx.oam[i]);
             }
         }
         for (int i = 1023; 0 <= i; i--) {
-            if (this->ctx.oam[i].visible && !this->ctx.oam[i].pri) {
+            if (this->ctx.oam[i].visible && this->ctx.oam[i].pri) {
                 renderSprite(&this->ctx.oam[i]);
             }
         }
