@@ -311,19 +311,20 @@ OAM は以下の構造体を持ちます。
 
 ```c
 typedef struct {
-    uint32_t visible;      // 非 0 で表示
-    int32_t y;             // Y 座標
-    int32_t x;             // X 座標
-    uint32_t attr;         // 属性
-    uint32_t size;         // サイズ (0: 8x8, 1: 16x16, ... 31: 256x256)
-    int32_t rotate;        // 回転角 (-360 ~ 360)
-    uint32_t scale;        // 拡大率 (0: 無効, 1 ~ 400 %)
-    uint32_t alpha;        // アルファブレンド (0: 無効, 0x000001 ~ 0xFFFFFF)
-    uint32_t mask;         // マスク色 (0: 無効, RGB888)
+    uint32_t visible;     // Visible (0 or not 0)
+    int32_t y;            // Position (Y)
+    int32_t x;            // Position (X)
+    uint32_t attr;        // Attribute
+    uint32_t size;        // Size (0: 8x8, 1: 16x16, 2: 24x24, 3: 32x32 ... 31: 256x256)
+    int32_t rotate;       // Rotate (-360 ~ 360)
+    uint32_t scale;       // Scale (0: disabled, or 1 ~ 400 percent)
+    uint32_t alpha;       // Alpha (0: disabled, or 0x000001 ~ 0xFFFFFF)
+    uint32_t mask;        // Mask (0: disabled, or RGB888)
     uint32_t sly;         // Scale Lock (Y)
     uint32_t slx;         // Scale Lock (X)
-    uint32_t reserved[5]; // Reserved
-} OAM;
+    uint32_t pri;         // High Priority Flag
+    uint32_t reserved[4]; // Reserved
+} ObjectAttributeMemory;
 ```
 
 各属性の仕様は次の通りです。
@@ -341,6 +342,7 @@ typedef struct {
 | mask | 0 or 0xRRGGBB | [Mask](#mask-of-sprite) |
 | sly  | 0 or 1 | Lock [Scale](#scale-of-sprite) (Y) |
 | slx  | 0 or 1 | Lock [Scale](#scale-of-sprite) (X) |
+| pri  | 0 or 1 | [High Priority Flag]() |
 | reserved | - | 0 以外を設定しないでください |
 
 ### (Size of Sprite)
@@ -396,6 +398,10 @@ Size 3 Pattern Number Layout
 マスク色に RGB888 の非 0 値を指定すると、スプライトを単色で塗りつぶします。
 
 シューティングゲームの自機の影など、[Scale](#scale-of-sprite)、[Alpha Blend](#alpha-blend-of-sprite)、Mask を組み合わせた表現に利用できます。
+
+### (High Priority Flag)
+
+High priority flag `pri` をセットすることで描画優先度を `pri` がセットされていないスプライトよりも優先することができる。
 
 ## VDP Register
 

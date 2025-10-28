@@ -60,7 +60,8 @@ typedef struct {
     uint32_t mask;        // Mask (0: disabled, or RGB888)
     uint32_t sly;         // Scale Lock (Y)
     uint32_t slx;         // Scale Lock (X)
-    uint32_t reserved[5]; // Reserved
+    uint32_t pri;         // High Priority Flag
+    uint32_t reserved[4]; // Reserved
 } ObjectAttributeMemory;
 
 #define OAM_MAX 1024

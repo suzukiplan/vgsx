@@ -2,7 +2,8 @@
 
 ## Version 0.24.0
 
-- Added slx and sly (Scale Lock X/Y) to OAM.
+- Added `slx` and `sly` (Scale Lock X/Y) to OAM.
+- Added `pri` (High Priority Flag) to OAM.
 
 ## Version 0.23.0
 

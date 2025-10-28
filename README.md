@@ -323,19 +323,20 @@ OAM is a structure with the following attributes.
 
 ```c
 typedef struct {
-    uint32_t visible;      // Visible (0 or not 0)
-    int32_t y;             // Position (Y)
-    int32_t x;             // Position (X)
-    uint32_t attr;         // Attribute
-    uint32_t size;         // Size (0: 8x8, 1: 16x16, 2: 24x24, 3: 32x32 ... 31: 256x256)
-    int32_t rotate;        // Rotate (-360 ~ 360)
-    uint32_t scale;        // Scale (0: disabled, or 1 ~ 400 percent)
-    uint32_t alpha;        // Alpha Blend (0: disabled, or 0x000001 ~ 0xFFFFFF)
-    uint32_t mask;         // Mask (0: disabled, or RGB888)
+    uint32_t visible;     // Visible (0 or not 0)
+    int32_t y;            // Position (Y)
+    int32_t x;            // Position (X)
+    uint32_t attr;        // Attribute
+    uint32_t size;        // Size (0: 8x8, 1: 16x16, 2: 24x24, 3: 32x32 ... 31: 256x256)
+    int32_t rotate;       // Rotate (-360 ~ 360)
+    uint32_t scale;       // Scale (0: disabled, or 1 ~ 400 percent)
+    uint32_t alpha;       // Alpha (0: disabled, or 0x000001 ~ 0xFFFFFF)
+    uint32_t mask;        // Mask (0: disabled, or RGB888)
     uint32_t sly;         // Scale Lock (Y)
     uint32_t slx;         // Scale Lock (X)
-    uint32_t reserved[5]; // Reserved
-} OAM;
+    uint32_t pri;         // High Priority Flag
+    uint32_t reserved[4]; // Reserved
+} ObjectAttributeMemory;
 ```
 
 The specifications for each attribute are shown in the table below.
@@ -353,6 +354,7 @@ The specifications for each attribute are shown in the table below.
 | mask    | 0 or 0xRRGGBB  | [Mask](#mask-of-sprite) |
 | sly     | 0 or 1         | Lock [Scale](#scale-of-sprite) (Y) |
 | slx     | 0 or 1         | Lock [Scale](#scale-of-sprite) (X) |
+| pri     | 0 or 1         | [High Priority Flag](#high-priority-flag) |
 | reserved| -              | Do not set a value other than zero. |
 
 ### (Size of Sprite)
@@ -412,6 +414,10 @@ For example:
 Setting a non-zero value (in RGB888 format) to the mask fills the sprite with the specified solid color.
 
 _For example, combining the [Scale](#scale-of-sprite), [Alpha Blend](#alpha-blend-of-sprite), and Mask functions can be used to render the shadows of shoot 'em up aircraft._
+
+### (High Priority Flag)
+
+Setting the high priority flag `pri` allows the drawing priority to be set higher than sprites without `pri` set.
 
 ## VDP Register
 

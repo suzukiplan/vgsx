@@ -160,7 +160,8 @@ class VDP
         uint32_t mask;        // Mask (0: disabled, or RGB888)
         uint32_t sly;         // Scale Lock (Y)
         uint32_t slx;         // Scale Lock (X)
-        uint32_t reserved[5]; // Reserved
+        uint32_t pri;         // High Priority Flag
+        uint32_t reserved[4]; // Reserved
     } OAM;
 
     typedef struct {
@@ -567,7 +568,12 @@ class VDP
     inline void renderSprites()
     {
         for (int i = 1023; 0 <= i; i--) {
-            if (this->ctx.oam[i].visible) {
+            if (this->ctx.oam[i].visible && this->ctx.oam[i].pri) {
+                renderSprite(&this->ctx.oam[i]);
+            }
+        }
+        for (int i = 1023; 0 <= i; i--) {
+            if (this->ctx.oam[i].visible && !this->ctx.oam[i].pri) {
                 renderSprite(&this->ctx.oam[i]);
             }
         }
