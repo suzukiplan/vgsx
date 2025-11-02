@@ -36,3 +36,13 @@
 #include "vgs_stdlib.h"
 #include "vgs_string.h"
 #include "vgs_system.h"
+
+#ifdef __INTELLISENSE__
+#define LAMBDA(rettype, ARG_LIST, BODY) (rettype(*) ARG_LIST)0
+#else
+#define LAMBDA(rettype, ARG_LIST, BODY)               \
+    ({                                                \
+        rettype __lambda_funcion__ ARG_LIST { BODY; } \
+        __lambda_funcion__;                           \
+    })
+#endif
