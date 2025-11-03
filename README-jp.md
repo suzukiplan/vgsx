@@ -827,6 +827,12 @@ VGS-X における I/O は 0xE00000～0xEFFFFF のメモリ領域に 32 ビッ�
 | 0xE03108 |  o  |  -  | [Sequential: Commit](#0xe031xxio---large-sequencial-file-io) |
 | 0xE03110 |  o  |  -  | [Sequential: Open Read](#0xe031xxio---large-sequencial-file-io) |
 | 0xE03114 |  -  |  o  | [Sequential: Read Byte](#0xe031xxio---large-sequencial-file-io) |
+| 0xE04000 |  o  |  -  | [Calendar: Year](#0xe0400xin---calendar)|
+| 0xE04001 |  o  |  -  | [Calendar: Month](#0xe0400xin---calendar)|
+| 0xE04002 |  o  |  -  | [Calendar: Day of Month](#0xe0400xin---calendar)|
+| 0xE04003 |  o  |  -  | [Calendar: Hour](#0xe0400xin---calendar)|
+| 0xE04004 |  o  |  -  | [Calendar: Minute](#0xe0400xin---calendar)|
+| 0xE04005 |  o  |  -  | [Calendar: Second](#0xe0400xin---calendar)|
 | 0xE7FFFC |  -  |  o  | [Exit](#0xe7fffcout---exit) |
 | 0xE80000 ~ 0xE8FFFC |  o  |  o  | [User-Defined I/O](#0xe8xxxxio---user-defined-io) |
 
@@ -911,6 +917,17 @@ UTF-8 文字列（終端 0）を SJIS に変換しながら `Destination` にコ
 #### DMA UTF8 to SJIS Character
 
 UTF-8 の 1 文字を SJIS に変換し、`Destination` に書き込みます。
+
+### 0xE0400x[in] - Calendar
+
+現在の日付と時刻を協定世界時（UTC）で数値表現として取得します。
+
+- 0xE04000: Year (例: 2025)
+- 0xE04001: Month (1 to 12)
+- 0xE04002: Day of Month (1 to 31)
+- 0xE04003: Hour (0 to 23)
+- 0xE04004: Minute (0 to 59)
+- 0xE04005: Second (0 to 59)
 
 ### 0xE7FFFC[out] - Exit
 
@@ -1032,6 +1049,12 @@ VGS Standard Library（Video Game System Standard Library）は、VGS-X と将�
 | save | `vgs_seq_commit` | [Large Sequencial File](#0xe031xxio---large-sequencial-file-io) をコミットする |
 | save | `vgs_seq_open_r` | [Large Sequencial File](#0xe031xxio---large-sequencial-file-io) を読み込み用に開く |
 | save | `vgs_seq_read` | [Large Sequencial File](#0xe031xxio---large-sequencial-file-io) から 1 バイト読み込む |
+| [calendar](#0xe0400xin---calendar) | `vgs_calendar_year` | 現在の年 (UTC) を取得 |
+| [calendar](#0xe0400xin---calendar) | `vgs_calendar_month` | 現在の次 (UTC) を取得 |
+| [calendar](#0xe0400xin---calendar) | `vgs_calendar_mday` | 現在の日 (UTC) を取得 |
+| [calendar](#0xe0400xin---calendar) | `vgs_calendar_hour` | 現在の時間 (UTC) を取得 |
+| [calendar](#0xe0400xin---calendar) | `vgs_calendar_minute` | 現在の分 (UTC) を取得 |
+| [calendar](#0xe0400xin---calendar) | `vgs_calendar_second` | 現在の秒 (UTC) を取得 |
 
 ### (Standard Functions)
 

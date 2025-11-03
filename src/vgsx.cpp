@@ -872,6 +872,12 @@ uint32_t VGSX::inPort(uint32_t address)
         case VGS_ADDR_BUTTON_ID_X: return static_cast<uint32_t>(this->getButtonIdX());
         case VGS_ADDR_BUTTON_ID_Y: return static_cast<uint32_t>(this->getButtonIdY());
         case VGS_ADDR_BUTTON_ID_START: return static_cast<uint32_t>(this->getButtonIdStart());
+        case VGS_ADDR_CAL_YEAR: return now()->tm_year + 1900;
+        case VGS_ADDR_CAL_MONTH: return now()->tm_mon + 1;
+        case VGS_ADDR_CAL_MDAY: return now()->tm_mday;
+        case VGS_ADDR_CAL_HOUR: return now()->tm_hour;
+        case VGS_ADDR_CAL_MINUTE: return now()->tm_min;
+        case VGS_ADDR_CAL_SECOND: return now()->tm_sec;
     }
     if (VGS_ADDR_USER <= address) {
         if (!this->subscribedInput) {

@@ -22,28 +22,42 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#pragma once
-#include "vgs_bgm.h"
-#include "vgs_bmpfont.h"
-#include "vgs_calendar.h"
-#include "vgs_cg.h"
-#include "vgs_ctype.h"
-#include "vgs_io.h"
-#include "vgs_key.h"
-#include "vgs_math.h"
-#include "vgs_save.h"
-#include "vgs_sfx.h"
-#include "vgs_stdint.h"
-#include "vgs_stdlib.h"
-#include "vgs_string.h"
-#include "vgs_system.h"
 
-#ifdef __INTELLISENSE__
-#define LAMBDA(rettype, ARG_LIST, BODY) (rettype(*) ARG_LIST)0
-#else
-#define LAMBDA(rettype, ARG_LIST, BODY)               \
-    ({                                                \
-        rettype __lambda_funcion__ ARG_LIST { BODY; } \
-        __lambda_funcion__;                           \
-    })
-#endif
+#pragma once
+#include <vgs.h>
+
+/**
+ * @brief Retrieves the current year in UTC.
+ * @return Year value (e.g., 2025)
+ */
+static inline int vgs_calendar_year() { return VGS_IN_CAL_YEAR; }
+
+/**
+ * @brief Retrieves the current month in UTC.
+ * @return Month value in the range 1–12 (1 = January)
+ */
+static inline int vgs_calendar_month() { return VGS_IN_CAL_MONTH; }
+
+/**
+ * @brief Retrieves the current day of the month in UTC.
+ * @return Day value in the range 1–31
+ */
+static inline int vgs_calendar_mday() { return VGS_IN_CAL_MDAY; }
+
+/**
+ * @brief Retrieves the current hour in UTC.
+ * @return Hour value in the range 0–23
+ */
+static inline int vgs_calendar_hour() { return VGS_IN_CAL_HOUR; }
+
+/**
+ * @brief Retrieves the current minute in UTC.
+ * @return Minute value in the range 0–59
+ */
+static inline int vgs_calendar_minute() { return VGS_IN_CAL_MINUTE; }
+
+/**
+ * @brief Retrieves the current second in UTC.
+ * @return Second value in the range 0–59
+ */
+static inline int vgs_calendar_second() { return VGS_IN_CAL_SECOND; }

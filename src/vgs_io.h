@@ -69,6 +69,12 @@
 #define VGS_ADDR_SEQ_COMMIT 0xE03108
 #define VGS_ADDR_SEQ_OPEN_R 0xE03110
 #define VGS_ADDR_SEQ_READ 0xE03114
+#define VGS_ADDR_CAL_YEAR 0xE04000
+#define VGS_ADDR_CAL_MONTH 0xE04001
+#define VGS_ADDR_CAL_MDAY 0xE04002
+#define VGS_ADDR_CAL_HOUR 0xE04003
+#define VGS_ADDR_CAL_MINUTE 0xE04004
+#define VGS_ADDR_CAL_SECOND 0xE04005
 #define VGS_ADDR_EXIT 0xE7FFFC
 #define VGS_ADDR_USER 0xE80000
 
@@ -117,6 +123,12 @@
 #define VGS_OUT_SEQ_COMMIT *((volatile uint32_t*)VGS_ADDR_SEQ_COMMIT)
 #define VGS_OUT_SEQ_OPEN_R *((volatile uint32_t*)VGS_ADDR_SEQ_OPEN_R)
 #define VGS_IN_SEQ_READ *((volatile uint32_t*)VGS_ADDR_SEQ_READ)
+#define VGS_IN_CAL_YEAR *((volatile uint32_t*)VGS_ADDR_CAL_YEAR)
+#define VGS_IN_CAL_MONTH *((volatile uint32_t*)VGS_ADDR_CAL_MONTH)
+#define VGS_IN_CAL_MDAY *((volatile uint32_t*)VGS_ADDR_CAL_MDAY)
+#define VGS_IN_CAL_HOUR *((volatile uint32_t*)VGS_ADDR_CAL_HOUR)
+#define VGS_IN_CAL_MINUTE *((volatile uint32_t*)VGS_ADDR_CAL_MINUTE)
+#define VGS_IN_CAL_SECOND *((volatile uint32_t*)VGS_ADDR_CAL_SECOND)
 #define VGS_OUT_EXIT *((volatile int32_t*)VGS_ADDR_EXIT)
 #define VGS_IO_USER ((volatile int32_t*)VGS_ADDR_USER)
 

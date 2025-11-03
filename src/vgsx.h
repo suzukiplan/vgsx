@@ -27,6 +27,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <math.h>
+#include <time.h>
 #include <functional>
 #include "vdp.hpp"
 
@@ -177,6 +178,12 @@ class VGSX
     void subscribeOutput(std::function<void(uint32_t port, uint32_t value)> callback);
 
   private:
+    static struct tm* now()
+    {
+        time_t now = time(nullptr);
+        return gmtime(&now);
+    }
+
     bool subscribedInput;
     bool subscribedOutput;
     std::function<uint32_t(uint32_t port)> inputCallback;

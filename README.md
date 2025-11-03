@@ -624,6 +624,12 @@ Note that all addresses and values for I/O instructions must be specified as 32-
 | 0xE03108 |  o  |  -  | [Sequencial: Commit](#0xe031xxio---large-sequencial-file-io) |
 | 0xE03110 |  o  |  -  | [Sequencial: Open for Read](#0xe031xxio---large-sequencial-file-io) |
 | 0xE03114 |  -  |  o  | [Sequencial: Read a Byte](#0xe031xxio---large-sequencial-file-io) |
+| 0xE04000 |  o  |  -  | [Calendar: Year](#0xe0400xin---calendar)|
+| 0xE04001 |  o  |  -  | [Calendar: Month](#0xe0400xin---calendar)|
+| 0xE04002 |  o  |  -  | [Calendar: Day of Month](#0xe0400xin---calendar)|
+| 0xE04003 |  o  |  -  | [Calendar: Hour](#0xe0400xin---calendar)|
+| 0xE04004 |  o  |  -  | [Calendar: Minute](#0xe0400xin---calendar)|
+| 0xE04005 |  o  |  -  | [Calendar: Second](#0xe0400xin---calendar)|
 | 0xE7FFFC |  -  |  o  | [Exit](#0xe7fffcout---exit) |
 | 0xE80000 ~ 0xE8FFFC | o | o | [User-Defined I/O](#0xe8xxxxio---user-defined-io) |
 
@@ -941,6 +947,17 @@ Remarks:
 - It is possible to read and write to sequential files simultaneously. However, it is not possible to read and write to the same index file simultaneously.
 - Since loading is processed in memory, there is no overhead from disk I/O.
 
+### 0xE0400x[in] - Calendar
+
+Retrieves the numerical representation of the current date and time in Coordinated Universal Time (UTC).
+
+- 0xE04000: Year (ex: 2025)
+- 0xE04001: Month (1 to 12)
+- 0xE04002: Day of Month (1 to 31)
+- 0xE04003: Hour (0 to 23)
+- 0xE04004: Minute (0 to 59)
+- 0xE04005: Second (0 to 59)
+
 ### 0xE7FFFC[out] - Exit
 
 Issuing an exit request for VGS-X.
@@ -1066,6 +1083,12 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | save | `vgs_seq_commit` | Commit a [Large Sequencial File](#0xe031xxio---large-sequencial-file-io) for write. |
 | save | `vgs_seq_open_r` | Open a [Large Sequencial File](#0xe031xxio---large-sequencial-file-io) for write. |
 | save | `vgs_seq_read` | Read a byte data to a [Large Sequencial File](#0xe031xxio---large-sequencial-file-io). |
+| [calendar](#0xe0400xin---calendar) | `vgs_calendar_year` | Retrieves the current year in UTC. |
+| [calendar](#0xe0400xin---calendar) | `vgs_calendar_month` | Retrieves the current month in UTC. |
+| [calendar](#0xe0400xin---calendar) | `vgs_calendar_mday` | Retrieves the current day of month in UTC. |
+| [calendar](#0xe0400xin---calendar) | `vgs_calendar_hour` | Retrieves the current hour in UTC. |
+| [calendar](#0xe0400xin---calendar) | `vgs_calendar_minute` | Retrieves the current minute in UTC. |
+| [calendar](#0xe0400xin---calendar) | `vgs_calendar_second` | Retrieves the current second in UTC. |
 
 ### (Standard Functions)
 
