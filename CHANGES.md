@@ -2,6 +2,7 @@
 
 ## Version 0.24.0
 
+- Added Calendar API
 - Added `slx` and `sly` (Scale Lock X/Y) to OAM.
 - Added `pri` (High Priority Flag) to OAM.
 
