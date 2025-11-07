@@ -18,7 +18,7 @@ Status
 4. [x] Implement Sound Effect function
 5. [x] Implement Gamepad function
 6. [x] Release beta 0.1.0
-7. [ ] Make launch title for VGS-X
+7. [ ] Release Battle Hanafuda (Production Version)
 
 Changes after Version 0.1.0 can be found in [CHANGES.md](./CHANGES.md).
 
@@ -39,7 +39,7 @@ Basic Features:
 
 VDP Features:
 
-- Screen Resolution: 320x200 pixels
+- Screen Resolution: 320x200 pixels (internally: 640x400)
 - Color: 24-bits color (RGB888)
 - BG: Four [nametables](#name-table), and Two modes ([Character Pattern and Bitmap](#0xd20028-0xd20034-bitmap-mode))
 - BG nametable size: 256x256 (2048x2048 pixels)
@@ -173,6 +173,16 @@ The following sections provide technical information useful for programming with
 - Sprites can display up to 1024.
 
 > _The screen resolution of VGS-X (320x200) is designed to enable full-screen display on the SteamDeck (1280x800)._
+
+## 4k Display
+
+The resolution (coordinate system) of VGS-X is 320×200 pixels, but internally, the screen buffer operates at 640×400 pixels.
+
+Sprites and backgrounds are always rendered at 4× size (twice the width and twice the height).
+
+This design allows sprites to be scaled down to 50% or more without losing pixel detail.
+
+It also reduces pixel loss when rotating sprites.
 
 ## Memory Map
 
