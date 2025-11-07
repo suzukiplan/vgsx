@@ -331,8 +331,8 @@ int main(int argc, char* argv[])
             "VGS-X for SDL2",
             SDL_WINDOWPOS_UNDEFINED,
             SDL_WINDOWPOS_UNDEFINED,
-            640,
-            400,
+            vgsx.getDisplayWidth(),
+            vgsx.getDisplayHeight(),
             0);
         windowSurface = SDL_GetWindowSurface(window);
         if (!windowSurface) {
@@ -411,14 +411,10 @@ int main(int argc, char* argv[])
                 pcDisplay += offsetY;
                 for (int y = 0; y < vgsx.getDisplayHeight(); y++) {
                     for (int x = 0; x < vgsx.getDisplayWidth(); x++) {
-                        uint32_t rgb888 = *vgsDisplay;
-                        pcDisplay[offsetX + x * 2] = rgb888;
-                        pcDisplay[offsetX + x * 2 + 1] = rgb888;
-                        pcDisplay[offsetX + pitch + x * 2] = rgb888;
-                        pcDisplay[offsetX + pitch + x * 2 + 1] = rgb888;
-                        vgsDisplay++;
+                        pcDisplay[offsetX + x] = vgsDisplay[x];
                     }
-                    pcDisplay += pitch * 2;
+                    pcDisplay += pitch;
+                    vgsDisplay += vgsx.getDisplayWidth();
                 }
                 SDL_UpdateWindowSurface(window);
             }
