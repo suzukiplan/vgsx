@@ -39,8 +39,8 @@ static void screenShot()
     ptr += 4;
     BitmapHeader header;
     header.isize = 40;
-    header.width = VDP_WIDTH * 2;
-    header.height = VDP_HEIGHT * 2;
+    header.width = vgsx.getDisplayWidth();
+    header.height = vgsx.getDisplayHeight();
     header.planes = 1;
     header.bits = 32;
     header.ctype = 0;
@@ -52,16 +52,12 @@ static void screenShot()
     memcpy(&buf[ptr], &header, sizeof(header));
     ptr += sizeof(header);
     uint32_t* display = vgsx.getDisplay();
-    for (int y = 0; y < VDP_HEIGHT; y++) {
-        for (int x = 0; x < VDP_WIDTH; x++) {
-            auto rgb888 = display[(VDP_HEIGHT - 1 - y) * VDP_WIDTH + x];
-            memcpy(&buf[ptr + VDP_WIDTH * 8], &rgb888, 4);
-            memcpy(&buf[ptr + VDP_WIDTH * 8 + 4], &rgb888, 4);
+    for (int y = 0; y < vgsx.getDisplayHeight(); y++) {
+        for (int x = 0; x < vgsx.getDisplayWidth(); x++) {
+            auto rgb888 = display[(vgsx.getDisplayHeight() - 1 - y) * vgsx.getDisplayWidth() + x];
             memcpy(&buf[ptr], &rgb888, 4);
-            memcpy(&buf[ptr + 4], &rgb888, 4);
-            ptr += 8;
+            ptr += 4;
         }
-        ptr += VDP_WIDTH * 8;
     }
     FILE* fp = fopen("screen.bmp", "wb");
     if (fp) {
