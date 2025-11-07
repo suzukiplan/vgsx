@@ -31,6 +31,10 @@
 #define VDP_BG_NUM 4   /* Number of the BG plan */
 #define VDP_WIDTH 320  /* Width of the Screen */
 #define VDP_HEIGHT 200 /* Height of the Screen */
+#define VDP_DISPLAY_SCALE 2
+#define VDP_DISPLAY_WIDTH (VDP_WIDTH * VDP_DISPLAY_SCALE)
+#define VDP_DISPLAY_HEIGHT (VDP_HEIGHT * VDP_DISPLAY_SCALE)
+#define VDP_DISPLAY_PIXELS (VDP_DISPLAY_WIDTH * VDP_DISPLAY_HEIGHT)
 
 extern "C" {
 extern const int vgsx_sin[360];
@@ -172,17 +176,17 @@ class VDP
     } PropotionalInfo;
 
     struct Context {
-        uint32_t display[VDP_WIDTH * VDP_HEIGHT]; // Virtual Display
-        uint8_t ptn[65536][32];                   // Character Pattern (ROM)
-        uint32_t nametbl[VDP_BG_NUM][65536];      // Name Table
-        OAM oam[1024];                            // OAM
-        uint32_t palette[16][16];                 // Palette
-        PropotionalInfo pinfo[0x80];              // Propotional Info
-        Register reg;                             // Register
-        int wx1[VDP_BG_NUM];                      // BG Window X1
-        int wy1[VDP_BG_NUM];                      // BG Window Y1
-        int wx2[VDP_BG_NUM];                      // BG Window X2
-        int wy2[VDP_BG_NUM];                      // BG Window Y2
+        uint32_t display[VDP_DISPLAY_PIXELS]; // Virtual Display (scaled 2x in both axes)
+        uint8_t ptn[65536][32];               // Character Pattern (ROM)
+        uint32_t nametbl[VDP_BG_NUM][65536];  // Name Table
+        OAM oam[1024];                        // OAM
+        uint32_t palette[16][16];             // Palette
+        PropotionalInfo pinfo[0x80];          // Propotional Info
+        Register reg;                         // Register
+        int wx1[VDP_BG_NUM];                  // BG Window X1
+        int wy1[VDP_BG_NUM];                  // BG Window Y1
+        int wx2[VDP_BG_NUM];                  // BG Window X2
+        int wy2[VDP_BG_NUM];                  // BG Window Y2
     } ctx;
 
     VDP()
@@ -319,7 +323,7 @@ class VDP
         if (this->ctx.reg.skip) {
             return;
         }
-        for (int i = 0; i < VDP_WIDTH * VDP_HEIGHT; i++) {
+        for (int i = 0; i < VDP_DISPLAY_PIXELS; i++) {
             this->ctx.display[i] = this->ctx.palette[0][0];
         }
         for (int i = 0; i < VDP_BG_NUM; i++) {
@@ -528,23 +532,33 @@ class VDP
 
     inline void renderBG(int n)
     {
+        uint32_t* display = this->ctx.display;
+        const int scaledWidth = VDP_DISPLAY_WIDTH;
         if (this->ctx.reg.bmp[n]) {
             // Bitmap Mode
+            uint32_t* vram = this->ctx.nametbl[n];
             for (int y = this->ctx.wy1[n]; y <= this->ctx.wy2[n]; y++) {
-                int dptr = y * VDP_WIDTH + this->ctx.wx1[n];
-                for (int x = this->ctx.wx1[n]; x <= this->ctx.wx2[n]; x++) {
-                    uint32_t col = this->ctx.nametbl[n][dptr];
+                int srcPtr = y * VDP_WIDTH + this->ctx.wx1[n];
+                int dstTop = (y * VDP_DISPLAY_SCALE) * scaledWidth + this->ctx.wx1[n] * VDP_DISPLAY_SCALE;
+                int dstBottom = dstTop + scaledWidth;
+                for (int x = this->ctx.wx1[n]; x <= this->ctx.wx2[n]; x++, srcPtr++) {
+                    uint32_t col = vram[srcPtr];
                     if (col) {
-                        this->ctx.display[dptr] = col;
+                        display[dstTop] = col;
+                        display[dstTop + 1] = col;
+                        display[dstBottom] = col;
+                        display[dstBottom + 1] = col;
                     }
-                    dptr++;
+                    dstTop += VDP_DISPLAY_SCALE;
+                    dstBottom += VDP_DISPLAY_SCALE;
                 }
             }
         } else {
             // Character Pattern Mode
-            int dptr = 0;
             for (int dy = 0; dy < VDP_HEIGHT; dy++) {
                 auto wy = (dy + this->ctx.reg.scrollY[n]) & 0x7FF;
+                int dstTop = (dy * VDP_DISPLAY_SCALE) * scaledWidth;
+                int dstBottom = dstTop + scaledWidth;
                 for (int dx = 0; dx < VDP_WIDTH; dx++) {
                     auto wx = (dx + this->ctx.reg.scrollX[n]) & 0x7FF;
                     auto attr = this->ctx.nametbl[n][(((wy >> 3) & 0xFF) << 8) | (wx >> 3) & 0xFF];
@@ -557,9 +571,14 @@ class VDP
                     if (flipV) py = 7 - py;
                     const uint8_t col = readPatternPixel(attr & 0xFFFF, px, py);
                     if (col) {
-                        this->ctx.display[dptr] = this->ctx.palette[pal][col];
+                        uint32_t color = this->ctx.palette[pal][col];
+                        display[dstTop] = color;
+                        display[dstTop + 1] = color;
+                        display[dstBottom] = color;
+                        display[dstBottom + 1] = color;
                     }
-                    dptr++;
+                    dstTop += VDP_DISPLAY_SCALE;
+                    dstBottom += VDP_DISPLAY_SCALE;
                 }
             }
         }
@@ -588,9 +607,16 @@ class VDP
         bool flipH = (oam->attr & 0x80000000) ? true : false;
         bool flipV = (oam->attr & 0x40000000) ? true : false;
         int32_t angle = 90 - oam->rotate;
-        int scale = oam->scale < 400 ? oam->scale : 400;
-        if (0 == scale) {
-            scale = 100; // default scale
+        const int coordScale = VDP_DISPLAY_SCALE;
+        const int displayWidth = VDP_DISPLAY_WIDTH;
+        const int displayHeight = VDP_DISPLAY_HEIGHT;
+        int scale = oam->scale;
+        if (scale == 0) {
+            scale = 100;
+        }
+        scale *= coordScale;
+        if (scale > 800) {
+            scale = 800;
         }
         angle %= 360;
         if (angle < 0) {
@@ -603,33 +629,34 @@ class VDP
         ratioX /= scaledSizeX;
         double ratioY = size;
         ratioY /= scaledSizeY;
-        int offsetX = (size - scaledSizeX) / 2;
-        int offsetY = (size - scaledSizeY) / 2;
+        int offsetX = ((size * 2 - scaledSizeX) / 2);
+        int offsetY = ((size * 2 - scaledSizeY) / 2);
         int halfSizeX = scaledSizeX / 2;
         int halfSizeY = scaledSizeY / 2;
-        for (int dy = oam->y + offsetY, by = 0; by < scaledSizeY; dy++, by++) {
+        int scaledX = oam->x * coordScale;
+        int scaledY = oam->y * coordScale;
+        for (int dy = scaledY + offsetY, by = 0; by < scaledSizeY; dy++, by++) {
             int py = (int)(by * ratioY);
             int wy = flipH ? size - py - 1 : py;
-            for (int dx = oam->x + offsetX, bx = 0; bx < scaledSizeX; dx++, bx++) {
-                // this->ctx.display[dy * VDP_WIDTH + dx] = 0xFF0000;
+            for (int dx = scaledX + offsetX, bx = 0; bx < scaledSizeX; dx++, bx++) {
                 int px = (int)(bx * ratioX);
                 int wx = flipH ? size - px - 1 : px;
                 int ddy = ((by - halfSizeY) * vgsx_sin[angle] + (bx - halfSizeX) * vgsx_cos[angle]) / 256 + halfSizeY;
-                ddy += oam->y + offsetY;
-                if (ddy < 0 || VDP_HEIGHT <= ddy) {
+                ddy += scaledY + offsetY;
+                if (ddy < 0 || displayHeight <= ddy) {
                     continue; // Out of screen top (check next line)
                 }
                 int ddx = ((bx - halfSizeX) * vgsx_sin[angle] - (by - halfSizeY) * vgsx_cos[angle]) / 256 + halfSizeX;
-                ddx += oam->x + offsetX;
-                if (ddx < 0 || VDP_WIDTH <= ddx) {
+                ddx += scaledX + offsetX;
+                if (ddx < 0 || displayWidth <= ddx) {
                     continue; // Out of screen left (check next pixel)
                 }
                 // Render Pixel
                 const uint8_t col = readSpritePixel(ptn, psize, wx, wy);
                 if (col) {
-                    this->renderSpritePixel(ddy * VDP_WIDTH + ddx, this->ctx.palette[pal][col], oam->alpha, oam->mask);
-                    if (ddx < 319) {
-                        this->renderSpritePixel(ddy * VDP_WIDTH + ddx + 1, this->ctx.palette[pal][col], oam->alpha, oam->mask);
+                    this->renderSpritePixel(ddy * displayWidth + ddx, this->ctx.palette[pal][col], oam->alpha, oam->mask);
+                    if (ddx + 1 < displayWidth) {
+                        this->renderSpritePixel(ddy * displayWidth + ddx + 1, this->ctx.palette[pal][col], oam->alpha, oam->mask);
                     }
                 }
             }

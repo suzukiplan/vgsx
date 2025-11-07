@@ -160,8 +160,8 @@ class VGSX
     void tick();
     void tickSound(int16_t* buf, int samples);
     inline uint32_t* getDisplay() { return this->vdp.ctx.display; }
-    inline int getDisplayWidth() { return VDP_WIDTH; }
-    inline int getDisplayHeight() { return VDP_HEIGHT; }
+    inline int getDisplayWidth() { return VDP_DISPLAY_WIDTH; }
+    inline int getDisplayHeight() { return VDP_DISPLAY_HEIGHT; }
     uint32_t inPort(uint32_t address);
     void outPort(uint32_t address, uint32_t value);
     inline bool isExit() { return this->exitFlag; }
