@@ -589,132 +589,47 @@ class VDP
         bool flipV = (oam->attr & 0x40000000) ? true : false;
         int32_t angle = 90 - oam->rotate;
         int scale = oam->scale < 400 ? oam->scale : 400;
+        if (0 == scale) {
+            scale = 100; // default scale
+        }
         angle %= 360;
         if (angle < 0) {
             angle += 360;
         }
-        if (90 == angle && (0 == scale || 100 == scale)) {
-            // None-rotate & None-scale
-            for (int dy = oam->y, py = 0; dy < oam->y + size; dy++, py++) {
-                if (dy < 0) {
+        // Scale & Rotate
+        int scaledSizeX = oam->slx ? size : size * scale / 100;
+        int scaledSizeY = oam->sly ? size : size * scale / 100;
+        double ratioX = size;
+        ratioX /= scaledSizeX;
+        double ratioY = size;
+        ratioY /= scaledSizeY;
+        int offsetX = (size - scaledSizeX) / 2;
+        int offsetY = (size - scaledSizeY) / 2;
+        int halfSizeX = scaledSizeX / 2;
+        int halfSizeY = scaledSizeY / 2;
+        for (int dy = oam->y + offsetY, by = 0; by < scaledSizeY; dy++, by++) {
+            int py = (int)(by * ratioY);
+            int wy = flipH ? size - py - 1 : py;
+            for (int dx = oam->x + offsetX, bx = 0; bx < scaledSizeX; dx++, bx++) {
+                // this->ctx.display[dy * VDP_WIDTH + dx] = 0xFF0000;
+                int px = (int)(bx * ratioX);
+                int wx = flipH ? size - px - 1 : px;
+                int ddy = ((by - halfSizeY) * vgsx_sin[angle] + (bx - halfSizeX) * vgsx_cos[angle]) / 256 + halfSizeY;
+                ddy += oam->y + offsetY;
+                if (ddy < 0 || VDP_HEIGHT <= ddy) {
                     continue; // Out of screen top (check next line)
                 }
-                if (VDP_HEIGHT <= dy) {
-                    break; // Out of screen bottom (end of rendering a sprite)
+                int ddx = ((bx - halfSizeX) * vgsx_sin[angle] - (by - halfSizeY) * vgsx_cos[angle]) / 256 + halfSizeX;
+                ddx += oam->x + offsetX;
+                if (ddx < 0 || VDP_WIDTH <= ddx) {
+                    continue; // Out of screen left (check next pixel)
                 }
-                int wy = flipV ? size - py - 1 : py;
-                for (int dx = oam->x, px = 0; dx < oam->x + size; dx++, px++) {
-                    if (dx < 0) {
-                        continue; // Out of screen left (check next pixel)
-                    }
-                    if (VDP_WIDTH <= dx) {
-                        break; // Out of screen right (end of rendering a line)
-                    }
-                    // Render Pixel
-                    const int wx = flipH ? size - px - 1 : px;
-                    const uint8_t col = readSpritePixel(ptn, psize, wx, wy);
-                    if (col) {
-                        this->renderSpritePixel(dy * VDP_WIDTH + dx, this->ctx.palette[pal][col], oam->alpha, oam->mask);
-                    }
-                }
-            }
-        } else if (90 == angle && 0 != scale && 100 != scale) {
-            // Scale & None-rotate
-            int scaledSizeX = oam->slx ? size : size * scale / 100;
-            int scaledSizeY = oam->sly ? size : size * scale / 100;
-            double ratioX = size;
-            ratioX /= scaledSizeX;
-            double ratioY = size;
-            ratioY /= scaledSizeY;
-            int offsetX = (size - scaledSizeX) / 2;
-            int offsetY = (size - scaledSizeY) / 2;
-            for (int dy = oam->y + offsetY, by = 0; by < scaledSizeY; dy++, by++) {
-                if (dy < 0) {
-                    continue; // Out of screen top (check next line)
-                }
-                if (VDP_HEIGHT <= dy) {
-                    break; // Out of screen bottom (end of rendering a sprite)
-                }
-                int py = (int)(by * ratioY);
-                int wy = flipH ? size - py - 1 : py;
-                for (int dx = oam->x + offsetX, bx = 0; bx < scaledSizeX; dx++, bx++) {
-                    if (dx < 0) {
-                        continue; // Out of screen left (check next pixel)
-                    }
-                    if (VDP_WIDTH <= dx) {
-                        break; // Out of screen right (end of rendering a line)
-                    }
-                    // this->ctx.display[dy * VDP_WIDTH + dx] = 0xFF0000;
-                    int px = (int)(bx * ratioX);
-                    const int wx = flipH ? size - px - 1 : px;
-                    const uint8_t col = readSpritePixel(ptn, psize, wx, wy);
-                    if (col) {
-                        this->renderSpritePixel(dy * VDP_WIDTH + dx, this->ctx.palette[pal][col], oam->alpha, oam->mask);
-                    }
-                }
-            }
-        } else if (0 == scale || 100 == scale) {
-            // Rotate & None-scale
-            int halfSize = size / 2;
-            for (int py = 0; py < size; py++) {
-                int wy = flipV ? size - py - 1 : py;
-                for (int px = 0; px < size; px++) {
-                    int dy = oam->y + ((py - halfSize) * vgsx_sin[angle] + (px - halfSize) * vgsx_cos[angle]) / 256 + halfSize;
-                    if (dy < 0 || VDP_HEIGHT <= dy) {
-                        continue; // Out of screen top (check next line)
-                    }
-                    int dx = oam->x + ((px - halfSize) * vgsx_sin[angle] - (py - halfSize) * vgsx_cos[angle]) / 256 + halfSize;
-                    if (dx < 0 || VDP_WIDTH <= dx) {
-                        continue; // Out of screen left (check next pixel)
-                    }
-                    // Render Pixel
-                    const int wx = flipH ? size - px - 1 : px;
-                    const uint8_t col = readSpritePixel(ptn, psize, wx, wy);
-                    if (col) {
-                        int ptr = dy * VDP_WIDTH + dx;
-                        this->renderSpritePixel(ptr, this->ctx.palette[pal][col], oam->alpha, oam->mask);
-                        if (dx < 319) {
-                            this->renderSpritePixel(ptr + 1, this->ctx.palette[pal][col], oam->alpha, oam->mask);
-                        }
-                    }
-                }
-            }
-        } else {
-            // Scale & Rotate
-            int scaledSizeX = oam->slx ? size : size * scale / 100;
-            int scaledSizeY = oam->sly ? size : size * scale / 100;
-            double ratioX = size;
-            ratioX /= scaledSizeX;
-            double ratioY = size;
-            ratioY /= scaledSizeY;
-            int offsetX = (size - scaledSizeX) / 2;
-            int offsetY = (size - scaledSizeY) / 2;
-            int halfSizeX = scaledSizeX / 2;
-            int halfSizeY = scaledSizeY / 2;
-            for (int dy = oam->y + offsetY, by = 0; by < scaledSizeY; dy++, by++) {
-                int py = (int)(by * ratioY);
-                int wy = flipH ? size - py - 1 : py;
-                for (int dx = oam->x + offsetX, bx = 0; bx < scaledSizeX; dx++, bx++) {
-                    // this->ctx.display[dy * VDP_WIDTH + dx] = 0xFF0000;
-                    int px = (int)(bx * ratioX);
-                    int wx = flipH ? size - px - 1 : px;
-                    int ddy = ((by - halfSizeY) * vgsx_sin[angle] + (bx - halfSizeX) * vgsx_cos[angle]) / 256 + halfSizeY;
-                    ddy += oam->y + offsetY;
-                    if (ddy < 0 || VDP_HEIGHT <= ddy) {
-                        continue; // Out of screen top (check next line)
-                    }
-                    int ddx = ((bx - halfSizeX) * vgsx_sin[angle] - (by - halfSizeY) * vgsx_cos[angle]) / 256 + halfSizeX;
-                    ddx += oam->x + offsetX;
-                    if (ddx < 0 || VDP_WIDTH <= ddx) {
-                        continue; // Out of screen left (check next pixel)
-                    }
-                    // Render Pixel
-                    const uint8_t col = readSpritePixel(ptn, psize, wx, wy);
-                    if (col) {
-                        this->renderSpritePixel(ddy * VDP_WIDTH + ddx, this->ctx.palette[pal][col], oam->alpha, oam->mask);
-                        if (ddx < 319) {
-                            this->renderSpritePixel(ddy * VDP_WIDTH + ddx + 1, this->ctx.palette[pal][col], oam->alpha, oam->mask);
-                        }
+                // Render Pixel
+                const uint8_t col = readSpritePixel(ptn, psize, wx, wy);
+                if (col) {
+                    this->renderSpritePixel(ddy * VDP_WIDTH + ddx, this->ctx.palette[pal][col], oam->alpha, oam->mask);
+                    if (ddx < 319) {
+                        this->renderSpritePixel(ddy * VDP_WIDTH + ddx + 1, this->ctx.palette[pal][col], oam->alpha, oam->mask);
                     }
                 }
             }
