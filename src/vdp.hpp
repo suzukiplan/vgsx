@@ -623,8 +623,8 @@ class VDP
             angle += 360;
         }
         // Scale & Rotate
-        int scaledSizeX = oam->slx ? size : size * scale / 100;
-        int scaledSizeY = oam->sly ? size : size * scale / 100;
+        int scaledSizeX = oam->slx ? size * 200 / 100 : size * scale / 100;
+        int scaledSizeY = oam->sly ? size * 200 / 100 : size * scale / 100;
         double ratioX = size;
         ratioX /= scaledSizeX;
         double ratioY = size;
