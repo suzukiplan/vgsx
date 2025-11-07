@@ -655,7 +655,7 @@ class VDP
                 const uint8_t col = readSpritePixel(ptn, psize, wx, wy);
                 if (col) {
                     this->renderSpritePixel(ddy * displayWidth + ddx, this->ctx.palette[pal][col], oam->alpha, oam->mask);
-                    if (ddx + 1 < displayWidth) {
+                    if (angle % 90 && ddx + 1 < displayWidth) {
                         this->renderSpritePixel(ddy * displayWidth + ddx + 1, this->ctx.palette[pal][col], oam->alpha, oam->mask);
                     }
                 }
