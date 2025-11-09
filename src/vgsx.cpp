@@ -376,7 +376,7 @@ bool VGSX::extractRom(const uint8_t* program, int programSize)
             if (!vgsx.loadPattern(pindex, ptr, size)) {
                 return false;
             }
-            this->putlog(LogLevel::I, "CHR load succeed. (%d patterns)\n", size / 32);
+            this->putlog(LogLevel::I, "CHR load succeed. (%d patterns)", size / 32);
             pindex += size / 32;
             ptr += size;
         } else if (0 == memcmp(ptr, "VGM", 4)) {
@@ -398,7 +398,7 @@ bool VGSX::extractRom(const uint8_t* program, int programSize)
             this->putlog(LogLevel::I, "WAV load succeed.");
             ptr += size;
         } else {
-            this->setLastError("Unknown chunk: %c%c%c\n", ptr[0], ptr[1], ptr[2]);
+            this->setLastError("Unknown chunk: %c%c%c", ptr[0], ptr[1], ptr[2]);
             return false;
         }
     }
