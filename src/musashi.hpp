@@ -4165,8 +4165,6 @@ extern unsigned char m68ki_cycles[][0x10000];
 #include <stdio.h>
 #include <stdarg.h>
 
-extern void exit(int);
-
 static void fatalerror(const char* format, ...)
 {
     va_list ap;
@@ -44035,8 +44033,8 @@ static void d68000_move_to_usp(void)
 static void d68010_movec(void)
 {
     uint extension;
-    char* reg_name;
-    char* processor;
+    const char* reg_name;
+    const char* processor;
     LIMIT_CPU_TYPES(M68010_PLUS);
     extension = read_imm_16();
 
@@ -48239,7 +48237,7 @@ float32 float32_rem(float32 a, float32 b)
         while (0 < expDiff) {
             q64 = estimateDiv128To64(aSig64, 0, bSig64);
             q64 = (2 < q64) ? q64 - 2 : 0;
-            aSig64 = -((bSig * q64) << 38);
+            aSig64 = (bits64)0 - ((bSig * q64) << 38);
             expDiff -= 62;
         }
         expDiff += 64;
@@ -48260,7 +48258,7 @@ float32 float32_rem(float32 a, float32 b)
     }
     zSign = ((sbits32)aSig < 0);
     if (zSign) {
-        aSig = -aSig;
+        aSig = (bits32)0 - aSig;
     }
     return normalizeRoundAndPackFloat32(aSign ^ zSign, bExp, aSig);
 }
@@ -49198,7 +49196,7 @@ float64 float64_rem(float64 a, float64 b)
     while (0 < expDiff) {
         q = estimateDiv128To64(aSig, 0, bSig);
         q = (2 < q) ? q - 2 : 0;
-        aSig = -((bSig >> 2) * q);
+        aSig = (bits64)0 - ((bSig >> 2) * q);
         expDiff -= 62;
     }
     expDiff += 64;
@@ -49223,7 +49221,7 @@ float64 float64_rem(float64 a, float64 b)
     }
     zSign = ((sbits64)aSig < 0);
     if (zSign) {
-        aSig = -aSig;
+        aSig = (bits64)0 - aSig;
     }
     return normalizeRoundAndPackFloat64(aSign ^ zSign, bExp, aSig);
 }

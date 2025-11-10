@@ -24,6 +24,7 @@
  */
 
 #include <stdarg.h>
+#include <math.h>
 #include "vgsx.h"
 #include "musashi.hpp"
 #include "vgs_io.h"
