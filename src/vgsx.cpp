@@ -1246,7 +1246,7 @@ VGSX::ButtonId VGSX::getButtonIdA()
     switch (this->gamepadType) {
         case GamepadType::Keyboard: return ButtonId::Z;
         case GamepadType::XBOX: return ButtonId::A;
-        case GamepadType::NintendoSwitch: return ButtonId::B;
+        case GamepadType::NintendoSwitch: return ButtonId::A;
         case GamepadType::PlayStation: return ButtonId::Cross;
         default: return ButtonId::Unknown;
     }
@@ -1257,7 +1257,7 @@ VGSX::ButtonId VGSX::getButtonIdB()
     switch (this->gamepadType) {
         case GamepadType::Keyboard: return ButtonId::X;
         case GamepadType::XBOX: return ButtonId::B;
-        case GamepadType::NintendoSwitch: return ButtonId::A;
+        case GamepadType::NintendoSwitch: return ButtonId::B;
         case GamepadType::PlayStation: return ButtonId::Circle;
         default: return ButtonId::Unknown;
     }
@@ -1268,7 +1268,7 @@ VGSX::ButtonId VGSX::getButtonIdX()
     switch (this->gamepadType) {
         case GamepadType::Keyboard: return ButtonId::A;
         case GamepadType::XBOX: return ButtonId::X;
-        case GamepadType::NintendoSwitch: return ButtonId::Y;
+        case GamepadType::NintendoSwitch: return ButtonId::X;
         case GamepadType::PlayStation: return ButtonId::Square;
         default: return ButtonId::Unknown;
     }
@@ -1279,7 +1279,7 @@ VGSX::ButtonId VGSX::getButtonIdY()
     switch (this->gamepadType) {
         case GamepadType::Keyboard: return ButtonId::S;
         case GamepadType::XBOX: return ButtonId::Y;
-        case GamepadType::NintendoSwitch: return ButtonId::X;
+        case GamepadType::NintendoSwitch: return ButtonId::Y;
         case GamepadType::PlayStation: return ButtonId::Triangle;
         default: return ButtonId::Unknown;
     }
