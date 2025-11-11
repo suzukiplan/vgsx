@@ -4,6 +4,7 @@
 
 - Support 4k Display
 - Added Calendar API
+- Added Software Reset API
 - Added `slx` and `sly` (Scale Lock X/Y) to OAM.
 - Added `pri` (High Priority Flag) to OAM.
 
