@@ -1078,6 +1078,10 @@ void VGSX::outPort(uint32_t address, uint32_t value)
             return;
         }
 
+        case VGS_ADDR_RESET:
+            this->reset();
+            return;
+
         case VGS_ADDR_EXIT:
             this->exitFlag = true;
             this->exitCode = (int32_t)value;

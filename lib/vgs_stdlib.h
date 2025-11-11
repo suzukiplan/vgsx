@@ -49,6 +49,11 @@ uint16_t vgs_rand(void);
 uint32_t vgs_rand32(void);
 
 /**
+ * @brief Software Reset
+ */
+void vgs_reset(void);
+
+/**
  * @brief Exit processs
  * @param code Exit code
  */

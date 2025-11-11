@@ -640,6 +640,7 @@ Note that all addresses and values for I/O instructions must be specified as 32-
 | 0xE0400C |  o  |  -  | [Calendar: Hour](#0xe040xxin---calendar)|
 | 0xE04010 |  o  |  -  | [Calendar: Minute](#0xe040xxin---calendar)|
 | 0xE04014 |  o  |  -  | [Calendar: Second](#0xe040xxin---calendar)|
+| 0xE7FFF8 |  -  |  o  | [Reset](#0xe7fff8out---reset) |
 | 0xE7FFFC |  -  |  o  | [Exit](#0xe7fffcout---exit) |
 | 0xE80000 ~ 0xE8FFFC | o | o | [User-Defined I/O](#0xe8xxxxio---user-defined-io) |
 
@@ -967,6 +968,10 @@ Retrieves the numerical representation of the current date and time in Coordinat
 - 0xE0400C: Hour (0 to 23)
 - 0xE04010: Minute (0 to 59)
 - 0xE04014: Second (0 to 59)
+
+### 0xE7FFF8[out] - Reset
+
+Issuing a reset request for VGS-X.
 
 ### 0xE7FFFC[out] - Exit
 
