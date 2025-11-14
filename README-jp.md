@@ -392,12 +392,14 @@ Size 3 Pattern Number Layout
 
 ### (Scale of Sprite)
 
-- `scale` には 0（無効）または 1～400 の倍率（パーセンテージ）を指定できます。
+- `scale` に 0〜400 の範囲で拡大率（パーセンテージ）を指定できます。
 - `slx` または `sly` のいずれかを 0 以外の値に設定すると、X 軸または Y 軸のいずれかのスケーリングが防止されます。
 
 ### (Alpha Blend of Sprite)
 
-アルファ値に非 0 を指定することでアルファブレンド描画を行えます。RGB 各成分に異なるアルファ値を設定することも可能です。
+`alpha` にアルファブレンド値を 0x000000〜0xFFFFFF の範囲で指定できます。
+
+RGB 各成分に異なるアルファ値を設定できます:
 
 - 0xFF0000 を指定すると赤成分のみを描画
 - 0x00FF00 を指定すると緑成分のみを描画
@@ -1015,6 +1017,7 @@ VGS Standard Library（Video Game System Standard Library）は、VGS-X と将�
 | cg:sp | `vgs_sprite` | [OAM](#oam-object-attribute-memory) をまとめて設定する |
 | cg:sp | `vgs_sprite_hide_all` | すべてのスプライトを非表示にする |
 | cg:sp | `vgs_oam` | [OAM](#oam-object-attribute-memory) レコードを取得する |
+| cg:sp | `vgs_sprite_alpha8` | スプライトのアルファ値を8bitで設定する |
 | bmpfont | `vgs_pfont_init` | [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) を初期化する |
 | bmpfont | `vgs_pfont_get` | [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) 情報を取得する |
 | bmpfont | `vgs_pfont_set` | [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) 情報を設定する |

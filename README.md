@@ -404,20 +404,18 @@ The Sprite rotation feature is useful when combined with the [Angle](#0xe00100-0
 
 ### (Scale of Sprite)
 
-- You can specify the magnification rate as a percentage on the `scale`, either 0 (disabled) or within the range of 1 to 400.
+- You can specify the magnification rate as a percentage on the `scale` within the range of 0 to 400.
 - Setting either `slx` or `sly` to a value other than zero will prevent scaling of either the X or Y axis.
 
 ### (Alpha Blend of Sprite)
 
-You can perform alpha blending by setting the alpha component of the OAM to a non-zero value.
+You can specify the alpha blend value for `alpha` in the range of 0x000000 to 0xFFFFFF.
 
-For VGS-X, you can set different alpha values for each RGB color component.
+You can assign different alpha values to each RGB component:
 
-For example:
-
-- Providing 0xFF0000 draws only the red pigment
-- Providing 0x00FF00 draws only the green pigment
-- Providing 0x0000FF draws only the blue pigment
+- Specifying 0xFF0000 renders only the red component.
+- Specifying 0x00FF00 renders only the green component.
+- Specifying 0x0000FF renders only the blue component.
 
 ### (Mask of Sprite)
 
@@ -1049,6 +1047,7 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | cg:sp | `vgs_sprite` | Set [OAM](#oam-object-attribute-memory) attribute values in bulk |
 | cg:sp | `vgs_sprite_hide_all` | Make all sprites invisible. |
 | cg:sp | `vgs_oam` | Get an [OAM](#oam-object-attribute-memory) record. |
+| cg:sp | `vgs_sprite_alpha8` | Set the sprite's alpha value with 8-bit precision. |
 | bmpfont | `vgs_pfont_init` | [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) Initialization. |
 | bmpfont | `vgs_pfont_get` | Acquiring [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) Information. |
 | bmpfont | `vgs_pfont_set` | Setting [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) Information. |

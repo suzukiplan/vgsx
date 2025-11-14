@@ -159,8 +159,8 @@ class VDP
         uint32_t attr;        // Attribute
         uint32_t size;        // Size (0: 8x8, 1: 16x16, 2: 24x24, 3: 32x32 ... 31: 256x256)
         int32_t rotate;       // Rotate (-360 ~ 360)
-        uint32_t scale;       // Scale (0: disabled, or 1 ~ 400 percent)
-        uint32_t alpha;       // Alpha (0: disabled, or 0x000001 ~ 0xFFFFFF)
+        uint32_t scale;       // Scale (0 ~ 400 percent)
+        uint32_t alpha;       // Alpha (0x000000 ~ 0xFFFFFF)
         uint32_t mask;        // Mask (0: disabled, or RGB888)
         uint32_t sly;         // Scale Lock (Y)
         uint32_t slx;         // Scale Lock (X)
@@ -611,8 +611,8 @@ class VDP
         const int displayWidth = VDP_DISPLAY_WIDTH;
         const int displayHeight = VDP_DISPLAY_HEIGHT;
         int scale = oam->scale;
-        if (scale == 0) {
-            scale = 100;
+        if (scale == 0 || oam->alpha == 0) {
+            return;
         }
         scale *= coordScale;
         if (scale > 800) {
@@ -668,7 +668,10 @@ class VDP
         if (mask) {
             color = mask;
         }
-        if (0 == alpha || 0xFFFFFF == (alpha & 0xFFFFFF)) {
+        if (0 == (alpha & 0xFFFFFF)) {
+            return;
+        }
+        if (0xFFFFFF == (alpha & 0xFFFFFF)) {
             this->ctx.display[displayAddress] = color;
             return;
         }

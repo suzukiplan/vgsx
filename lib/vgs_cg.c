@@ -164,5 +164,6 @@ void vgs_sprite(uint16_t n, BOOL visible, int16_t x, int16_t y, uint8_t size, ui
     OAM[n].attr <<= 16;
     OAM[n].attr |= ptn;
     OAM[n].rotate = 0;
-    OAM[n].scale = 0;
+    OAM[n].scale = 100;
+    OAM[n].alpha = 0xFFFFFF;
 }

@@ -434,7 +434,6 @@ static inline void vgs_sprite_priority(uint8_t bg)
  * @param size Sprite size (0: 8x8, 1: 16x16, 2: 24x24 ... 15: 256x256)
  * @param pal Palette number (0 to 15)
  * @param ptn Character pattern number (0 to 65535)
- * @remark Scale and rotation are reset to disabled (0).
  * @remark Drawing outside the screen area will be skipped.
  * @remark Individual parameters can be referenced and/or updated via OAM[n].
  */
@@ -458,6 +457,21 @@ static inline void vgs_sprite_hide_all(void)
 static inline ObjectAttributeMemory* vgs_oam(uint16_t n)
 {
     return &OAM[n];
+}
+
+/**
+ * @brief Set the sprite's alpha value with 8-bit precision.
+ * @param oam   Target OAM.
+ * @param alpha Alpha value (0x00 to 0xFF).
+ */
+static inline void vgs_sprite_alpha8(ObjectAttributeMemory* oam, uint8_t alpha)
+{
+    uint32_t alpha24 = alpha;
+    alpha24 <<= 8;
+    alpha24 |= alpha;
+    alpha24 <<= 8;
+    alpha24 |= alpha;
+    oam->alpha = alpha24;
 }
 
 #ifdef __cplusplus
