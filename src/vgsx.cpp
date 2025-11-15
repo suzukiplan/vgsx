@@ -586,7 +586,9 @@ void VGSX::reset(void)
         return;
     }
     m68k_pulse_reset();
-    m68k_set_reg(M68K_REG_SP, 0);
+    constexpr uint32_t RAM_BASE = 0xF00000;
+    const uint32_t ramSize = sizeof(this->ctx.ram);
+    m68k_set_reg(M68K_REG_SP, RAM_BASE + ramSize - 4);
     this->detectReferVSync = false;
     this->exitFlag = false;
     this->exitCode = 0;
