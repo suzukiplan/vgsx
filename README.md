@@ -1189,6 +1189,7 @@ It is primarily provided for debugging purposes during game development.
 
 ```
 usage: vgsx [-i]
+            [-d]
             [-g /path/to/pattern.chr]
             [-c /path/to/palette.bin]
             [-b /path/to/bgm.vgm]
@@ -1198,6 +1199,7 @@ usage: vgsx [-i]
 ```
 
 - Specifying the `-i` option causes the application to launch after the boot logo appears. In this case, the file must be in the ROM format created by [`makerom`](#makerom) command.
+- When the `-d` option is specified, the RAM and save data will be dumped when the program exits.
 - The `-g`, `-b`, and `-s` options can be specified multiple times.
 - Program file (`.elf`) or ROM file (`rom`) are automatically identified based on the header information in the file header.
 - The `-x` option is intended for use in testing environments such as CI. If the exit code specified by the user program matches the expected value, the process exits with 0; otherwise, it exits with -1. When this option is specified, SDL video and audio output is skipped.
