@@ -475,5 +475,5 @@ RAM usage: 256/1048576 (0%)
 
 Average MC68030 Clocks: 5.6MHz per second.
 Maximum MC68030 Clocks: 5.6MHz per second.
-Detect exit: code=59
+Detect exit: code=59 (0x0000003B)
 Excpected!

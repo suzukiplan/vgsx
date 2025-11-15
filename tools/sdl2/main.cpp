@@ -500,7 +500,7 @@ int main(int argc, char* argv[])
 
     if (vgsx.isExit()) {
         auto exitCode = vgsx.getExitCode();
-        printf("Detect exit: code=%d\n", exitCode);
+        printf("Detect exit: code=%d (0x%08X)\n", exitCode, exitCode);
         if (consoleMode) {
             if (expectedExitCode == exitCode) {
                 puts("Excpected!");
