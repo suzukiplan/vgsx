@@ -1,4 +1,5 @@
 CC = m68k-elf-gcc -m68030 -O2 -I./ -I../src -c
+AS = m68k-elf-as
 
 LIBCOBJ = vgs_system.o
 LIBCOBJ += vgs_cg.o
@@ -9,6 +10,7 @@ LIBCOBJ += vgs_ctype.o
 LIBCOBJ += vgs_save.o
 LIBCOBJ += vgs_key.o
 LIBCOBJ += vgs_bmpfont.o
+LIBCOBJ += vectors.o
 
 all: libc.a liblog.a
 	cp -p vgs_io.h ../src
@@ -23,7 +25,10 @@ libc.a: ${LIBCOBJ}
 liblog.a: log.o
 	m68k-elf-ar rcs $@ $<
 
-.SUFFIXES: .c .o
+.SUFFIXES: .c .s .o
 
 .c.o:
 	${CC} $<
+
+.s.o:
+	${AS} -o $@ $<

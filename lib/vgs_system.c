@@ -41,3 +41,33 @@ void vgs_vsync(void)
 {
     _vsync = VGS_IN_VSYNC;
 }
+
+void _bus_error(void)
+{
+    VGS_OUT_EXIT = 0xDEAD0000;
+}
+
+void _address_error(void)
+{
+    VGS_OUT_EXIT = 0xDEAD0001;
+}
+
+void _illegal(void)
+{
+    VGS_OUT_EXIT = 0xDEAD0002;
+}
+
+void _zero_div(void)
+{
+    VGS_OUT_EXIT = 0xDEAD0003;
+}
+
+void _chk_inst(void)
+{
+    VGS_OUT_EXIT = 0xDEAD0004;
+}
+
+void _trapv(void)
+{
+    VGS_OUT_EXIT = 0xDEAD0005;
+}
