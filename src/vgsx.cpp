@@ -23,6 +23,7 @@
  * THE SOFTWARE.
  */
 
+#include <algorithm>
 #include <stdarg.h>
 #include <math.h>
 #include "vgsx.h"
@@ -610,7 +611,14 @@ void VGSX::reset(void)
     putlog(LogLevel::I, "M68K_REG_PC = 0x%06X", eh.e_entry);
     m68k_set_reg(M68K_REG_PC, eh.e_entry);
 
-    // Search an Executable Code
+    constexpr uint32_t RAM_BASE = 0xF00000;
+    const uint32_t ramSize = static_cast<uint32_t>(sizeof(this->ctx.ram));
+    const uint64_t ramLimit = static_cast<uint64_t>(RAM_BASE) + ramSize;
+
+    // Reset RAM
+    memset(this->ctx.ram, 0xFF, sizeof(this->ctx.ram));
+
+    // Search an Executable Code and initialize RAM segments
     for (uint32_t i = 0, off = eh.e_phoff; i < eh.e_phnum; i++, off += eh.e_phentsize) {
         Elf32_Phdr ph;
         memcpy(&ph, &this->ctx.elf[off], eh.e_phentsize);
@@ -630,45 +638,41 @@ void VGSX::reset(void)
                ph.p_filesz,
                ph.p_memsz,
                ph.p_flags);
-        if (ph.p_type == 1) {
-            if (0 == ph.p_paddr && (ph.p_flags & 0x01)) {
-                this->ctx.program = &this->ctx.elf[ph.p_offset];
-                this->ctx.programSize = ph.p_memsz;
-            }
+        if (ph.p_type == 1 && 0 == ph.p_paddr && (ph.p_flags & 0x01)) {
+            this->ctx.program = &this->ctx.elf[ph.p_offset];
+            this->ctx.programSize = ph.p_memsz;
         }
-    }
-
-    // Reset RAM
-    memset(this->ctx.ram, 0xFF, sizeof(this->ctx.ram));
-    // ELF section data relocate to RAM from ROM
-    for (uint32_t i = 0, off = eh.e_shoff; i < eh.e_shnum; i++, off += eh.e_shentsize) {
-        Elf32_Shdr sh;
-        memcpy(&sh, &this->ctx.elf[off], eh.e_shentsize);
-        sh.sh_name = b2h32(sh.sh_name);
-        sh.sh_type = b2h32(sh.sh_type);
-        sh.sh_flags = b2h32(sh.sh_flags);
-        sh.sh_addr = b2h32(sh.sh_addr);
-        sh.sh_offset = b2h32(sh.sh_offset);
-        sh.sh_size = b2h32(sh.sh_size);
-        sh.sh_link = b2h32(sh.sh_link);
-        sh.sh_info = b2h32(sh.sh_info);
-        putlog(LogLevel::I, ".section:%s flags=%d, addr=0x%06X, offset=0x%06X, size=%d, link=%d, info=%d",
-               elf32_section_type(sh.sh_type).c_str(),
-               sh.sh_flags,
-               sh.sh_addr,
-               sh.sh_offset,
-               sh.sh_size,
-               sh.sh_link,
-               sh.sh_info);
-        if (0xF00000 <= sh.sh_addr) {
-            if (sh.sh_type == 8) {
-                memset(&this->ctx.ram[sh.sh_addr & 0xFFFFF], 0, sh.sh_size);
-                putlog(LogLevel::I, "- RAM Cleared: 0x%X to 0x%X", sh.sh_addr, (sh.sh_addr) + sh.sh_size - 1);
-            } else {
-                memcpy(&this->ctx.ram[sh.sh_addr & 0xFFFFF],
-                       &this->ctx.elf[sh.sh_offset],
-                       sh.sh_size);
-                putlog(LogLevel::I, "- RAM Copied: 0x%X from ELF:0x%X (%u bytes)", sh.sh_addr, sh.sh_offset, sh.sh_size);
+        if (ph.p_type == 1 && ph.p_memsz) {
+            uint32_t loadAddress = ph.p_paddr ? ph.p_paddr : ph.p_vaddr;
+            uint64_t segStart = loadAddress;
+            uint64_t segEnd = segStart + ph.p_memsz;
+            if (segEnd > RAM_BASE && segStart < ramLimit) {
+                uint64_t ramSegStart = std::max<uint64_t>(segStart, RAM_BASE);
+                uint64_t ramSegEnd = std::min<uint64_t>(segEnd, ramLimit);
+                uint32_t memBytes = static_cast<uint32_t>(ramSegEnd - ramSegStart);
+                uint32_t ramOffset = static_cast<uint32_t>(ramSegStart - RAM_BASE);
+                uint64_t segCopyStart64 = ramSegStart - segStart;
+                uint32_t copyBytes = 0;
+                if (segCopyStart64 < ph.p_filesz) {
+                    uint32_t segCopyStart = static_cast<uint32_t>(segCopyStart64);
+                    uint32_t available = ph.p_filesz - segCopyStart;
+                    copyBytes = (available < memBytes) ? available : memBytes;
+                    if (copyBytes) {
+                        memcpy(&this->ctx.ram[ramOffset],
+                               &this->ctx.elf[ph.p_offset + segCopyStart],
+                               copyBytes);
+                    }
+                }
+                if (memBytes > copyBytes) {
+                    memset(&this->ctx.ram[ramOffset + copyBytes], 0, memBytes - copyBytes);
+                }
+                putlog(LogLevel::I,
+                       "- RAM Segment: 0x%06X-0x%06X (copied %u bytes from ELF:0x%X, zeroed %u bytes)",
+                       static_cast<uint32_t>(ramSegStart),
+                       static_cast<uint32_t>(ramSegEnd - 1),
+                       copyBytes,
+                       ph.p_offset + static_cast<uint32_t>(segCopyStart64),
+                       memBytes - copyBytes);
             }
         }
     }
