@@ -32,6 +32,8 @@
 #include "utf8_to_sjis.h"
 #include "vgmdrv.hpp"
 
+#define LIMIT_CLOCKS 1000000000
+
 static int illegal_instruction_logger(int opcode);
 static VGSX* g_vgsx_instance = nullptr;
 
@@ -710,6 +712,10 @@ void VGSX::tick(void)
     while (!this->detectReferVSync && !this->exitFlag) {
         m68k_execute(4);
         this->ctx.frameClocks += 4;
+        if (LIMIT_CLOCKS < this->ctx.frameClocks) {
+            putlog(LogLevel::E, "Detected an over clocks");
+            exit(-1);
+        }
     }
     this->vdp.render();
 
