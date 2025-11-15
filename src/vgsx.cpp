@@ -32,7 +32,7 @@
 #include "utf8_to_sjis.h"
 #include "vgmdrv.hpp"
 
-#define LIMIT_CLOCKS 1000000000
+#define LIMIT_CLOCKS 100000000
 
 static int illegal_instruction_logger(int opcode);
 static VGSX* g_vgsx_instance = nullptr;
