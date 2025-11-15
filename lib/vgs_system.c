@@ -27,14 +27,17 @@
 static volatile uint32_t _vsync;
 extern int main(int argc, char* argv[]);
 
-void crt0(void)
+static inline void hang_up(void)
 {
-    vgs_exit(main(0, (char**)0));
-
-    // Hang-up after exit
     while (1) {
         vgs_vsync();
     }
+}
+
+void crt0(void)
+{
+    vgs_exit(main(0, (char**)0));
+    hang_up();
 }
 
 void vgs_vsync(void)
@@ -45,29 +48,35 @@ void vgs_vsync(void)
 void _bus_error(void)
 {
     VGS_OUT_EXIT = 0xDEAD0000;
+    hang_up();
 }
 
 void _address_error(void)
 {
     VGS_OUT_EXIT = 0xDEAD0001;
+    hang_up();
 }
 
 void _illegal(void)
 {
     VGS_OUT_EXIT = 0xDEAD0002;
+    hang_up();
 }
 
 void _zero_div(void)
 {
     VGS_OUT_EXIT = 0xDEAD0003;
+    hang_up();
 }
 
 void _chk_inst(void)
 {
     VGS_OUT_EXIT = 0xDEAD0004;
+    hang_up();
 }
 
 void _trapv(void)
 {
     VGS_OUT_EXIT = 0xDEAD0005;
+    hang_up();
 }
