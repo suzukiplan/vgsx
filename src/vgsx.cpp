@@ -32,6 +32,9 @@
 #include "utf8_to_sjis.h"
 #include "vgmdrv.hpp"
 
+static int illegal_instruction_logger(int opcode);
+static VGSX* g_vgsx_instance = nullptr;
+
 VGSX vgsx;
 
 #define FADEOUT_FRAMES 100
@@ -248,6 +251,20 @@ extern "C" void m68k_write_memory_32(uint32_t address, uint32_t value)
     }
 }
 
+static int illegal_instruction_logger(int opcode)
+{
+    uint32_t pc = m68k_get_reg(nullptr, M68K_REG_PC);
+    uint32_t sp = m68k_get_reg(nullptr, M68K_REG_SP);
+    if (g_vgsx_instance) {
+        g_vgsx_instance->putlog(VGSX::LogLevel::E,
+                                "Illegal opcode 0x%04X at PC=0x%06X (SP=0x%06X)",
+                                opcode & 0xFFFF,
+                                pc & 0xFFFFFF,
+                                sp & 0xFFFFFF);
+    }
+    return 0; // fall through to normal illegal exception handling
+}
+
 VGSX::VGSX()
 {
     this->vgmdrv = new VgmDriver(44100, 2);
@@ -265,6 +282,8 @@ VGSX::VGSX()
     memset(&this->key, 0, sizeof(this->key));
     m68k_set_cpu_type(M68K_CPU_TYPE_68030);
     m68k_init();
+    g_vgsx_instance = this;
+    m68k_set_illg_instr_callback(illegal_instruction_logger);
     this->reset();
 }
 
