@@ -26,6 +26,8 @@
 
 static volatile uint32_t _vsync;
 extern int main(int argc, char* argv[]);
+extern void __vgs_vectors(void);
+static void (*const __keep_vectors)(void) __attribute__((used)) = __vgs_vectors;
 
 static inline void hang_up(void)
 {
