@@ -637,7 +637,7 @@ void VGSX::reset(void)
     m68k_set_reg(M68K_REG_PC, eh.e_entry);
 
     // Reset RAM
-    memset(this->ctx.ram, 0xFF, sizeof(this->ctx.ram));
+    memset(this->ctx.ram, 0x00, sizeof(this->ctx.ram));
 
     // Search an Executable Code and initialize RAM segments
     for (uint32_t i = 0, off = eh.e_phoff; i < eh.e_phnum; i++, off += eh.e_phentsize) {
