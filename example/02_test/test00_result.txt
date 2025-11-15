@@ -105,11 +105,11 @@ vgs_chr_width() = 40
 vgs_chr_height() = 25
 vgs_draw_width() = 320
 vgs_draw_height() = 200
-vgs_save(4294967204,80)
+vgs_save(16777120,80)
 [notice] save.dat wrote (80 bytes)
 vgs_save_check() = 80
 [notice] save.dat read (80 bytes)
-vgs_load(4294967204) = 80
+vgs_load(16777120) = 80
 [notice] save010.dat wrote (300 bytes)
 [notice] save010.dat read (300 bytes)
 vgs_seq_read = 0
@@ -422,7 +422,7 @@ vgs_button_id_start = 12 (SPACE key)
 vgs_strcpy(buf,"Test of strcpy!")
 vgs_strcat(buf,"Hoge hoge.")
 call vgs_exit with exit code: 59
-Update the peak CPU clock rate: 337664Hz per frame.
+Update the peak CPU clock rate: 337552Hz per frame.
 
 [RAM DUMP]
 F00000 00 00 00 00 FF FF FF FF - 00 00 00 00 FF FF FF FF  ................
@@ -430,17 +430,17 @@ F00010 00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00  ................
 F00030 00 00 00 00 00 00 00 00 - 00 00 00 00 53 50 41 43  ............SPAC
 F00040 45 00 00 00 00 00 00 00 - FF FF FF FF FF FF FF FF  E...............
 F00050 FF FF FF FF FF FF FF FF - FF FF FF FF FF FF FF FF  ................
-FFFF30 FF FF FF FF 00 00 07 14 - 00 00 00 00 00 00 07 14  ................
-FFFF40 00 00 02 36 FF FF FF 58 - 00 F0 00 3C 00 F0 00 3C  ...6...X...<...<
-FFFF50 00 00 00 3B 00 00 02 36 - 00 00 02 36 FF FF FF 70  ...;...6...6...p
-FFFF60 00 00 00 3B 00 00 01 B8 - FF FF FF 70 FF FF FF 88  ...;.......p....
-FFFF70 35 39 00 F6 FF FF FF A4 - 00 00 13 0C 00 00 00 3B  59.............;
-FFFF80 00 00 2B 4E 00 00 00 3B - 00 00 00 00 00 00 00 00  ..+N...;........
+FFFF30 00 00 07 14 00 00 00 00 - 00 00 07 14 00 00 02 36  ...............6
+FFFF40 00 FF FF 54 00 F0 00 3C - 00 F0 00 3C 00 00 00 3B  ...T...<...<...;
+FFFF50 00 00 02 36 00 00 02 36 - 00 FF FF 6C 00 00 00 3B  ...6...6...l...;
+FFFF60 00 00 01 B8 00 FF FF 6C - 00 FF FF 84 35 39 00 F6  .......l....59..
+FFFF70 00 FF FF A0 00 00 13 0C - 00 00 00 3B 00 00 2B 4E  ...........;..+N
+FFFF80 00 00 00 3B 00 00 00 00 - 00 00 00 00 00 00 00 00  ...;............
 FFFF90 00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00  ................
-FFFFA0 00 00 00 00 54 65 73 74 - 20 6F 66 20 73 74 72 63  ....Test of strc
-FFFFB0 70 79 21 48 6F 67 65 20 - 68 6F 67 65 2E 00 01 01  py!Hoge hoge....
+FFFFA0 54 65 73 74 20 6F 66 20 - 73 74 72 63 70 79 21 48  Test of strcpy!H
+FFFFB0 6F 67 65 20 68 6F 67 65 - 2E 00 01 01 01 01 01 01  oge hoge........
 FFFFC0 01 01 01 01 01 01 01 01 - 01 01 01 01 01 01 01 01  ................
-FFFFF0 01 01 01 01 00 00 02 B6 - 00 00 00 00 00 00 00 00  ................
+FFFFF0 00 00 02 B6 00 00 00 00 - 00 00 00 00 FF FF FF FF  ................
 
 [save.dat]
 000000 54 68 69 73 20 69 73 20 - 74 65 73 74 20 73 74 72  This is test str
