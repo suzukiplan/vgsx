@@ -45,6 +45,11 @@ uint32_t vgs_rand32(void)
     return result;
 }
 
+void vgs_reset(void)
+{
+    VGS_OUT_RESET = 0xC0;
+}
+
 void vgs_exit(int32_t code)
 {
     VGS_OUT_EXIT = code;

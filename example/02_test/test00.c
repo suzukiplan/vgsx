@@ -21,6 +21,12 @@ int32_t expect32d(int32_t actual, int32_t expect)
     return -1;
 }
 
+void check_abort(uint32_t exit_code)
+{
+    // vgs_putlog("stat check_abort (%u)", exit_code);
+    vgs_abort(exit_code);
+}
+
 int main(int argc, char* argv)
 {
     char buf[80];
@@ -183,8 +189,8 @@ int main(int argc, char* argv)
     vgs_strcat(buf, "Hoge hoge.");
     expect32d(vgs_strcmp(buf, "Test of strcpy!Hoge hoge."), 0);
 
-    vgs_putlog("call vgs_exit with exit code: %d", ret);
-    vgs_exit(ret);
+    vgs_putlog("call vgs_abort with exit code: %d", ret);
+    check_abort(ret);
     vgs_putlog("return 456 (this message will not shown)");
     return 456;
 }

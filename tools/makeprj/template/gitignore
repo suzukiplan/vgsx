@@ -1,6 +1,8 @@
+./obj/*
 *.o
+*.d
 *.elf
 *.chr
 game.rom
 palette.bin
-
+screen.bmp

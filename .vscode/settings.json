@@ -62,6 +62,7 @@
         "iomanip": "cpp",
         "iostream": "cpp",
         "ostream": "cpp",
-        "__config": "cpp"
+        "__config": "cpp",
+        "vgs_cg.h": "c"
     }
 }

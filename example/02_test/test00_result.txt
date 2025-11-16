@@ -1,27 +1,13 @@
-[info] M68K_REG_PC = 0x0002AC
-[info] .program:LOAD offset=8192, va=0x000000, pa=0x000000, fs=11160, ms=11160, flg=5
-[info] .program:LOAD offset=24576, va=0xF00000, pa=0xF00000, fs=20, ms=72, flg=6
-[info] .section:NULL flags=0, addr=0x000000, offset=0x000000, size=0, link=0, info=0
-[info] .section:PROGBITS flags=6, addr=0x000000, offset=0x002000, size=2168, link=0, info=0
-[info] .section:PROGBITS flags=6, addr=0x000878, offset=0x002878, size=6, link=0, info=0
-[info] .section:PROGBITS flags=6, addr=0x00087E, offset=0x00287E, size=12, link=0, info=0
-[info] .section:PROGBITS flags=6, addr=0x00088A, offset=0x00288A, size=5966, link=0, info=0
-[info] .section:PROGBITS flags=2, addr=0x001FD8, offset=0x003FD8, size=4, link=0, info=0
-[info] .section:PROGBITS flags=50, addr=0x001FDC, offset=0x003FDC, size=3004, link=0, info=0
-[info] .section:PROGBITS flags=3, addr=0xF00000, offset=0x006000, size=4, link=0, info=0
-[info] - RAM Copied: 0xF00000 from ELF:0x6000 (4 bytes)
-[info] .section:PROGBITS flags=3, addr=0xF00004, offset=0x006004, size=8, link=0, info=0
-[info] - RAM Copied: 0xF00004 from ELF:0x6004 (8 bytes)
-[info] .section:PROGBITS flags=3, addr=0xF0000C, offset=0x00600C, size=8, link=0, info=0
-[info] - RAM Copied: 0xF0000C from ELF:0x600C (8 bytes)
-[info] .section:NOBITS flags=3, addr=0xF00014, offset=0x006014, size=52, link=0, info=0
-[info] - RAM Cleared: 0xF00014 to 0xF00047
-[info] .section:PROGBITS flags=48, addr=0x000000, offset=0x006014, size=18, link=0, info=0
-[info] .section:SYMTAB flags=0, addr=0x000000, offset=0x006028, size=1296, link=13, info=43
-[info] .section:STRTAB flags=0, addr=0x000000, offset=0x006538, size=749, link=0, info=0
-[info] .section:STRTAB flags=0, addr=0x000000, offset=0x006825, size=118, link=0, info=0
+[info] M68K_REG_PC = 0x001BD2
+[info] .program:LOAD offset=8192, va=0x000000, pa=0x000000, fs=11772, ms=11772, flg=5
+[info] .program:LOAD offset=24576, va=0xF00000, pa=0x002DFC, fs=20, ms=72, flg=6
+[info] - RAM Segment: 0xF00000-0xF00047 (copied 20 bytes from ELF:0x6000, zeroed 52 bytes)
 Load succeed.
 Start main loop.
+[info] M68K_REG_PC = 0x001BD2
+[info] .program:LOAD offset=8192, va=0x000000, pa=0x000000, fs=11772, ms=11772, flg=5
+[info] .program:LOAD offset=24576, va=0xF00000, pa=0x002DFC, fs=20, ms=72, flg=6
+[info] - RAM Segment: 0xF00000-0xF00047 (copied 20 bytes from ELF:0x6000, zeroed 52 bytes)
 length of "This is test string." = 20
 vgs_strchr('t') ... test string.
 vgs_strrchr('t') ... tring.
@@ -119,11 +105,11 @@ vgs_chr_width() = 40
 vgs_chr_height() = 25
 vgs_draw_width() = 320
 vgs_draw_height() = 200
-vgs_save(4294967204,80)
+vgs_save(16777092,80)
 [notice] save.dat wrote (80 bytes)
 vgs_save_check() = 80
 [notice] save.dat read (80 bytes)
-vgs_load(4294967204) = 80
+vgs_load(16777092) = 80
 [notice] save010.dat wrote (300 bytes)
 [notice] save010.dat read (300 bytes)
 vgs_seq_read = 0
@@ -435,8 +421,94 @@ vgs_button_id_y = 6 (S key)
 vgs_button_id_start = 12 (SPACE key)
 vgs_strcpy(buf,"Test of strcpy!")
 vgs_strcat(buf,"Hoge hoge.")
-call vgs_exit with exit code: 59
-Update the peak CPU clock rate: 337664Hz per frame.
+call vgs_abort with exit code: 59
+[error] Symbols:
+[error] 000000 __vgs_vectors (0 bytes)
+[error] 000000 RAM_TOP (0 bytes)
+[error] 000400 deregister_tm_clones (0 bytes)
+[error] 000424 register_tm_clones (0 bytes)
+[error] 000458 __do_global_dtors_aux (0 bytes)
+[error] 0004C2 call___do_global_dtors_aux (0 bytes)
+[error] 0004C4 frame_dummy (0 bytes)
+[error] 0004E2 call_frame_dummy (0 bytes)
+[error] 0004E4 vgs_bg_width (14 bytes)
+[error] 0004F2 vgs_bg_height (14 bytes)
+[error] 000500 vgs_chr_width (10 bytes)
+[error] 00050A vgs_chr_height (10 bytes)
+[error] 000514 vgs_draw_width (14 bytes)
+[error] 000522 vgs_draw_height (12 bytes)
+[error] 00052E vgs_isdigit (30 bytes)
+[error] 00054C vgs_isupper (30 bytes)
+[error] 00056A vgs_islower (30 bytes)
+[error] 000588 vgs_isalpha (38 bytes)
+[error] 0005AE vgs_isalnum (50 bytes)
+[error] 0005E0 vgs_toupper (34 bytes)
+[error] 000602 vgs_tolower (34 bytes)
+[error] 000624 vgs_key_type (16 bytes)
+[error] 000634 vgs_button_id_a (16 bytes)
+[error] 000644 vgs_button_id_b (16 bytes)
+[error] 000654 vgs_button_id_x (16 bytes)
+[error] 000664 vgs_button_id_y (16 bytes)
+[error] 000674 vgs_button_id_start (16 bytes)
+[error] 000684 vgs_hitchk (70 bytes)
+[error] 0006CA vgs_seq_open_w (34 bytes)
+[error] 0006EC vgs_seq_write (34 bytes)
+[error] 00070E vgs_seq_commit (22 bytes)
+[error] 000724 vgs_seq_open_r (34 bytes)
+[error] 000746 vgs_seq_read (16 bytes)
+[error] 000756 expect (72 bytes)
+[error] 00079E expect32d (62 bytes)
+[error] 0007DC check_abort (22 bytes)
+[error] 0007F2 main (4772 bytes)
+[error] 001A98 vgs_print (24 bytes)
+[error] 001AB0 vgs_println (32 bytes)
+[error] 001AD0 vgs_putlog (244 bytes)
+[error] 001BC4 hang_up (14 bytes)
+[error] 001BD2 crt0 (22 bytes)
+[error] 001BE8 vgs_vsync (14 bytes)
+[error] 001BF6 vgs_abort (12 bytes)
+[error] 001C02 _bus_error (14 bytes)
+[error] 001C10 _address_error (14 bytes)
+[error] 001C1E _illegal (14 bytes)
+[error] 001C2C _zero_div (14 bytes)
+[error] 001C3A _chk_inst (14 bytes)
+[error] 001C48 _trapv (14 bytes)
+[error] 001C58 vgs_srand (14 bytes)
+[error] 001C66 vgs_rand (20 bytes)
+[error] 001C7A vgs_rand32 (50 bytes)
+[error] 001CAC vgs_reset (12 bytes)
+[error] 001CB8 vgs_exit (10 bytes)
+[error] 001CC4 vgs_u32str (162 bytes)
+[error] 001D66 vgs_d32str (40 bytes)
+[error] 001D8E vgs_memcpy (32 bytes)
+[error] 001DAE vgs_memset (38 bytes)
+[error] 001DD4 vgs_strlen (22 bytes)
+[error] 001DEA vgs_strchr (34 bytes)
+[error] 001E0C vgs_strrchr (60 bytes)
+[error] 001E48 vgs_strcmp (48 bytes)
+[error] 001E78 vgs_stricmp (110 bytes)
+[error] 001EE6 vgs_strncmp (68 bytes)
+[error] 001F2A vgs_strstr (116 bytes)
+[error] 001F9E vgs_strcpy (68 bytes)
+[error] 001FE2 vgs_strcat (88 bytes)
+[error] 00203A vgs_sjis_from_utf8 (26 bytes)
+[error] 002054 vgs_degree (40 bytes)
+[error] 00207C vgs_sin (16 bytes)
+[error] 00208C vgs_cos (16 bytes)
+[error] 00209C vgs_atoi (134 bytes)
+[error] 002124 vgs_save (18 bytes)
+[error] 002136 vgs_load (16 bytes)
+[error] 002146 vgs_save_check (8 bytes)
+[error] 002150 vgs_key_code (96 bytes)
+[error] 0021B0 vgs_button_name (26 bytes)
+[error] 0021CC __do_global_ctors_aux (0 bytes)
+[error] 0021EE call___do_global_ctors_aux (0 bytes)
+[error] 100000 RAM_SIZE (0 bytes)
+[error] F00000 RAM_BASE (0 bytes)
+[error] Stack trace (FP=0xFFFF74):
+[error] #0: 0x001A78 <main+0x1286>
+[error] #1: 0x001BDC <crt0+0xA>
+Update the peak CPU clock rate: 380860Hz per frame.
 
 [RAM DUMP]
 F00000 00 00 00 00 FF FF FF FF - 00 00 00 00 FF FF FF FF  ................
@@ -444,17 +516,16 @@ F00010 00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00  ................
 F00030 00 00 00 00 00 00 00 00 - 00 00 00 00 53 50 41 43  ............SPAC
 F00040 45 00 00 00 00 00 00 00 - FF FF FF FF FF FF FF FF  E...............
 F00050 FF FF FF FF FF FF FF FF - FF FF FF FF FF FF FF FF  ................
-FFFF30 FF FF FF FF 00 00 07 14 - 00 00 00 00 00 00 07 14  ................
-FFFF40 00 00 02 36 FF FF FF 58 - 00 F0 00 3C 00 F0 00 3C  ...6...X...<...<
-FFFF50 00 00 00 3B 00 00 02 36 - 00 00 02 36 FF FF FF 70  ...;...6...6...p
-FFFF60 00 00 00 3B 00 00 01 B8 - FF FF FF 70 FF FF FF 88  ...;.......p....
-FFFF70 35 39 00 F6 FF FF FF A4 - 00 00 13 0C 00 00 00 3B  59.............;
-FFFF80 00 00 2B 4E 00 00 00 3B - 00 00 00 00 00 00 00 00  ..+N...;........
-FFFF90 00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00  ................
-FFFFA0 00 00 00 00 54 65 73 74 - 20 6F 66 20 73 74 72 63  ....Test of strc
-FFFFB0 70 79 21 48 6F 67 65 20 - 68 6F 67 65 2E 00 01 01  py!Hoge hoge....
-FFFFC0 01 01 01 01 01 01 01 01 - 01 01 01 01 01 01 01 01  ................
-FFFFF0 01 01 01 01 00 00 02 B6 - 00 00 00 00 00 00 00 00  ................
+FFFF40 00 F0 00 3C 00 F0 00 3C - 00 00 00 00 00 00 1B 4E  ...<...<.......N
+FFFF50 00 00 1B 4E 00 FF FF 68 - 00 00 00 3B 00 FF FF EC  ...N...h...;....
+FFFF60 00 FF FF 68 00 FF FF 80 - 35 39 00 00 00 00 07 EA  ...h....59......
+FFFF70 00 00 00 3B 00 FF FF EC - 00 00 1A 78 00 00 00 3B  ...;.......x...;
+FFFF80 00 00 00 00 54 65 73 74 - 20 6F 66 20 73 74 72 63  ....Test of strc
+FFFF90 70 79 21 48 6F 67 65 20 - 68 6F 67 65 2E 00 01 01  py!Hoge hoge....
+FFFFA0 01 01 01 01 01 01 01 01 - 01 01 01 01 01 01 01 01  ................
+FFFFD0 01 01 01 01 00 00 00 14 - 00 00 22 6B 00 00 01 2C  .........."k...,
+FFFFE0 00 00 01 2C 00 00 00 50 - 00 00 00 3B 00 00 00 00  ...,...P...;....
+FFFFF0 00 00 1B DC 00 00 00 00 - 00 00 00 00 FF FF FF FF  ................
 
 [save.dat]
 000000 54 68 69 73 20 69 73 20 - 74 65 73 74 20 73 74 72  This is test str
@@ -485,9 +556,9 @@ Size: 80 bytes
 000110 10 11 12 13 14 15 16 17 - 18 19 1A 1B 1C 1D 1E 1F  ................
 000120 20 21 22 23 24 25 26 27 - 28 29 2A 2B               !"#$%&'()*+
 Size: 300 bytes
+RAM usage: 240/1048576 (0%)
 
-Average MC68030 Clocks: 5.6MHz per second.
-Maximum MC68030 Clocks: 5.6MHz per second.
-RAM usage: 256/1048576 (0%)
-Detect exit: code=59
+Average MC68030 Clocks: 6.3MHz per second.
+Maximum MC68030 Clocks: 6.3MHz per second.
+Detect exit: code=59 (0x0000003B)
 Excpected!

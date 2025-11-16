@@ -56,9 +56,12 @@ typedef struct {
     uint32_t size;        // Size (0: 8x8, 1: 16x16, 2: 24x24, 3: 32x32 ... 31: 256x256)
     int32_t rotate;       // Rotate (-360 ~ 360)
     uint32_t scale;       // Scale (0: disabled, or 1 ~ 400 percent)
-    uint32_t alpha;       // Alpha Blend (0: disabled, or 0x000001 ~ 0xFFFFFF)
+    uint32_t alpha;       // Alpha (0: disabled, or 0x000001 ~ 0xFFFFFF)
     uint32_t mask;        // Mask (0: disabled, or RGB888)
-    uint32_t reserved[7]; // Reserved
+    uint32_t sly;         // Scale Lock (Y)
+    uint32_t slx;         // Scale Lock (X)
+    uint32_t pri;         // High Priority Flag
+    uint32_t reserved[4]; // Reserved
 } ObjectAttributeMemory;
 
 #define OAM_MAX 1024
@@ -431,7 +434,6 @@ static inline void vgs_sprite_priority(uint8_t bg)
  * @param size Sprite size (0: 8x8, 1: 16x16, 2: 24x24 ... 15: 256x256)
  * @param pal Palette number (0 to 15)
  * @param ptn Character pattern number (0 to 65535)
- * @remark Scale and rotation are reset to disabled (0).
  * @remark Drawing outside the screen area will be skipped.
  * @remark Individual parameters can be referenced and/or updated via OAM[n].
  */
@@ -455,6 +457,21 @@ static inline void vgs_sprite_hide_all(void)
 static inline ObjectAttributeMemory* vgs_oam(uint16_t n)
 {
     return &OAM[n];
+}
+
+/**
+ * @brief Set the sprite's alpha value with 8-bit precision.
+ * @param oam   Target OAM.
+ * @param alpha Alpha value (0x00 to 0xFF).
+ */
+static inline void vgs_sprite_alpha8(ObjectAttributeMemory* oam, uint8_t alpha)
+{
+    uint32_t alpha24 = alpha;
+    alpha24 <<= 8;
+    alpha24 |= alpha;
+    alpha24 <<= 8;
+    alpha24 |= alpha;
+    oam->alpha = alpha24;
 }
 
 #ifdef __cplusplus

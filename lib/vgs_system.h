@@ -46,6 +46,12 @@ static inline void vgs_vsync_n(int n)
 }
 
 /**
+ * @brief Abort with stacktrace
+ * @param code Exit code
+ */
+void vgs_abort(uint32_t code);
+
+/**
  * @brief User-Defined I/O (Input)
  * @param port Port Number
  * @return Input Value

@@ -26,18 +26,59 @@
 
 static volatile uint32_t _vsync;
 extern int main(int argc, char* argv[]);
+extern void __vgs_vectors(void);
+static void (*const __keep_vectors)(void) __attribute__((used)) = __vgs_vectors;
 
-void crt0(void)
+static inline void hang_up(void)
 {
-    vgs_exit(main(0, (char**)0));
-
-    // Hang-up after exit
     while (1) {
         vgs_vsync();
     }
 }
 
+void crt0(void)
+{
+    vgs_exit(main(0, (char**)0));
+    hang_up();
+}
+
 void vgs_vsync(void)
 {
     _vsync = VGS_IN_VSYNC;
+}
+
+void vgs_abort(uint32_t code)
+{
+    VGS_OUT_ABORT = code;
+    hang_up();
+}
+
+void _bus_error(void)
+{
+    vgs_abort(0xDEAD0000);
+}
+
+void _address_error(void)
+{
+    vgs_abort(0xDEAD0001);
+}
+
+void _illegal(void)
+{
+    vgs_abort(0xDEAD0002);
+}
+
+void _zero_div(void)
+{
+    vgs_abort(0xDEAD0003);
+}
+
+void _chk_inst(void)
+{
+    vgs_abort(0xDEAD0004);
+}
+
+void _trapv(void)
+{
+    vgs_abort(0xDEAD0005);
 }

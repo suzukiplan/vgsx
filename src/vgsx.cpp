@@ -23,12 +23,20 @@
  * THE SOFTWARE.
  */
 
+#include <algorithm>
 #include <stdarg.h>
+#include <math.h>
+#include <vector>
 #include "vgsx.h"
 #include "musashi.hpp"
 #include "vgs_io.h"
 #include "utf8_to_sjis.h"
 #include "vgmdrv.hpp"
+
+#define LIMIT_CLOCKS 100000000
+
+static int illegal_instruction_logger(int opcode);
+static VGSX* g_vgsx_instance = nullptr;
 
 VGSX vgsx;
 
@@ -81,6 +89,15 @@ typedef struct {
     uint32_t sh_addralign;
     uint32_t sh_entsize;
 } Elf32_Shdr;
+
+typedef struct {
+    uint32_t st_name;
+    uint32_t st_value;
+    uint32_t st_size;
+    uint8_t st_info;
+    uint8_t st_other;
+    uint16_t st_shndx;
+} Elf32_Sym;
 
 static std::string elf32_program_type(uint32_t type)
 {
@@ -178,6 +195,256 @@ static void loadElfHeader(Elf32_Ehdr* header, const void* prg)
     header->e_shstrndx = b2h16(header->e_shstrndx);
 }
 
+struct BacktraceSymbol {
+    uint32_t address;
+    uint32_t size;
+    const char* name;
+};
+
+static constexpr uint32_t RAM_BASE = 0xF00000;
+static constexpr uint32_t RAM_SIZE = 0x100000;
+static constexpr uint32_t RAM_LIMIT = RAM_BASE + RAM_SIZE;
+
+static bool loadSectionHeader(const uint8_t* elf, size_t elfSize, const Elf32_Ehdr& eh, uint32_t index, Elf32_Shdr* out)
+{
+    if (!eh.e_shentsize) {
+        return false;
+    }
+    uint64_t sectionOffset = static_cast<uint64_t>(eh.e_shoff) + static_cast<uint64_t>(index) * eh.e_shentsize;
+    if (sectionOffset + eh.e_shentsize > elfSize) {
+        return false;
+    }
+    memset(out, 0, sizeof(*out));
+    size_t copySize = std::min<size_t>(sizeof(*out), static_cast<size_t>(eh.e_shentsize));
+    memcpy(out, &elf[sectionOffset], copySize);
+    out->sh_name = b2h32(out->sh_name);
+    out->sh_type = b2h32(out->sh_type);
+    out->sh_flags = b2h32(out->sh_flags);
+    out->sh_addr = b2h32(out->sh_addr);
+    out->sh_offset = b2h32(out->sh_offset);
+    out->sh_size = b2h32(out->sh_size);
+    out->sh_link = b2h32(out->sh_link);
+    out->sh_info = b2h32(out->sh_info);
+    out->sh_addralign = b2h32(out->sh_addralign);
+    out->sh_entsize = b2h32(out->sh_entsize);
+    return true;
+}
+
+static bool readRam32(const VGSX::Context& ctx, uint32_t address, uint32_t& out)
+{
+    uint64_t addr = address;
+    if (addr < RAM_BASE || addr + 3 >= RAM_LIMIT) {
+        return false;
+    }
+    uint32_t offset = static_cast<uint32_t>(addr - RAM_BASE);
+    const uint8_t* ptr = &ctx.ram[offset];
+    out = (uint32_t(ptr[0]) << 24) |
+          (uint32_t(ptr[1]) << 16) |
+          (uint32_t(ptr[2]) << 8) |
+          uint32_t(ptr[3]);
+    return true;
+}
+
+static const std::vector<BacktraceSymbol>& getBacktraceSymbols(const VGSX& vgs)
+{
+    static const uint8_t* cachedElf = nullptr;
+    static size_t cachedElfSize = 0;
+    static std::vector<BacktraceSymbol> cachedSymbols;
+
+    if (cachedElf == vgs.ctx.elf && cachedElfSize == vgs.ctx.elfSize) {
+        return cachedSymbols;
+    }
+
+    cachedElf = vgs.ctx.elf;
+    cachedElfSize = vgs.ctx.elfSize;
+    cachedSymbols.clear();
+
+    if (!vgs.ctx.elf || vgs.ctx.elfSize < sizeof(Elf32_Ehdr)) {
+        return cachedSymbols;
+    }
+
+    Elf32_Ehdr eh;
+    loadElfHeader(&eh, vgs.ctx.elf);
+    if (!eh.e_shoff || !eh.e_shentsize || !eh.e_shnum) {
+        return cachedSymbols;
+    }
+
+    uint64_t tableEnd = static_cast<uint64_t>(eh.e_shoff) + static_cast<uint64_t>(eh.e_shentsize) * eh.e_shnum;
+    if (tableEnd > vgs.ctx.elfSize) {
+        return cachedSymbols;
+    }
+
+    for (uint32_t i = 0; i < eh.e_shnum; ++i) {
+        Elf32_Shdr sh;
+        if (!loadSectionHeader(vgs.ctx.elf, vgs.ctx.elfSize, eh, i, &sh)) {
+            continue;
+        }
+        if (sh.sh_type != 2 && sh.sh_type != 11) {
+            continue;
+        }
+        uint64_t sectionEnd = static_cast<uint64_t>(sh.sh_offset) + sh.sh_size;
+        if (!sh.sh_entsize || sectionEnd > vgs.ctx.elfSize) {
+            continue;
+        }
+        if (sh.sh_link >= eh.e_shnum) {
+            continue;
+        }
+        Elf32_Shdr strSh;
+        if (!loadSectionHeader(vgs.ctx.elf, vgs.ctx.elfSize, eh, sh.sh_link, &strSh)) {
+            continue;
+        }
+        uint64_t strEnd = static_cast<uint64_t>(strSh.sh_offset) + strSh.sh_size;
+        if (!strSh.sh_size || strEnd > vgs.ctx.elfSize) {
+            continue;
+        }
+        const char* strtab = reinterpret_cast<const char*>(&vgs.ctx.elf[strSh.sh_offset]);
+        uint32_t symCount = sh.sh_size / sh.sh_entsize;
+        for (uint32_t s = 0; s < symCount; ++s) {
+            uint64_t symOffset = static_cast<uint64_t>(sh.sh_offset) + static_cast<uint64_t>(s) * sh.sh_entsize;
+            if (symOffset + sh.sh_entsize > vgs.ctx.elfSize) {
+                break;
+            }
+            Elf32_Sym sym;
+            memset(&sym, 0, sizeof(sym));
+            size_t symCopy = std::min<size_t>(sizeof(sym), static_cast<size_t>(sh.sh_entsize));
+            memcpy(&sym, &vgs.ctx.elf[symOffset], symCopy);
+            sym.st_name = b2h32(sym.st_name);
+            sym.st_value = b2h32(sym.st_value);
+            sym.st_size = b2h32(sym.st_size);
+            sym.st_shndx = b2h16(sym.st_shndx);
+            uint8_t type = sym.st_info & 0x0F;
+            if ((type != 2 && type != 0) || sym.st_name >= strSh.sh_size) {
+                continue;
+            }
+            const char* name = strtab + sym.st_name;
+            if (!name || !*name) {
+                continue;
+            }
+            BacktraceSymbol symbol;
+            symbol.address = sym.st_value & 0xFFFFFF;
+            symbol.size = sym.st_size;
+            symbol.name = name;
+            cachedSymbols.push_back(symbol);
+        }
+    }
+    std::sort(cachedSymbols.begin(), cachedSymbols.end(), [](const BacktraceSymbol& a, const BacktraceSymbol& b) {
+        return a.address < b.address;
+    });
+
+    vgsx.putlog(VGSX::LogLevel::E, "Symbols:");
+    for (auto sym : cachedSymbols) {
+        vgsx.putlog(VGSX::LogLevel::E, "%06X %s (%d bytes)", sym.address, sym.name, sym.size);
+    }
+    return cachedSymbols;
+}
+
+static const BacktraceSymbol* resolveSymbol(const std::vector<BacktraceSymbol>& symbols, uint32_t address)
+{
+    if (symbols.empty()) {
+        return nullptr;
+    }
+    size_t left = 0;
+    size_t right = symbols.size();
+    while (left < right) {
+        size_t mid = (left + right) / 2;
+        if (address < symbols[mid].address) {
+            right = mid;
+        } else {
+            left = mid + 1;
+        }
+    }
+    if (left == 0) {
+        return nullptr;
+    }
+    const BacktraceSymbol& sym = symbols[left - 1];
+    uint64_t end;
+    if (sym.size) {
+        end = static_cast<uint64_t>(sym.address) + sym.size;
+    } else if (left < symbols.size()) {
+        end = symbols[left].address;
+    } else {
+        end = static_cast<uint64_t>(sym.address) + 1;
+    }
+    if (address < sym.address || address >= end) {
+        return nullptr;
+    }
+    return &sym;
+}
+
+static void logStackTrace(VGSX& vgs)
+{
+    constexpr uint32_t MAX_DEPTH = 16;
+    const auto& symbols = getBacktraceSymbols(vgs);
+    uint32_t frame = m68k_get_reg(nullptr, M68K_REG_A6) & 0xFFFFFF;
+    bool printed = false;
+    for (uint32_t depth = 0; depth < MAX_DEPTH; ++depth) {
+        uint32_t prevFrame = 0;
+        uint32_t returnAddress = 0;
+        if (!readRam32(vgs.ctx, frame, prevFrame) || !readRam32(vgs.ctx, frame + 4, returnAddress)) {
+            break;
+        }
+        returnAddress &= 0xFFFFFF;
+        if (!returnAddress) {
+            break;
+        }
+        if (!printed) {
+            vgs.putlog(VGSX::LogLevel::E, "Stack trace (FP=0x%06X):", frame);
+            printed = true;
+        }
+        if (const BacktraceSymbol* sym = resolveSymbol(symbols, returnAddress)) {
+            vgs.putlog(VGSX::LogLevel::E,
+                       "#%u: 0x%06X <%s+0x%X>",
+                       depth,
+                       returnAddress,
+                       sym->name,
+                       returnAddress - sym->address);
+        } else {
+            vgs.putlog(VGSX::LogLevel::E, "#%u: 0x%06X", depth, returnAddress);
+        }
+        prevFrame &= 0xFFFFFF;
+        if (prevFrame <= frame || prevFrame < RAM_BASE || prevFrame >= RAM_LIMIT) {
+            break;
+        }
+        frame = prevFrame;
+    }
+    if (printed) {
+        return;
+    }
+
+    uint32_t sp = m68k_get_reg(nullptr, M68K_REG_SP) & 0xFFFFFF;
+    if (sp < RAM_BASE || sp >= RAM_LIMIT) {
+        vgs.putlog(VGSX::LogLevel::E, "Stack trace unavailable (invalid SP: 0x%06X)", sp);
+        return;
+    }
+    uint32_t available = RAM_LIMIT - sp;
+    uint32_t depth = std::min<uint32_t>(MAX_DEPTH, available / 4);
+    if (!depth) {
+        vgs.putlog(VGSX::LogLevel::E, "Stack trace unavailable (empty stack)");
+        return;
+    }
+    vgs.putlog(VGSX::LogLevel::E, "Stack trace (SP=0x%06X):", sp);
+    for (uint32_t i = 0; i < depth; ++i) {
+        uint32_t addr = 0;
+        if (!readRam32(vgs.ctx, sp + i * 4, addr)) {
+            break;
+        }
+        addr &= 0xFFFFFF;
+        if (!addr) {
+            break;
+        }
+        if (const BacktraceSymbol* sym = resolveSymbol(symbols, addr)) {
+            vgs.putlog(VGSX::LogLevel::E,
+                       "#%u: 0x%06X <%s+0x%X>",
+                       i,
+                       addr,
+                       sym->name,
+                       addr - sym->address);
+        } else {
+            vgs.putlog(VGSX::LogLevel::E, "#%u: 0x%06X", i, addr);
+        }
+    }
+}
+
 extern "C" uint32_t m68k_read_memory_8(uint32_t address)
 {
     if (address < 0xC00000) {
@@ -246,6 +513,20 @@ extern "C" void m68k_write_memory_32(uint32_t address, uint32_t value)
     }
 }
 
+static int illegal_instruction_logger(int opcode)
+{
+    uint32_t pc = m68k_get_reg(nullptr, M68K_REG_PC);
+    uint32_t sp = m68k_get_reg(nullptr, M68K_REG_SP);
+    if (g_vgsx_instance) {
+        g_vgsx_instance->putlog(VGSX::LogLevel::E,
+                                "Illegal opcode 0x%04X at PC=0x%06X (SP=0x%06X)",
+                                opcode & 0xFFFF,
+                                pc & 0xFFFFFF,
+                                sp & 0xFFFFFF);
+    }
+    return 0; // fall through to normal illegal exception handling
+}
+
 VGSX::VGSX()
 {
     this->vgmdrv = new VgmDriver(44100, 2);
@@ -263,6 +544,8 @@ VGSX::VGSX()
     memset(&this->key, 0, sizeof(this->key));
     m68k_set_cpu_type(M68K_CPU_TYPE_68030);
     m68k_init();
+    g_vgsx_instance = this;
+    m68k_set_illg_instr_callback(illegal_instruction_logger);
     this->reset();
 }
 
@@ -376,7 +659,7 @@ bool VGSX::extractRom(const uint8_t* program, int programSize)
             if (!vgsx.loadPattern(pindex, ptr, size)) {
                 return false;
             }
-            this->putlog(LogLevel::I, "CHR load succeed. (%d patterns)\n", size / 32);
+            this->putlog(LogLevel::I, "CHR load succeed. (%d patterns)", size / 32);
             pindex += size / 32;
             ptr += size;
         } else if (0 == memcmp(ptr, "VGM", 4)) {
@@ -398,7 +681,7 @@ bool VGSX::extractRom(const uint8_t* program, int programSize)
             this->putlog(LogLevel::I, "WAV load succeed.");
             ptr += size;
         } else {
-            this->setLastError("Unknown chunk: %c%c%c\n", ptr[0], ptr[1], ptr[2]);
+            this->setLastError("Unknown chunk: %c%c%c", ptr[0], ptr[1], ptr[2]);
             return false;
         }
     }
@@ -583,8 +866,12 @@ void VGSX::reset(void)
     if (this->ignoreReset) {
         return;
     }
+    constexpr uint32_t RAM_BASE = 0xF00000;
+    const uint32_t ramSize = static_cast<uint32_t>(sizeof(this->ctx.ram));
+    const uint64_t ramLimit = static_cast<uint64_t>(RAM_BASE) + ramSize;
+
     m68k_pulse_reset();
-    m68k_set_reg(M68K_REG_SP, 0);
+    m68k_set_reg(M68K_REG_SP, RAM_BASE + ramSize - 4);
     this->detectReferVSync = false;
     this->exitFlag = false;
     this->exitCode = 0;
@@ -609,7 +896,10 @@ void VGSX::reset(void)
     putlog(LogLevel::I, "M68K_REG_PC = 0x%06X", eh.e_entry);
     m68k_set_reg(M68K_REG_PC, eh.e_entry);
 
-    // Search an Executable Code
+    // Reset RAM
+    memset(this->ctx.ram, 0xFF, sizeof(this->ctx.ram));
+
+    // Search an Executable Code and initialize RAM segments
     for (uint32_t i = 0, off = eh.e_phoff; i < eh.e_phnum; i++, off += eh.e_phentsize) {
         Elf32_Phdr ph;
         memcpy(&ph, &this->ctx.elf[off], eh.e_phentsize);
@@ -629,45 +919,41 @@ void VGSX::reset(void)
                ph.p_filesz,
                ph.p_memsz,
                ph.p_flags);
-        if (ph.p_type == 1) {
-            if (0 == ph.p_paddr && (ph.p_flags & 0x01)) {
-                this->ctx.program = &this->ctx.elf[ph.p_offset];
-                this->ctx.programSize = ph.p_memsz;
-            }
+        if (ph.p_type == 1 && 0 == ph.p_paddr && (ph.p_flags & 0x01)) {
+            this->ctx.program = &this->ctx.elf[ph.p_offset];
+            this->ctx.programSize = ph.p_memsz;
         }
-    }
-
-    // Reset RAM
-    memset(this->ctx.ram, 0xFF, sizeof(this->ctx.ram));
-    // ELF section data relocate to RAM from ROM
-    for (uint32_t i = 0, off = eh.e_shoff; i < eh.e_shnum; i++, off += eh.e_shentsize) {
-        Elf32_Shdr sh;
-        memcpy(&sh, &this->ctx.elf[off], eh.e_shentsize);
-        sh.sh_name = b2h32(sh.sh_name);
-        sh.sh_type = b2h32(sh.sh_type);
-        sh.sh_flags = b2h32(sh.sh_flags);
-        sh.sh_addr = b2h32(sh.sh_addr);
-        sh.sh_offset = b2h32(sh.sh_offset);
-        sh.sh_size = b2h32(sh.sh_size);
-        sh.sh_link = b2h32(sh.sh_link);
-        sh.sh_info = b2h32(sh.sh_info);
-        putlog(LogLevel::I, ".section:%s flags=%d, addr=0x%06X, offset=0x%06X, size=%d, link=%d, info=%d",
-               elf32_section_type(sh.sh_type).c_str(),
-               sh.sh_flags,
-               sh.sh_addr,
-               sh.sh_offset,
-               sh.sh_size,
-               sh.sh_link,
-               sh.sh_info);
-        if (0xF00000 <= sh.sh_addr) {
-            if (sh.sh_type == 8) {
-                memset(&this->ctx.ram[sh.sh_addr & 0xFFFFF], 0, sh.sh_size);
-                putlog(LogLevel::I, "- RAM Cleared: 0x%X to 0x%X", sh.sh_addr, (sh.sh_addr) + sh.sh_size - 1);
-            } else {
-                memcpy(&this->ctx.ram[sh.sh_addr & 0xFFFFF],
-                       &this->ctx.elf[sh.sh_offset],
-                       sh.sh_size);
-                putlog(LogLevel::I, "- RAM Copied: 0x%X from ELF:0x%X (%u bytes)", sh.sh_addr, sh.sh_offset, sh.sh_size);
+        if (ph.p_type == 1 && ph.p_memsz) {
+            uint32_t loadAddress = ph.p_vaddr ? ph.p_vaddr : ph.p_paddr;
+            uint64_t segStart = loadAddress;
+            uint64_t segEnd = segStart + ph.p_memsz;
+            if (segEnd > RAM_BASE && segStart < ramLimit) {
+                uint64_t ramSegStart = std::max<uint64_t>(segStart, RAM_BASE);
+                uint64_t ramSegEnd = std::min<uint64_t>(segEnd, ramLimit);
+                uint32_t memBytes = static_cast<uint32_t>(ramSegEnd - ramSegStart);
+                uint32_t ramOffset = static_cast<uint32_t>(ramSegStart - RAM_BASE);
+                uint64_t segCopyStart64 = ramSegStart - segStart;
+                uint32_t copyBytes = 0;
+                if (segCopyStart64 < ph.p_filesz) {
+                    uint32_t segCopyStart = static_cast<uint32_t>(segCopyStart64);
+                    uint32_t available = ph.p_filesz - segCopyStart;
+                    copyBytes = (available < memBytes) ? available : memBytes;
+                    if (copyBytes) {
+                        memcpy(&this->ctx.ram[ramOffset],
+                               &this->ctx.elf[ph.p_offset + segCopyStart],
+                               copyBytes);
+                    }
+                }
+                if (memBytes > copyBytes) {
+                    memset(&this->ctx.ram[ramOffset + copyBytes], 0, memBytes - copyBytes);
+                }
+                putlog(LogLevel::I,
+                       "- RAM Segment: 0x%06X-0x%06X (copied %u bytes from ELF:0x%X, zeroed %u bytes)",
+                       static_cast<uint32_t>(ramSegStart),
+                       static_cast<uint32_t>(ramSegEnd - 1),
+                       copyBytes,
+                       ph.p_offset + static_cast<uint32_t>(segCopyStart64),
+                       memBytes - copyBytes);
             }
         }
     }
@@ -686,6 +972,10 @@ void VGSX::tick(void)
     while (!this->detectReferVSync && !this->exitFlag) {
         m68k_execute(4);
         this->ctx.frameClocks += 4;
+        if (LIMIT_CLOCKS < this->ctx.frameClocks) {
+            putlog(LogLevel::E, "Detected an over clocks");
+            exit(-1);
+        }
     }
     this->vdp.render();
 
@@ -872,6 +1162,12 @@ uint32_t VGSX::inPort(uint32_t address)
         case VGS_ADDR_BUTTON_ID_X: return static_cast<uint32_t>(this->getButtonIdX());
         case VGS_ADDR_BUTTON_ID_Y: return static_cast<uint32_t>(this->getButtonIdY());
         case VGS_ADDR_BUTTON_ID_START: return static_cast<uint32_t>(this->getButtonIdStart());
+        case VGS_ADDR_CAL_YEAR: return now()->tm_year + 1900;
+        case VGS_ADDR_CAL_MONTH: return now()->tm_mon + 1;
+        case VGS_ADDR_CAL_MDAY: return now()->tm_mday;
+        case VGS_ADDR_CAL_HOUR: return now()->tm_hour;
+        case VGS_ADDR_CAL_MINUTE: return now()->tm_min;
+        case VGS_ADDR_CAL_SECOND: return now()->tm_sec;
     }
     if (VGS_ADDR_USER <= address) {
         if (!this->subscribedInput) {
@@ -1071,6 +1367,16 @@ void VGSX::outPort(uint32_t address, uint32_t value)
             return;
         }
 
+        case VGS_ADDR_RESET:
+            this->reset();
+            return;
+
+        case VGS_ADDR_ABORT:
+            this->exitFlag = true;
+            this->exitCode = (int32_t)value;
+            logStackTrace(*this);
+            return;
+
         case VGS_ADDR_EXIT:
             this->exitFlag = true;
             this->exitCode = (int32_t)value;
@@ -1239,7 +1545,7 @@ VGSX::ButtonId VGSX::getButtonIdA()
     switch (this->gamepadType) {
         case GamepadType::Keyboard: return ButtonId::Z;
         case GamepadType::XBOX: return ButtonId::A;
-        case GamepadType::NintendoSwitch: return ButtonId::B;
+        case GamepadType::NintendoSwitch: return ButtonId::A;
         case GamepadType::PlayStation: return ButtonId::Cross;
         default: return ButtonId::Unknown;
     }
@@ -1250,7 +1556,7 @@ VGSX::ButtonId VGSX::getButtonIdB()
     switch (this->gamepadType) {
         case GamepadType::Keyboard: return ButtonId::X;
         case GamepadType::XBOX: return ButtonId::B;
-        case GamepadType::NintendoSwitch: return ButtonId::A;
+        case GamepadType::NintendoSwitch: return ButtonId::B;
         case GamepadType::PlayStation: return ButtonId::Circle;
         default: return ButtonId::Unknown;
     }
@@ -1261,7 +1567,7 @@ VGSX::ButtonId VGSX::getButtonIdX()
     switch (this->gamepadType) {
         case GamepadType::Keyboard: return ButtonId::A;
         case GamepadType::XBOX: return ButtonId::X;
-        case GamepadType::NintendoSwitch: return ButtonId::Y;
+        case GamepadType::NintendoSwitch: return ButtonId::X;
         case GamepadType::PlayStation: return ButtonId::Square;
         default: return ButtonId::Unknown;
     }
@@ -1272,7 +1578,7 @@ VGSX::ButtonId VGSX::getButtonIdY()
     switch (this->gamepadType) {
         case GamepadType::Keyboard: return ButtonId::S;
         case GamepadType::XBOX: return ButtonId::Y;
-        case GamepadType::NintendoSwitch: return ButtonId::X;
+        case GamepadType::NintendoSwitch: return ButtonId::Y;
         case GamepadType::PlayStation: return ButtonId::Triangle;
         default: return ButtonId::Unknown;
     }

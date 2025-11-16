@@ -39,8 +39,8 @@ static void screenShot()
     ptr += 4;
     BitmapHeader header;
     header.isize = 40;
-    header.width = VDP_WIDTH * 2;
-    header.height = VDP_HEIGHT * 2;
+    header.width = vgsx.getDisplayWidth();
+    header.height = vgsx.getDisplayHeight();
     header.planes = 1;
     header.bits = 32;
     header.ctype = 0;
@@ -52,16 +52,12 @@ static void screenShot()
     memcpy(&buf[ptr], &header, sizeof(header));
     ptr += sizeof(header);
     uint32_t* display = vgsx.getDisplay();
-    for (int y = 0; y < VDP_HEIGHT; y++) {
-        for (int x = 0; x < VDP_WIDTH; x++) {
-            auto rgb888 = display[(VDP_HEIGHT - 1 - y) * VDP_WIDTH + x];
-            memcpy(&buf[ptr + VDP_WIDTH * 8], &rgb888, 4);
-            memcpy(&buf[ptr + VDP_WIDTH * 8 + 4], &rgb888, 4);
+    for (int y = 0; y < vgsx.getDisplayHeight(); y++) {
+        for (int x = 0; x < vgsx.getDisplayWidth(); x++) {
+            auto rgb888 = display[(vgsx.getDisplayHeight() - 1 - y) * vgsx.getDisplayWidth() + x];
             memcpy(&buf[ptr], &rgb888, 4);
-            memcpy(&buf[ptr + 4], &rgb888, 4);
-            ptr += 8;
+            ptr += 4;
         }
-        ptr += VDP_WIDTH * 8;
     }
     FILE* fp = fopen("screen.bmp", "wb");
     if (fp) {
@@ -90,6 +86,7 @@ static uint8_t* loadBinary(const char* path, int* size)
 static void put_usage()
 {
     puts("usage: vgsx [-i]");
+    puts("            [-d]");
     puts("            [-g /path/to/pattern.chr]");
     puts("            [-c /path/to/palette.bin]");
     puts("            [-b /path/to/bgm.vgm]");
@@ -163,6 +160,7 @@ int main(int argc, char* argv[])
     bool consoleMode = false;
     int32_t expectedExitCode = 0;
     bool isFirstOption = true;
+    bool print_dump = false;
     vgsx.disableBootBios();
     for (int i = 1; i < argc; i++) {
         if ('-' == argv[i][0]) {
@@ -260,6 +258,9 @@ int main(int argc, char* argv[])
                     }
                     vgsx.enableBootBios();
                     break;
+                case 'd':
+                    print_dump = true;
+                    break;
                 default:
                     put_usage();
                     return 1;
@@ -331,8 +332,8 @@ int main(int argc, char* argv[])
             "VGS-X for SDL2",
             SDL_WINDOWPOS_UNDEFINED,
             SDL_WINDOWPOS_UNDEFINED,
-            640,
-            400,
+            vgsx.getDisplayWidth(),
+            vgsx.getDisplayHeight(),
             0);
         windowSurface = SDL_GetWindowSurface(window);
         if (!windowSurface) {
@@ -411,14 +412,10 @@ int main(int argc, char* argv[])
                 pcDisplay += offsetY;
                 for (int y = 0; y < vgsx.getDisplayHeight(); y++) {
                     for (int x = 0; x < vgsx.getDisplayWidth(); x++) {
-                        uint32_t rgb888 = *vgsDisplay;
-                        pcDisplay[offsetX + x * 2] = rgb888;
-                        pcDisplay[offsetX + x * 2 + 1] = rgb888;
-                        pcDisplay[offsetX + pitch + x * 2] = rgb888;
-                        pcDisplay[offsetX + pitch + x * 2 + 1] = rgb888;
-                        vgsDisplay++;
+                        pcDisplay[offsetX + x] = vgsDisplay[x];
                     }
-                    pcDisplay += pitch * 2;
+                    pcDisplay += pitch;
+                    vgsDisplay += vgsx.getDisplayWidth();
                 }
                 SDL_UpdateWindowSurface(window);
             }
@@ -439,41 +436,44 @@ int main(int argc, char* argv[])
         }
     }
 
-    printf("\n[RAM DUMP]\n");
-    uint8_t prevbin[16];
-    uint32_t ramUsage = 0;
-    for (int i = 0; i < sizeof(vgsx.ctx.ram); i += 16) {
-        if (i != 0) {
-            if (0 == memcmp(prevbin, &vgsx.ctx.ram[i], 16)) {
-                continue; // skip same data
+    if (print_dump) {
+        printf("\n[RAM DUMP]\n");
+        uint8_t prevbin[16];
+        uint32_t ramUsage = 0;
+        for (int i = 0; i < sizeof(vgsx.ctx.ram); i += 16) {
+            if (i != 0) {
+                if (0 == memcmp(prevbin, &vgsx.ctx.ram[i], 16)) {
+                    continue; // skip same data
+                }
             }
-        }
-        memcpy(prevbin, &vgsx.ctx.ram[i], 16);
-        printf("%06X", 0xF00000 + i);
-        for (int j = 0; j < 16; j++) {
-            if (8 == j) {
-                printf(" - %02X", prevbin[j]);
-            } else {
-                printf(" %02X", prevbin[j]);
+            memcpy(prevbin, &vgsx.ctx.ram[i], 16);
+            printf("%06X", 0xF00000 + i);
+            for (int j = 0; j < 16; j++) {
+                if (8 == j) {
+                    printf(" - %02X", prevbin[j]);
+                } else {
+                    printf(" %02X", prevbin[j]);
+                }
             }
-        }
-        printf("  ");
-        for (int j = 0; j < 16; j++) {
-            if (isprint(prevbin[j])) {
-                putc(prevbin[j], stdout);
-            } else {
-                putc('.', stdout);
+            printf("  ");
+            for (int j = 0; j < 16; j++) {
+                if (isprint(prevbin[j])) {
+                    putc(prevbin[j], stdout);
+                } else {
+                    putc('.', stdout);
+                }
             }
+            printf("\n");
+            ramUsage += 16;
         }
-        printf("\n");
-        ramUsage += 16;
-    }
 
-    file_dump("save.dat");
-    for (int i = 0; i < 256; i++) {
-        char fname[80];
-        snprintf(fname, sizeof(fname), "save%03d.dat", i);
-        file_dump(fname);
+        file_dump("save.dat");
+        for (int i = 0; i < 256; i++) {
+            char fname[80];
+            snprintf(fname, sizeof(fname), "save%03d.dat", i);
+            file_dump(fname);
+        }
+        printf("RAM usage: %d/%d (%d%%)\n", ramUsage, 1024 * 1024, ramUsage * 100 / 1024 / 1024);
     }
 
     if (0 < loopCount) {
@@ -496,12 +496,11 @@ int main(int argc, char* argv[])
     } else {
         printf("Maximum MC68030 Clocks: %.1fMHz per second.\n", max / 1000000);
     }
-    printf("RAM usage: %d/%d (%d%%)\n", ramUsage, 1024 * 1024, ramUsage * 100 / 1024 / 1024);
     SDL_Quit();
 
     if (vgsx.isExit()) {
         auto exitCode = vgsx.getExitCode();
-        printf("Detect exit: code=%d\n", exitCode);
+        printf("Detect exit: code=%d (0x%08X)\n", exitCode, exitCode);
         if (consoleMode) {
             if (expectedExitCode == exitCode) {
                 puts("Excpected!");

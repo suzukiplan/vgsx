@@ -533,17 +533,17 @@ void m68k_init(void);
 void m68k_pulse_reset(void);
 
 /* execute num_cycles worth of instructions.  returns number of cycles used */
-int m68k_execute(int num_cycles) M68K_HOT;
+M68K_HOT int m68k_execute(int num_cycles);
 
 /* These functions let you read/write/modify the number of cycles left to run
  * while m68k_execute() is running.
  * These are useful if the 68k accesses a memory-mapped port on another device
  * that requires immediate processing by another CPU.
  */
-int m68k_cycles_run(void) M68K_HOT;              /* Number of cycles run so far */
-int m68k_cycles_remaining(void) M68K_HOT;        /* Number of cycles left */
-void m68k_modify_timeslice(int cycles) M68K_HOT; /* Modify cycles left */
-void m68k_end_timeslice(void) M68K_HOT;          /* End timeslice now */
+M68K_HOT int m68k_cycles_run(void);              /* Number of cycles run so far */
+M68K_HOT int m68k_cycles_remaining(void);        /* Number of cycles left */
+M68K_HOT void m68k_modify_timeslice(int cycles); /* Modify cycles left */
+M68K_HOT void m68k_end_timeslice(void);          /* End timeslice now */
 
 /* Set the IPL0-IPL2 pins on the CPU (IRQ).
  * A transition from < 7 to 7 will cause a non-maskable interrupt (NMI).
@@ -4165,8 +4165,6 @@ extern unsigned char m68ki_cycles[][0x10000];
 #include <stdio.h>
 #include <stdarg.h>
 
-extern void exit(int);
-
 static void fatalerror(const char* format, ...)
 {
     va_list ap;
@@ -7455,7 +7453,7 @@ void m68k_set_cpu_type(unsigned int cpu_type)
 
 /* Execute some instructions until we use up num_cycles clock cycles */
 /* ASG: removed per-instruction interrupt checks */
-int m68k_execute(int num_cycles) M68K_HOT
+M68K_HOT int m68k_execute(int num_cycles)
 {
     /* eat up any reset cycles */
     if (M68K_UNLIKELY(RESET_CYCLES)) {
@@ -7521,24 +7519,24 @@ int m68k_execute(int num_cycles) M68K_HOT
     return m68ki_initial_cycles - GET_CYCLES();
 }
 
-int m68k_cycles_run(void) M68K_HOT
+M68K_HOT int m68k_cycles_run(void)
 {
     return m68ki_initial_cycles - GET_CYCLES();
 }
 
-int m68k_cycles_remaining(void) M68K_HOT
+M68K_HOT int m68k_cycles_remaining(void)
 {
     return GET_CYCLES();
 }
 
 /* Change the timeslice */
-void m68k_modify_timeslice(int cycles) M68K_HOT
+M68K_HOT void m68k_modify_timeslice(int cycles)
 {
     m68ki_initial_cycles += cycles;
     ADD_CYCLES(cycles);
 }
 
-void m68k_end_timeslice(void) M68K_HOT
+M68K_HOT void m68k_end_timeslice(void)
 {
     m68ki_initial_cycles -= GET_CYCLES();
     SET_CYCLES(0);
@@ -44035,8 +44033,8 @@ static void d68000_move_to_usp(void)
 static void d68010_movec(void)
 {
     uint extension;
-    char* reg_name;
-    char* processor;
+    const char* reg_name;
+    const char* processor;
     LIMIT_CPU_TYPES(M68010_PLUS);
     extension = read_imm_16();
 
@@ -48239,7 +48237,7 @@ float32 float32_rem(float32 a, float32 b)
         while (0 < expDiff) {
             q64 = estimateDiv128To64(aSig64, 0, bSig64);
             q64 = (2 < q64) ? q64 - 2 : 0;
-            aSig64 = -((bSig * q64) << 38);
+            aSig64 = (bits64)0 - ((bSig * q64) << 38);
             expDiff -= 62;
         }
         expDiff += 64;
@@ -48260,7 +48258,7 @@ float32 float32_rem(float32 a, float32 b)
     }
     zSign = ((sbits32)aSig < 0);
     if (zSign) {
-        aSig = -aSig;
+        aSig = (bits32)0 - aSig;
     }
     return normalizeRoundAndPackFloat32(aSign ^ zSign, bExp, aSig);
 }
@@ -49198,7 +49196,7 @@ float64 float64_rem(float64 a, float64 b)
     while (0 < expDiff) {
         q = estimateDiv128To64(aSig, 0, bSig);
         q = (2 < q) ? q - 2 : 0;
-        aSig = -((bSig >> 2) * q);
+        aSig = (bits64)0 - ((bSig >> 2) * q);
         expDiff -= 62;
     }
     expDiff += 64;
@@ -49223,7 +49221,7 @@ float64 float64_rem(float64 a, float64 b)
     }
     zSign = ((sbits64)aSig < 0);
     if (zSign) {
-        aSig = -aSig;
+        aSig = (bits64)0 - aSig;
     }
     return normalizeRoundAndPackFloat64(aSign ^ zSign, bExp, aSig);
 }

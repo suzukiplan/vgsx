@@ -18,7 +18,7 @@ Status
 4. [x] 効果音（SFX）機能の実装
 5. [x] ゲームパッド機能の実装
 6. [x] beta 0.1.0 のリリース
-7. [ ] VGS-X のローンチタイトル制作
+7. [ ] Battle Hanafuda の製品版をリリース
 
 バージョン 0.1.0 以降の変更履歴は [CHANGES.md](./CHANGES.md) を参照してください。
 
@@ -39,7 +39,7 @@ Basic Features:
 
 VDP Features:
 
-- 画面解像度: 320x200 ピクセル
+- 画面解像度: 320x200 ピクセル (内部的には 640x400)
 - 色表現: 24bit カラー（RGB888）
 - BG: 4 枚の [ネームテーブル](#name-table) と 2 種類のモード（[キャラクタパターン／ビットマップ](#0xd20028-0xd20034-bitmap-mode)）
 - BG ネームテーブルサイズ: 256x256（2048x2048 ピクセル）
@@ -171,6 +171,16 @@ make
 - スプライトは最大 1024 枚表示できます。
 
 > _VGS-X の画面解像度 (320x200) は、SteamDeck (1280x800) で全画面表示できるよう設計されています。_
+
+## 4k Display
+
+VGS-X の解像度（座標系）は 320x200 ピクセルですが、内部的な画面バッファは 640x400 ピクセルです。
+
+そして、スプライトやBGは常に 4倍サイズ（縦と横がそれぞれ2倍）で描画されています。
+
+これにより、スプライトの拡大率が 50% 以上ならドット欠けが無く縮小表示することが可能です。
+
+また、回転時のドット欠けも少なくなります。
 
 ## Memory Map
 
@@ -311,17 +321,20 @@ OAM は以下の構造体を持ちます。
 
 ```c
 typedef struct {
-    uint32_t visible;      // 非 0 で表示
-    int32_t y;             // Y 座標
-    int32_t x;             // X 座標
-    uint32_t attr;         // 属性
-    uint32_t size;         // サイズ (0: 8x8, 1: 16x16, ... 31: 256x256)
-    int32_t rotate;        // 回転角 (-360 ~ 360)
-    uint32_t scale;        // 拡大率 (0: 無効, 1 ~ 400 %)
-    uint32_t alpha;        // アルファブレンド (0: 無効, 0x000001 ~ 0xFFFFFF)
-    uint32_t mask;         // マスク色 (0: 無効, RGB888)
-    uint32_t reserved[7];  // 予約領域
-} OAM;
+    uint32_t visible;     // Visible (0 or not 0)
+    int32_t y;            // Position (Y)
+    int32_t x;            // Position (X)
+    uint32_t attr;        // Attribute
+    uint32_t size;        // Size (0: 8x8, 1: 16x16, 2: 24x24, 3: 32x32 ... 31: 256x256)
+    int32_t rotate;       // Rotate (-360 ~ 360)
+    uint32_t scale;       // Scale (0: disabled, or 1 ~ 400 percent)
+    uint32_t alpha;       // Alpha (0: disabled, or 0x000001 ~ 0xFFFFFF)
+    uint32_t mask;        // Mask (0: disabled, or RGB888)
+    uint32_t sly;         // Scale Lock (Y)
+    uint32_t slx;         // Scale Lock (X)
+    uint32_t pri;         // High Priority Flag
+    uint32_t reserved[4]; // Reserved
+} ObjectAttributeMemory;
 ```
 
 各属性の仕様は次の通りです。
@@ -337,6 +350,9 @@ typedef struct {
 | scale | 0 ~ 400 | [Scale](#scale-of-sprite) |
 | alpha | 0 or 0xRRGGBB | [Alpha Blend](#alpha-blend-of-sprite) |
 | mask | 0 or 0xRRGGBB | [Mask](#mask-of-sprite) |
+| sly  | 0 or 1 | Lock [Scale](#scale-of-sprite) (Y) |
+| slx  | 0 or 1 | Lock [Scale](#scale-of-sprite) (X) |
+| pri  | 0 or 1 | [High Priority Flag]() |
 | reserved | - | 0 以外を設定しないでください |
 
 ### (Size of Sprite)
@@ -376,11 +392,14 @@ Size 3 Pattern Number Layout
 
 ### (Scale of Sprite)
 
-`scale` には 0（無効）または 1～400 の倍率（パーセンテージ）を指定できます。
+- `scale` に 0〜400 の範囲で拡大率（パーセンテージ）を指定できます。
+- `slx` または `sly` のいずれかを 0 以外の値に設定すると、X 軸または Y 軸のいずれかのスケーリングが防止されます。
 
 ### (Alpha Blend of Sprite)
 
-アルファ値に非 0 を指定することでアルファブレンド描画を行えます。RGB 各成分に異なるアルファ値を設定することも可能です。
+`alpha` にアルファブレンド値を 0x000000〜0xFFFFFF の範囲で指定できます。
+
+RGB 各成分に異なるアルファ値を設定できます:
 
 - 0xFF0000 を指定すると赤成分のみを描画
 - 0x00FF00 を指定すると緑成分のみを描画
@@ -391,6 +410,10 @@ Size 3 Pattern Number Layout
 マスク色に RGB888 の非 0 値を指定すると、スプライトを単色で塗りつぶします。
 
 シューティングゲームの自機の影など、[Scale](#scale-of-sprite)、[Alpha Blend](#alpha-blend-of-sprite)、Mask を組み合わせた表現に利用できます。
+
+### (High Priority Flag)
+
+High priority flag `pri` をセットすることで描画優先度を `pri` がセットされていないスプライトよりも優先することができる。
 
 ## VDP Register
 
@@ -816,6 +839,14 @@ VGS-X における I/O は 0xE00000～0xEFFFFF のメモリ領域に 32 ビッ�
 | 0xE03108 |  o  |  -  | [Sequential: Commit](#0xe031xxio---large-sequencial-file-io) |
 | 0xE03110 |  o  |  -  | [Sequential: Open Read](#0xe031xxio---large-sequencial-file-io) |
 | 0xE03114 |  -  |  o  | [Sequential: Read Byte](#0xe031xxio---large-sequencial-file-io) |
+| 0xE04000 |  o  |  -  | [Calendar: Year](#0xe040xxin---calendar)|
+| 0xE04004 |  o  |  -  | [Calendar: Month](#0xe040xxin---calendar)|
+| 0xE04008 |  o  |  -  | [Calendar: Day of Month](#0xe040xxin---calendar)|
+| 0xE0400C |  o  |  -  | [Calendar: Hour](#0xe040xxin---calendar)|
+| 0xE04010 |  o  |  -  | [Calendar: Minute](#0xe040xxin---calendar)|
+| 0xE04014 |  o  |  -  | [Calendar: Second](#0xe040xxin---calendar)|
+| 0xE7FFF4 |  o  |  -  | [Abort](#0xe7fff4out---abort) |
+| 0xE7FFF8 |  -  |  o  | [Reset](#0xe7fff8out---reset) |
 | 0xE7FFFC |  -  |  o  | [Exit](#0xe7fffcout---exit) |
 | 0xE80000 ~ 0xE8FFFC |  o  |  o  | [User-Defined I/O](#0xe8xxxxio---user-defined-io) |
 
@@ -901,6 +932,39 @@ UTF-8 文字列（終端 0）を SJIS に変換しながら `Destination` にコ
 
 UTF-8 の 1 文字を SJIS に変換し、`Destination` に書き込みます。
 
+### 0xE040xx[in] - Calendar
+
+現在の日付と時刻を協定世界時（UTC）で数値表現として取得します。
+
+- 0xE04000: Year (例: 2025)
+- 0xE04004: Month (1 to 12)
+- 0xE04008: Day of Month (1 to 31)
+- 0xE0400C: Hour (0 to 23)
+- 0xE04010: Minute (0 to 59)
+- 0xE04014: Second (0 to 59)
+
+### 0xE7FFF4[out] - Abort
+
+スタックバックトレースを表示してプログラムを異常終了させます。
+
+なお、コンパイルオプションで最適化 (`-O`) を指定した場合は正常にバックトレースが拾えないことがあります。
+
+**本機能を利用する場合は一時的に最適化を無効にしてください。**
+
+最適化無効で Abort した時の出力例:
+
+```
+[error] Stack trace (FP=0xFFFF74):
+[error] #0: 0x001A78 <main+0x1286>
+[error] #1: 0x001BDC <crt0+0xA>
+```
+
+> VGS-X のプログラムは初期エントリ `crt0` から `main` がコールされていることが分かります。
+
+### 0xE7FFF8[out] - Reset
+
+VGS-X にリセット要求を送ります。
+
 ### 0xE7FFFC[out] - Exit
 
 VGS-X に終了要求を送ります。デバッグ用 SDL2 エミュレータでは、ここに書き込んだ値がプロセスの終了コードになります。
@@ -939,6 +1003,7 @@ VGS Standard Library（Video Game System Standard Library）は、VGS-X と将�
 
 | Category | Function | Description |
 |:---------|:---------|:------------|
+| system | `vgs_abort` | スタックバックトレースを出力して [Abort](#0xe7fff4out---abort) |
 | system | `vgs_vsync` | 60fps の [V-SYNC](#0xe00000in---v-sync) と同期する |
 | system | `vgs_user_in` | [User-Defined I/O](#0xe8xxxxio---user-defined-io) を入力する |
 | system | `vgs_user_out` | [User-Defined I/O](#0xe8xxxxio---user-defined-io) を出力する |
@@ -972,6 +1037,7 @@ VGS Standard Library（Video Game System Standard Library）は、VGS-X と将�
 | cg:sp | `vgs_sprite` | [OAM](#oam-object-attribute-memory) をまとめて設定する |
 | cg:sp | `vgs_sprite_hide_all` | すべてのスプライトを非表示にする |
 | cg:sp | `vgs_oam` | [OAM](#oam-object-attribute-memory) レコードを取得する |
+| cg:sp | `vgs_sprite_alpha8` | スプライトのアルファ値を8bitで設定する |
 | bmpfont | `vgs_pfont_init` | [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) を初期化する |
 | bmpfont | `vgs_pfont_get` | [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) 情報を取得する |
 | bmpfont | `vgs_pfont_set` | [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) 情報を設定する |
@@ -1021,6 +1087,12 @@ VGS Standard Library（Video Game System Standard Library）は、VGS-X と将�
 | save | `vgs_seq_commit` | [Large Sequencial File](#0xe031xxio---large-sequencial-file-io) をコミットする |
 | save | `vgs_seq_open_r` | [Large Sequencial File](#0xe031xxio---large-sequencial-file-io) を読み込み用に開く |
 | save | `vgs_seq_read` | [Large Sequencial File](#0xe031xxio---large-sequencial-file-io) から 1 バイト読み込む |
+| [calendar](#0xe040xxin---calendar) | `vgs_calendar_year` | 現在の年 (UTC) を取得 |
+| [calendar](#0xe040xxin---calendar) | `vgs_calendar_month` | 現在の次 (UTC) を取得 |
+| [calendar](#0xe040xxin---calendar) | `vgs_calendar_mday` | 現在の日 (UTC) を取得 |
+| [calendar](#0xe040xxin---calendar) | `vgs_calendar_hour` | 現在の時間 (UTC) を取得 |
+| [calendar](#0xe040xxin---calendar) | `vgs_calendar_minute` | 現在の分 (UTC) を取得 |
+| [calendar](#0xe040xxin---calendar) | `vgs_calendar_second` | 現在の秒 (UTC) を取得 |
 
 ### (Standard Functions)
 
@@ -1100,6 +1172,7 @@ SDL2 を用いた VGS-X エミュレータです。主に開発時のデバッ�
 
 ```
 usage: vgsx [-i]
+            [-d]
             [-g /path/to/pattern.chr]
             [-c /path/to/palette.bin]
             [-b /path/to/bgm.vgm]
@@ -1109,6 +1182,7 @@ usage: vgsx [-i]
 ```
 
 - `-i` を指定するとブートロゴ表示後にアプリを起動します（`makerom` で生成した ROM が必要）。
+- `-d` オプションを指定するとプログラム終了時に RAM とセーブデータのダンプを出力します。
 - `-g`、`-b`、`-s` は複数指定可能です。
 - .elf と .rom はヘッダ情報から自動判別します。
 - `-x` は CI などのテスト用途向けで、ユーザープログラムの終了コードが期待値と一致すると 0、異なると -1 を返します。指定時は SDL の映像・音声出力を抑制します。

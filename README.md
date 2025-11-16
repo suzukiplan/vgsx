@@ -18,7 +18,7 @@ Status
 4. [x] Implement Sound Effect function
 5. [x] Implement Gamepad function
 6. [x] Release beta 0.1.0
-7. [ ] Make launch title for VGS-X
+7. [ ] Release Battle Hanafuda (Production Version)
 
 Changes after Version 0.1.0 can be found in [CHANGES.md](./CHANGES.md).
 
@@ -39,7 +39,7 @@ Basic Features:
 
 VDP Features:
 
-- Screen Resolution: 320x200 pixels
+- Screen Resolution: 320x200 pixels (internally: 640x400)
 - Color: 24-bits color (RGB888)
 - BG: Four [nametables](#name-table), and Two modes ([Character Pattern and Bitmap](#0xd20028-0xd20034-bitmap-mode))
 - BG nametable size: 256x256 (2048x2048 pixels)
@@ -173,6 +173,16 @@ The following sections provide technical information useful for programming with
 - Sprites can display up to 1024.
 
 > _The screen resolution of VGS-X (320x200) is designed to enable full-screen display on the SteamDeck (1280x800)._
+
+## 4k Display
+
+The resolution (coordinate system) of VGS-X is 320×200 pixels, but internally, the screen buffer operates at 640×400 pixels.
+
+Sprites and backgrounds are always rendered at 4× size (twice the width and twice the height).
+
+This design allows sprites to be scaled down to 50% or more without losing pixel detail.
+
+It also reduces pixel loss when rotating sprites.
 
 ## Memory Map
 
@@ -323,17 +333,20 @@ OAM is a structure with the following attributes.
 
 ```c
 typedef struct {
-    uint32_t visible;      // Visible (0 or not 0)
-    int32_t y;             // Position (Y)
-    int32_t x;             // Position (X)
-    uint32_t attr;         // Attribute
-    uint32_t size;         // Size (0: 8x8, 1: 16x16, 2: 24x24, 3: 32x32 ... 31: 256x256)
-    int32_t rotate;        // Rotate (-360 ~ 360)
-    uint32_t scale;        // Scale (0: disabled, or 1 ~ 400 percent)
-    uint32_t alpha;        // Alpha Blend (0: disabled, or 0x000001 ~ 0xFFFFFF)
-    uint32_t mask;         // Mask (0: disabled, or RGB888)
-    uint32_t reserved[7];  // Reserved
-} OAM;
+    uint32_t visible;     // Visible (0 or not 0)
+    int32_t y;            // Position (Y)
+    int32_t x;            // Position (X)
+    uint32_t attr;        // Attribute
+    uint32_t size;        // Size (0: 8x8, 1: 16x16, 2: 24x24, 3: 32x32 ... 31: 256x256)
+    int32_t rotate;       // Rotate (-360 ~ 360)
+    uint32_t scale;       // Scale (0: disabled, or 1 ~ 400 percent)
+    uint32_t alpha;       // Alpha (0: disabled, or 0x000001 ~ 0xFFFFFF)
+    uint32_t mask;        // Mask (0: disabled, or RGB888)
+    uint32_t sly;         // Scale Lock (Y)
+    uint32_t slx;         // Scale Lock (X)
+    uint32_t pri;         // High Priority Flag
+    uint32_t reserved[4]; // Reserved
+} ObjectAttributeMemory;
 ```
 
 The specifications for each attribute are shown in the table below.
@@ -349,6 +362,9 @@ The specifications for each attribute are shown in the table below.
 | scale   | 0 ~ 400        | [Scale](#scale-of-sprite) |
 | alpha   | 0 or 0xRRGGBB  | [Alpha Blend](#alpha-blend-of-sprite) |
 | mask    | 0 or 0xRRGGBB  | [Mask](#mask-of-sprite) |
+| sly     | 0 or 1         | Lock [Scale](#scale-of-sprite) (Y) |
+| slx     | 0 or 1         | Lock [Scale](#scale-of-sprite) (X) |
+| pri     | 0 or 1         | [High Priority Flag](#high-priority-flag) |
 | reserved| -              | Do not set a value other than zero. |
 
 ### (Size of Sprite)
@@ -388,25 +404,28 @@ The Sprite rotation feature is useful when combined with the [Angle](#0xe00100-0
 
 ### (Scale of Sprite)
 
-You can specify the magnification rate as a percentage on the `scale`, either 0 (disabled) or within the range of 1 to 400.
+- You can specify the magnification rate as a percentage on the `scale` within the range of 0 to 400.
+- Setting either `slx` or `sly` to a value other than zero will prevent scaling of either the X or Y axis.
 
 ### (Alpha Blend of Sprite)
 
-You can perform alpha blending by setting the alpha component of the OAM to a non-zero value.
+You can specify the alpha blend value for `alpha` in the range of 0x000000 to 0xFFFFFF.
 
-For VGS-X, you can set different alpha values for each RGB color component.
+You can assign different alpha values to each RGB component:
 
-For example:
-
-- Providing 0xFF0000 draws only the red pigment
-- Providing 0x00FF00 draws only the green pigment
-- Providing 0x0000FF draws only the blue pigment
+- Specifying 0xFF0000 renders only the red component.
+- Specifying 0x00FF00 renders only the green component.
+- Specifying 0x0000FF renders only the blue component.
 
 ### (Mask of Sprite)
 
 Setting a non-zero value (in RGB888 format) to the mask fills the sprite with the specified solid color.
 
 _For example, combining the [Scale](#scale-of-sprite), [Alpha Blend](#alpha-blend-of-sprite), and Mask functions can be used to render the shadows of shoot 'em up aircraft._
+
+### (High Priority Flag)
+
+Setting the high priority flag `pri` allows the drawing priority to be set higher than sprites without `pri` set.
 
 ## VDP Register
 
@@ -613,6 +632,14 @@ Note that all addresses and values for I/O instructions must be specified as 32-
 | 0xE03108 |  o  |  -  | [Sequencial: Commit](#0xe031xxio---large-sequencial-file-io) |
 | 0xE03110 |  o  |  -  | [Sequencial: Open for Read](#0xe031xxio---large-sequencial-file-io) |
 | 0xE03114 |  -  |  o  | [Sequencial: Read a Byte](#0xe031xxio---large-sequencial-file-io) |
+| 0xE04000 |  o  |  -  | [Calendar: Year](#0xe040xxin---calendar)|
+| 0xE04004 |  o  |  -  | [Calendar: Month](#0xe040xxin---calendar)|
+| 0xE04008 |  o  |  -  | [Calendar: Day of Month](#0xe040xxin---calendar)|
+| 0xE0400C |  o  |  -  | [Calendar: Hour](#0xe040xxin---calendar)|
+| 0xE04010 |  o  |  -  | [Calendar: Minute](#0xe040xxin---calendar)|
+| 0xE04014 |  o  |  -  | [Calendar: Second](#0xe040xxin---calendar)|
+| 0xE7FFF4 |  o  |  -  | [Abort](#0xe7fff4out---abort) |
+| 0xE7FFF8 |  -  |  o  | [Reset](#0xe7fff8out---reset) |
 | 0xE7FFFC |  -  |  o  | [Exit](#0xe7fffcout---exit) |
 | 0xE80000 ~ 0xE8FFFC | o | o | [User-Defined I/O](#0xe8xxxxio---user-defined-io) |
 
@@ -930,6 +957,39 @@ Remarks:
 - It is possible to read and write to sequential files simultaneously. However, it is not possible to read and write to the same index file simultaneously.
 - Since loading is processed in memory, there is no overhead from disk I/O.
 
+### 0xE040xx[in] - Calendar
+
+Retrieves the numerical representation of the current date and time in Coordinated Universal Time (UTC).
+
+- 0xE04000: Year (ex: 2025)
+- 0xE04004: Month (1 to 12)
+- 0xE04008: Day of Month (1 to 31)
+- 0xE0400C: Hour (0 to 23)
+- 0xE04010: Minute (0 to 59)
+- 0xE04014: Second (0 to 59)
+
+### 0xE7FFF4[out] - Abort
+
+Displays a stack backtrace and terminates the program abnormally.
+
+Note that when compiler optimizations (-O) are enabled, the backtrace may not be captured correctly.
+
+If you plan to use this feature, **temporarily disable compiler optimizations.**
+
+Example output when an Abort occurs with optimizations disabled:
+
+```
+[error] Stack trace (FP=0xFFFF74):
+[error] #0: 0x001A78 <main+0x1286>
+[error] #1: 0x001BDC <crt0+0xA>
+```
+
+> From this, you can see that a VGS-X program calls main from the initial entry point crt0.
+
+### 0xE7FFF8[out] - Reset
+
+Issuing a reset request for VGS-X.
+
 ### 0xE7FFFC[out] - Exit
 
 Issuing an exit request for VGS-X.
@@ -973,6 +1033,7 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 
 | Category | Function | Description |
 |:------|:---------|:------------|
+| system | `vgs_abort` | Abort with Stack Backtrace |
 | system | `vgs_vsync` | Synchronize the [V-SYNC](#0xe00000in---v-sync) (screen output with 60fps) |
 | system | `vgs_user_in` | [User-Defined I/O](#0xe8xxxxio---user-defined-io) (Input) |
 | system | `vgs_user_out` | [User-Defined I/O](#0xe8xxxxio---user-defined-io) (Output) |
@@ -1006,6 +1067,7 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | cg:sp | `vgs_sprite` | Set [OAM](#oam-object-attribute-memory) attribute values in bulk |
 | cg:sp | `vgs_sprite_hide_all` | Make all sprites invisible. |
 | cg:sp | `vgs_oam` | Get an [OAM](#oam-object-attribute-memory) record. |
+| cg:sp | `vgs_sprite_alpha8` | Set the sprite's alpha value with 8-bit precision. |
 | bmpfont | `vgs_pfont_init` | [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) Initialization. |
 | bmpfont | `vgs_pfont_get` | Acquiring [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) Information. |
 | bmpfont | `vgs_pfont_set` | Setting [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) Information. |
@@ -1055,6 +1117,12 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | save | `vgs_seq_commit` | Commit a [Large Sequencial File](#0xe031xxio---large-sequencial-file-io) for write. |
 | save | `vgs_seq_open_r` | Open a [Large Sequencial File](#0xe031xxio---large-sequencial-file-io) for write. |
 | save | `vgs_seq_read` | Read a byte data to a [Large Sequencial File](#0xe031xxio---large-sequencial-file-io). |
+| [calendar](#0xe040xxin---calendar) | `vgs_calendar_year` | Retrieves the current year in UTC. |
+| [calendar](#0xe040xxin---calendar) | `vgs_calendar_month` | Retrieves the current month in UTC. |
+| [calendar](#0xe040xxin---calendar) | `vgs_calendar_mday` | Retrieves the current day of month in UTC. |
+| [calendar](#0xe040xxin---calendar) | `vgs_calendar_hour` | Retrieves the current hour in UTC. |
+| [calendar](#0xe040xxin---calendar) | `vgs_calendar_minute` | Retrieves the current minute in UTC. |
+| [calendar](#0xe040xxin---calendar) | `vgs_calendar_second` | Retrieves the current second in UTC. |
 
 ### (Standard Functions)
 
@@ -1141,6 +1209,7 @@ It is primarily provided for debugging purposes during game development.
 
 ```
 usage: vgsx [-i]
+            [-d]
             [-g /path/to/pattern.chr]
             [-c /path/to/palette.bin]
             [-b /path/to/bgm.vgm]
@@ -1150,6 +1219,7 @@ usage: vgsx [-i]
 ```
 
 - Specifying the `-i` option causes the application to launch after the boot logo appears. In this case, the file must be in the ROM format created by [`makerom`](#makerom) command.
+- When the `-d` option is specified, the RAM and save data will be dumped when the program exits.
 - The `-g`, `-b`, and `-s` options can be specified multiple times.
 - Program file (`.elf`) or ROM file (`rom`) are automatically identified based on the header information in the file header.
 - The `-x` option is intended for use in testing environments such as CI. If the exit code specified by the user program matches the expected value, the process exits with 0; otherwise, it exits with -1. When this option is specified, SDL video and audio output is skipped.
