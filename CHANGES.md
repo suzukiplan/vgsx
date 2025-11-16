@@ -8,6 +8,7 @@
 - Added `slx` and `sly` (Scale Lock X/Y) to OAM.
 - Added `pri` (High Priority Flag) to OAM.
 - Added `vgs_sprite_alpha8` function.
+- Added `vgs_abort` function.
 - Changed the behavior when `OAM.alpha` is set to `0` from “alpha disabled” to “fully transparent.” **(Disruptive)**
 - Changed the behavior when `OAM.scale` is set to `0` from “scaling disabled” to “scaled to 0%.” **(Disruptive)**
 - Changed the default values when initializing a sprite with `vgs_sprite` to `OAM.alpha = 0xFFFFFF` and `OAM.scale = 100`.
