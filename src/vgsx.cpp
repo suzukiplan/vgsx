@@ -637,7 +637,7 @@ void VGSX::reset(void)
     m68k_set_reg(M68K_REG_PC, eh.e_entry);
 
     // Reset RAM
-    memset(this->ctx.ram, 0x00, sizeof(this->ctx.ram));
+    memset(this->ctx.ram, 0xFF, sizeof(this->ctx.ram));
 
     // Search an Executable Code and initialize RAM segments
     for (uint32_t i = 0, off = eh.e_phoff; i < eh.e_phnum; i++, off += eh.e_phentsize) {
@@ -664,7 +664,7 @@ void VGSX::reset(void)
             this->ctx.programSize = ph.p_memsz;
         }
         if (ph.p_type == 1 && ph.p_memsz) {
-            uint32_t loadAddress = ph.p_paddr ? ph.p_paddr : ph.p_vaddr;
+            uint32_t loadAddress = ph.p_vaddr ? ph.p_vaddr : ph.p_paddr;
             uint64_t segStart = loadAddress;
             uint64_t segEnd = segStart + ph.p_memsz;
             if (segEnd > RAM_BASE && segStart < ramLimit) {
