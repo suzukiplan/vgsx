@@ -12,4 +12,4 @@ run:
 	@${VGSX_ROOT}/tools/sdl2/vgsx -d -x 59 test00.elf > test00_result.txt
 
 test00.elf: test00.c ../../lib/libc.a
-	m68k-elf-gcc -m68030 -O2 -I${VGSX_ROOT}/lib -o $@ $< -L${VGSX_ROOT}/lib -T${VGSX_ROOT}/lib/linker.ld -Wl,-ecrt0 -llog
+	m68k-elf-gcc -m68030 -I${VGSX_ROOT}/lib -o $@ $< -L${VGSX_ROOT}/lib -T${VGSX_ROOT}/lib/linker.ld -Wl,-ecrt0 -llog

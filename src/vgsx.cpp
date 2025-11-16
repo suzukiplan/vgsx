@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <stdarg.h>
 #include <math.h>
+#include <vector>
 #include "vgsx.h"
 #include "musashi.hpp"
 #include "vgs_io.h"
@@ -88,6 +89,15 @@ typedef struct {
     uint32_t sh_addralign;
     uint32_t sh_entsize;
 } Elf32_Shdr;
+
+typedef struct {
+    uint32_t st_name;
+    uint32_t st_value;
+    uint32_t st_size;
+    uint8_t st_info;
+    uint8_t st_other;
+    uint16_t st_shndx;
+} Elf32_Sym;
 
 static std::string elf32_program_type(uint32_t type)
 {
@@ -183,6 +193,256 @@ static void loadElfHeader(Elf32_Ehdr* header, const void* prg)
     header->e_shentsize = b2h16(header->e_shentsize);
     header->e_shnum = b2h16(header->e_shnum);
     header->e_shstrndx = b2h16(header->e_shstrndx);
+}
+
+struct BacktraceSymbol {
+    uint32_t address;
+    uint32_t size;
+    const char* name;
+};
+
+static constexpr uint32_t RAM_BASE = 0xF00000;
+static constexpr uint32_t RAM_SIZE = 0x100000;
+static constexpr uint32_t RAM_LIMIT = RAM_BASE + RAM_SIZE;
+
+static bool loadSectionHeader(const uint8_t* elf, size_t elfSize, const Elf32_Ehdr& eh, uint32_t index, Elf32_Shdr* out)
+{
+    if (!eh.e_shentsize) {
+        return false;
+    }
+    uint64_t sectionOffset = static_cast<uint64_t>(eh.e_shoff) + static_cast<uint64_t>(index) * eh.e_shentsize;
+    if (sectionOffset + eh.e_shentsize > elfSize) {
+        return false;
+    }
+    memset(out, 0, sizeof(*out));
+    size_t copySize = std::min<size_t>(sizeof(*out), static_cast<size_t>(eh.e_shentsize));
+    memcpy(out, &elf[sectionOffset], copySize);
+    out->sh_name = b2h32(out->sh_name);
+    out->sh_type = b2h32(out->sh_type);
+    out->sh_flags = b2h32(out->sh_flags);
+    out->sh_addr = b2h32(out->sh_addr);
+    out->sh_offset = b2h32(out->sh_offset);
+    out->sh_size = b2h32(out->sh_size);
+    out->sh_link = b2h32(out->sh_link);
+    out->sh_info = b2h32(out->sh_info);
+    out->sh_addralign = b2h32(out->sh_addralign);
+    out->sh_entsize = b2h32(out->sh_entsize);
+    return true;
+}
+
+static bool readRam32(const VGSX::Context& ctx, uint32_t address, uint32_t& out)
+{
+    uint64_t addr = address;
+    if (addr < RAM_BASE || addr + 3 >= RAM_LIMIT) {
+        return false;
+    }
+    uint32_t offset = static_cast<uint32_t>(addr - RAM_BASE);
+    const uint8_t* ptr = &ctx.ram[offset];
+    out = (uint32_t(ptr[0]) << 24) |
+          (uint32_t(ptr[1]) << 16) |
+          (uint32_t(ptr[2]) << 8) |
+          uint32_t(ptr[3]);
+    return true;
+}
+
+static const std::vector<BacktraceSymbol>& getBacktraceSymbols(const VGSX& vgs)
+{
+    static const uint8_t* cachedElf = nullptr;
+    static size_t cachedElfSize = 0;
+    static std::vector<BacktraceSymbol> cachedSymbols;
+
+    if (cachedElf == vgs.ctx.elf && cachedElfSize == vgs.ctx.elfSize) {
+        return cachedSymbols;
+    }
+
+    cachedElf = vgs.ctx.elf;
+    cachedElfSize = vgs.ctx.elfSize;
+    cachedSymbols.clear();
+
+    if (!vgs.ctx.elf || vgs.ctx.elfSize < sizeof(Elf32_Ehdr)) {
+        return cachedSymbols;
+    }
+
+    Elf32_Ehdr eh;
+    loadElfHeader(&eh, vgs.ctx.elf);
+    if (!eh.e_shoff || !eh.e_shentsize || !eh.e_shnum) {
+        return cachedSymbols;
+    }
+
+    uint64_t tableEnd = static_cast<uint64_t>(eh.e_shoff) + static_cast<uint64_t>(eh.e_shentsize) * eh.e_shnum;
+    if (tableEnd > vgs.ctx.elfSize) {
+        return cachedSymbols;
+    }
+
+    for (uint32_t i = 0; i < eh.e_shnum; ++i) {
+        Elf32_Shdr sh;
+        if (!loadSectionHeader(vgs.ctx.elf, vgs.ctx.elfSize, eh, i, &sh)) {
+            continue;
+        }
+        if (sh.sh_type != 2 && sh.sh_type != 11) {
+            continue;
+        }
+        uint64_t sectionEnd = static_cast<uint64_t>(sh.sh_offset) + sh.sh_size;
+        if (!sh.sh_entsize || sectionEnd > vgs.ctx.elfSize) {
+            continue;
+        }
+        if (sh.sh_link >= eh.e_shnum) {
+            continue;
+        }
+        Elf32_Shdr strSh;
+        if (!loadSectionHeader(vgs.ctx.elf, vgs.ctx.elfSize, eh, sh.sh_link, &strSh)) {
+            continue;
+        }
+        uint64_t strEnd = static_cast<uint64_t>(strSh.sh_offset) + strSh.sh_size;
+        if (!strSh.sh_size || strEnd > vgs.ctx.elfSize) {
+            continue;
+        }
+        const char* strtab = reinterpret_cast<const char*>(&vgs.ctx.elf[strSh.sh_offset]);
+        uint32_t symCount = sh.sh_size / sh.sh_entsize;
+        for (uint32_t s = 0; s < symCount; ++s) {
+            uint64_t symOffset = static_cast<uint64_t>(sh.sh_offset) + static_cast<uint64_t>(s) * sh.sh_entsize;
+            if (symOffset + sh.sh_entsize > vgs.ctx.elfSize) {
+                break;
+            }
+            Elf32_Sym sym;
+            memset(&sym, 0, sizeof(sym));
+            size_t symCopy = std::min<size_t>(sizeof(sym), static_cast<size_t>(sh.sh_entsize));
+            memcpy(&sym, &vgs.ctx.elf[symOffset], symCopy);
+            sym.st_name = b2h32(sym.st_name);
+            sym.st_value = b2h32(sym.st_value);
+            sym.st_size = b2h32(sym.st_size);
+            sym.st_shndx = b2h16(sym.st_shndx);
+            uint8_t type = sym.st_info & 0x0F;
+            if ((type != 2 && type != 0) || sym.st_name >= strSh.sh_size) {
+                continue;
+            }
+            const char* name = strtab + sym.st_name;
+            if (!name || !*name) {
+                continue;
+            }
+            BacktraceSymbol symbol;
+            symbol.address = sym.st_value & 0xFFFFFF;
+            symbol.size = sym.st_size;
+            symbol.name = name;
+            cachedSymbols.push_back(symbol);
+        }
+    }
+    std::sort(cachedSymbols.begin(), cachedSymbols.end(), [](const BacktraceSymbol& a, const BacktraceSymbol& b) {
+        return a.address < b.address;
+    });
+
+    vgsx.putlog(VGSX::LogLevel::E, "Symbols:");
+    for (auto sym : cachedSymbols) {
+        vgsx.putlog(VGSX::LogLevel::E, "%06X %s (%d bytes)", sym.address, sym.name, sym.size);
+    }
+    return cachedSymbols;
+}
+
+static const BacktraceSymbol* resolveSymbol(const std::vector<BacktraceSymbol>& symbols, uint32_t address)
+{
+    if (symbols.empty()) {
+        return nullptr;
+    }
+    size_t left = 0;
+    size_t right = symbols.size();
+    while (left < right) {
+        size_t mid = (left + right) / 2;
+        if (address < symbols[mid].address) {
+            right = mid;
+        } else {
+            left = mid + 1;
+        }
+    }
+    if (left == 0) {
+        return nullptr;
+    }
+    const BacktraceSymbol& sym = symbols[left - 1];
+    uint64_t end;
+    if (sym.size) {
+        end = static_cast<uint64_t>(sym.address) + sym.size;
+    } else if (left < symbols.size()) {
+        end = symbols[left].address;
+    } else {
+        end = static_cast<uint64_t>(sym.address) + 1;
+    }
+    if (address < sym.address || address >= end) {
+        return nullptr;
+    }
+    return &sym;
+}
+
+static void logStackTrace(VGSX& vgs)
+{
+    constexpr uint32_t MAX_DEPTH = 16;
+    const auto& symbols = getBacktraceSymbols(vgs);
+    uint32_t frame = m68k_get_reg(nullptr, M68K_REG_A6) & 0xFFFFFF;
+    bool printed = false;
+    for (uint32_t depth = 0; depth < MAX_DEPTH; ++depth) {
+        uint32_t prevFrame = 0;
+        uint32_t returnAddress = 0;
+        if (!readRam32(vgs.ctx, frame, prevFrame) || !readRam32(vgs.ctx, frame + 4, returnAddress)) {
+            break;
+        }
+        returnAddress &= 0xFFFFFF;
+        if (!returnAddress) {
+            break;
+        }
+        if (!printed) {
+            vgs.putlog(VGSX::LogLevel::E, "Stack trace (FP=0x%06X):", frame);
+            printed = true;
+        }
+        if (const BacktraceSymbol* sym = resolveSymbol(symbols, returnAddress)) {
+            vgs.putlog(VGSX::LogLevel::E,
+                       "#%u: 0x%06X <%s+0x%X>",
+                       depth,
+                       returnAddress,
+                       sym->name,
+                       returnAddress - sym->address);
+        } else {
+            vgs.putlog(VGSX::LogLevel::E, "#%u: 0x%06X", depth, returnAddress);
+        }
+        prevFrame &= 0xFFFFFF;
+        if (prevFrame <= frame || prevFrame < RAM_BASE || prevFrame >= RAM_LIMIT) {
+            break;
+        }
+        frame = prevFrame;
+    }
+    if (printed) {
+        return;
+    }
+
+    uint32_t sp = m68k_get_reg(nullptr, M68K_REG_SP) & 0xFFFFFF;
+    if (sp < RAM_BASE || sp >= RAM_LIMIT) {
+        vgs.putlog(VGSX::LogLevel::E, "Stack trace unavailable (invalid SP: 0x%06X)", sp);
+        return;
+    }
+    uint32_t available = RAM_LIMIT - sp;
+    uint32_t depth = std::min<uint32_t>(MAX_DEPTH, available / 4);
+    if (!depth) {
+        vgs.putlog(VGSX::LogLevel::E, "Stack trace unavailable (empty stack)");
+        return;
+    }
+    vgs.putlog(VGSX::LogLevel::E, "Stack trace (SP=0x%06X):", sp);
+    for (uint32_t i = 0; i < depth; ++i) {
+        uint32_t addr = 0;
+        if (!readRam32(vgs.ctx, sp + i * 4, addr)) {
+            break;
+        }
+        addr &= 0xFFFFFF;
+        if (!addr) {
+            break;
+        }
+        if (const BacktraceSymbol* sym = resolveSymbol(symbols, addr)) {
+            vgs.putlog(VGSX::LogLevel::E,
+                       "#%u: 0x%06X <%s+0x%X>",
+                       i,
+                       addr,
+                       sym->name,
+                       addr - sym->address);
+        } else {
+            vgs.putlog(VGSX::LogLevel::E, "#%u: 0x%06X", i, addr);
+        }
+    }
 }
 
 extern "C" uint32_t m68k_read_memory_8(uint32_t address)
@@ -1109,6 +1369,12 @@ void VGSX::outPort(uint32_t address, uint32_t value)
 
         case VGS_ADDR_RESET:
             this->reset();
+            return;
+
+        case VGS_ADDR_ABORT:
+            this->exitFlag = true;
+            this->exitCode = (int32_t)value;
+            logStackTrace(*this);
             return;
 
         case VGS_ADDR_EXIT:

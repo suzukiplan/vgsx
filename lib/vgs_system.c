@@ -47,38 +47,38 @@ void vgs_vsync(void)
     _vsync = VGS_IN_VSYNC;
 }
 
+void vgs_abort(uint32_t code)
+{
+    VGS_OUT_ABORT = code;
+    hang_up();
+}
+
 void _bus_error(void)
 {
-    VGS_OUT_EXIT = 0xDEAD0000;
-    hang_up();
+    vgs_abort(0xDEAD0000);
 }
 
 void _address_error(void)
 {
-    VGS_OUT_EXIT = 0xDEAD0001;
-    hang_up();
+    vgs_abort(0xDEAD0001);
 }
 
 void _illegal(void)
 {
-    VGS_OUT_EXIT = 0xDEAD0002;
-    hang_up();
+    vgs_abort(0xDEAD0002);
 }
 
 void _zero_div(void)
 {
-    VGS_OUT_EXIT = 0xDEAD0003;
-    hang_up();
+    vgs_abort(0xDEAD0003);
 }
 
 void _chk_inst(void)
 {
-    VGS_OUT_EXIT = 0xDEAD0004;
-    hang_up();
+    vgs_abort(0xDEAD0004);
 }
 
 void _trapv(void)
 {
-    VGS_OUT_EXIT = 0xDEAD0005;
-    hang_up();
+    vgs_abort(0xDEAD0005);
 }

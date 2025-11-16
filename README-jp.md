@@ -845,6 +845,7 @@ VGS-X における I/O は 0xE00000～0xEFFFFF のメモリ領域に 32 ビッ�
 | 0xE0400C |  o  |  -  | [Calendar: Hour](#0xe040xxin---calendar)|
 | 0xE04010 |  o  |  -  | [Calendar: Minute](#0xe040xxin---calendar)|
 | 0xE04014 |  o  |  -  | [Calendar: Second](#0xe040xxin---calendar)|
+| 0xE7FFF4 |  o  |  -  | [Abort](#0xe7fff4out---abort) |
 | 0xE7FFF8 |  -  |  o  | [Reset](#0xe7fff8out---reset) |
 | 0xE7FFFC |  -  |  o  | [Exit](#0xe7fffcout---exit) |
 | 0xE80000 ~ 0xE8FFFC |  o  |  o  | [User-Defined I/O](#0xe8xxxxio---user-defined-io) |
@@ -942,6 +943,24 @@ UTF-8 の 1 文字を SJIS に変換し、`Destination` に書き込みます。
 - 0xE04010: Minute (0 to 59)
 - 0xE04014: Second (0 to 59)
 
+### 0xE7FFF4[out] - Abort
+
+スタックバックトレースを表示してプログラムを異常終了させます。
+
+なお、コンパイルオプションで最適化 (`-O`) を指定した場合は正常にバックトレースが拾えないことがあります。
+
+**本機能を利用する場合は一時的に最適化を無効にしてください。**
+
+最適化無効で Abort した時の出力例:
+
+```
+[error] Stack trace (FP=0xFFFF74):
+[error] #0: 0x001A78 <main+0x1286>
+[error] #1: 0x001BDC <crt0+0xA>
+```
+
+> VGS-X のプログラムは初期エントリ `crt0` から `main` がコールされていることが分かります。
+
 ### 0xE7FFF8[out] - Reset
 
 VGS-X にリセット要求を送ります。
@@ -984,6 +1003,7 @@ VGS Standard Library（Video Game System Standard Library）は、VGS-X と将�
 
 | Category | Function | Description |
 |:---------|:---------|:------------|
+| system | `vgs_abort` | スタックバックトレースを出力して [Abort](#0xe7fff4out---abort) |
 | system | `vgs_vsync` | 60fps の [V-SYNC](#0xe00000in---v-sync) と同期する |
 | system | `vgs_user_in` | [User-Defined I/O](#0xe8xxxxio---user-defined-io) を入力する |
 | system | `vgs_user_out` | [User-Defined I/O](#0xe8xxxxio---user-defined-io) を出力する |
