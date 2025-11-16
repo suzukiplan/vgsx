@@ -1,5 +1,13 @@
 # Changes
 
+## Next Version
+
+The current `master` branch is in a nightly state.
+
+Pending fixes:
+
+- n/a
+
 ## Version 0.24.0 **(Disruptive)**
 
 - Support 4k Display
