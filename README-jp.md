@@ -642,11 +642,13 @@ VGS-X は下図のような D-Pad、ABXY、Start の入力を取得できます�
 
 | VGS-X and XBOX | PC Keybord | Switch | PlayStation |
 |:-:|:-:|:-:|:-:|
-| `A` | `Z` | `B` | `Cross` |
-| `B` | `X` | `A` | `Circle` |
-| `X` | `A` | `Y` | `Square` |
-| `Y` | `S` | `X` | `Triangle` |
+| `A` | `Z` | `A` | `Cross` |
+| `B` | `X` | `B` | `Circle` |
+| `X` | `A` | `X` | `Square` |
+| `Y` | `S` | `Y` | `Triangle` |
 | `Start` | `Space` | `Plus` | `Options` |
+
+> Switch のゲームパッド（Proコン）を用いる場合、A/B と X/Y の並び順が標準（XBOX）とは逆になる仕様です。
 
 ## 0xE021xx[io] - Gamepad Types
 

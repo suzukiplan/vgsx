@@ -820,11 +820,13 @@ The following table shows the button assignments for a typical gamepad:
 
 | VGS-X and XBOX | PC Keybord | Switch | PlayStation | 
 |:-:|:-:|:-:|:-:|
-| `A` | `Z` | `B` | `Cross` |
-| `B` | `X` | `A` | `Circle` |
-| `X` | `A` | `Y` | `Square` |
-| `Y` | `S` | `X` | `Triangle` |
+| `A` | `Z` | `A` | `Cross` |
+| `B` | `X` | `B` | `Circle` |
+| `X` | `A` | `X` | `Square` |
+| `Y` | `S` | `Y` | `Triangle` |
 | `Start` | `Space` | `Plus` | `Options` |
+
+> When using a Switch gamepad (Pro Controller), the positions of the A/B and X/Y buttons are reversed compared to the standard (Xbox) layout.
 
 ### 0xE021xx[io] - Gamepad Types
 
