@@ -6,7 +6,7 @@ The current `master` branch is in a nightly state.
 
 Pending fixes:
 
-- n/a
+- Added `VGSX::setSaveDataDirectory` method
 
 ## Version 0.24.0 **(Disruptive)**
 

@@ -27,6 +27,7 @@
 #include <stdarg.h>
 #include <math.h>
 #include <vector>
+#include <string>
 #include "vgsx.h"
 #include "musashi.hpp"
 #include "vgs_io.h"
@@ -529,6 +530,7 @@ static int illegal_instruction_logger(int opcode)
 
 VGSX::VGSX()
 {
+    strcpy(this->saveDataDir, "./");
     this->vgmdrv = new VgmDriver(44100, 2);
     ((VgmDriver*)this->vgmdrv)->subscribeLog([&](bool isError, const char* msg) {
         putlog(isError ? LogLevel::E : LogLevel::I, "%s", msg);
@@ -1085,7 +1087,9 @@ uint32_t VGSX::inPort(uint32_t address)
                 putlog(LogLevel::W, "ignored an invalid load request (addr=0x%X)", this->ctx.save.address);
                 return 0;
             }
-            FILE* fp = fopen("save.dat", "rb");
+            std::string path = saveDataDir;
+            path += "save.dat";
+            FILE* fp = fopen(path.c_str(), "rb");
             if (!fp) {
                 putlog(LogLevel::E, "failed load request (File Not Found!)");
                 return 0;
@@ -1123,7 +1127,9 @@ uint32_t VGSX::inPort(uint32_t address)
 
         case VGS_ADDR_SAVE_CHECK: // Check save.dat size
         {
-            FILE* fp = fopen("save.dat", "rb");
+            std::string path = saveDataDir;
+            path += "save.dat";
+            FILE* fp = fopen(path.c_str(), "rb");
             if (!fp) {
                 putlog(LogLevel::W, "failed check save.dat size request (File Not Found!)");
                 return 0;
@@ -1274,7 +1280,9 @@ void VGSX::outPort(uint32_t address, uint32_t value)
             } else if (0x00FFFFFF < this->ctx.save.address + value) {
                 putlog(LogLevel::W, "ignored an invalid save request (addr=0x%X+%u)", this->ctx.save.address, value);
             } else {
-                FILE* fp = fopen("save.dat", "wb");
+                std::string path = saveDataDir;
+                path += "save.dat";
+                FILE* fp = fopen(path.c_str(), "wb");
                 if (!fp) {
                     putlog(LogLevel::E, "save.dat open failed!");
                 } else {
@@ -1301,7 +1309,9 @@ void VGSX::outPort(uint32_t address, uint32_t value)
         case VGS_ADDR_SEQ_COMMIT: {
             char fname[80];
             snprintf(fname, sizeof(fname), "save%03d.dat", (int)this->ctx.sqw.index);
-            FILE* fp = fopen(fname, "wb");
+            std::string path = saveDataDir;
+            path += fname;
+            FILE* fp = fopen(path.c_str(), "wb");
             if (fp) {
                 if (this->ctx.sqw.size != fwrite(this->ctx.sqw.buffer, 1, this->ctx.sqw.size, fp)) {
                     putlog(LogLevel::E, "file write error (%s)", fname);
@@ -1317,7 +1327,9 @@ void VGSX::outPort(uint32_t address, uint32_t value)
             this->ctx.sqr.index = value & 0xFF;
             char fname[80];
             snprintf(fname, sizeof(fname), "save%03d.dat", (int)this->ctx.sqr.index);
-            FILE* fp = fopen(fname, "rb");
+            std::string path = saveDataDir;
+            path += fname;
+            FILE* fp = fopen(path.c_str(), "rb");
             if (fp) {
                 this->ctx.sqr.size = fread(this->ctx.sqr.buffer, 1, sizeof(this->ctx.sqr.buffer), fp);
                 putlog(LogLevel::N, "%s read (%u bytes)", fname, this->ctx.sqr.size);

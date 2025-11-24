@@ -177,6 +177,20 @@ class VGSX
     void subscribeInput(std::function<uint32_t(uint32_t port)> callback);
     void subscribeOutput(std::function<void(uint32_t port, uint32_t value)> callback);
 
+    void setSaveDataDirectory(const char* dir)
+    {
+        memset(saveDataDir, 0, sizeof(saveDataDir));
+        strncpy(saveDataDir, dir, sizeof(saveDataDir) - 2);
+        int len = (int)strlen(saveDataDir);
+        if (len < 1) {
+            strcpy(saveDataDir, "./");
+        } else {
+            if (saveDataDir[len - 1] != '/' && saveDataDir[len - 1] != '\\') {
+                strcat(saveDataDir, "/");
+            }
+        }
+    }
+
   private:
     static struct tm* now()
     {
@@ -184,6 +198,7 @@ class VGSX
         return gmtime(&now);
     }
 
+    char saveDataDir[1024];
     bool subscribedInput;
     bool subscribedOutput;
     std::function<uint32_t(uint32_t port)> inputCallback;
