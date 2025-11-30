@@ -881,8 +881,8 @@ void VGSX::reset(void)
     this->ctx.programSize = 0;
     this->ctx.randomIndex = 0;
     this->ctx.frameClocks = 0;
-    this->ctx.vgmMasterVolume = VGS_MASTER_VOLUME_MAX;
-    this->ctx.sfxMasterVolume = VGS_MASTER_VOLUME_MAX;
+    this->ctx.vgmMasterVolume = VGS_MASTER_VOLUME_MAX - 1;
+    this->ctx.sfxMasterVolume = VGS_MASTER_VOLUME_MAX - 1;
     this->vdp.reset();
     ((VgmDriver*)this->vgmdrv)->reset();
     for (int i = 0; i < 0x100; i++) {
@@ -997,7 +997,7 @@ void VGSX::tickSound(int16_t* buf, int samples)
     if (!helper->isEnded() && !this->ctx.vgmPause) {
         helper->render(buf, samples);
     }
-    if (this->ctx.vgmMasterVolume < VGS_MASTER_VOLUME_MAX) {
+    if (this->ctx.vgmMasterVolume < VGS_MASTER_VOLUME_MAX - 1) {
         for (int i = 0; i < samples; i++) {
             int32_t w = buf[i];
             w *= this->ctx.vgmMasterVolume;
@@ -1022,7 +1022,7 @@ void VGSX::tickSound(int16_t* buf, int samples)
             for (int j = 0; j < samples; j++) {
                 if (this->ctx.sfxData[i].index < this->ctx.sfxData[i].count) {
                     int w = this->ctx.sfxData[i].data[this->ctx.sfxData[i].index];
-                    if (this->ctx.sfxMasterVolume < VGS_MASTER_VOLUME_MAX) {
+                    if (this->ctx.sfxMasterVolume < VGS_MASTER_VOLUME_MAX - 1) {
                         w *= this->ctx.sfxMasterVolume;
                         w /= VGS_MASTER_VOLUME_MAX;
                     }
@@ -1249,11 +1249,11 @@ void VGSX::outPort(uint32_t address, uint32_t value)
             return;
 
         case VGS_ADDR_VGM_MASTER:
-            this->ctx.vgmMasterVolume = value < VGS_MASTER_VOLUME_MAX ? value : VGS_MASTER_VOLUME_MAX;
+            this->ctx.vgmMasterVolume = value < VGS_MASTER_VOLUME_MAX ? value : VGS_MASTER_VOLUME_MAX - 1;
             return;
 
         case VGS_ADDR_SFX_MASTER:
-            this->ctx.sfxMasterVolume = value < VGS_MASTER_VOLUME_MAX ? value : VGS_MASTER_VOLUME_MAX;
+            this->ctx.sfxMasterVolume = value < VGS_MASTER_VOLUME_MAX ? value : VGS_MASTER_VOLUME_MAX - 1;
             return;
 
         case VGS_ADDR_SFX_PLAY: // Play SFX

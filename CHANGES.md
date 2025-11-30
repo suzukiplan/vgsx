@@ -7,6 +7,7 @@ The current `master` branch is in a nightly state.
 Pending fixes:
 
 - Added `VGSX::setSaveDataDirectory` method
+- Changed the master volume range: 0-256 -> 0-255
 
 ## Version 0.24.0 **(Disruptive)**
 

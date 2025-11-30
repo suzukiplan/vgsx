@@ -772,7 +772,7 @@ For a concrete example, please refer to the implementation in [./example/03_rota
 - Set 0 to 0xE01004 to pause BGM playback.
 - Set 1 to 0xE01004 to resume BGM playback.
 - Set 2 to 0xE01004 to fadeout the BGM.
-- Set BGM Master Volume to 0xE01008: 0=0%, 256=100% (default: 256)
+- Set BGM Master Volume to 0xE01008: 0=0%, 255=100% (default: 255)
 - Get BGM Master Volume from 0xE01008
 
 VGS-X can play VGM data compatible with the YM2612 (OPN2).
@@ -783,7 +783,7 @@ We recommend using [Furnace Tracker](https://github.com/tildearrow/furnace) to c
 
 - Set the .wav index value to 0xE01100 to play the sound effect (SFX).
 - Set the .wav index value to 0xE01104 to stop the SFX.
-- Set SFX Master Volume to 0xE01108: 0=0%, 256=100% (default: 256)
+- Set SFX Master Volume to 0xE01108: 0=0%, 255=100% (default: 255)
 - Get SFX Master Volume from 0xE01108
 
 Plays the SFX loaded at the index corresponding to the output value.
