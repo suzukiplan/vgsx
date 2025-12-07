@@ -538,7 +538,10 @@ VGSX::VGSX()
     this->subscribedInput = false;
     this->subscribedOutput = false;
     this->gamepadType = GamepadType::Keyboard;
-    this->logCallback = nullptr;
+    this->logCallback = {};
+    this->consoleCallback = {};
+    this->consoleBufferLength = 0;
+    this->consoleBuffer[0] = '\0';
     this->bootBios = true;
     this->ignoreReset = false;
     memset(&this->pendingRomData, 0, sizeof(pendingRomData));
@@ -877,6 +880,8 @@ void VGSX::reset(void)
     this->detectReferVSync = false;
     this->exitFlag = false;
     this->exitCode = 0;
+    this->consoleBufferLength = 0;
+    this->consoleBuffer[0] = '\0';
     this->ctx.program = NULL;
     this->ctx.programSize = 0;
     this->ctx.randomIndex = 0;
@@ -1189,7 +1194,18 @@ void VGSX::outPort(uint32_t address, uint32_t value)
 {
     switch (address) {
         case VGS_ADDR_CONSOLE: // Console Output
-            fputc(value, stdout);
+            if (this->consoleCallback) {
+                if ('\n' == value) {
+                    this->consoleCallback(this->consoleBuffer);
+                    this->consoleBufferLength = 0;
+                    this->consoleBuffer[0] = '\0';
+                } else if (this->consoleBufferLength < sizeof(this->consoleBuffer) - 1) {
+                    this->consoleBuffer[this->consoleBufferLength++] = static_cast<char>(value);
+                    this->consoleBuffer[this->consoleBufferLength] = '\0';
+                }
+            } else {
+                fputc(value, stdout);
+            }
             return;
         case VGS_ADDR_RANDOM: // Setup Random
             this->ctx.randomIndex = (int)value;

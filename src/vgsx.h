@@ -29,6 +29,7 @@
 #include <math.h>
 #include <time.h>
 #include <functional>
+#include <utility>
 #include "vdp.hpp"
 
 class VGSX
@@ -167,7 +168,8 @@ class VGSX
     inline bool isExit() { return this->exitFlag; }
     int32_t getExitCode() { return this->exitCode; }
     void putlog(LogLevel level, const char* format, ...);
-    void setLogCallback(void (*callback)(LogLevel level, const char* msg)) { this->logCallback = callback; }
+    void setLogCallback(std::function<void(LogLevel level, const char* msg)> callback) { this->logCallback = std::move(callback); }
+    void setConsoleCallback(std::function<void(const char* msg)> callback) { this->consoleCallback = std::move(callback); }
     inline void setGamepadType(GamepadType type) { this->gamepadType = type; }
     ButtonId getButtonIdA();
     ButtonId getButtonIdB();
@@ -211,7 +213,10 @@ class VGSX
     } pendingRomData;
     bool bootBios;
     bool extractRom(const uint8_t* program, int programSize);
-    void (*logCallback)(LogLevel level, const char* msg);
+    std::function<void(LogLevel level, const char* msg)> logCallback;
+    std::function<void(const char* msg)> consoleCallback;
+    char consoleBuffer[1024];
+    uint16_t consoleBufferLength;
     GamepadType gamepadType;
     bool exitFlag;
     int32_t exitCode;
