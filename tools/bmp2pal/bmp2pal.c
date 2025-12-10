@@ -54,63 +54,173 @@ int main(int argc, char* argv[])
     /* 引数チェック */
     rc++;
     if (argc < 3) {
-        fprintf(stderr, "usage: bmp2pal input.bmp|input.png palette.dat\n");
+        fprintf(stderr, "usage: bmp2pal {input.bmp|input.png} palette.dat\n");
         goto ENDPROC;
     }
 
     is_png = is_png_file(argv[1]);
     if (is_png) {
         rc++;
-        if (!stbi_info(argv[1], &dh.width, &dh.height, &png_comp)) {
-            fprintf(stderr, "ERROR: Could not read png header: %s\n", argv[1]);
+        if (NULL == (fpR = fopen(argv[1], "rb"))) {
+            fprintf(stderr, "ERROR: Could not open: %s\n", argv[1]);
             goto ENDPROC;
         }
-        rc++;
-        if (stbi_is_16_bit(argv[1])) {
-            fprintf(stderr, "ERROR: 16bit png is not supported: %s\n", argv[1]);
-            goto ENDPROC;
-        }
-        if (png_comp == 2 || png_comp == 4) {
-            fprintf(stderr, "ERROR: PNG with alpha channel is not supported: %s\n", argv[1]);
-            goto ENDPROC;
-        }
-        rc++;
-        png_data = stbi_load(argv[1], &dh.width, &dh.height, &png_comp, 3);
-        if (!png_data) {
-            fprintf(stderr, "ERROR: Could not load png: %s\n", stbi_failure_reason());
-            goto ENDPROC;
-        }
-        dh.bits = 8;
-        dh.ctype = 0;
-        dh.cnum = 0;
-        dh.inum = 0;
 
-        int pixel_count = dh.width * dh.height;
-        const unsigned char* ptr = png_data;
-        for (i = 0; i < pixel_count; i++, ptr += 3) {
-            unsigned int color = ((unsigned int)ptr[0] << 16) | ((unsigned int)ptr[1] << 8) | ptr[2];
-            int found = 0;
-            for (j = 0; j < palette_size; j++) {
-                if (pal256[j] == color) {
-                    found = 1;
-                    break;
-                }
+        const unsigned char expected_sig[8] = {137, 80, 78, 71, 13, 10, 26, 10};
+        unsigned char signature[8];
+        rc++;
+        if (sizeof(signature) != fread(signature, 1, sizeof(signature), fpR) || memcmp(signature, expected_sig, sizeof(signature))) {
+            fprintf(stderr, "ERROR: Invalid png signature: %s\n", argv[1]);
+            goto ENDPROC;
+        }
+
+        int palette_loaded = 0;
+        int got_ihdr = 0;
+        unsigned char bit_depth = 0;
+        unsigned char color_type = 0;
+
+        while (1) {
+            unsigned char len_buf[4];
+            unsigned char type_buf[4];
+            if (sizeof(len_buf) != fread(len_buf, 1, sizeof(len_buf), fpR) || sizeof(type_buf) != fread(type_buf, 1, sizeof(type_buf), fpR)) {
+                fprintf(stderr, "ERROR: Unexpected EOF while reading png chunks: %s\n", argv[1]);
+                goto ENDPROC;
             }
-            if (!found) {
-                if (palette_size >= 256) {
-                    fprintf(stderr, "ERROR: PNG has more than 256 colors: %s\n", argv[1]);
+
+            unsigned int chunk_len = ((unsigned int)len_buf[0] << 24) | ((unsigned int)len_buf[1] << 16) | ((unsigned int)len_buf[2] << 8) | (unsigned int)len_buf[3];
+
+            if (!memcmp(type_buf, "IHDR", 4)) {
+                unsigned char ihdr[13];
+                if (chunk_len != sizeof(ihdr)) {
+                    fprintf(stderr, "ERROR: Invalid IHDR length: %s\n", argv[1]);
                     goto ENDPROC;
                 }
-                pal256[palette_size] = color;
-                palette_size++;
+                rc++;
+                if (sizeof(ihdr) != fread(ihdr, 1, sizeof(ihdr), fpR)) {
+                    fprintf(stderr, "ERROR: Could not read IHDR: %s\n", argv[1]);
+                    goto ENDPROC;
+                }
+                dh.width = ((unsigned int)ihdr[0] << 24) | ((unsigned int)ihdr[1] << 16) | ((unsigned int)ihdr[2] << 8) | (unsigned int)ihdr[3];
+                dh.height = ((unsigned int)ihdr[4] << 24) | ((unsigned int)ihdr[5] << 16) | ((unsigned int)ihdr[6] << 8) | (unsigned int)ihdr[7];
+                bit_depth = ihdr[8];
+                color_type = ihdr[9];
+                got_ihdr = 1;
+                if (fseek(fpR, 4, SEEK_CUR)) {
+                    fprintf(stderr, "ERROR: Could not skip IHDR CRC: %s\n", argv[1]);
+                    goto ENDPROC;
+                }
+                continue;
+            }
+
+            if (!memcmp(type_buf, "PLTE", 4)) {
+                if ((chunk_len % 3) || chunk_len > 768) {
+                    fprintf(stderr, "ERROR: Invalid PLTE length: %s\n", argv[1]);
+                    goto ENDPROC;
+                }
+                unsigned char pal_buf[768];
+                if (chunk_len && chunk_len != fread(pal_buf, 1, chunk_len, fpR)) {
+                    fprintf(stderr, "ERROR: Could not read PLTE: %s\n", argv[1]);
+                    goto ENDPROC;
+                }
+                palette_size = chunk_len / 3;
+                for (i = 0; i < palette_size; i++) {
+                    pal256[i] = ((unsigned int)pal_buf[i * 3] << 16) | ((unsigned int)pal_buf[i * 3 + 1] << 8) | pal_buf[i * 3 + 2];
+                }
+                palette_loaded = 1;
+            } else {
+                if (chunk_len && fseek(fpR, chunk_len, SEEK_CUR)) {
+                    fprintf(stderr, "ERROR: Could not skip chunk: %s\n", argv[1]);
+                    goto ENDPROC;
+                }
+            }
+
+            if (fseek(fpR, 4, SEEK_CUR)) { /* CRC */
+                fprintf(stderr, "ERROR: Could not skip CRC: %s\n", argv[1]);
+                goto ENDPROC;
+            }
+
+            if ((palette_loaded && got_ihdr) || !memcmp(type_buf, "IEND", 4)) {
+                break;
             }
         }
-        if (!palette_size) {
-            fprintf(stderr, "ERROR: PNG has no color data: %s\n", argv[1]);
+
+        fclose(fpR);
+        fpR = NULL;
+
+        if (!got_ihdr) {
+            fprintf(stderr, "ERROR: IHDR chunk not found: %s\n", argv[1]);
             goto ENDPROC;
         }
-        for (; palette_size < 256; palette_size++) {
-            pal256[palette_size] = 0;
+
+        if (color_type == 3) {
+            if (!palette_loaded) {
+                fprintf(stderr, "ERROR: Indexed PNG has no palette: %s\n", argv[1]);
+                goto ENDPROC;
+            }
+            if (bit_depth != 8) {
+                fprintf(stderr, "ERROR: Indexed PNG must be 8bit: %s\n", argv[1]);
+                goto ENDPROC;
+            }
+            dh.bits = 8;
+            dh.ctype = 0;
+            dh.cnum = palette_size;
+            dh.inum = 0;
+            for (; palette_size < 256; palette_size++) {
+                pal256[palette_size] = 0;
+            }
+        } else {
+            rc++;
+            if (!stbi_info(argv[1], &dh.width, &dh.height, &png_comp)) {
+                fprintf(stderr, "ERROR: Could not read png header: %s\n", argv[1]);
+                goto ENDPROC;
+            }
+            rc++;
+            if (stbi_is_16_bit(argv[1])) {
+                fprintf(stderr, "ERROR: 16bit png is not supported: %s\n", argv[1]);
+                goto ENDPROC;
+            }
+            if (png_comp == 2 || png_comp == 4) {
+                fprintf(stderr, "ERROR: PNG with alpha channel is not supported: %s\n", argv[1]);
+                goto ENDPROC;
+            }
+            rc++;
+            png_data = stbi_load(argv[1], &dh.width, &dh.height, &png_comp, 3);
+            if (!png_data) {
+                fprintf(stderr, "ERROR: Could not load png: %s\n", stbi_failure_reason());
+                goto ENDPROC;
+            }
+            dh.bits = 8;
+            dh.ctype = 0;
+            dh.cnum = 0;
+            dh.inum = 0;
+
+            int pixel_count = dh.width * dh.height;
+            const unsigned char* ptr = png_data;
+            for (i = 0; i < pixel_count; i++, ptr += 3) {
+                unsigned int color = ((unsigned int)ptr[0] << 16) | ((unsigned int)ptr[1] << 8) | ptr[2];
+                int found = 0;
+                for (j = 0; j < palette_size; j++) {
+                    if (pal256[j] == color) {
+                        found = 1;
+                        break;
+                    }
+                }
+                if (!found) {
+                    if (palette_size >= 256) {
+                        fprintf(stderr, "ERROR: PNG has more than 256 colors: %s\n", argv[1]);
+                        goto ENDPROC;
+                    }
+                    pal256[palette_size] = color;
+                    palette_size++;
+                }
+            }
+            if (!palette_size) {
+                fprintf(stderr, "ERROR: PNG has no color data: %s\n", argv[1]);
+                goto ENDPROC;
+            }
+            for (; palette_size < 256; palette_size++) {
+                pal256[palette_size] = 0;
+            }
         }
     } else {
         /* 読み込みファイルをオープン */
