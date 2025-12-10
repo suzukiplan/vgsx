@@ -50,10 +50,10 @@ int main(int argc, char** argv)
     out.reserve(w * h);
 
     for (int i = 0; i < w * h; ++i) {
-        uint8_t r = img[i * 4 + 0];
-        uint8_t g = img[i * 4 + 1];
-        uint8_t b = img[i * 4 + 2];
-        uint8_t a = img[i * 4 + 3];
+        uint8_t r = img[i * 4 + 3];
+        uint8_t g = img[i * 4 + 2];
+        uint8_t b = img[i * 4 + 1];
+        uint8_t a = img[i * 4 + 0];
         out.push_back(pack_be(r, g, b, a));
     }
 
