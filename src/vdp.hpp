@@ -661,13 +661,16 @@ class VDP
                 // Render Pixel
                 if (oam->ram_ptr) {
                     const int ram_ptr = (oam->ram_ptr + (wx + (wy * (1 + psize) * 8)) * 4) & 0xFFFFC;
-                    if (angle % 90 && ddx + 1 < displayWidth) {
-                        uint32_t rgb = cpu_ram[ram_ptr + 1];
-                        rgb <<= 8;
-                        rgb |= cpu_ram[ram_ptr + 2];
-                        rgb <<= 8;
-                        rgb |= cpu_ram[ram_ptr + 3];
+                    uint32_t rgb = cpu_ram[ram_ptr + 1];
+                    rgb <<= 8;
+                    rgb |= cpu_ram[ram_ptr + 2];
+                    rgb <<= 8;
+                    rgb |= cpu_ram[ram_ptr + 3];
+                    if (rgb) {
                         this->renderSpritePixel(ddy * displayWidth + ddx + 1, rgb, oam->alpha, oam->mask);
+                        if (angle % 90 && ddx + 1 < displayWidth) {
+                            this->renderSpritePixel(ddy * displayWidth + ddx + 1, rgb, oam->alpha, oam->mask);
+                        }
                     }
                 } else {
                     const uint8_t col = readSpritePixel(ptn, psize, wx, wy);
