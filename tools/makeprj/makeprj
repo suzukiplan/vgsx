@@ -47,8 +47,8 @@ fi
 echo "Create directory: $VGSX_Project_Path/src"
 mkdir "$VGSX_Project_Path/src"
 
-echo "Create directory: $VGSX_Project_Path/bmp"
-mkdir "$VGSX_Project_Path/bmp"
+echo "Create directory: $VGSX_Project_Path/png"
+mkdir "$VGSX_Project_Path/png"
 
 echo "Create directory: $VGSX_Project_Path/vgm"
 mkdir "$VGSX_Project_Path/vgm"
@@ -71,8 +71,8 @@ cp -p template/README.md "$VGSX_Project_Path/README.md"
 echo "Create file: $VGSX_Project_Path/src/main.c"
 cp -p template/main.c "$VGSX_Project_Path/src/main.c"
 
-echo "Create file: $VGSX_Project_Path/bmp/font.bmp"
-cp -p template/font.bmp "$VGSX_Project_Path/bmp/font.bmp"
+echo "Create file: $VGSX_Project_Path/png/font.png"
+cp -p template/font.png "$VGSX_Project_Path/png/font.png"
 
 echo "Create file: $VGSX_Project_Path/vgm/sample.vgm"
 cp -p template/sample.vgm "$VGSX_Project_Path/vgm/sample.vgm"

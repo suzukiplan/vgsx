@@ -17,8 +17,8 @@ OBJ_FILES := $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC_FILES))
 DEP_FILES := $(OBJ_FILES:.o=.d)
 
 # === Assets =================================================================
-CHR_FILES = ./bmp/font.chr
-# CHR_FILES += ./bmp/new_pattern.chr
+CHR_FILES = ./png/font.chr
+# CHR_FILES += ./png/new_pattern.chr
 
 BGM_FILES = ./vgm/sample.vgm
 # BGM_FILES += ./vgm/new_song.vgm
@@ -45,12 +45,12 @@ game.rom: program.elf palette.bin ${CHR_FILES} ${BGM_FILES} ${WAV_FILES}
 program.elf: ${OBJ_FILES}
 	${M68KCC} -o $@ ${OBJ_FILES} -L${VGSX_ROOT}/lib -Wl,-ecrt0 -llog
 
-palette.bin: ./bmp/font.bmp
+palette.bin: ./png/font.png
 	${BMP2PAL} $< $@
 
-.SUFFIXES: .bmp .chr
+.SUFFIXES: .png .chr
 
-.bmp.chr:
+.png.chr:
 	${BMP2CHR} $< $@
 
 # ============================================================================
