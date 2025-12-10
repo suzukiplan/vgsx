@@ -2,70 +2,159 @@
 #include <SDL.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <cstdio>
 #include <iostream>
 #include <fstream>
 #include <chrono>
+#include <vector>
 #include "vgsx.h"
 
 static pthread_mutex_t soundMutex = PTHREAD_MUTEX_INITIALIZER;
 
-typedef struct BitmapHeader_ {
-    int isize;             /* 情報ヘッダサイズ */
-    int width;             /* 幅 */
-    int height;            /* 高さ */
-    unsigned short planes; /* プレーン数 */
-    unsigned short bits;   /* 色ビット数 */
-    unsigned int ctype;    /* 圧縮形式 */
-    unsigned int gsize;    /* 画像データサイズ */
-    int xppm;              /* X方向解像度 */
-    int yppm;              /* Y方向解像度 */
-    unsigned int cnum;     /* 使用色数 */
-    unsigned int inum;     /* 重要色数 */
-} BitmapHeader;
+static uint32_t pngCrc32Update(uint32_t crc, const uint8_t* data, size_t length)
+{
+    static bool initialized = false;
+    static uint32_t table[256];
+    if (!initialized) {
+        for (uint32_t i = 0; i < 256; i++) {
+            uint32_t c = i;
+            for (int k = 0; k < 8; k++) {
+                c = (c & 1) ? (0xEDB88320u ^ (c >> 1)) : (c >> 1);
+            }
+            table[i] = c;
+        }
+        initialized = true;
+    }
+    for (size_t i = 0; i < length; i++) {
+        crc = table[(crc ^ data[i]) & 0xFF] ^ (crc >> 8);
+    }
+    return crc;
+}
+
+static uint32_t pngCrc32(const char type[4], const uint8_t* data, uint32_t length)
+{
+    uint32_t crc = pngCrc32Update(0xFFFFFFFFu, reinterpret_cast<const uint8_t*>(type), 4);
+    if (length) crc = pngCrc32Update(crc, data, length);
+    return crc ^ 0xFFFFFFFFu;
+}
+
+static uint32_t pngAdler32(const uint8_t* data, size_t length)
+{
+    const uint32_t mod = 65521u;
+    uint32_t a = 1;
+    uint32_t b = 0;
+    while (length) {
+        size_t block = length > 5552 ? 5552 : length;
+        length -= block;
+        for (size_t i = 0; i < block; i++) {
+            a += data[i];
+            b += a;
+        }
+        a %= mod;
+        b %= mod;
+        data += block;
+    }
+    return (b << 16) | a;
+}
+
+static bool writePngChunk(FILE* fp, const char type[4], const uint8_t* data, uint32_t length)
+{
+    uint8_t header[4];
+    header[0] = (length >> 24) & 0xFF;
+    header[1] = (length >> 16) & 0xFF;
+    header[2] = (length >> 8) & 0xFF;
+    header[3] = length & 0xFF;
+    if (4 != fwrite(header, 1, 4, fp)) return false;
+    if (4 != fwrite(type, 1, 4, fp)) return false;
+    if (length && length != fwrite(data, 1, length, fp)) return false;
+    uint32_t crc = pngCrc32(type, data, length);
+    uint8_t crcbuf[4];
+    crcbuf[0] = (crc >> 24) & 0xFF;
+    crcbuf[1] = (crc >> 16) & 0xFF;
+    crcbuf[2] = (crc >> 8) & 0xFF;
+    crcbuf[3] = crc & 0xFF;
+    return 4 == fwrite(crcbuf, 1, 4, fp);
+}
+
+static bool writePng(const char* path, const uint32_t* display, int width, int height)
+{
+    const size_t stride = (size_t)width * 4;
+    std::vector<uint8_t> raw;
+    raw.reserve((stride + 1) * height);
+    for (int y = 0; y < height; ++y) {
+        raw.push_back(0);
+        const uint32_t* row = display + y * width;
+        for (int x = 0; x < width; ++x) {
+            uint32_t pixel = row[x];
+            raw.push_back((pixel >> 16) & 0xFF);
+            raw.push_back((pixel >> 8) & 0xFF);
+            raw.push_back(pixel & 0xFF);
+            raw.push_back(0xFF);
+        }
+    }
+
+    uint32_t adler = pngAdler32(raw.data(), raw.size());
+    std::vector<uint8_t> idat;
+    size_t blockCount = (raw.size() + 65534) / 65535;
+    idat.reserve(raw.size() + blockCount * 5 + 6);
+    idat.push_back(0x78);
+    idat.push_back(0x01);
+    size_t offset = 0;
+    while (offset < raw.size()) {
+        size_t block = raw.size() - offset;
+        if (block > 65535) block = 65535;
+        bool finalBlock = (offset + block) == raw.size();
+        idat.push_back(finalBlock ? 0x01 : 0x00);
+        uint16_t len = (uint16_t)block;
+        uint16_t nlen = ~len;
+        idat.push_back(len & 0xFF);
+        idat.push_back((len >> 8) & 0xFF);
+        idat.push_back(nlen & 0xFF);
+        idat.push_back((nlen >> 8) & 0xFF);
+        idat.insert(idat.end(), raw.begin() + offset, raw.begin() + offset + block);
+        offset += block;
+    }
+    idat.push_back((adler >> 24) & 0xFF);
+    idat.push_back((adler >> 16) & 0xFF);
+    idat.push_back((adler >> 8) & 0xFF);
+    idat.push_back(adler & 0xFF);
+
+    FILE* fp = fopen(path, "wb");
+    if (!fp) {
+        return false;
+    }
+    bool result = true;
+    const uint8_t signature[8] = {137, 80, 78, 71, 13, 10, 26, 10};
+    result = result && 8 == fwrite(signature, 1, 8, fp);
+    uint8_t ihdr[13];
+    ihdr[0] = (width >> 24) & 0xFF;
+    ihdr[1] = (width >> 16) & 0xFF;
+    ihdr[2] = (width >> 8) & 0xFF;
+    ihdr[3] = width & 0xFF;
+    ihdr[4] = (height >> 24) & 0xFF;
+    ihdr[5] = (height >> 16) & 0xFF;
+    ihdr[6] = (height >> 8) & 0xFF;
+    ihdr[7] = height & 0xFF;
+    ihdr[8] = 8; // bit depth
+    ihdr[9] = 6; // RGBA
+    ihdr[10] = 0;
+    ihdr[11] = 0;
+    ihdr[12] = 0;
+    result = result && writePngChunk(fp, "IHDR", ihdr, sizeof(ihdr));
+    result = result && writePngChunk(fp, "IDAT", idat.data(), (uint32_t)idat.size());
+    result = result && writePngChunk(fp, "IEND", nullptr, 0);
+    fclose(fp);
+    return result;
+}
 
 static void screenShot()
 {
-    static unsigned char buf[14 + 40 + VDP_WIDTH * 2 * VDP_HEIGHT * 2 * 4];
-    int iSize = (int)sizeof(buf);
-    memset(buf, 0, sizeof(buf));
-    int ptr = 0;
-    buf[ptr++] = 'B';
-    buf[ptr++] = 'M';
-    memcpy(&buf[ptr], &iSize, 4);
-    ptr += 4;
-    ptr += 4;
-    iSize = 14 + 40;
-    memcpy(&buf[ptr], &iSize, 4);
-    ptr += 4;
-    BitmapHeader header;
-    header.isize = 40;
-    header.width = vgsx.getDisplayWidth();
-    header.height = vgsx.getDisplayHeight();
-    header.planes = 1;
-    header.bits = 32;
-    header.ctype = 0;
-    header.gsize = header.width * header.height * (header.bits / 8);
-    header.xppm = 1;
-    header.yppm = 1;
-    header.cnum = 0;
-    header.inum = 0;
-    memcpy(&buf[ptr], &header, sizeof(header));
-    ptr += sizeof(header);
-    uint32_t* display = vgsx.getDisplay();
-    for (int y = 0; y < vgsx.getDisplayHeight(); y++) {
-        for (int x = 0; x < vgsx.getDisplayWidth(); x++) {
-            auto rgb888 = display[(vgsx.getDisplayHeight() - 1 - y) * vgsx.getDisplayWidth() + x];
-            memcpy(&buf[ptr], &rgb888, 4);
-            ptr += 4;
-        }
+    const char* filename = "screen.png";
+    if (writePng(filename, vgsx.getDisplay(), vgsx.getDisplayWidth(), vgsx.getDisplayHeight())) {
+        puts("Capture screen.png");
+    } else {
+        puts("Failed to capture screen.png");
     }
-    FILE* fp = fopen("screen.bmp", "wb");
-    if (fp) {
-        fwrite(buf, 1, sizeof(buf), fp);
-        fclose(fp);
-        puts("Capture screen.bmp");
-    }
-    return;
 }
 
 static uint8_t* loadBinary(const char* path, int* size)
