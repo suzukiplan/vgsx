@@ -6,14 +6,14 @@ The current `master` branch is in a nightly state.
 
 Pending fixes:
 
-- Added `ram_ptr` and `rom_ptr` (Bitmap Sprite Buffer) to the OAM
-- Added `VGSX::setSaveDataDirectory` method
-- Added `VGSX::setConsoleCallback` method
-- Added tool chain: `bmp2img`
-- `bmp2chr` supports `.png` format
-- `bmp2pal` supports `.png` format
-- `VGSX::setLogCallback` changes to `std::function`
-- Changed the master volume range: 0-256 -> 0-255
+- Add `ram_ptr` and `rom_ptr` (Bitmap Sprite Buffer) entries to the OAM
+- Add `VGSX::setSaveDataDirectory`
+- Add `VGSX::setConsoleCallback`
+- Add new toolchain component: `bmp2img`
+- Extend `bmp2chr` to support `.png` input
+- Extend `bmp2pal` to support `.png` input
+- Update `VGSX::setLogCallback` to use `std::function`
+- Adjust master volume range from 0–256 to 0–255
 
 ## Version 0.24.0 **(Disruptive)**
 
