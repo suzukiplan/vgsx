@@ -37,33 +37,15 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    // --- 変換処理 ---
-    std::vector<uint32_t> out;
-    out.reserve(w * h);
-
-    for (int i = 0; i < w * h; ++i) {
-        uint8_t r = img[i * 4];
-        uint8_t g = img[i * 4 + 1];
-        uint8_t b = img[i * 4 + 2];
-        uint32_t rgb = b;
-        rgb <<= 8;
-        rgb |= g;
-        rgb <<= 8;
-        rgb |= r;
-        rgb <<= 8;
-        out.push_back(rgb);
-    }
-
-    stbi_image_free(img);
-
     FILE* fp = fopen(argv[2], "wb");
     if (!fp) {
         fprintf(stderr, "Failed to open output file: %s\n", argv[2]);
         return 1;
     }
 
-    fwrite(out.data(), 4, out.size(), fp);
+    fwrite(img, 4, w * h, fp);
     fclose(fp);
+    stbi_image_free(img);
 
     printf("OK: %dx%d pixels -> %s\n", w, h, argv[2]);
     return 0;
