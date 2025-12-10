@@ -34,17 +34,46 @@ static int is_png_file(const char* path)
     return ext[0] == '.' && tolower((unsigned char)ext[1]) == 'p' && tolower((unsigned char)ext[2]) == 'n' && tolower((unsigned char)ext[3]) == 'g';
 }
 
-static int read_png_palette(const char* path, unsigned int* palette, int* palette_size)
+static unsigned int read_be32(const unsigned char* p)
+{
+    return ((unsigned int)p[0] << 24) | ((unsigned int)p[1] << 16) | ((unsigned int)p[2] << 8) | (unsigned int)p[3];
+}
+
+static unsigned char paeth(unsigned char a, unsigned char b, unsigned char c)
+{
+    int p = (int)a + (int)b - (int)c;
+    int pa = p > a ? p - a : a - p;
+    int pb = p > b ? p - b : b - p;
+    int pc = p > c ? p - c : c - p;
+    if (pa <= pb && pa <= pc) {
+        return a;
+    }
+    if (pb <= pc) {
+        return b;
+    }
+    return c;
+}
+
+static int load_indexed_png(const char* path, struct DatHead* dh, unsigned char** out_pixels, unsigned int* palette, int* palette_size)
 {
     static const unsigned char sig[8] = {0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A};
-    unsigned char buf[256 * 3];
+    unsigned char plte[256 * 3];
+    unsigned char header[13];
     unsigned char alpha[256];
+    unsigned char* idata = NULL;
+    int idata_len = 0;
+    unsigned char* inflated = NULL;
+    int inflated_len = 0;
+    int bit_depth = 0;
+    int color_type = 0;
+    int interlace = 0;
     FILE* fp = fopen(path, "rb");
     if (!fp) {
         return 0;
     }
 
-    if (fread(buf, 1, 8, fp) != 8 || memcmp(buf, sig, 8)) {
+    unsigned char sigbuf[8];
+    if (fread(sigbuf, 1, 8, fp) != 8 || memcmp(sigbuf, sig, 8)) {
         fclose(fp);
         return 0;
     }
@@ -60,21 +89,35 @@ static int read_png_palette(const char* path, unsigned int* palette, int* palett
         if (fread(lenbuf, 1, 4, fp) != 4 || fread(type, 1, 4, fp) != 4) {
             break;
         }
-        len = ((unsigned int)lenbuf[0] << 24) | ((unsigned int)lenbuf[1] << 16) | ((unsigned int)lenbuf[2] << 8) | (unsigned int)lenbuf[3];
+        len = read_be32(lenbuf);
         type[4] = '\0';
 
-        if (!memcmp(type, "PLTE", 4)) {
-            if (len > sizeof(buf) || (len % 3)) {
+        if (!memcmp(type, "IHDR", 4)) {
+            if (len != 13 || fread(header, 1, 13, fp) != 13) {
                 fclose(fp);
                 return 0;
             }
-            if (fread(buf, 1, len, fp) != len) {
+            dh->width = (int)read_be32(header);
+            dh->height = (int)read_be32(header + 4);
+            bit_depth = header[8];
+            color_type = header[9];
+            interlace = header[12];
+            if (color_type != 3 || (bit_depth != 4 && bit_depth != 8) || interlace != 0) {
                 fclose(fp);
                 return 0;
             }
-            *palette_size = len / 3;
+        } else if (!memcmp(type, "PLTE", 4)) {
+            if (len > 256 * 3 || (len % 3)) {
+                fclose(fp);
+                return 0;
+            }
+            if (fread(plte, 1, len, fp) != len) {
+                fclose(fp);
+                return 0;
+            }
+            *palette_size = (int)(len / 3);
             for (int i = 0; i < *palette_size; i++) {
-                palette[i] = ((unsigned int)buf[i * 3] << 24) | ((unsigned int)buf[i * 3 + 1] << 16) | ((unsigned int)buf[i * 3 + 2] << 8);
+                palette[i] = ((unsigned int)plte[i * 3] << 24) | ((unsigned int)plte[i * 3 + 1] << 16) | ((unsigned int)plte[i * 3 + 2] << 8);
             }
         } else if (!memcmp(type, "tRNS", 4)) {
             unsigned int count = len < 256 ? len : 256;
@@ -86,6 +129,20 @@ static int read_png_palette(const char* path, unsigned int* palette, int* palett
                 fclose(fp);
                 return 0;
             }
+        } else if (!memcmp(type, "IDAT", 4)) {
+            unsigned char* newbuf = (unsigned char*)realloc(idata, (size_t)idata_len + len);
+            if (!newbuf) {
+                fclose(fp);
+                free(idata);
+                return 0;
+            }
+            idata = newbuf;
+            if (fread(idata + idata_len, 1, len, fp) != len) {
+                fclose(fp);
+                free(idata);
+                return 0;
+            }
+            idata_len += (int)len;
         } else {
             if (fseek(fp, (long)len, SEEK_CUR)) {
                 break;
@@ -102,12 +159,98 @@ static int read_png_palette(const char* path, unsigned int* palette, int* palett
 
     fclose(fp);
 
-    if (!*palette_size) {
+    if (!idata_len || !*palette_size || !dh->width || !dh->height) {
+        free(idata);
         return 0;
     }
+
     for (int i = 0; i < *palette_size; i++) {
         palette[i] |= alpha[i];
     }
+
+    int row_bytes = (dh->width * bit_depth + 7) / 8;
+    int expected = (row_bytes + 1) * dh->height;
+    inflated = (unsigned char*)stbi_zlib_decode_malloc_guesssize_headerflag((char*)idata, idata_len, expected, &inflated_len, 1);
+    free(idata);
+    if (!inflated || inflated_len < expected) {
+        free(inflated);
+        return 0;
+    }
+
+    unsigned char* unpacked = (unsigned char*)malloc((size_t)dh->width * dh->height);
+    if (!unpacked) {
+        free(inflated);
+        return 0;
+    }
+
+    unsigned char* prev = NULL;
+    int out_pos = 0;
+    unsigned char* ptr = inflated;
+    for (int y = 0; y < dh->height; y++) {
+        unsigned char filter = *ptr++;
+        unsigned char* cur = ptr;
+        unsigned char* row = cur;
+        switch (filter) {
+        case 0:
+            break;
+        case 1:
+            for (int i = 0; i < row_bytes; i++) {
+                unsigned char left = i ? row[i - 1] : 0;
+                row[i] = (unsigned char)(row[i] + left);
+            }
+            break;
+        case 2:
+            for (int i = 0; i < row_bytes; i++) {
+                unsigned char up = prev ? prev[i] : 0;
+                row[i] = (unsigned char)(row[i] + up);
+            }
+            break;
+        case 3:
+            for (int i = 0; i < row_bytes; i++) {
+                unsigned char left = i ? row[i - 1] : 0;
+                unsigned char up = prev ? prev[i] : 0;
+                row[i] = (unsigned char)(row[i] + (unsigned char)(((int)left + (int)up) / 2));
+            }
+            break;
+        case 4:
+            for (int i = 0; i < row_bytes; i++) {
+                unsigned char left = i ? row[i - 1] : 0;
+                unsigned char up = prev ? prev[i] : 0;
+                unsigned char up_left = (prev && i) ? prev[i - 1] : 0;
+                row[i] = (unsigned char)(row[i] + paeth(left, up, up_left));
+            }
+            break;
+        default:
+            free(unpacked);
+            free(inflated);
+            return 0;
+        }
+
+        if (bit_depth == 8) {
+            for (int i = 0; i < dh->width; i++) {
+                unpacked[out_pos++] = (unsigned char)(row[i] & 0x0F);
+            }
+        } else {
+            for (int i = 0; i < dh->width; i++) {
+                int byte_index = i / 2;
+                unsigned char v = row[byte_index];
+                unsigned char idx = (i & 1) ? (unsigned char)(v & 0x0F) : (unsigned char)((v >> 4) & 0x0F);
+                unpacked[out_pos++] = idx;
+            }
+        }
+
+        prev = row;
+        ptr += row_bytes;
+    }
+
+    free(inflated);
+
+    dh->bits = 4;
+    dh->ctype = 0;
+    dh->cnum = 0;
+    dh->inum = 0;
+
+    *out_pixels = unpacked;
     return 1;
 }
 
@@ -124,9 +267,7 @@ int main(int argc, char* argv[])
     char* bmp = NULL;
     char* tmp = NULL;
     unsigned char* ptn = NULL;
-    unsigned char* png_data = NULL;
     int is_png = 0;
-    int png_comp = 0;
     unsigned int png_palette[256];
     int png_palette_size = 0;
 
@@ -140,28 +281,10 @@ int main(int argc, char* argv[])
     is_png = is_png_file(argv[1]);
     if (is_png) {
         rc++;
-        if (!stbi_info(argv[1], &dh.width, &dh.height, &png_comp)) {
-            fprintf(stderr, "ERROR: Could not read png header: %s\n", argv[1]);
+        if (!load_indexed_png(argv[1], &dh, (unsigned char**)&bmp, png_palette, &png_palette_size)) {
+            fprintf(stderr, "ERROR: Could not load indexed png: %s\n", argv[1]);
             goto ENDPROC;
         }
-        rc++;
-        if (stbi_is_16_bit(argv[1])) {
-            fprintf(stderr, "ERROR: 16bit png is not supported: %s\n", argv[1]);
-            goto ENDPROC;
-        }
-        if (png_comp == 2 || png_comp == 4) {
-            fprintf(stderr, "ERROR: PNG with alpha channel is not supported: %s\n", argv[1]);
-            goto ENDPROC;
-        }
-        rc++;
-        if (!read_png_palette(argv[1], png_palette, &png_palette_size)) {
-            fprintf(stderr, "ERROR: Could not read png palette: %s\n", argv[1]);
-            goto ENDPROC;
-        }
-        dh.bits = png_palette_size <= 16 ? 4 : 8;
-        dh.ctype = 0;
-        dh.cnum = 0;
-        dh.inum = 0;
     } else {
         /* 読み込みファイルをオープン */
         rc++;
@@ -216,29 +339,7 @@ int main(int argc, char* argv[])
     }
 
     if (is_png) {
-        rc++;
-        png_data = stbi_load(argv[1], &dh.width, &dh.height, &png_comp, 4);
-        if (!png_data) {
-            fprintf(stderr, "ERROR: Could not load png: %s\n", stbi_failure_reason());
-            goto ENDPROC;
-        }
-        bmp = (char*)png_data;
-        for (i = 0; i < dh.width * dh.height; i++) {
-            unsigned char* px = png_data + i * 4;
-            unsigned int color = ((unsigned int)px[0] << 24) | ((unsigned int)px[1] << 16) | ((unsigned int)px[2] << 8) | px[3];
-            int idx = -1;
-            for (j = 0; j < png_palette_size; j++) {
-                if (png_palette[j] == color) {
-                    idx = j;
-                    break;
-                }
-            }
-            if (idx < 0) {
-                fprintf(stderr, "ERROR: Palette mismatch on png pixel %d.\n", i);
-                goto ENDPROC;
-            }
-            bmp[i] = (unsigned char)(idx & 0x0F);
-        }
+        /* 既に bmp に読み込み済み */
     } else {
         /* 読み込みメモリを確保 */
         bmp = (char*)malloc(dh.width * dh.height);
@@ -338,11 +439,8 @@ ENDPROC:
     if (fpW) {
         fclose(fpW);
     }
-    if (!is_png && bmp) {
+    if (bmp) {
         free(bmp);
-    }
-    if (png_data) {
-        stbi_image_free(png_data);
     }
     if (ptn) {
         free(ptn);
