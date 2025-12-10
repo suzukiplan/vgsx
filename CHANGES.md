@@ -14,6 +14,7 @@ Pending fixes:
 - Extend `bmp2pal` to support `.png` input
 - Update `VGSX::setLogCallback` to use `std::function`
 - Adjust master volume range from 0–256 to 0–255
+- Changed the emulator’s SDL2 build to output screenshots (previously `screen.bmp`) in PNG format (`screen.png`) when pressing the **C** key.
 
 ## Version 0.24.0 **(Disruptive)**
 

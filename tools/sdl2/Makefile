@@ -16,6 +16,7 @@ OBJECTS += utf8_to_sjis.o
 OBJECTS += musashi.o
 HEADER_FILES = ${CORE_PATH}/*.h
 HEADER_FILES += ${CORE_PATH}/*.hpp
+HEADER_FILES += ../common/*.h
 
 all: vgsx
 
