@@ -1,6 +1,7 @@
 VGSX_ROOT = ./vgsx
 BIN2VAR = ${VGSX_ROOT}/tools/bin2var/bin2var
 BMP2CHR = ${VGSX_ROOT}/tools/bmp2chr/bmp2chr
+BMP2IMG = ${VGSX_ROOT}/tools/bmp2img/bmp2img
 BMP2PAL = ${VGSX_ROOT}/tools/bmp2pal/bmp2pal
 CSV2VAR = ${VGSX_ROOT}/tools/csv2var/csv2var
 MAKEROM = ${VGSX_ROOT}/tools/makerom/makerom
