@@ -660,7 +660,7 @@ class VDP
                 }
                 // Render Pixel
                 if (oam->ram_ptr) {
-                    const int ram_ptr = (oam->ram_ptr + (wx + (wy * (1 + psize) * 8)) * 4) & 0xFFFFC;
+                    const int ram_ptr = (oam->ram_ptr + (wx + (wy * psize * 8)) * 4) & 0xFFFFC;
                     uint32_t rgb = cpu_ram[ram_ptr + 1];
                     rgb <<= 8;
                     rgb |= cpu_ram[ram_ptr + 2];
