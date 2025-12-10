@@ -1217,10 +1217,10 @@ bin2var /path/to/binary.rom [u8|u16|u16l|u16b]
 
 パス: [./tools/bmp2chr](./tools/bmp2chr/)
 
-256 色または 16 色の .bmp（Windows bitmap）から VGS-X 用 [Character Pattern](#character-pattern) を生成します。
+256 色または 16 色の .bmp（Windows bitmap）ファイルまたは 256 色かつアルファチャンネルを含まない .png ファイルから VGS-X 用 [Character Pattern](#character-pattern) を生成します。
 
 ```
-usage: bmp2chr input.bmp output.chr
+usage: bmp2chr input.png output.chr
 ```
 
 - 画像の幅・高さは 8 の倍数である必要があります。

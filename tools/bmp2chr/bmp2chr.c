@@ -2,6 +2,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
+
+#define STBI_ONLY_PNG
+#define STB_IMAGE_IMPLEMENTATION
+#include "../common/stb_image.h"
 
 /* 情報ヘッダ */
 struct DatHead {
@@ -18,6 +23,17 @@ struct DatHead {
     unsigned int inum;     /* 重要色数 */
 };
 
+static int is_png_file(const char* path)
+{
+    size_t len = strlen(path);
+    if (len < 4) {
+        return 0;
+    }
+
+    const char* ext = path + len - 4;
+    return ext[0] == '.' && tolower((unsigned char)ext[1]) == 'p' && tolower((unsigned char)ext[2]) == 'n' && tolower((unsigned char)ext[3]) == 'g';
+}
+
 int main(int argc, char* argv[])
 {
     FILE* fpR = NULL;
@@ -27,48 +43,72 @@ int main(int argc, char* argv[])
     unsigned int pal256[256];
     unsigned int pal16[16];
     struct DatHead dh;
-    unsigned char bh, bl;
-    unsigned char mh[4];
-    int i, j, k, y, x, a;
-    char* bmp;
-    unsigned char* ptn;
+    int i, j, y, x;
+    char* bmp = NULL;
+    char* tmp = NULL;
+    unsigned char* ptn = NULL;
+    unsigned char* png_data = NULL;
+    int is_png = 0;
+    int png_comp = 0;
 
     /* 引数チェック */
     rc++;
     if (argc < 3) {
-        fprintf(stderr, "usage: bmp2chr input.bmp output.chr\n");
+        fprintf(stderr, "usage: bmp2chr input.bmp|input.png output.chr\n");
         goto ENDPROC;
     }
 
-    /* 読み込みファイルをオープン */
-    rc++;
-    if (NULL == (fpR = fopen(argv[1], "rb"))) {
-        fprintf(stderr, "ERROR: Could not open: %s\n", argv[1]);
-        goto ENDPROC;
+    is_png = is_png_file(argv[1]);
+    if (is_png) {
+        rc++;
+        if (!stbi_info(argv[1], &dh.width, &dh.height, &png_comp)) {
+            fprintf(stderr, "ERROR: Could not read png header: %s\n", argv[1]);
+            goto ENDPROC;
+        }
+        rc++;
+        if (stbi_is_16_bit(argv[1])) {
+            fprintf(stderr, "ERROR: 16bit png is not supported: %s\n", argv[1]);
+            goto ENDPROC;
+        }
+        if (png_comp == 2 || png_comp == 4) {
+            fprintf(stderr, "ERROR: PNG with alpha channel is not supported: %s\n", argv[1]);
+            goto ENDPROC;
+        }
+        dh.bits = 8;
+        dh.ctype = 0;
+        dh.cnum = 0;
+        dh.inum = 0;
+    } else {
+        /* 読み込みファイルをオープン */
+        rc++;
+        if (NULL == (fpR = fopen(argv[1], "rb"))) {
+            fprintf(stderr, "ERROR: Could not open: %s\n", argv[1]);
+            goto ENDPROC;
+        }
+
+        /* ファイルヘッダを読み込む */
+        rc++;
+        if (sizeof(fh) != fread(fh, 1, sizeof(fh), fpR)) {
+            fprintf(stderr, "ERROR: Invalid file header.\n");
+            goto ENDPROC;
+        }
+
+        /* 先頭2バイトだけ読む */
+        rc++;
+        if (strncmp(fh, "BM", 2)) {
+            fprintf(stderr, "ERROR: Inuput file is not bitmap.\n");
+            goto ENDPROC;
+        }
+
+        /* 情報ヘッダを読み込む */
+        rc++;
+        if (sizeof(dh) != fread(&dh, 1, sizeof(dh), fpR)) {
+            fprintf(stderr, "ERROR: Invalid bitmap file header.\n");
+            goto ENDPROC;
+        }
     }
 
-    /* ファイルヘッダを読み込む */
-    rc++;
-    if (sizeof(fh) != fread(fh, 1, sizeof(fh), fpR)) {
-        fprintf(stderr, "ERROR: Invalid file header.\n");
-        goto ENDPROC;
-    }
-
-    /* 先頭2バイトだけ読む */
-    rc++;
-    if (strncmp(fh, "BM", 2)) {
-        fprintf(stderr, "ERROR: Inuput file is not bitmap.\n");
-        goto ENDPROC;
-    }
-
-    /* 情報ヘッダを読み込む */
-    rc++;
-    if (sizeof(dh) != fread(&dh, 1, sizeof(dh), fpR)) {
-        fprintf(stderr, "ERROR: Invalid bitmap file header.\n");
-        goto ENDPROC;
-    }
-
-    printf("INPUT: width=%d, height=%d, bits=%d(%d), cmp=%d\n", dh.width, dh.height, (int)dh.bits, dh.cnum, dh.ctype);
+    printf("INPUT: width=%d, height=%d, bits=%d\n", dh.width, dh.height, (int)dh.bits);
 
     /* 8の倍数 */
     rc++;
@@ -91,51 +131,77 @@ int main(int argc, char* argv[])
         goto ENDPROC;
     }
 
-    /* 読み込みメモリを確保 */
-    bmp = (char*)malloc(dh.width * dh.height);
-
-    rc++;
-    if (dh.bits == 8) {
-        /* パレットを読み飛ばす */
-        if (sizeof(pal256) != fread(pal256, 1, sizeof(pal256), fpR)) {
-            fprintf(stderr, "ERROR: Could not read palette data.\n");
+    if (is_png) {
+        rc++;
+        png_data = stbi_load(argv[1], &dh.width, &dh.height, &png_comp, 1);
+        if (!png_data) {
+            fprintf(stderr, "ERROR: Could not load png: %s\n", stbi_failure_reason());
             goto ENDPROC;
         }
-        /* 画像データを上下反転しながら読み込む */
-        rc++;
-        for (i = dh.height - 1; 0 <= i; i--) {
-            if (dh.width != fread(&bmp[i * dh.width], 1, dh.width, fpR)) {
-                fprintf(stderr, "ERROR: Could not read graphic data.\n");
-                goto ENDPROC;
-            }
-            /* 色情報を mod 16 (0~15) にしておく*/
-            for (j = i * dh.width; j < (i + 1) * dh.width; j++) {
-                bmp[j] &= 0x0F;
-            }
+        bmp = (char*)png_data;
+        for (i = 0; i < dh.width * dh.height; i++) {
+            bmp[i] &= 0x0F;
         }
     } else {
-        /* パレットを読み飛ばす */
-        if (sizeof(pal16) != fread(pal16, 1, sizeof(pal16), fpR)) {
-            fprintf(stderr, "ERROR: Could not read palette data.\n");
+        /* 読み込みメモリを確保 */
+        bmp = (char*)malloc(dh.width * dh.height);
+        if (!bmp) {
+            fprintf(stderr, "ERROR: Out of memory.\n");
             goto ENDPROC;
         }
-        /* 画像データを上下反転しながら読み込む */
+
         rc++;
-        char* tmp = (char*)malloc(dh.width / 2);
-        for (i = dh.height - 1; 0 <= i; i--) {
-            if (dh.width / 2 != fread(tmp, 1, dh.width / 2, fpR)) {
-                fprintf(stderr, "ERROR: Could not read graphic data.\n");
+        if (dh.bits == 8) {
+            /* パレットを読み飛ばす */
+            if (sizeof(pal256) != fread(pal256, 1, sizeof(pal256), fpR)) {
+                fprintf(stderr, "ERROR: Could not read palette data.\n");
                 goto ENDPROC;
             }
-            for (int j = 0; j < dh.width; j++) {
-                bmp[i * dh.width + j] = j & 1 ? tmp[j / 2] & 0x0F : (tmp[j / 2] & 0xF0) >> 4;
+            /* 画像データを上下反転しながら読み込む */
+            rc++;
+            for (i = dh.height - 1; 0 <= i; i--) {
+                if (dh.width != fread(&bmp[i * dh.width], 1, dh.width, fpR)) {
+                    fprintf(stderr, "ERROR: Could not read graphic data.\n");
+                    goto ENDPROC;
+                }
+                /* 色情報を mod 16 (0~15) にしておく*/
+                for (j = i * dh.width; j < (i + 1) * dh.width; j++) {
+                    bmp[j] &= 0x0F;
+                }
             }
+        } else {
+            /* パレットを読み飛ばす */
+            if (sizeof(pal16) != fread(pal16, 1, sizeof(pal16), fpR)) {
+                fprintf(stderr, "ERROR: Could not read palette data.\n");
+                goto ENDPROC;
+            }
+            /* 画像データを上下反転しながら読み込む */
+            rc++;
+            tmp = (char*)malloc(dh.width / 2);
+            if (!tmp) {
+                fprintf(stderr, "ERROR: Out of memory.\n");
+                goto ENDPROC;
+            }
+            for (i = dh.height - 1; 0 <= i; i--) {
+                if (dh.width / 2 != fread(tmp, 1, dh.width / 2, fpR)) {
+                    fprintf(stderr, "ERROR: Could not read graphic data.\n");
+                    goto ENDPROC;
+                }
+                for (int j = 0; j < dh.width; j++) {
+                    bmp[i * dh.width + j] = j & 1 ? tmp[j / 2] & 0x0F : (tmp[j / 2] & 0xF0) >> 4;
+                }
+            }
+            free(tmp);
+            tmp = NULL;
         }
-        free(tmp);
     }
 
     /* Bitmap を パターン形式 に変換 */
     ptn = (unsigned char*)malloc(dh.width * dh.height / 2);
+    if (!ptn) {
+        fprintf(stderr, "ERROR: Out of memory.\n");
+        goto ENDPROC;
+    }
     unsigned char* ptr = ptn;
     for (y = 0; y < dh.height / 8; y++) {
         for (x = 0; x < dh.width / 8; x++) {
@@ -174,6 +240,18 @@ ENDPROC:
     }
     if (fpW) {
         fclose(fpW);
+    }
+    if (!is_png && bmp) {
+        free(bmp);
+    }
+    if (png_data) {
+        stbi_image_free(png_data);
+    }
+    if (ptn) {
+        free(ptn);
+    }
+    if (tmp) {
+        free(tmp);
     }
     return rc;
 }

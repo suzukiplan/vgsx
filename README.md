@@ -1260,16 +1260,17 @@ Remarks
 
 Path: [./tools/bmp2chr](./tools/bmp2chr/)
 
-Generates VGS-X [Character Pattern](#character-pattern) pattern data from a 256-colour or 16-colour .bmp (Windows bitmap) file.
+Generates a VGS-X [Character Pattern](#character-pattern) from either  
+a 256-color or 16-color `.bmp` (Windows Bitmap) file, **or** a 256-color `.png` file without an alpha channel.
 
 ```
-usage: bmp2chr input.bmp output.chr
+usage: bmp2chr input.png output.chr
 ```
 
 Remarks:
 
-- The height and width of the image must be 8 or more and a multiple of 8.
-- Read the character pattern in 8x8-pixel blocks from top-left to bottom-right.
+- The image width and height must be multiples of 8.  
+- Tiles are read sequentially from the top-left corner in 8×8-pixel units.
 
 ## bmp2pal
 

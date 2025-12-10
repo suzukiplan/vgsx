@@ -9,6 +9,7 @@ Pending fixes:
 - Added `ram_ptr` (Bitmap Sprite Buffer) to the OAM
 - Added `VGSX::setSaveDataDirectory` method
 - Added `VGSX::setConsoleCallback` method
+- `bmp2chr` supports `.png` format
 - `VGSX::setLogCallback` changes to `std::function`
 - Changed the master volume range: 0-256 -> 0-255
 
