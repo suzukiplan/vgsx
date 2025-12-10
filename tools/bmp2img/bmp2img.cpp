@@ -6,14 +6,6 @@
 #include <vector>
 #include <string>
 
-static uint32_t pack_be(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
-{
-    return (uint32_t(r) << 24) |
-           (uint32_t(g) << 16) |
-           (uint32_t(b) << 8) |
-           uint32_t(a);
-}
-
 static bool is_valid_size(int w, int h)
 {
     if (w <= 0 || h <= 0) return false;
@@ -50,11 +42,16 @@ int main(int argc, char** argv)
     out.reserve(w * h);
 
     for (int i = 0; i < w * h; ++i) {
-        uint8_t r = img[i * 4 + 3];
-        uint8_t g = img[i * 4 + 2];
-        uint8_t b = img[i * 4 + 1];
-        uint8_t a = img[i * 4 + 0];
-        out.push_back(pack_be(a, r, g, b));
+        uint8_t r = img[i * 4];
+        uint8_t g = img[i * 4 + 1];
+        uint8_t b = img[i * 4 + 2];
+        uint32_t rgb = b;
+        rgb <<= 8;
+        rgb |= g;
+        rgb <<= 8;
+        rgb |= r;
+        rgb <<= 8;
+        out.push_back(rgb);
     }
 
     stbi_image_free(img);
