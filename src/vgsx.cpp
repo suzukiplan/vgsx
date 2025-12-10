@@ -552,6 +552,7 @@ VGSX::VGSX()
     g_vgsx_instance = this;
     m68k_set_illg_instr_callback(illegal_instruction_logger);
     this->vdp.setCpuRam(this->ctx.ram);
+    this->vdp.setPgRom(nullptr, 0);
     this->reset();
 }
 
@@ -930,6 +931,7 @@ void VGSX::reset(void)
         if (ph.p_type == 1 && 0 == ph.p_paddr && (ph.p_flags & 0x01)) {
             this->ctx.program = &this->ctx.elf[ph.p_offset];
             this->ctx.programSize = ph.p_memsz;
+            this->vdp.setPgRom(this->ctx.program, this->ctx.programSize);
         }
         if (ph.p_type == 1 && ph.p_memsz) {
             uint32_t loadAddress = ph.p_vaddr ? ph.p_vaddr : ph.p_paddr;

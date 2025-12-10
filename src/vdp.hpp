@@ -69,6 +69,8 @@ class VDP
 {
   private:
     const uint8_t* cpu_ram;
+    const uint8_t* pg_rom;
+    size_t pg_rom_size;
     class PatternRom
     {
       public:
@@ -167,7 +169,8 @@ class VDP
         uint32_t slx;         // Scale Lock (X)
         uint32_t pri;         // High Priority Flag
         uint32_t ram_ptr;     // Bitmap Sprite Buffer (RGB888)
-        uint32_t reserved[3]; // Reserved
+        uint32_t rom_ptr;     // Bitmap Sprite Buffer (RGB888)
+        uint32_t reserved[2]; // Reserved
     } OAM;
 
     typedef struct {
@@ -196,11 +199,20 @@ class VDP
         this->rom.ptn.clear();
         this->rom.pal = nullptr;
         this->rom.palSize = 0;
+        this->cpu_ram = nullptr;
+        this->pg_rom = nullptr;
+        this->pg_rom_size = 0;
     }
 
     void setCpuRam(const uint8_t* cpu_ram)
     {
         this->cpu_ram = cpu_ram;
+    }
+
+    void setPgRom(const uint8_t* pg_rom, size_t pg_rom_size)
+    {
+        this->pg_rom = pg_rom;
+        this->pg_rom_size = pg_rom_size;
     }
 
     ~VDP()
@@ -659,7 +671,7 @@ class VDP
                     continue; // Out of screen left (check next pixel)
                 }
                 // Render Pixel
-                if (oam->ram_ptr) {
+                if (oam->ram_ptr && cpu_ram) {
                     const int ram_ptr = (oam->ram_ptr + (wx + (wy * psize * 8)) * 4) & 0xFFFFC;
                     uint32_t rgb = cpu_ram[ram_ptr + 1];
                     rgb <<= 8;
@@ -670,6 +682,21 @@ class VDP
                         this->renderSpritePixel(ddy * displayWidth + ddx + 1, rgb, oam->alpha, oam->mask);
                         if (angle % 90 && ddx + 1 < displayWidth) {
                             this->renderSpritePixel(ddy * displayWidth + ddx + 1, rgb, oam->alpha, oam->mask);
+                        }
+                    }
+                } else if (oam->rom_ptr && pg_rom) {
+                    const int rom_ptr = (oam->rom_ptr + (wx + (wy * psize * 8)) * 4) & 0xFFFFC;
+                    if (rom_ptr + 4 < pg_rom_size) {
+                        uint32_t rgb = pg_rom[rom_ptr + 1];
+                        rgb <<= 8;
+                        rgb |= cpu_ram[rom_ptr + 2];
+                        rgb <<= 8;
+                        rgb |= cpu_ram[rom_ptr + 3];
+                        if (rgb) {
+                            this->renderSpritePixel(ddy * displayWidth + ddx + 1, rgb, oam->alpha, oam->mask);
+                            if (angle % 90 && ddx + 1 < displayWidth) {
+                                this->renderSpritePixel(ddy * displayWidth + ddx + 1, rgb, oam->alpha, oam->mask);
+                            }
                         }
                     }
                 } else {

@@ -346,7 +346,8 @@ typedef struct {
     uint32_t slx;         // Scale Lock (X)
     uint32_t pri;         // High Priority Flag
     uint32_t ram_ptr;     // Bitmap Sprite Buffer (RGB888)
-    uint32_t reserved[4]; // Reserved
+    uint32_t rom_ptr;     // Bitmap Sprite Buffer (RGB888)
+    uint32_t reserved[2]; // Reserved
 } ObjectAttributeMemory;
 ```
 
@@ -367,6 +368,7 @@ The specifications for each attribute are shown in the table below.
 | slx     | 0 or 1         | Lock [Scale](#scale-of-sprite) (X) |
 | pri     | 0 or 1         | [High Priority Flag](#high-priority-flag) |
 | ram_ptr | 0 or RAM addr  | [Bitmap Sprite](#bitmap-sprite) Buffer (RGB888) |
+| rom_ptr | 0 or ROM addr  | [Bitmap Sprite](#bitmap-sprite) Buffer (RGB888) |
 | reserved| -              | Do not set a value other than zero. |
 
 ### (Size of Sprite)
@@ -431,9 +433,11 @@ Setting the high priority flag `pri` allows the drawing priority to be set highe
 
 ### (Bitmap Sprite)
 
-By setting a non-zero RAM address to the **Bitmap Sprite Buffer (RGB888) `ram_ptr`**, you can display a sprite directly from an RGB888-formatted buffer in RAM (1 px = 4 bytes) without using the [character pattern](#character-pattern) system.
+By setting a RAM address (non-zero) to `ram_ptr` in the Bitmap Sprite Buffer (RGB888), or a ROM address (non-zero) to `rom_ptr`, you can display an RGB888-format sprite (1 px = 4 bytes) stored directly in RAM/ROM **without** using a [Character Pattern](#character-pattern).
 
-*RAM buffer size = square of `(size + 1) * 8`*
+If both `ram_ptr` and `rom_ptr` are non-zero, the value of `ram_ptr` takes priority.
+
+_* RAM/ROM buffer size = `((size + 1) * 8)²`_
 
 ## VDP Register
 
