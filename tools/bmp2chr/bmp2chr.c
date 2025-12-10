@@ -34,6 +34,83 @@ static int is_png_file(const char* path)
     return ext[0] == '.' && tolower((unsigned char)ext[1]) == 'p' && tolower((unsigned char)ext[2]) == 'n' && tolower((unsigned char)ext[3]) == 'g';
 }
 
+static int read_png_palette(const char* path, unsigned int* palette, int* palette_size)
+{
+    static const unsigned char sig[8] = {0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A};
+    unsigned char buf[256 * 3];
+    unsigned char alpha[256];
+    FILE* fp = fopen(path, "rb");
+    if (!fp) {
+        return 0;
+    }
+
+    if (fread(buf, 1, 8, fp) != 8 || memcmp(buf, sig, 8)) {
+        fclose(fp);
+        return 0;
+    }
+
+    memset(alpha, 0xFF, sizeof(alpha));
+    *palette_size = 0;
+
+    for (;;) {
+        unsigned char lenbuf[4];
+        char type[5];
+        unsigned int len;
+
+        if (fread(lenbuf, 1, 4, fp) != 4 || fread(type, 1, 4, fp) != 4) {
+            break;
+        }
+        len = ((unsigned int)lenbuf[0] << 24) | ((unsigned int)lenbuf[1] << 16) | ((unsigned int)lenbuf[2] << 8) | (unsigned int)lenbuf[3];
+        type[4] = '\0';
+
+        if (!memcmp(type, "PLTE", 4)) {
+            if (len > sizeof(buf) || (len % 3)) {
+                fclose(fp);
+                return 0;
+            }
+            if (fread(buf, 1, len, fp) != len) {
+                fclose(fp);
+                return 0;
+            }
+            *palette_size = len / 3;
+            for (int i = 0; i < *palette_size; i++) {
+                palette[i] = ((unsigned int)buf[i * 3] << 24) | ((unsigned int)buf[i * 3 + 1] << 16) | ((unsigned int)buf[i * 3 + 2] << 8);
+            }
+        } else if (!memcmp(type, "tRNS", 4)) {
+            unsigned int count = len < 256 ? len : 256;
+            if (fread(alpha, 1, count, fp) != count) {
+                fclose(fp);
+                return 0;
+            }
+            if (len > count && fseek(fp, (long)(len - count), SEEK_CUR)) {
+                fclose(fp);
+                return 0;
+            }
+        } else {
+            if (fseek(fp, (long)len, SEEK_CUR)) {
+                break;
+            }
+        }
+
+        if (fseek(fp, 4, SEEK_CUR)) {
+            break;
+        }
+        if (!memcmp(type, "IEND", 4)) {
+            break;
+        }
+    }
+
+    fclose(fp);
+
+    if (!*palette_size) {
+        return 0;
+    }
+    for (int i = 0; i < *palette_size; i++) {
+        palette[i] |= alpha[i];
+    }
+    return 1;
+}
+
 int main(int argc, char* argv[])
 {
     FILE* fpR = NULL;
@@ -50,11 +127,13 @@ int main(int argc, char* argv[])
     unsigned char* png_data = NULL;
     int is_png = 0;
     int png_comp = 0;
+    unsigned int png_palette[256];
+    int png_palette_size = 0;
 
     /* 引数チェック */
     rc++;
     if (argc < 3) {
-        fprintf(stderr, "usage: bmp2chr input.bmp|input.png output.chr\n");
+        fprintf(stderr, "usage: bmp2chr {input.bmp|input.png} output.chr\n");
         goto ENDPROC;
     }
 
@@ -74,7 +153,12 @@ int main(int argc, char* argv[])
             fprintf(stderr, "ERROR: PNG with alpha channel is not supported: %s\n", argv[1]);
             goto ENDPROC;
         }
-        dh.bits = 8;
+        rc++;
+        if (!read_png_palette(argv[1], png_palette, &png_palette_size)) {
+            fprintf(stderr, "ERROR: Could not read png palette: %s\n", argv[1]);
+            goto ENDPROC;
+        }
+        dh.bits = png_palette_size <= 16 ? 4 : 8;
         dh.ctype = 0;
         dh.cnum = 0;
         dh.inum = 0;
@@ -133,14 +217,27 @@ int main(int argc, char* argv[])
 
     if (is_png) {
         rc++;
-        png_data = stbi_load(argv[1], &dh.width, &dh.height, &png_comp, 1);
+        png_data = stbi_load(argv[1], &dh.width, &dh.height, &png_comp, 4);
         if (!png_data) {
             fprintf(stderr, "ERROR: Could not load png: %s\n", stbi_failure_reason());
             goto ENDPROC;
         }
         bmp = (char*)png_data;
         for (i = 0; i < dh.width * dh.height; i++) {
-            bmp[i] &= 0x0F;
+            unsigned char* px = png_data + i * 4;
+            unsigned int color = ((unsigned int)px[0] << 24) | ((unsigned int)px[1] << 16) | ((unsigned int)px[2] << 8) | px[3];
+            int idx = -1;
+            for (j = 0; j < png_palette_size; j++) {
+                if (png_palette[j] == color) {
+                    idx = j;
+                    break;
+                }
+            }
+            if (idx < 0) {
+                fprintf(stderr, "ERROR: Palette mismatch on png pixel %d.\n", i);
+                goto ENDPROC;
+            }
+            bmp[i] = (unsigned char)(idx & 0x0F);
         }
     } else {
         /* 読み込みメモリを確保 */
