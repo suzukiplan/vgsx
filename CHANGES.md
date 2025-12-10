@@ -6,7 +6,7 @@ The current `master` branch is in a nightly state.
 
 Pending fixes:
 
-- Add `ram_ptr` and `rom_ptr` (Bitmap Sprite Buffer) entries to the OAM
+- Add `ram_ptr` (Bitmap Sprite Buffer) entries to the OAM
 - Add `VGSX::setSaveDataDirectory`
 - Add `VGSX::setConsoleCallback`
 - Add new toolchain component: `bmp2img`
