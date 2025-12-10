@@ -9,6 +9,7 @@ Pending fixes:
 - Added `ram_ptr` and `rom_ptr` (Bitmap Sprite Buffer) to the OAM
 - Added `VGSX::setSaveDataDirectory` method
 - Added `VGSX::setConsoleCallback` method
+- Added tool chain: `bmp2img`
 - `bmp2chr` supports `.png` format
 - `bmp2pal` supports `.png` format
 - `VGSX::setLogCallback` changes to `std::function`

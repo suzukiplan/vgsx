@@ -1172,6 +1172,7 @@ vgs_putlog("d32=%d, u32=%u, str=%s", (int32_t)123, (uint32_t)456, "text");
 | [vgsx](#vgs-x-emulator-for-debug) | デバッグ用 VGS-X エミュレータ |
 | [bin2var](#bin2var) | バイナリを C 言語の配列に変換 |
 | [bmp2chr](#bmp2chr) | [CHR](#character-pattern) データ生成 |
+| [bmp2img](#bmp2img) | [Bitmap Sprite](#bitmap-sprite) 形式のデータを生成 |
 | [bmp2pal](#bmp2pal) | 初期 [palette](#palette) 生成 |
 | [csv2var](#csv2var) | Tiled CSV をバイナリへ変換 |
 | [makeprj](#makeprj) | 新規プロジェクト作成 |
@@ -1229,6 +1230,19 @@ usage: bmp2chr input.png output.chr
 
 - 画像の幅・高さは 8 の倍数である必要があります。
 - 左上から 8x8 ピクセル単位で順に読み込みます。
+
+## bmp2img
+
+パス: [./tools/bmp2img](./tools/bmp2img/)
+
+256 色または 16 色の .bmp（Windows bitmap）ファイルまたは 256 色かつアルファチャンネルを含まない .png ファイルから VGS-X 用 [Bitmap Sprite](#bitmap-sprite) 形式のピクセルデータ（`rom_ptr` 用）を生成します。
+
+```
+Usage: bmp2img input.(png|bmp) output.img
+```
+
+- 画像の幅・高さは 8 の倍数である必要があります。
+- 本ツールで生成した .img ファイルは [bin2var](#bin2var) コマンドで変換したコードをプログラムにリンクして使用することを想定しています。
 
 ## bmp2pal
 

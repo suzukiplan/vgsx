@@ -1206,8 +1206,9 @@ vgs_putlog("d32=%d, u32=%u, str=%s", (int32_t)123, (uint32_t)456, "text");
 |:-----|:------------|
 | [vgsx](#vgs-x-emulator-for-debug) | VGS-X Emulator for Debug |
 | [bin2var](#bin2var) | Convert binary files to C language code |
-| [bmp2chr](#bmp2chr) | Make [CHR](#character-pattern) data from .bmp file |
-| [bmp2pal](#bmp2pal) | Make initial [palette](#palette) from .bmp file |
+| [bmp2chr](#bmp2chr) | Make [CHR](#character-pattern) data from `.bmp` or `.png` file |
+| [bmp2img](#bmp2img) | Make [Bitmap Sprite](#bitmap-sprite) data from `.bmp` or `.png` file |
+| [bmp2pal](#bmp2pal) | Make initial [palette](#palette) from `.bmp` or `.png` file |
 | [csv2var](#csv2var) | Convert Tiled Map Editor CSV format to binary format. |
 | [makeprj](#makeprj) | Create a new project |
 | [makerom](#makerom) | Make ROM file from Program and Assets |
@@ -1275,6 +1276,20 @@ Remarks:
 
 - The image width and height must be multiples of 8.  
 - Tiles are read sequentially from the top-left corner in 8×8-pixel units.
+
+## bmp2img
+
+Path: [./tools/bmp2img](./tools/bmp2img/)
+
+Generates VGS-X [Bitmap Sprite](#bitmap-sprite)–format pixel data (`rom_ptr` use) from a  
+256-color or 16-color `.bmp` (Windows Bitmap) file, or a 256-color `.png` file without an alpha channel.
+
+```
+Usage: bmp2img input.(png|bmp) output.img
+```
+
+- The image width and height must be multiples of 8.  
+- The `.img` files produced by this tool are intended to be linked into your program after being converted with the [bin2var](#bin2var) command.
 
 ## bmp2pal
 
