@@ -1280,10 +1280,11 @@ Remarks:
 
 Path: [./tools/bmp2pal](./tools/bmp2pal/)
 
-Generates initial [Palette](#palette) data for VGS-X from 256-color .bmp (Windows Bitmap) file.
+Generates initial [Palette](#palette) data for VGS-X from either  
+a 256-color or 16-color `.bmp` (Windows Bitmap) file, **or** a 256-color `.png` file without an alpha channel.
 
 ```
-usage: bmp2pal input.bmp palette.dat
+usage: bmp2pal input.png palette.dat
 ```
 
 ## csv2var

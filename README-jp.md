@@ -1234,10 +1234,10 @@ usage: bmp2chr input.png output.chr
 
 パス: [./tools/bmp2pal](./tools/bmp2pal/)
 
-256 色の .bmp から VGS-X 用の初期 [Palette](#palette) を生成します。
+256 色または 16 色の .bmp（Windows bitmap）ファイルまたは 256 色かつアルファチャンネルを含まない .png ファイルから VGS-X 用の初期 [Palette](#palette) を生成します。
 
 ```
-usage: bmp2pal input.bmp palette.dat
+usage: bmp2pal input.png palette.dat
 ```
 
 ## csv2var

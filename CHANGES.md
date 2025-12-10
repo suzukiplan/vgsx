@@ -10,6 +10,7 @@ Pending fixes:
 - Added `VGSX::setSaveDataDirectory` method
 - Added `VGSX::setConsoleCallback` method
 - `bmp2chr` supports `.png` format
+- `bmp2pal` supports `.png` format
 - `VGSX::setLogCallback` changes to `std::function`
 - Changed the master volume range: 0-256 -> 0-255
 
