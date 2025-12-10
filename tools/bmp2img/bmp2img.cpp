@@ -45,11 +45,11 @@ int main(int argc, char** argv)
         uint8_t r = img[i * 4];
         uint8_t g = img[i * 4 + 1];
         uint8_t b = img[i * 4 + 2];
-        uint32_t rgb = r;
+        uint32_t rgb = b;
         rgb <<= 8;
         rgb |= g;
         rgb <<= 8;
-        rgb |= b;
+        rgb |= r;
         rgb <<= 8;
         out.push_back(rgb);
     }
