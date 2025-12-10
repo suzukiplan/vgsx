@@ -6,6 +6,7 @@ The current `master` branch is in a nightly state.
 
 Pending fixes:
 
+- Added `ram_ptr` (Bitmap Sprite Buffer) to the OAM
 - Added `VGSX::setSaveDataDirectory` method
 - Added `VGSX::setConsoleCallback` method
 - `VGSX::setLogCallback` changes to `std::function`

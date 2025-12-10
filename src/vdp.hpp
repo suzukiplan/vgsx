@@ -68,6 +68,7 @@ static inline void graphicDrawWindow(VDP* vdp);
 class VDP
 {
   private:
+    const uint8_t* cpu_ram;
     class PatternRom
     {
       public:
@@ -165,7 +166,8 @@ class VDP
         uint32_t sly;         // Scale Lock (Y)
         uint32_t slx;         // Scale Lock (X)
         uint32_t pri;         // High Priority Flag
-        uint32_t reserved[4]; // Reserved
+        uint32_t ram_ptr;     // Bitmap Sprite Buffer (RGB888)
+        uint32_t reserved[3]; // Reserved
     } OAM;
 
     typedef struct {
@@ -194,6 +196,11 @@ class VDP
         this->rom.ptn.clear();
         this->rom.pal = nullptr;
         this->rom.palSize = 0;
+    }
+
+    void setCpuRam(const uint8_t* cpu_ram)
+    {
+        this->cpu_ram = cpu_ram;
     }
 
     ~VDP()
@@ -652,11 +659,23 @@ class VDP
                     continue; // Out of screen left (check next pixel)
                 }
                 // Render Pixel
-                const uint8_t col = readSpritePixel(ptn, psize, wx, wy);
-                if (col) {
-                    this->renderSpritePixel(ddy * displayWidth + ddx, this->ctx.palette[pal][col], oam->alpha, oam->mask);
+                if (oam->ram_ptr) {
+                    const int ram_ptr = (oam->ram_ptr + px + (py * (1 + psize) * 8)) & 0xFFFFC;
                     if (angle % 90 && ddx + 1 < displayWidth) {
-                        this->renderSpritePixel(ddy * displayWidth + ddx + 1, this->ctx.palette[pal][col], oam->alpha, oam->mask);
+                        uint32_t rgb = cpu_ram[ram_ptr + 1];
+                        rgb <<= 8;
+                        rgb |= cpu_ram[ram_ptr + 2];
+                        rgb <<= 8;
+                        rgb |= cpu_ram[ram_ptr + 3];
+                        this->renderSpritePixel(ddy * displayWidth + ddx + 1, rgb, oam->alpha, oam->mask);
+                    }
+                } else {
+                    const uint8_t col = readSpritePixel(ptn, psize, wx, wy);
+                    if (col) {
+                        this->renderSpritePixel(ddy * displayWidth + ddx, this->ctx.palette[pal][col], oam->alpha, oam->mask);
+                        if (angle % 90 && ddx + 1 < displayWidth) {
+                            this->renderSpritePixel(ddy * displayWidth + ddx + 1, this->ctx.palette[pal][col], oam->alpha, oam->mask);
+                        }
                     }
                 }
             }

@@ -345,6 +345,7 @@ typedef struct {
     uint32_t sly;         // Scale Lock (Y)
     uint32_t slx;         // Scale Lock (X)
     uint32_t pri;         // High Priority Flag
+    uint32_t ram_ptr;     // Bitmap Sprite Buffer (RGB888)
     uint32_t reserved[4]; // Reserved
 } ObjectAttributeMemory;
 ```
@@ -365,6 +366,7 @@ The specifications for each attribute are shown in the table below.
 | sly     | 0 or 1         | Lock [Scale](#scale-of-sprite) (Y) |
 | slx     | 0 or 1         | Lock [Scale](#scale-of-sprite) (X) |
 | pri     | 0 or 1         | [High Priority Flag](#high-priority-flag) |
+| ram_ptr | 0 or RAM addr  | [Bitmap Sprite](#bitmap-sprite) Buffer (RGB888) |
 | reserved| -              | Do not set a value other than zero. |
 
 ### (Size of Sprite)
@@ -426,6 +428,12 @@ _For example, combining the [Scale](#scale-of-sprite), [Alpha Blend](#alpha-blen
 ### (High Priority Flag)
 
 Setting the high priority flag `pri` allows the drawing priority to be set higher than sprites without `pri` set.
+
+### (Bitmap Sprite)
+
+By setting a non-zero RAM address to the **Bitmap Sprite Buffer (RGB888) `ram_ptr`**, you can display a sprite directly from an RGB888-formatted buffer in RAM (1 px = 4 bytes) without using the [character pattern](#character-pattern) system.
+
+*RAM buffer size = square of `(size + 1) * 8`*
 
 ## VDP Register
 

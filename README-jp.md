@@ -333,7 +333,8 @@ typedef struct {
     uint32_t sly;         // Scale Lock (Y)
     uint32_t slx;         // Scale Lock (X)
     uint32_t pri;         // High Priority Flag
-    uint32_t reserved[4]; // Reserved
+    uint32_t ram_ptr;     // Bitmap Sprite Buffer (RGB888)
+    uint32_t reserved[3]; // Reserved
 } ObjectAttributeMemory;
 ```
 
@@ -353,6 +354,7 @@ typedef struct {
 | sly  | 0 or 1 | Lock [Scale](#scale-of-sprite) (Y) |
 | slx  | 0 or 1 | Lock [Scale](#scale-of-sprite) (X) |
 | pri  | 0 or 1 | [High Priority Flag]() |
+| ram_ptr | 0 or RAM addr  | [Bitmap Sprite](#bitmap-sprite) Buffer (RGB888) |
 | reserved | - | 0 以外を設定しないでください |
 
 ### (Size of Sprite)
@@ -414,6 +416,12 @@ RGB 各成分に異なるアルファ値を設定できます:
 ### (High Priority Flag)
 
 High priority flag `pri` をセットすることで描画優先度を `pri` がセットされていないスプライトよりも優先することができる。
+
+### (Bitmap Sprite)
+
+Bitmap Sprite Buffer (RGB888) `ram_ptr` に RAM アドレス（0以外）をセットすることで [キャラクタパターン](#character-pattern) を用いずに RAM に設定された RGB888 形式（1px = 4bytes）のスプライトを表示することができる。
+
+※RAM バッファサイズ = `(size + 1) * 8` の二乗
 
 ## VDP Register
 

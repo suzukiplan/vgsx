@@ -551,6 +551,7 @@ VGSX::VGSX()
     m68k_init();
     g_vgsx_instance = this;
     m68k_set_illg_instr_callback(illegal_instruction_logger);
+    this->vdp.setCpuRam(this->ctx.ram);
     this->reset();
 }
 
