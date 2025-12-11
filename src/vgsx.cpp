@@ -1180,6 +1180,12 @@ uint32_t VGSX::inPort(uint32_t address)
         case VGS_ADDR_CAL_HOUR: return now()->tm_hour;
         case VGS_ADDR_CAL_MINUTE: return now()->tm_min;
         case VGS_ADDR_CAL_SECOND: return now()->tm_sec;
+        case VGS_ADDR_CAL2_YEAR: return now2()->tm_year + 1900;
+        case VGS_ADDR_CAL2_MONTH: return now2()->tm_mon + 1;
+        case VGS_ADDR_CAL2_MDAY: return now2()->tm_mday;
+        case VGS_ADDR_CAL2_HOUR: return now2()->tm_hour;
+        case VGS_ADDR_CAL2_MINUTE: return now2()->tm_min;
+        case VGS_ADDR_CAL2_SECOND: return now2()->tm_sec;
     }
     if (VGS_ADDR_USER <= address) {
         if (!this->subscribedInput) {

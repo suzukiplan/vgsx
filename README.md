@@ -640,12 +640,18 @@ Note that all addresses and values for I/O instructions must be specified as 32-
 | 0xE03108 |  o  |  -  | [Sequencial: Commit](#0xe031xxio---large-sequencial-file-io) |
 | 0xE03110 |  o  |  -  | [Sequencial: Open for Read](#0xe031xxio---large-sequencial-file-io) |
 | 0xE03114 |  -  |  o  | [Sequencial: Read a Byte](#0xe031xxio---large-sequencial-file-io) |
-| 0xE04000 |  o  |  -  | [Calendar: Year](#0xe040xxin---calendar)|
-| 0xE04004 |  o  |  -  | [Calendar: Month](#0xe040xxin---calendar)|
-| 0xE04008 |  o  |  -  | [Calendar: Day of Month](#0xe040xxin---calendar)|
-| 0xE0400C |  o  |  -  | [Calendar: Hour](#0xe040xxin---calendar)|
-| 0xE04010 |  o  |  -  | [Calendar: Minute](#0xe040xxin---calendar)|
-| 0xE04014 |  o  |  -  | [Calendar: Second](#0xe040xxin---calendar)|
+| 0xE04000 |  o  |  -  | [UTC: Year](#0xe040xxin---calendar)|
+| 0xE04004 |  o  |  -  | [UTC: Month](#0xe040xxin---calendar)|
+| 0xE04008 |  o  |  -  | [UTC: Day of Month](#0xe040xxin---calendar)|
+| 0xE0400C |  o  |  -  | [UTC: Hour](#0xe040xxin---calendar)|
+| 0xE04010 |  o  |  -  | [UTC: Minute](#0xe040xxin---calendar)|
+| 0xE04014 |  o  |  -  | [UTC: Second](#0xe040xxin---calendar)|
+| 0xE04020 |  o  |  -  | [Local: Year](#0xe040xxin---calendar)|
+| 0xE04024 |  o  |  -  | [Local: Month](#0xe040xxin---calendar)|
+| 0xE04028 |  o  |  -  | [Local: Day of Month](#0xe040xxin---calendar)|
+| 0xE0402C |  o  |  -  | [Local: Hour](#0xe040xxin---calendar)|
+| 0xE04030 |  o  |  -  | [Local: Minute](#0xe040xxin---calendar)|
+| 0xE04034 |  o  |  -  | [Local: Second](#0xe040xxin---calendar)|
 | 0xE7FFF4 |  o  |  -  | [Abort](#0xe7fff4out---abort) |
 | 0xE7FFF8 |  -  |  o  | [Reset](#0xe7fff8out---reset) |
 | 0xE7FFFC |  -  |  o  | [Exit](#0xe7fffcout---exit) |
@@ -969,14 +975,25 @@ Remarks:
 
 ### 0xE040xx[in] - Calendar
 
-Retrieves the numerical representation of the current date and time in Coordinated Universal Time (UTC).
+Retrieves the current date and time.
 
-- 0xE04000: Year (ex: 2025)
+Coordinated Universal Time (UTC):
+
+- 0xE04000: Year (e.g., 2025)
 - 0xE04004: Month (1 to 12)
 - 0xE04008: Day of Month (1 to 31)
 - 0xE0400C: Hour (0 to 23)
 - 0xE04010: Minute (0 to 59)
 - 0xE04014: Second (0 to 59)
+
+Local Time Zone:
+
+- 0xE04020: Year (e.g., 2025)
+- 0xE04024: Month (1 to 12)
+- 0xE04028: Day of Month (1 to 31)
+- 0xE0402C: Hour (0 to 23)
+- 0xE04030: Minute (0 to 59)
+- 0xE04034: Second (0 to 59)
 
 ### 0xE7FFF4[out] - Abort
 
@@ -1127,12 +1144,18 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | save | `vgs_seq_commit` | Commit a [Large Sequencial File](#0xe031xxio---large-sequencial-file-io) for write. |
 | save | `vgs_seq_open_r` | Open a [Large Sequencial File](#0xe031xxio---large-sequencial-file-io) for write. |
 | save | `vgs_seq_read` | Read a byte data to a [Large Sequencial File](#0xe031xxio---large-sequencial-file-io). |
-| [calendar](#0xe040xxin---calendar) | `vgs_calendar_year` | Retrieves the current year in UTC. |
-| [calendar](#0xe040xxin---calendar) | `vgs_calendar_month` | Retrieves the current month in UTC. |
-| [calendar](#0xe040xxin---calendar) | `vgs_calendar_mday` | Retrieves the current day of month in UTC. |
-| [calendar](#0xe040xxin---calendar) | `vgs_calendar_hour` | Retrieves the current hour in UTC. |
-| [calendar](#0xe040xxin---calendar) | `vgs_calendar_minute` | Retrieves the current minute in UTC. |
-| [calendar](#0xe040xxin---calendar) | `vgs_calendar_second` | Retrieves the current second in UTC. |
+| [calendar](#0xe040xxin---calendar) | `vgs_utc_year` | Retrieves the current year in UTC. |
+| [calendar](#0xe040xxin---calendar) | `vgs_utc_month` | Retrieves the current month in UTC. |
+| [calendar](#0xe040xxin---calendar) | `vgs_utc_mday` | Retrieves the current day of month in UTC. |
+| [calendar](#0xe040xxin---calendar) | `vgs_utc_hour` | Retrieves the current hour in UTC. |
+| [calendar](#0xe040xxin---calendar) | `vgs_utc_minute` | Retrieves the current minute in UTC. |
+| [calendar](#0xe040xxin---calendar) | `vgs_utc_second` | Retrieves the current second in UTC. |
+| [calendar](#0xe040xxin---calendar) | `vgs_local_year` | Retrieves the current year in the local timezone. |
+| [calendar](#0xe040xxin---calendar) | `vgs_local_month` | Retrieves the current month in the local timezone. |
+| [calendar](#0xe040xxin---calendar) | `vgs_local_mday` | Retrieves the current day of month in the local timezone. |
+| [calendar](#0xe040xxin---calendar) | `vgs_local_hour` | Retrieves the current hour in the local timezone. |
+| [calendar](#0xe040xxin---calendar) | `vgs_local_minute` | Retrieves the current minute in the local timezone. |
+| [calendar](#0xe040xxin---calendar) | `vgs_local_second` | Retrieves the current second in the local timezone. |
 
 ### (Standard Functions)
 

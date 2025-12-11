@@ -200,6 +200,12 @@ class VGSX
         return gmtime(&now);
     }
 
+    static struct tm* now2()
+    {
+        time_t now = time(nullptr);
+        return localtime(&now);
+    }
+
     char saveDataDir[1024];
     bool subscribedInput;
     bool subscribedOutput;

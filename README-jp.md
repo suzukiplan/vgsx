@@ -849,12 +849,18 @@ VGS-X における I/O は 0xE00000～0xEFFFFF のメモリ領域に 32 ビッ�
 | 0xE03108 |  o  |  -  | [Sequential: Commit](#0xe031xxio---large-sequencial-file-io) |
 | 0xE03110 |  o  |  -  | [Sequential: Open Read](#0xe031xxio---large-sequencial-file-io) |
 | 0xE03114 |  -  |  o  | [Sequential: Read Byte](#0xe031xxio---large-sequencial-file-io) |
-| 0xE04000 |  o  |  -  | [Calendar: Year](#0xe040xxin---calendar)|
-| 0xE04004 |  o  |  -  | [Calendar: Month](#0xe040xxin---calendar)|
-| 0xE04008 |  o  |  -  | [Calendar: Day of Month](#0xe040xxin---calendar)|
-| 0xE0400C |  o  |  -  | [Calendar: Hour](#0xe040xxin---calendar)|
-| 0xE04010 |  o  |  -  | [Calendar: Minute](#0xe040xxin---calendar)|
-| 0xE04014 |  o  |  -  | [Calendar: Second](#0xe040xxin---calendar)|
+| 0xE04000 |  o  |  -  | [UTC: Year](#0xe040xxin---calendar)|
+| 0xE04004 |  o  |  -  | [UTC: Month](#0xe040xxin---calendar)|
+| 0xE04008 |  o  |  -  | [UTC: Day of Month](#0xe040xxin---calendar)|
+| 0xE0400C |  o  |  -  | [UTC: Hour](#0xe040xxin---calendar)|
+| 0xE04010 |  o  |  -  | [UTC: Minute](#0xe040xxin---calendar)|
+| 0xE04014 |  o  |  -  | [UTC: Second](#0xe040xxin---calendar)|
+| 0xE04020 |  o  |  -  | [Local: Year](#0xe040xxin---calendar)|
+| 0xE04024 |  o  |  -  | [Local: Month](#0xe040xxin---calendar)|
+| 0xE04028 |  o  |  -  | [Local: Day of Month](#0xe040xxin---calendar)|
+| 0xE0402C |  o  |  -  | [Local: Hour](#0xe040xxin---calendar)|
+| 0xE04030 |  o  |  -  | [Local: Minute](#0xe040xxin---calendar)|
+| 0xE04034 |  o  |  -  | [Local: Second](#0xe040xxin---calendar)|
 | 0xE7FFF4 |  o  |  -  | [Abort](#0xe7fff4out---abort) |
 | 0xE7FFF8 |  -  |  o  | [Reset](#0xe7fff8out---reset) |
 | 0xE7FFFC |  -  |  o  | [Exit](#0xe7fffcout---exit) |
@@ -944,7 +950,9 @@ UTF-8 の 1 文字を SJIS に変換し、`Destination` に書き込みます。
 
 ### 0xE040xx[in] - Calendar
 
-現在の日付と時刻を協定世界時（UTC）で数値表現として取得します。
+現在の日付と時刻を取得できます。
+
+協定世界時（UTC）:
 
 - 0xE04000: Year (例: 2025)
 - 0xE04004: Month (1 to 12)
@@ -952,6 +960,15 @@ UTF-8 の 1 文字を SJIS に変換し、`Destination` に書き込みます。
 - 0xE0400C: Hour (0 to 23)
 - 0xE04010: Minute (0 to 59)
 - 0xE04014: Second (0 to 59)
+
+ローカル・タイムゾーン:
+
+- 0xE04020: Year (例: 2025)
+- 0xE04024: Month (1 to 12)
+- 0xE04028: Day of Month (1 to 31)
+- 0xE0402C: Hour (0 to 23)
+- 0xE04030: Minute (0 to 59)
+- 0xE04034: Second (0 to 59)
 
 ### 0xE7FFF4[out] - Abort
 
@@ -1097,12 +1114,18 @@ VGS Standard Library（Video Game System Standard Library）は、VGS-X と将�
 | save | `vgs_seq_commit` | [Large Sequencial File](#0xe031xxio---large-sequencial-file-io) をコミットする |
 | save | `vgs_seq_open_r` | [Large Sequencial File](#0xe031xxio---large-sequencial-file-io) を読み込み用に開く |
 | save | `vgs_seq_read` | [Large Sequencial File](#0xe031xxio---large-sequencial-file-io) から 1 バイト読み込む |
-| [calendar](#0xe040xxin---calendar) | `vgs_calendar_year` | 現在の年 (UTC) を取得 |
-| [calendar](#0xe040xxin---calendar) | `vgs_calendar_month` | 現在の次 (UTC) を取得 |
-| [calendar](#0xe040xxin---calendar) | `vgs_calendar_mday` | 現在の日 (UTC) を取得 |
-| [calendar](#0xe040xxin---calendar) | `vgs_calendar_hour` | 現在の時間 (UTC) を取得 |
-| [calendar](#0xe040xxin---calendar) | `vgs_calendar_minute` | 現在の分 (UTC) を取得 |
-| [calendar](#0xe040xxin---calendar) | `vgs_calendar_second` | 現在の秒 (UTC) を取得 |
+| [calendar](#0xe040xxin---calendar) | `vgs_utc_year` | 現在の年 (UTC) を取得 |
+| [calendar](#0xe040xxin---calendar) | `vgs_utc_month` | 現在の次 (UTC) を取得 |
+| [calendar](#0xe040xxin---calendar) | `vgs_utc_mday` | 現在の日 (UTC) を取得 |
+| [calendar](#0xe040xxin---calendar) | `vgs_utc_hour` | 現在の時間 (UTC) を取得 |
+| [calendar](#0xe040xxin---calendar) | `vgs_utc_minute` | 現在の分 (UTC) を取得 |
+| [calendar](#0xe040xxin---calendar) | `vgs_utc_second` | 現在の秒 (UTC) を取得 |
+| [calendar](#0xe040xxin---calendar) | `vgs_local_year` | 現在の年 (TZ) を取得 |
+| [calendar](#0xe040xxin---calendar) | `vgs_local_month` | 現在の次 (TZ) を取得 |
+| [calendar](#0xe040xxin---calendar) | `vgs_local_mday` | 現在の日 (TZ) を取得 |
+| [calendar](#0xe040xxin---calendar) | `vgs_local_hour` | 現在の時間 (TZ) を取得 |
+| [calendar](#0xe040xxin---calendar) | `vgs_local_minute` | 現在の分 (TZ) を取得 |
+| [calendar](#0xe040xxin---calendar) | `vgs_local_second` | 現在の秒 (TZ) を取得 |
 
 ### (Standard Functions)
 

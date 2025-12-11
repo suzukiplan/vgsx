@@ -6,6 +6,20 @@ The current `master` branch is in a nightly state.
 
 Pending fixes:
 
+- Added support for retrieving date/time information in the local time zone
+- Modified calendar API specifications **(Disruptive)**  
+  - `vgs_calendar_year` → `vgs_utc_year`  
+  - `vgs_calendar_month` → `vgs_utc_month`  
+  - `vgs_calendar_mday` → `vgs_utc_mday`  
+  - `vgs_calendar_hour` → `vgs_utc_hour`  
+  - `vgs_calendar_minute` → `vgs_utc_minute`  
+  - `vgs_calendar_second` → `vgs_utc_second`  
+  - `vgs_local_year` (new)  
+  - `vgs_local_month` (new)  
+  - `vgs_local_mday` (new)  
+  - `vgs_local_hour` (new)  
+  - `vgs_local_minute` (new)  
+  - `vgs_local_second` (new)
 - Add `ram_ptr` (Bitmap Sprite Buffer) entries to the OAM
 - Add `VGSX::setSaveDataDirectory`
 - Add `VGSX::setConsoleCallback`
