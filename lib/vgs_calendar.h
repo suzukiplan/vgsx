@@ -66,34 +66,34 @@ static inline int vgs_utc_second() { return VGS_IN_CAL_SECOND; }
  * @brief Retrieves the current year in the local timezone
  * @return Year value (e.g., 2025)
  */
-static inline int vgs_local_year() { return VGS_IN_CAL_YEAR; }
+static inline int vgs_local_year() { return VGS_IN_CAL2_YEAR; }
 
 /**
  * @brief Retrieves the current month in the local timezone
  * @return Month value in the range 1–12 (1 = January)
  */
-static inline int vgs_local_month() { return VGS_IN_CAL_MONTH; }
+static inline int vgs_local_month() { return VGS_IN_CAL2_MONTH; }
 
 /**
  * @brief Retrieves the current day of the month in the local timezone
  * @return Day value in the range 1–31
  */
-static inline int vgs_local_mday() { return VGS_IN_CAL_MDAY; }
+static inline int vgs_local_mday() { return VGS_IN_CAL2_MDAY; }
 
 /**
  * @brief Retrieves the current hour in the local timezone
  * @return Hour value in the range 0–23
  */
-static inline int vgs_local_hour() { return VGS_IN_CAL_HOUR; }
+static inline int vgs_local_hour() { return VGS_IN_CAL2_HOUR; }
 
 /**
  * @brief Retrieves the current minute in the local timezone
  * @return Minute value in the range 0–59
  */
-static inline int vgs_local_minute() { return VGS_IN_CAL_MINUTE; }
+static inline int vgs_local_minute() { return VGS_IN_CAL2_MINUTE; }
 
 /**
  * @brief Retrieves the current second in the local timezone
  * @return Second value in the range 0–59
  */
-static inline int vgs_local_second() { return VGS_IN_CAL_SECOND; }
+static inline int vgs_local_second() { return VGS_IN_CAL2_SECOND; }
