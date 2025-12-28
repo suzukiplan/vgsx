@@ -9,8 +9,8 @@
 static bool is_valid_size(int w, int h)
 {
     if (w <= 0 || h <= 0) return false;
-    if (w > 256 || h > 256) return false;
-    if ((w % 8) != 0 || (h % 8) != 0) return false;
+    // if (w > 256 || h > 256) return false;
+    // if ((w % 8) != 0 || (h % 8) != 0) return false;
     return true;
 }
 
