@@ -68,7 +68,10 @@ static inline void graphicDrawWindow(VDP* vdp);
 class VDP
 {
   private:
+    const uint8_t* cpu_rom;
     const uint8_t* cpu_ram;
+    size_t cpu_rom_size;
+
     class PatternRom
     {
       public:
@@ -150,7 +153,10 @@ class VDP
         uint32_t pf_width;            // R35: Profotinaol Font - width
         uint32_t cp_fr;               // R36: Copy Character Pattern (From)
         uint32_t cp_to;               // R37: Copy Character Pattern (To)
-        uint32_t reserved[218];       // Reserved
+        uint32_t tr_addr;             // R38: Transfer Character Pattern (address)
+        uint32_t tr_size;             // R39: Transfer Character Pattern (size)
+        uint32_t tr_to;               // R40: Transfer Character Pattern (to)
+        uint32_t reserved[215];       // Reserved
     } Register;
 
     typedef struct {
@@ -196,7 +202,14 @@ class VDP
         this->rom.ptn.clear();
         this->rom.pal = nullptr;
         this->rom.palSize = 0;
+        this->cpu_rom = nullptr;
         this->cpu_ram = nullptr;
+    }
+
+    void setCpuRom(const uint8_t* cpu_rom, size_t cpu_rom_size)
+    {
+        this->cpu_rom = cpu_rom;
+        this->cpu_rom_size = cpu_rom_size;
     }
 
     void setCpuRam(const uint8_t* cpu_ram)
@@ -319,6 +332,7 @@ class VDP
                         case 34: this->ctx.pinfo[this->ctx.reg.pf_ptn & 0x7F].dy = value; break;
                         case 35: this->ctx.pinfo[this->ctx.reg.pf_ptn & 0x7F].width = value; break;
                         case 37: this->copyCharacterPattern(); break;
+                        case 40: this->transferCharacterPattern(); break;
                     }
                     return;
                 }
@@ -353,6 +367,41 @@ class VDP
             return;
         }
         memcpy(this->ctx.ptn[this->ctx.reg.cp_to], this->ctx.ptn[this->ctx.reg.cp_fr], 32);
+    }
+
+    void transferCharacterPattern()
+    {
+        auto addr = this->ctx.reg.tr_addr & 0x00FFFFFF;
+        auto size = this->ctx.reg.tr_size;
+        auto num = size / 32;
+        auto to = this->ctx.reg.tr_to &= 0xFFFF;
+        const uint8_t* from = nullptr;
+        if (size < 32) {
+            return; // invalid size
+        } else if (0x10000 < to + num) {
+            return; // buffer overflow
+        } else if (addr < 0xC00000) {
+            if (!cpu_rom) {
+                return; // no program
+            }
+            if (cpu_rom_size <= addr + size) {
+                return; // buffer overflow
+            }
+            from = &cpu_rom[addr];
+        } else if (0xF00000 <= addr) {
+            addr &= 0x0FFFFF;
+            if (!cpu_ram) {
+                return; // no ram
+            }
+            if (0x100000 <= addr + size) {
+                return; // buffer overflow
+            }
+            from = &cpu_ram[addr];
+        }
+        if (!from) {
+            return; // invalid address
+        }
+        memcpy(this->ctx.ptn[to], from, num * 32);
     }
 
     void setupPropotional(uint16_t ptn_start)

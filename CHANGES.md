@@ -20,10 +20,11 @@ Pending fixes:
   - `vgs_local_hour` (new)  
   - `vgs_local_minute` (new)  
   - `vgs_local_second` (new)
-- Add `ram_ptr` (Bitmap Sprite Buffer) entries to the OAM
-- Add `VGSX::setSaveDataDirectory`
-- Add `VGSX::setConsoleCallback`
-- Add new toolchain component: `bmp2img`
+- Added a `ram_ptr` (Bitmap Sprite Buffer) entries to the OAM
+- Added a feature and API (`vgs_ptn_transfer`) to transfer character patterns from CPU memory (ROM/RAM) to VRAM.
+- Added a `VGSX::setSaveDataDirectory`
+- Added a `VGSX::setConsoleCallback`
+- Added new toolchain component: `bmp2img`
 - Extend `bmp2chr` to support `.png` input
 - Extend `bmp2pal` to support `.png` input
 - Update `VGSX::setLogCallback` to use `std::function`

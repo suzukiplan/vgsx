@@ -903,6 +903,7 @@ void VGSX::reset(void)
     loadElfHeader(&eh, this->ctx.elf);
     putlog(LogLevel::I, "M68K_REG_PC = 0x%06X", eh.e_entry);
     m68k_set_reg(M68K_REG_PC, eh.e_entry);
+    vdp.setCpuRom(nullptr, 0);
 
     // Reset RAM
     memset(this->ctx.ram, 0xFF, sizeof(this->ctx.ram));
@@ -930,6 +931,7 @@ void VGSX::reset(void)
         if (ph.p_type == 1 && 0 == ph.p_paddr && (ph.p_flags & 0x01)) {
             this->ctx.program = &this->ctx.elf[ph.p_offset];
             this->ctx.programSize = ph.p_memsz;
+            vdp.setCpuRom(this->ctx.program, this->ctx.programSize);
         }
         if (ph.p_type == 1 && ph.p_memsz) {
             uint32_t loadAddress = ph.p_vaddr ? ph.p_vaddr : ph.p_paddr;

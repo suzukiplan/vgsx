@@ -477,6 +477,9 @@ _* RAM buffer size = `((size + 1) * 8)²`_
 |0xD2008C | R35 | PF_WIDTH | [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) width |
 |0xD20090 | R36 | CP_FR | [Copy Character Pattern (From)](#0xd20090-0xd20094-copy-character-pattern) |
 |0xD20094 | R37 | CP_TO | [Copy Character Pattern (To)](#0xd20090-0xd20094-copy-character-pattern) |
+|0xD20098 |  R38 | TR_ADDR  | [Transfer Character Pattern (address)](#0xd20098-0xd200a0-transfer-character-pattern) |
+|0xD2009C |  R39 | TR_SIZE  | [Transfer Character Pattern (size)](#0xd20098-0xd200a0-transfer-character-pattern) |
+|0xD200A0 |  R40 | TR_TO  | [Transfer Character Pattern (pattern)](#0xd20098-0xd200a0-transfer-character-pattern) |
 
 Please note that access to the VDP register must always be 4-byte aligned.
 
@@ -581,11 +584,28 @@ See the example of usage: [./example/05_pro-font/program.c](./example/05_pro-fon
 
 ### 0xD20090-0xD20094: Copy Character Pattern
 
-Copy the character pattern.
+Copies data from a specified pattern number to another specified pattern number.
 
-After setting the source index to `0xD20090 (CP_FR)`, it is executed by setting the destination index to `0xD20094 (CP_TO)`.
+1. Set the source pattern number in `CP_FR` (0xD20090).
+2. Specify the destination pattern number in `CP_TO` (0xD20094).
 
-For example, it is intended for use in animations such as the ocean on a map.
+Remarks:
+
+- The copy completes immediately when `CP_TO` is written.
+
+### 0xD20098-0xD200A0: Transfer Character Pattern
+
+Transfers data from a specified memory address to a specified pattern number.
+
+1. Set the source memory address in `TR_ADDR` (0xD20098).
+2. Specify the transfer size (in bytes) in `TR_SIZE` (0xD2009C).
+3. Transfer to the pattern number specified by `TR_TO` (0xD200A0).
+
+Remarks:
+
+- The memory address specified in `TR_ADDR` must contain raw character pattern data in the [Character Pattern Table](#character-pattern) format.
+- `TR_SIZE` must be a multiple of 32.
+- The transfer completes immediately when `TR_TO` is written.
 
 ## I/O Map
 

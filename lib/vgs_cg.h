@@ -113,6 +113,9 @@ typedef struct {
 #define VGS_VREG_PF_WIDTH *((volatile int32_t*)0xD2008C)
 #define VGS_VREG_CP_FR *((volatile int32_t*)0xD20090)
 #define VGS_VREG_CP_TO *((volatile int32_t*)0xD20094)
+#define VGS_VREG_TR_ADDR *((volatile int32_t*)0xD20098)
+#define VGS_VREG_TR_SIZE *((volatile int32_t*)0xD2009C)
+#define VGS_VREG_TR_TO *((volatile int32_t*)0xD200A0)
 
 // Graphic Draw Function Identifer
 #define VGS_DRAW_PIXEL 0
@@ -190,13 +193,26 @@ static inline uint32_t vgs_pal_get(uint8_t pal, uint8_t col)
 
 /**
  * @brief Copy Character Pattern.
- * @param to Destination charaqcter pattern index
- * @param from Source charaqcter pattern index
+ * @param to Destination character pattern index
+ * @param from Source character pattern index
  */
 static inline void vgs_ptn_copy(uint16_t to, uint16_t from)
 {
     VGS_VREG_CP_FR = from;
     VGS_VREG_CP_TO = to;
+}
+
+/**
+ * @brief Transfer Character Pattern.
+ * @param to Destination charaqcter pattern index
+ * @param from Source character pattern address
+ * @param sizeInByte Transfer character pattern size in byte
+ */
+static inline void vgs_ptn_transfer(uint16_t to, const void* from, uint32_t sizeInByte)
+{
+    VGS_VREG_TR_ADDR = (uint32_t)from;
+    VGS_VREG_TR_SIZE = sizeInByte;
+    VGS_VREG_TR_TO = to;
 }
 
 /**
