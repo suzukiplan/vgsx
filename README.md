@@ -295,7 +295,7 @@ Remarks:
 - The Name Table is a 256x256 x 4bytes two-dimensional array of the [attributes](#attribute). 
 - The visible displayed area is 40x25 in the Name Table (256x256).
 - By setting character patterns and attribute data to it, graphics can be displayed on the background layer.
-- The Name Table has a four-layer structure, with BG1 displayed on top of BG0, BG2 on top of BG1, BG3 on top of BG2, and BG4 on top of BG3.
+- The Name Table has a four-layer structure, with BG1 displayed on top of BG0, BG2 on top of BG1, and BG3 on top of BG2.
 
 | Address             | Size  | Name Table |
 |:-------------------:|:-----:|:----------:|
@@ -707,7 +707,7 @@ The `vgs_print` function is defined in [log.h](./lib/log.h).
 
 - You can set the seed for random numbers by writing a value to 0xE00004.
 - Reading 0xE00004 allows you to obtain a random number (0 to 65535).
-- The random number generation in VGS-X guarantees that calling it 65,536 times will return each number from 0 to 65,535 exactly once.
+- The random number generation in VGS-X is deterministic and repeats every 65,536 reads for the same seed.
 
 ### 0xE00008-0xE00014[i/o] - Direct Memory Access
 
@@ -726,7 +726,7 @@ Remarks:
 
 - The upper 24 bits of `Argument` are ignored.
 - The `Source` must be either a Program Address (0x000000 to Size-of-Program) or a RAM Address (0xF00000 to 0xFFFFFF).
-- If the search results fall outside the valid address range, 0 is entered; if a search data is found, the found index is entered.
+- The return value is the byte offset from `Source` to the first matching byte. `0` may indicate either "found at `Source`" or "not found".
 - Please note that performing searches not expected to yield results can result in significant overhead.
 
 #### DMA Copy
@@ -763,8 +763,8 @@ The angle function can quickly calculate the degrees (from 0 to 359) between two
 ```c
 VGS_OUT_ANGLE_X1 = x1;
 VGS_OUT_ANGLE_Y1 = y1;
-VGS_OUT_ANGLE_X2 = x1;
-VGS_OUT_ANGLE_Y2 = y1;
+VGS_OUT_ANGLE_X2 = x2;
+VGS_OUT_ANGLE_Y2 = y2;
 // Get (and Set) degree of (x1,y1) and (x2,y2)
 int32_t degree = VGS_IO_ANGLE_DEGREE; 
 ```
