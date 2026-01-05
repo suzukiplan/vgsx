@@ -139,6 +139,12 @@ make
 ~/vgsx/tools/makeprj/makeprj ~/projects/MyGame
 ```
 
+## Compatibility Policy
+
+VGS-X は、将来のバージョンアップにより互換性が維持されなくなる変更（破壊的変更）を行う可能性があります。
+
+[makeprj](#makeprj) コマンドで生成した時点のサブモジュールバージョンを維持している限り、あなたのプロジェクトの互換性には影響しません。ただし、最新バージョンの VGS-X で提供される機能が必要になった場合は、[CHANGES.md](./CHANGES.md) を確認し、**(Disruptive)** のマークが付いた項目の変更内容を入念に確認してください。
+
 # Architecture Reference Manual
 
 以下では、VGS-X でプログラミングを行う際に役立つ技術情報をまとめています。

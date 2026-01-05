@@ -141,6 +141,12 @@ You can create a new project for developing your game by executing the [makeprj]
 ~/vgsx/tools/makeprj/makeprj ~/projects/MyGame
 ```
 
+## Compatibility Policy
+
+VGS-X may introduce changes in future updates that do not preserve backward compatibility (i.e., breaking changes).
+
+As long as you keep the submodule versions that were generated when you ran the [makeprj](#makeprj) command, your project’s compatibility will not be affected. However, if you need features provided by the latest version of VGS-X, review [CHANGES.md](./CHANGES.md) and carefully check the changes in any entries marked **(Disruptive)**.
+
 # Architecture Reference Manual
 
 The following sections provide technical information useful for programming with VGS-X.
