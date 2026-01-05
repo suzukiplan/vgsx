@@ -10,6 +10,7 @@ LIBCOBJ += vgs_ctype.o
 LIBCOBJ += vgs_save.o
 LIBCOBJ += vgs_key.o
 LIBCOBJ += vgs_bmpfont.o
+LIBCOBJ += crt.o
 LIBCOBJ += vectors.o
 
 all: libc.a liblog.a
