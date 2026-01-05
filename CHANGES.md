@@ -1,6 +1,6 @@
 # Changes
 
-## Version 1.0.0
+## Version 1.0.0 **(Disruptive)**
 
 - Added support for retrieving date/time information in the local time zone
 - Modified calendar API specifications **(Disruptive)**  
