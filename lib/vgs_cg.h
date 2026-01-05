@@ -62,7 +62,7 @@ typedef struct {
     uint32_t slx;         // Scale Lock (X)
     uint32_t pri;         // High Priority Flag
     uint32_t ram_ptr;     // Bitmap Sprite Buffer (RGB888)
-    uint32_t reserved[3]; // Reserved
+    uint32_t reserved[3]; // Reserved (Specify 0 to maintain future compatibility.)
 } ObjectAttributeMemory;
 
 #define OAM_MAX 1024

@@ -156,7 +156,7 @@ class VDP
         uint32_t tr_addr;             // R38: Transfer Character Pattern (address)
         uint32_t tr_size;             // R39: Transfer Character Pattern (size)
         uint32_t tr_to;               // R40: Transfer Character Pattern (to)
-        uint32_t reserved[215];       // Reserved
+        uint32_t reserved[215];       // Reserved (Specify 0 to maintain future compatibility.)
     } Register;
 
     typedef struct {
@@ -173,7 +173,7 @@ class VDP
         uint32_t slx;         // Scale Lock (X)
         uint32_t pri;         // High Priority Flag
         uint32_t ram_ptr;     // Bitmap Sprite Buffer (RGB888)
-        uint32_t reserved[3]; // Reserved
+        uint32_t reserved[3]; // Reserved (Specify 0 to maintain future compatibility.)
     } OAM;
 
     typedef struct {
