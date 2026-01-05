@@ -2,26 +2,6 @@
 
 ![vgsx.png](./vgsx.png)
 
-## WIP
-
-This project is still in the WIP; _Work In Progress_ phase.
-
-All the features listed in this README.md have been implemented. However, please note that the current specifications are subject to frequent and unexpected changes.
-
-Once this project reaches a stable phase, version 1.0.0 is scheduled for release.
-
-Status
-
-1. [x] Execute MC680x0 ELF32 module
-2. [x] Implement VDP
-3. [x] Implement Background Music function
-4. [x] Implement Sound Effect function
-5. [x] Implement Gamepad function
-6. [x] Release beta 0.1.0
-7. [ ] Release Battle Hanafuda (Production Version)
-
-Changes after Version 0.1.0 can be found in [CHANGES.md](./CHANGES.md).
-
 ## About VGS-X
 
 The VGS-X is a 16-bit game console featuring an MC68030 processor, the YM2612(OPN) FM sound chip, and a proprietary VDP optimized for MC68k architecture.
