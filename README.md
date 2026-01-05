@@ -253,6 +253,13 @@ Remarks:
 
 > __WIP Note:__ Currently, the character pattern specification assumes that all necessary patterns are loaded at program startup. This means we intend to restrict dynamic pattern rewriting after startup. However, we also believe there is room to consider changing this specification.
 
+## Character Pattern RAM
+
+- At startup (initial state), the chr file specified by [makerom](#makerom) is loaded into memory (Character Pattern RAM).
+- Using the [Copy Character Pattern](#0xd20090-0xd20094-copy-character-pattern) feature, you can copy a character from one character pattern number to another.
+- Using the [Transfer Character Pattern](#0xd20098-0xd200a0-transfer-character-pattern) feature, you can load character patterns stored in Program ROM or RAM into memory.
+- Any memory contents modified by [Copy Character Pattern](#0xd20090-0xd20094-copy-character-pattern) or [Transfer Character Pattern](#0xd20098-0xd200a0-transfer-character-pattern) will be restored to the initial state after a reset.
+
 ## Palette
 
 - VGS-X allows up to 16 palettes

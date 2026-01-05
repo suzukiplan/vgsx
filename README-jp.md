@@ -249,7 +249,12 @@ VGS-X では最大 65,536 個のキャラクタパターンを利用できます
 - キャラクタパターンはプログラムから直接参照できません。ネームテーブルまたは OAM でパターン番号を指定して描画します。
 - BG とスプライトでパターン番号を共有します。
 
-> __WIP Note:__ 現状ではプログラム起動時に必要なキャラクタパターンをすべてロードする前提です。起動後に動的にパターンを書き換えることは制限する想定ですが、仕様変更の余地は検討中です。
+## Character Pattern RAM
+
+- 起動時（初期状態）には、[makerom](#makerom) で指定した chr ファイルがメモリ（Character Pattern RAM）に展開されます。
+- [Copy Character Pattern](#0xd20090-0xd20094-copy-character-pattern) 機能を用いることで、特定のキャラクタパターン番号のキャラクタを別のキャラクタパターン番号へコピーできます。
+- [Transfer Character Pattern](#0xd20098-0xd200a0-transfer-character-pattern) 機能を用いることで、プログラム ROM または RAM 上のキャラクタパターンをメモリへ展開できます。
+- [Copy Character Pattern](#0xd20090-0xd20094-copy-character-pattern) または [Transfer Character Pattern](#0xd20098-0xd200a0-transfer-character-pattern) によって変更されたメモリ内容は、リセットにより初期状態に戻ります。
 
 ## Palette
 
