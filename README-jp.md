@@ -822,18 +822,27 @@ VGS_OUT_KEY_BUTTON_NAME = (uint32_t)buf;
 
 ## 0xE030xx[io] - SaveData
 
-セーブデータをストレージ（save.dat）に保存／読み込みできます。
+このインタフェースは、プログラムが **RAM 上のデータを永続ストレージ（`save.dat`）へ保存** したり、**過去に保存したデータを RAM に読み戻す** ことを可能にします。  
+出力（書き込み）としてアクセスするか、入力（読み出し）としてアクセスするかによって、同一の I/O アドレスで保存／読み込みの両方を扱います。
+
+### Usage
 
 ```c
-VGS_OUT_SAVE_ADDRESS = (uint32_t)&mydata; // RAM アドレス
-VGS_IO_SAVE_EXECUTE = sizeof(mydata);     // RAM から save.dat へ書き込み
-uint32_t size = VGS_IO_SAVE_EXECUTE;      // save.dat から RAM へ読み込み
+VGS_OUT_SAVE_ADDRESS = (uint32_t)&mydata; // 保存/読み込みの基準となるRAMアドレス
+VGS_IO_SAVE_EXECUTE = sizeof(mydata);     // 保存: RAM → save.dat へ書き込み
+uint32_t size = VGS_IO_SAVE_EXECUTE;      // 読み込み: save.dat → RAM へ読み込み
 ```
 
-備考:
+- VGS_IO_SAVE_EXECUTE に値を書き込むと、そのバイト数分のデータを RAM から save.dat に保存します。
+- VGS_IO_SAVE_EXECUTE を読み出すと、save.dat から RAM にデータを読み込み、実際に読み込まれたバイト数を返します。
 
-- `0xE03000 (VGS_OUT_SAVE_ADDRESS)` は RAM（0xF00000～0xFFFFFF）である必要があります。
-- セーブデータが破損している、または読み込みに失敗した場合、読み込み結果は 0 になります。
+### Remarks
+
+- VGS_OUT_SAVE_ADDRESS は RAM 範囲 0xF00000〜0xFFFFFF（24-bit アドレス空間）内のアドレスを指定しなければなりません。
+- 保存（save）時は、指定サイズが 1〜0x100000 bytes の範囲である必要があり、かつ対象のアドレス範囲が RAM の上限を超えてはなりません。
+- 読み込み（load）時は、save.dat が存在しない、サイズが不正、または正常に読み込めない場合、読み込み結果は 0 になります。
+- 読み込み操作が返す値は、RAM に読み込まれたバイト数を表します。
+- このインタフェースはセーブデータ内容の整合性検証（ハッシュ等）は行いません。確認するのはファイルの存在、サイズの妥当性、および読み込み成功可否のみです。
 
 ## 0xE031xx[io] - Large Sequencial File I/O
 

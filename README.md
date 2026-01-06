@@ -915,18 +915,28 @@ VGS_OUT_KEY_BUTTON_NAME = (uint32_t)buf;
 
 ### 0xE030xx[io] - SaveData
 
-You can save your save data to storage (save.dat file) or load saved save data.
+This interface allows the program to **save data from RAM to persistent storage (`save.dat`)** and **load previously saved data back into RAM**.
+The same I/O address is used for both operations, depending on whether it is accessed as an output or an input.
+
+#### Usage
 
 ```c
-VGS_OUT_SAVE_ADDRESS = (uint32_t)&mydata; // RAM address
-VGS_IO_SAVE_EXECUTE = sizeof(mydata);     // Write save.dat from RAM
-uint32_t size = VGS_IO_SAVE_EXECUTE;      // Read save.dat to RAM
+VGS_OUT_SAVE_ADDRESS = (uint32_t)&mydata; // Base RAM address for save/load
+VGS_IO_SAVE_EXECUTE = sizeof(mydata);     // Save: write RAM → save.dat
+uint32_t size = VGS_IO_SAVE_EXECUTE;      // Load: read save.dat → RAM
 ```
 
-Remarks
+* Writing a value to `VGS_IO_SAVE_EXECUTE` saves that number of bytes from RAM to `save.dat`.
+* Reading from `VGS_IO_SAVE_EXECUTE` loads data from `save.dat` into RAM and returns the number of bytes actually loaded.
 
-- `0xE03000 (VGS_OUT_SAVE_ADDRESS)` must be within the RAM address range (0xF00000 to 0xFFFFFF).
-- If the save data is corrupted or fails to load, the load result will be 0.
+#### Remarks
+
+* `VGS_OUT_SAVE_ADDRESS` must specify an address within the RAM range
+  **0xF00000 to 0xFFFFFF** (24-bit address space).
+* For save operations, the specified size must be between **1 and 0x100000 bytes**, and the address range must not exceed the RAM limit.
+* For load operations, if `save.dat` does not exist, has an invalid size, or cannot be read successfully, the load result will be **0**.
+* The returned value from a load operation represents the number of bytes loaded into RAM.
+* This interface does not perform integrity verification of the save data contents; only file existence, size validity, and read success are checked.
 
 ### 0xE031xx[io] - Large Sequencial File I/O
 
