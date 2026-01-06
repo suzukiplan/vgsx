@@ -544,17 +544,108 @@ Remarks:
 - `TR_SIZE` には 32 の倍数を指定しなければなりません。
 - 転送は `TR_TO` の書き込みがされた時即座に完了する。
 
-## 0xE00000[out] - Console Output
+## I/O Map
 
-`0xE00000` に出力すると、ホスト環境のコンソールに文字列を表示できます。
+VGS-X における I/O は 0xE00000～0xEFFFFF のメモリ領域に 32 ビット値でアクセスすることで実行します。
+
+| Address  | In  | Out | Description |
+|:--------:|:---:|:---:|:------------|
+| 0xE00000 |  o  |  -  | [V-SYNC](#0xe00000in---v-sync) |
+| 0xE00000 |  -  |  o  | [Console Output](#0xe00000out---console-output) |
+| 0xE00004 |  o  |  o  | [Random](#0xe00004io---random) |
+| 0xE00008 |  -  |  o  | [DMA: Destination](#0xe00008-0xe00014io---direct-memory-access) |
+| 0xE0000C |  -  |  o  | [DMA: Source](#0xe00008-0xe00014io---direct-memory-access) |
+| 0xE00010 |  -  |  o  | [DMA: Argument](#0xe00008-0xe00014io---direct-memory-access) |
+| 0xE00014 |  o  |  o  | [DMA: Execute](#0xe00008-0xe00014io---direct-memory-access) |
+| 0xE00100 |  -  |  o  | [Angle: X1](#0xe00100-0xe00118io---angle) |
+| 0xE00104 |  -  |  o  | [Angle: Y1](#0xe00100-0xe00118io---angle) |
+| 0xE00108 |  -  |  o  | [Angle: X2](#0xe00100-0xe00118io---angle) |
+| 0xE0010C |  -  |  o  | [Angle: Y2](#0xe00100-0xe00118io---angle) |
+| 0xE00110 |  o  |  o  | [Angle: Degree (0～359)](#0xe00100-0xe00118io---angle) |
+| 0xE00114 |  o  |  -  | [Angle: int-sin (-256～256)](#0xe00100-0xe00118io---angle) |
+| 0xE00118 |  o  |  -  | [Angle: int-cos (-256～256)](#0xe00100-0xe00118io---angle) |
+| 0xE01000 |  -  |  o  | [Play BGM](#0xe010xxo---background-music-bgm) |
+| 0xE01004 |  -  |  o  | [BGM Control](#0xe010xxo---background-music-bgm) |
+| 0xE01008 |  o  |  o  | [BGM Master Volume](#0xe010xxo---background-music-bgm) |
+| 0xE01100 |  -  |  o  | [Play SFX](#0xe011xxo---sound-effect-sfx) |
+| 0xE01104 |  -  |  o  | [Stop SFX](#0xe011xxo---sound-effect-sfx) |
+| 0xE01108 |  o  |  o  | [SFX Master Volume](#0xe011xxo---sound-effect-sfx) |
+| 0xE02000 |  o  |  -  | [Gamepad: D-pad Up](#0xe020xxi---gamepad) |
+| 0xE02004 |  o  |  -  | [Gamepad: D-pad Down](#0xe020xxi---gamepad) |
+| 0xE02008 |  o  |  -  | [Gamepad: D-pad Left](#0xe020xxi---gamepad) |
+| 0xE0200C |  o  |  -  | [Gamepad: D-pad Right](#0xe020xxi---gamepad) |
+| 0xE02010 |  o  |  -  | [Gamepad: A button](#0xe020xxi---gamepad) |
+| 0xE02014 |  o  |  -  | [Gamepad: B button](#0xe020xxi---gamepad) |
+| 0xE02018 |  o  |  -  | [Gamepad: X button](#0xe020xxi---gamepad) |
+| 0xE0201C |  o  |  -  | [Gamepad: Y button](#0xe020xxi---gamepad) |
+| 0xE02020 |  o  |  -  | [Gamepad: Start button](#0xe020xxi---gamepad) |
+| 0xE02100 |  o  |  o  | [Gamepad: Type](#0xe021xxio---gamepad-types) |
+| 0xE02104 |  o  |  -  | [Gamepad: Button ID (A)](#0xe021xxio---gamepad-types) |
+| 0xE02108 |  o  |  -  | [Gamepad: Button ID (B)](#0xe021xxio---gamepad-types) |
+| 0xE0210C |  o  |  -  | [Gamepad: Button ID (X)](#0xe021xxio---gamepad-types) |
+| 0xE02110 |  o  |  -  | [Gamepad: Button ID (Y)](#0xe021xxio---gamepad-types) |
+| 0xE02114 |  o  |  -  | [Gamepad: Button ID (Start)](#0xe021xxio---gamepad-types) |
+| 0xE02118 |  -  |  o  | [Gamepad: Button Name (ID)](#0xe021xxio---gamepad-types) |
+| 0xE0211C |  -  |  o  | [Gamepad: Button Name (Address)](#0xe021xxio---gamepad-types) |
+| 0xE03000 |  o  |  -  | [SaveData: Address](#0xe030xxio---savedata) |
+| 0xE03004 |  o  |  o  | [SaveData: Execute](#0xe030xxio---savedata) |
+| 0xE03008 |  -  |  o  | [SaveData: Size](#0xe030xxio---savedata) |
+| 0xE03100 |  o  |  -  | [Sequential: Open Write](#0xe031xxio---large-sequencial-file-io) |
+| 0xE03104 |  o  |  -  | [Sequential: Write Byte](#0xe031xxio---large-sequencial-file-io) |
+| 0xE03108 |  o  |  -  | [Sequential: Commit](#0xe031xxio---large-sequencial-file-io) |
+| 0xE03110 |  o  |  -  | [Sequential: Open Read](#0xe031xxio---large-sequencial-file-io) |
+| 0xE03114 |  -  |  o  | [Sequential: Read Byte](#0xe031xxio---large-sequencial-file-io) |
+| 0xE04000 |  o  |  -  | [UTC: Year](#0xe040xxin---calendar)|
+| 0xE04004 |  o  |  -  | [UTC: Month](#0xe040xxin---calendar)|
+| 0xE04008 |  o  |  -  | [UTC: Day of Month](#0xe040xxin---calendar)|
+| 0xE0400C |  o  |  -  | [UTC: Hour](#0xe040xxin---calendar)|
+| 0xE04010 |  o  |  -  | [UTC: Minute](#0xe040xxin---calendar)|
+| 0xE04014 |  o  |  -  | [UTC: Second](#0xe040xxin---calendar)|
+| 0xE04020 |  o  |  -  | [Local: Year](#0xe040xxin---calendar)|
+| 0xE04024 |  o  |  -  | [Local: Month](#0xe040xxin---calendar)|
+| 0xE04028 |  o  |  -  | [Local: Day of Month](#0xe040xxin---calendar)|
+| 0xE0402C |  o  |  -  | [Local: Hour](#0xe040xxin---calendar)|
+| 0xE04030 |  o  |  -  | [Local: Minute](#0xe040xxin---calendar)|
+| 0xE04034 |  o  |  -  | [Local: Second](#0xe040xxin---calendar)|
+| 0xE7FFF4 |  o  |  -  | [Abort](#0xe7fff4out---abort) |
+| 0xE7FFF8 |  -  |  o  | [Reset](#0xe7fff8out---reset) |
+| 0xE7FFFC |  -  |  o  | [Exit](#0xe7fffcout---exit) |
+| 0xE80000 ~ 0xE8FFFC |  o  |  o  | [User-Defined I/O](#0xe8xxxxio---user-defined-io) |
 
 ## 0xE00000[in] - V-SYNC
 
-`0xE00000` から読み出すと V-SYNC を待ちます。1 フレーム（60fps）ごとに同期を取る際に利用してください。
+MC68030 プログラムが 0xE00000 を読み込むと、VGS-X はその時点の VRAM を参照して BG0～BG3 とスプライトを描画し、60fps で同期を取った後に戻ります。
 
-## 0xE00004[out] - Exit
+```c
+// VRAM の更新処理
+drawProc();
 
-ユーザープログラムを終了し、終了コードを返します。
+// 垂直同期を待つ（内部的に 0xE00000 へ入力）
+vgs_vsync();
+
+// 同期完了後の処理
+afterDrawProc();
+```
+
+`vgs_vsync` 関数は [vgs.h](./lib/vgs.h) に定義されています。
+
+> __設計方針__: この仕様により VGS-X の MC68030 には動作クロックという概念がありません。実行速度はホスト PC の性能に依存し、必要スペックの周知は開発者に委ねられます。
+
+## 0xE00000[out] - Console Output
+
+0xE00000 に値を書き込むとコンソールに文字列を出力できます。デバッグログなどに利用してください。
+
+```c
+vgs_print("Hello, World!\n");
+```
+
+`vgs_print` は [log.h](./lib/log.h) に定義されています。
+
+## 0xE00004[i/o] - Random
+
+- 0xE00004 に書き込むと乱数シードを設定できます。
+- 0xE00004 を読み出すと 0～65535 の乱数を取得できます。
+- 同一のシードであれば結果は決定的で、65,536 回の読み出しで周期的に繰り返します。
 
 ## 0xE00008-0xE00014[io] - Direct Memory Access
 
@@ -785,182 +876,6 @@ while (1) {
 - 読み込みと書き込みを同時に行うことはできますが、同じインデックスのファイルを同時に扱うことはできません。
 - 読み込み処理もメモリ上で行われるため、ディスク I/O のオーバーヘッドは発生しません。
 
-## 0xE040xx[i] - Random
-
-乱数を取得します。0xE04000 は 8bit、0xE04004 は 16bit、0xE04008 は 32bit の乱数を返します。
-
-## 0xE050xx[i] - Timer
-
-V-SYNC に依存しない高精度タイマを提供します。0xE05000 で現在値、0xE05004 で差分を取得できます。
-
-## 0xE060xx[o] - Window Title
-
-0xE06000 にタイトル文字列（RAM アドレス）を書き込むと、ウィンドウタイトルを変更できます。
-
-## 0xE070xx[o] - Window Size
-
-0xE07000 / 0xE07004 に幅と高さ（ピクセル）を指定すると、ウィンドウサイズを変更します。
-
-## 0xE080xx[io] - User-Defined I/O
-
-ユーザープログラム側で自由に用途を定義できる I/O です。ランタイム実装側でコールバック処理を登録することで利用します。
-
-## 0xE090xx[o] - Reset
-
-0xE09000 に任意の値を書き込むとリセットがかかり、プログラムを再起動します。
-
-## 0xE0A0xx[o] - Error Log
-
-0xE0A000 にエラーコード、0xE0A004 にエラーメッセージ（RAM アドレス）を設定すると、ホスト側にエラーログを通知できます。
-
-## I/O Map
-
-VGS-X における I/O は 0xE00000～0xEFFFFF のメモリ領域に 32 ビット値でアクセスすることで実行します。
-
-| Address  | In  | Out | Description |
-|:--------:|:---:|:---:|:------------|
-| 0xE00000 |  o  |  -  | [V-SYNC](#0xe00000in---v-sync) |
-| 0xE00000 |  -  |  o  | [Console Output](#0xe00000out---console-output) |
-| 0xE00004 |  o  |  o  | [Random](#0xe00004io---random) |
-| 0xE00008 |  -  |  o  | [DMA: Destination](#0xe00008-0xe00014io---direct-memory-access) |
-| 0xE0000C |  -  |  o  | [DMA: Source](#0xe00008-0xe00014io---direct-memory-access) |
-| 0xE00010 |  -  |  o  | [DMA: Argument](#0xe00008-0xe00014io---direct-memory-access) |
-| 0xE00014 |  o  |  o  | [DMA: Execute](#0xe00008-0xe00014io---direct-memory-access) |
-| 0xE00100 |  -  |  o  | [Angle: X1](#0xe00100-0xe00118io---angle) |
-| 0xE00104 |  -  |  o  | [Angle: Y1](#0xe00100-0xe00118io---angle) |
-| 0xE00108 |  -  |  o  | [Angle: X2](#0xe00100-0xe00118io---angle) |
-| 0xE0010C |  -  |  o  | [Angle: Y2](#0xe00100-0xe00118io---angle) |
-| 0xE00110 |  o  |  o  | [Angle: Degree (0～359)](#0xe00100-0xe00118io---angle) |
-| 0xE00114 |  o  |  -  | [Angle: int-sin (-256～256)](#0xe00100-0xe00118io---angle) |
-| 0xE00118 |  o  |  -  | [Angle: int-cos (-256～256)](#0xe00100-0xe00118io---angle) |
-| 0xE01000 |  -  |  o  | [Play BGM](#0xe010xxo---background-music-bgm) |
-| 0xE01004 |  -  |  o  | [BGM Control](#0xe010xxo---background-music-bgm) |
-| 0xE01008 |  o  |  o  | [BGM Master Volume](#0xe010xxo---background-music-bgm) |
-| 0xE01100 |  -  |  o  | [Play SFX](#0xe011xxo---sound-effect-sfx) |
-| 0xE01104 |  -  |  o  | [Stop SFX](#0xe011xxo---sound-effect-sfx) |
-| 0xE01108 |  o  |  o  | [SFX Master Volume](#0xe011xxo---sound-effect-sfx) |
-| 0xE02000 |  o  |  -  | [Gamepad: D-pad Up](#0xe020xxi---gamepad) |
-| 0xE02004 |  o  |  -  | [Gamepad: D-pad Down](#0xe020xxi---gamepad) |
-| 0xE02008 |  o  |  -  | [Gamepad: D-pad Left](#0xe020xxi---gamepad) |
-| 0xE0200C |  o  |  -  | [Gamepad: D-pad Right](#0xe020xxi---gamepad) |
-| 0xE02010 |  o  |  -  | [Gamepad: A button](#0xe020xxi---gamepad) |
-| 0xE02014 |  o  |  -  | [Gamepad: B button](#0xe020xxi---gamepad) |
-| 0xE02018 |  o  |  -  | [Gamepad: X button](#0xe020xxi---gamepad) |
-| 0xE0201C |  o  |  -  | [Gamepad: Y button](#0xe020xxi---gamepad) |
-| 0xE02020 |  o  |  -  | [Gamepad: Start button](#0xe020xxi---gamepad) |
-| 0xE02100 |  o  |  o  | [Gamepad: Type](#0xe021xxio---gamepad-types) |
-| 0xE02104 |  o  |  -  | [Gamepad: Button ID (A)](#0xe021xxio---gamepad-types) |
-| 0xE02108 |  o  |  -  | [Gamepad: Button ID (B)](#0xe021xxio---gamepad-types) |
-| 0xE0210C |  o  |  -  | [Gamepad: Button ID (X)](#0xe021xxio---gamepad-types) |
-| 0xE02110 |  o  |  -  | [Gamepad: Button ID (Y)](#0xe021xxio---gamepad-types) |
-| 0xE02114 |  o  |  -  | [Gamepad: Button ID (Start)](#0xe021xxio---gamepad-types) |
-| 0xE02118 |  -  |  o  | [Gamepad: Button Name (ID)](#0xe021xxio---gamepad-types) |
-| 0xE0211C |  -  |  o  | [Gamepad: Button Name (Address)](#0xe021xxio---gamepad-types) |
-| 0xE03000 |  o  |  -  | [SaveData: Address](#0xe030xxio---savedata) |
-| 0xE03004 |  o  |  o  | [SaveData: Execute](#0xe030xxio---savedata) |
-| 0xE03008 |  -  |  o  | [SaveData: Size](#0xe030xxio---savedata) |
-| 0xE03100 |  o  |  -  | [Sequential: Open Write](#0xe031xxio---large-sequencial-file-io) |
-| 0xE03104 |  o  |  -  | [Sequential: Write Byte](#0xe031xxio---large-sequencial-file-io) |
-| 0xE03108 |  o  |  -  | [Sequential: Commit](#0xe031xxio---large-sequencial-file-io) |
-| 0xE03110 |  o  |  -  | [Sequential: Open Read](#0xe031xxio---large-sequencial-file-io) |
-| 0xE03114 |  -  |  o  | [Sequential: Read Byte](#0xe031xxio---large-sequencial-file-io) |
-| 0xE04000 |  o  |  -  | [UTC: Year](#0xe040xxin---calendar)|
-| 0xE04004 |  o  |  -  | [UTC: Month](#0xe040xxin---calendar)|
-| 0xE04008 |  o  |  -  | [UTC: Day of Month](#0xe040xxin---calendar)|
-| 0xE0400C |  o  |  -  | [UTC: Hour](#0xe040xxin---calendar)|
-| 0xE04010 |  o  |  -  | [UTC: Minute](#0xe040xxin---calendar)|
-| 0xE04014 |  o  |  -  | [UTC: Second](#0xe040xxin---calendar)|
-| 0xE04020 |  o  |  -  | [Local: Year](#0xe040xxin---calendar)|
-| 0xE04024 |  o  |  -  | [Local: Month](#0xe040xxin---calendar)|
-| 0xE04028 |  o  |  -  | [Local: Day of Month](#0xe040xxin---calendar)|
-| 0xE0402C |  o  |  -  | [Local: Hour](#0xe040xxin---calendar)|
-| 0xE04030 |  o  |  -  | [Local: Minute](#0xe040xxin---calendar)|
-| 0xE04034 |  o  |  -  | [Local: Second](#0xe040xxin---calendar)|
-| 0xE7FFF4 |  o  |  -  | [Abort](#0xe7fff4out---abort) |
-| 0xE7FFF8 |  -  |  o  | [Reset](#0xe7fff8out---reset) |
-| 0xE7FFFC |  -  |  o  | [Exit](#0xe7fffcout---exit) |
-| 0xE80000 ~ 0xE8FFFC |  o  |  o  | [User-Defined I/O](#0xe8xxxxio---user-defined-io) |
-
-## 0xE00000[in] - V-SYNC
-
-MC68030 プログラムが 0xE00000 を読み込むと、VGS-X はその時点の VRAM を参照して BG0～BG3 とスプライトを描画し、60fps で同期を取った後に戻ります。
-
-```c
-// VRAM の更新処理
-drawProc();
-
-// 垂直同期を待つ（内部的に 0xE00000 へ入力）
-vgs_vsync();
-
-// 同期完了後の処理
-afterDrawProc();
-```
-
-`vgs_vsync` 関数は [vgs.h](./lib/vgs.h) に定義されています。
-
-> __設計方針__: この仕様により VGS-X の MC68030 には動作クロックという概念がありません。実行速度はホスト PC の性能に依存し、必要スペックの周知は開発者に委ねられます。
-
-## 0xE00000[out] - Console Output
-
-0xE00000 に値を書き込むとコンソールに文字列を出力できます。デバッグログなどに利用してください。
-
-```c
-vgs_print("Hello, World!\n");
-```
-
-`vgs_print` は [log.h](./lib/log.h) に定義されています。
-
-## 0xE00004[i/o] - Random
-
-- 0xE00004 に書き込むと乱数シードを設定できます。
-- 0xE00004 を読み出すと 0～65535 の乱数を取得できます。
-- 同一のシードであれば結果は決定的で、65,536 回の読み出しで周期的に繰り返します。
-
-## 0xE00008-0xE00014[i/o] - Direct Memory Access
-
-| `Destination` | `Source` | `Argument` | `Execute` | Description |
-|:-:|:-:|:-:|:-:|:-|
-| - | ☑︎ | `target` | `in` | [Search](#dma-search) |
-| ☑︎ | ☑︎ | `size` | `out(0)` | [Copy](#dma-copy) |
-| ☑︎ | ☑︎ | `size` | `out(1)` | [Set](#dma-set) |
-| ☑︎ | ☑︎ | - | `out(2)` | [UTF8 to SJIS](#dma-utf8-to-sjis-string) |
-| ☑︎ | ☑︎ | - | `out(3)` | [UTF8 to SJIS (char)](#dma-utf8-to-sjis-character) |
-
-#### DMA Search
-
-`Source` で指定したアドレス以降から、`Argument` 下位 8 ビットに一致するデータを検索します。
-
-- `Source` はプログラム領域または RAM を指定してください。
-- 戻り値は `Source` から一致位置までのバイトオフセットです（`0` は「`Source` の先頭で一致」または「未検出」の両方を意味し得ます）。
-- 結果が期待できない検索を長時間行うとオーバーヘッドが大きくなる点に注意してください。
-
-#### DMA Copy
-
-`Source` から `Destination` へ `Argument` バイト分のデータを転送します。
-
-- `Source` はプログラム領域または RAM。
-- `Destination` は RAM。
-- 両方が RAM の場合、領域が重なっていても `memmove` 相当で安全に転送されます。
-- 無効な範囲を指定すると DMA は実行されません。
-
-#### DMA Set
-
-`Source` 下位 8 ビットで `Destination` から `Argument` バイト分を埋めます。
-
-- `Source` 上位 24 ビットは無視されます。
-- `Destination` は RAM である必要があります。
-- 無効な範囲を指定すると DMA は実行されません。
-
-#### DMA UTF8 to SJIS String
-
-UTF-8 文字列（終端 0）を SJIS に変換しながら `Destination` にコピーします。
-
-- `Source` はプログラム領域または RAM。
-- `Destination` は RAM。
-
-#### DMA UTF8 to SJIS Character
-
-UTF-8 の 1 文字を SJIS に変換し、`Destination` に書き込みます。
 
 ### 0xE040xx[in] - Calendar
 
