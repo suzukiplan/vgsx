@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <vector>
 
+#include "vdp.hpp"
 #include "vgsx.h"
 #include "vgs_io.h"
 
@@ -9,6 +10,28 @@ static int fail(const char* msg)
 {
     std::fprintf(stderr, "FAIL: %s\n", msg);
     return 1;
+}
+
+static int test_readme_vdp_register_doc()
+{
+    const char* candidates[] = {"README.md", "../../README.md"};
+    const char* readmePath = nullptr;
+    for (const char* candidate : candidates) {
+        if (FILE* fp = std::fopen(candidate, "rb")) {
+            std::fclose(fp);
+            readmePath = candidate;
+            break;
+        }
+    }
+    if (!readmePath) {
+        return fail("README.md not found (tried README.md and ../../README.md)");
+    }
+
+    char msg[512];
+    if (!VDP::checkReadmeVdpRegisterSectionComplete(readmePath, msg, sizeof(msg))) {
+        return fail(msg[0] ? msg : "VDP register doc check failed");
+    }
+    return 0;
 }
 
 static int test_random_full_cycle(VGSX& vgs)
@@ -71,6 +94,7 @@ int main()
 {
     vgsx.disableBootBios();
 
+    if (int rc = test_readme_vdp_register_doc(); rc) return rc;
     if (int rc = test_random_full_cycle(vgsx); rc) return rc;
     if (int rc = test_dma_memset_last_byte(vgsx); rc) return rc;
     if (int rc = test_seq_write_clamps_to_1mb(vgsx); rc) return rc;

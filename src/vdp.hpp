@@ -24,6 +24,9 @@
  */
 #pragma once
 #include <stdint.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include <ctype.h>
@@ -127,6 +130,87 @@ class VDP
     }
 
   public:
+    static inline bool checkReadmeVdpRegisterSectionCompleteImpl(const char* readmePath,
+                                                                 uint32_t firstReservedIndex,
+                                                                 char* out,
+                                                                 size_t outSize)
+    {
+        if (!out || 0 == outSize) {
+            return false;
+        }
+        out[0] = '\0';
+        if (!readmePath) {
+            snprintf(out, outSize, "README path is null");
+            return false;
+        }
+        if (256 < firstReservedIndex) {
+            snprintf(out, outSize, "invalid firstReservedIndex=%u", firstReservedIndex);
+            return false;
+        }
+
+        FILE* fp = fopen(readmePath, "rb");
+        if (!fp) {
+            snprintf(out, outSize, "cannot open %s", readmePath);
+            return false;
+        }
+
+        uint64_t found[4] = {0, 0, 0, 0};
+        bool inSection = false;
+        bool inTable = false;
+        char line[4096];
+        while (fgets(line, sizeof(line), fp)) {
+            if (!inSection) {
+                if (0 == strncmp(line, "## VDP Register", 15)) {
+                    inSection = true;
+                }
+                continue;
+            }
+            if ('|' == line[0]) {
+                const char* p = line + 1;
+                while (' ' == *p || '\t' == *p) {
+                    p++;
+                }
+                if ('0' == p[0] && ('x' == p[1] || 'X' == p[1])) {
+                    char* end = nullptr;
+                    unsigned long addr = strtoul(p, &end, 0);
+                    if (end && end != p && 0xD20000UL <= addr && addr < 0xD20000UL + 256UL * 4UL) {
+                        unsigned long diff = addr - 0xD20000UL;
+                        if (0 == (diff & 3UL)) {
+                            uint32_t index = (uint32_t)(diff >> 2);
+                            found[index >> 6] |= (1ULL << (index & 63));
+                            inTable = true;
+                        }
+                    }
+                }
+            } else if (inTable) {
+                break;
+            }
+        }
+        fclose(fp);
+
+        if (!inSection || !inTable) {
+            snprintf(out, outSize, "%s does not have a parsable `## VDP Register` table", readmePath);
+            return false;
+        }
+
+        uint32_t missing[256];
+        uint32_t missingCount = 0;
+        for (uint32_t i = 0; i < firstReservedIndex; i++) {
+            if (0 == (found[i >> 6] & (1ULL << (i & 63)))) {
+                missing[missingCount++] = i;
+            }
+        }
+        if (0 == missingCount) {
+            return true;
+        }
+
+        int n = snprintf(out, outSize, "missing VDP registers in %s `## VDP Register`:", readmePath);
+        for (uint32_t i = 0; i < missingCount && i < 16U && 0 < n && (size_t)n < outSize; i++) {
+            n += snprintf(out + n, outSize - (size_t)n, " R%u", missing[i]);
+        }
+        return false;
+    }
+
     typedef struct {
         uint32_t skip;                // R0: Skip Render
         uint32_t spos;                // R1: Sprite Position (0: Between BG0 and BG1 ~ 3)
@@ -158,6 +242,16 @@ class VDP
         uint32_t tr_to;               // R40: Transfer Character Pattern (to)
         uint32_t reserved[215];       // Reserved (Specify 0 to maintain future compatibility.)
     } Register;
+
+    static constexpr uint32_t kVdpRegisterFirstReservedIndex =
+        (uint32_t)(offsetof(Register, reserved) / sizeof(uint32_t));
+    static_assert(0 == (offsetof(Register, reserved) % sizeof(uint32_t)), "Register not 32-bit aligned");
+    static_assert(sizeof(Register) == 256U * sizeof(uint32_t), "Register must be 256x32-bit");
+
+    static inline bool checkReadmeVdpRegisterSectionComplete(const char* readmePath, char* out, size_t outSize)
+    {
+        return checkReadmeVdpRegisterSectionCompleteImpl(readmePath, kVdpRegisterFirstReservedIndex, out, outSize);
+    }
 
     typedef struct {
         uint32_t visible;     // Visible (0 or not 0)
