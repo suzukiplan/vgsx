@@ -940,13 +940,54 @@ uint32_t size = VGS_IO_SAVE_EXECUTE;      // Load: read save.dat → RAM
 
 ### 0xE031xx[io] - Large Sequencial File I/O
 
-VGS-X can perform sequential file I/O of up to 1MB in byte units.
+This interface provides **buffered sequential file I/O in byte units**, designed for recording and replaying **moderate-sized data streams** such as compact input logs or replay data.
 
-This feature is suitable for tasks such as saving game replay data.
+All data is accumulated in a **fixed-size internal memory buffer** and written to or read from a file in a single operation.
+This interface is **not intended for large or streaming data**.
 
-By continuously writing data that encodes key input information into 1-byte units per frame, it can record up to 1,048,576 frames (approximately 291 minutes) of replay data.
+#### File Model
 
-You can create up to 256 sequential files.
+* Up to **256 sequential files** can be used.
+* Files are identified by an **8-bit index (0–255)**.
+* Each file is stored as `saveNNN.dat` (`save000.dat` to `save255.dat`) in the save data directory.
+
+#### Write Operation
+
+```c
+VGS_IO_SEQ_OPEN_W = index;   // Select file index (0–255)
+VGS_IO_SEQ_WRITE  = value;   // Write 1 byte to internal buffer
+VGS_IO_SEQ_COMMIT = 0;       // Write buffer to saveNNN.dat
+```
+
+1. `VGS_IO_SEQ_OPEN_W` selects the target sequential file.
+2. Each write to `VGS_IO_SEQ_WRITE` appends **one byte** to an internal buffer.
+3. `VGS_IO_SEQ_COMMIT` writes the buffered data to the file, **overwriting any existing file** with the same index.
+
+#### Read Operation
+
+```c
+VGS_IO_SEQ_OPEN_R = index;        // Select file index (0–255)
+uint32_t value = VGS_IO_SEQ_READ; // Read next byte
+```
+
+1. `VGS_IO_SEQ_OPEN_R` loads the entire file into an internal buffer.
+2. Each read from `VGS_IO_SEQ_READ` returns the next byte in sequence.
+3. When all buffered data has been consumed, `VGS_IO_SEQ_READ` returns `0xFFFFFFFF`.
+
+#### Buffer Size and Limitations
+
+* The maximum size of a sequential file is limited by a **fixed internal buffer of approximately 64 KB**.
+* If the buffer becomes full during a write operation:
+  * Additional `VGS_IO_SEQ_WRITE` operations are **silently ignored**.
+* There is **no support for streaming, chunked I/O, or incremental flushing**.
+* The effective maximum recordable length depends entirely on this internal buffer size.
+
+#### Remarks
+
+* This interface performs **buffered file I/O only**; it is not suitable for large datasets or long-duration recordings.
+* No data integrity verification (such as checksums or versioning) is performed.
+* This design favors **simplicity and predictability** over scalability.
+
 
 #### (Write Large Sequencial File)
 
