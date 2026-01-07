@@ -1,26 +1,52 @@
-# VGS-X
+# VGS-X [![CircleCI](https://dl.circleci.com/status-badge/img/gh/suzukiplan/vgsx/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/suzukiplan/vgsx/tree/master)
 
 ![vgsx.png](./vgsx.png)
 
-## WIP
+## VGS Philosophy
 
-This project is still in the WIP; _Work In Progress_ phase.
+VGS (SUZUKI PLAN - Video Game System) is designed around a single, consistent philosophy:
+**to define a stable virtual hardware model and preserve it over time through emulation**.
 
-All the features listed in this README.md have been implemented. However, please note that the current specifications are subject to frequent and unexpected changes.
+Rather than treating a game engine as a collection of APIs or libraries,
+VGS defines the *computer itself* on which games run — including CPU, graphics, sound, and memory layout.
+By fixing this model, games are decoupled from real hardware, operating systems, and evolving toolchains.
 
-Once this project reaches a stable phase, version 1.0.0 is scheduled for release.
+The goal of VGS is not technical novelty or maximum performance.
+Its value lies in allowing developers to continue creating games
+with the same mental model for decades, without being forced to adapt
+to external platform changes.
 
-Status
+VGS exists to make long-term game creation practical, sustainable,
+and intellectually stable.
 
-1. [x] Execute MC680x0 ELF32 module
-2. [x] Implement VDP
-3. [x] Implement Background Music function
-4. [x] Implement Sound Effect function
-5. [x] Implement Gamepad function
-6. [x] Release beta 0.1.0
-7. [ ] Release Battle Hanafuda (Production Version)
+## Relationship to VGS-Zero
 
-Changes after Version 0.1.0 can be found in [CHANGES.md](./CHANGES.md).
+VGS-X is the successor to [VGS-Zero](https://github.com/suzukiplan/vgszero), but it is **not a simple performance upgrade**.
+Both systems share the same core philosophy: defining a fixed virtual hardware model and
+preserving it long-term through emulation, independent of real hardware and operating systems.
+
+A key design principle common to both VGS-Zero and VGS-X is **real-clock–independent design**.
+This principle does not prohibit the use of modern host performance.
+Rather, it states that **the semantics and behavior of software must never be defined in terms of
+real CPU clocks, host execution speed, or frame timing characteristics**.
+
+In VGS-X, all game logic, timing, and audiovisual behavior are expressed exclusively
+within the rules of the virtual hardware—CPU, VDP, sound system, DMA, and memory layout.
+Host performance is used only as an implementation resource to faithfully and stably
+realize this virtual machine, not as a variable that influences game behavior.
+
+VGS-Zero embodied this idea with an 8-bit Z80-based model, where strong constraints and
+complete isolation from host timing allowed games to be treated as artifacts bound to a
+timeless machine definition.
+VGS-X redefines the same concept around a 32-bit MC68030-based architecture,
+greatly expanding computational scale and asset capacity while preserving the same rule:
+**software behavior must remain invariant regardless of host performance**.
+
+Rather than competing on raw speed or technological novelty,
+VGS-X exists to provide a stable, long-lived virtual game platform.
+By clearly separating software semantics from implementation performance,
+developers can continue creating games for decades
+without changing their fundamental assumptions about time or execution.
 
 ## About VGS-X
 
@@ -61,6 +87,37 @@ The runtime environment supports the all of PC operating systems (Windows, macOS
 In the future, we also plan to provide runtimes capable of running on Nintendo Switch 1/2 and PlayStation 4/5. Due to an NDA, we cannot disclose details, but we will be confirmed that the [core](./src) modules can be built and run using the SDKs for those game consoles.
 
 VGS-X aims to provide game developers and publishers with an environment that enables them to deliver games that are fully compatible across any computer with certain performance specifications.
+
+## VGS-X Runtime Philosophy and Portability
+
+VGS-X is provided under the MIT License, which allows free modification,
+customization, and redistribution of both the specification and its
+reference implementations.
+
+The SDL2-based runtime included in this repository is provided as a
+**reference implementation**, intended for development, testing, and
+practical use on general-purpose platforms such as PC and Steam.
+It is not intended to be the only possible or mandatory runtime.
+
+VGS-X is designed so that developers who require a different execution
+environment — including proprietary hardware or console platforms —
+can implement their own runtime as needed, based on the published
+specification and I/O definitions.
+
+In other words, VGS-X does not attempt to provide “every possible runtime”,
+but instead provides a stable virtual hardware specification that makes
+such implementations feasible when required.
+
+# First Step Guide
+
+This section describes the **first steps for developing applications for VGS-X**.
+It covers setting up the development environment, building and running the Example
+(*Hello, World*), creating a new project, and the guidelines necessary to
+**maintain compatibility of your game over time**.
+
+By the end of this section, you will be able to build and run a VGS-X application
+on your own environment and proceed with game development in a stable and
+future-proof manner.
 
 ## Setup Build Environment
 
@@ -161,9 +218,26 @@ You can create a new project for developing your game by executing the [makeprj]
 ~/vgsx/tools/makeprj/makeprj ~/projects/MyGame
 ```
 
+## Compatibility Policy
+
+VGS-X may introduce changes in future updates that do not preserve backward compatibility (i.e., breaking changes).
+
+As long as you keep the submodule versions that were generated when you ran the [makeprj](#makeprj) command, your project’s compatibility will not be affected. However, if you need features provided by the latest version of VGS-X, review [CHANGES.md](./CHANGES.md) and carefully check the changes in any entries marked **(Disruptive)**.
+
 # Architecture Reference Manual
 
-The following sections provide technical information useful for programming with VGS-X.
+This section provides a detailed reference to the VGS-X virtual hardware architecture.
+It is **not intended to be read linearly from start to finish**.
+
+The contents here are designed to be used **while writing actual game code**—
+as a technical reference you can consult whenever you need to understand
+memory layout, VDP behavior, I/O semantics, or low-level system details.
+
+If you are new to VGS-X, it is perfectly fine to skip this section at first
+and return to it as your implementation progresses.
+
+> All hardware features described in this section can be accessed through the
+> **C-language runtime library explained later in the [VGS Standard Library](#vgs-standard-library)**.
 
 ## Screen Specification
 
@@ -267,6 +341,13 @@ Remarks:
 
 > __WIP Note:__ Currently, the character pattern specification assumes that all necessary patterns are loaded at program startup. This means we intend to restrict dynamic pattern rewriting after startup. However, we also believe there is room to consider changing this specification.
 
+## Character Pattern RAM
+
+- At startup (initial state), the chr file specified by [makerom](#makerom) is loaded into memory (Character Pattern RAM).
+- Using the [Copy Character Pattern](#0xd20090-0xd20094-copy-character-pattern) feature, you can copy a character from one character pattern number to another.
+- Using the [Transfer Character Pattern](#0xd20098-0xd200a0-transfer-character-pattern) feature, you can load character patterns stored in Program ROM or RAM into memory.
+- Any memory contents modified by [Copy Character Pattern](#0xd20090-0xd20094-copy-character-pattern) or [Transfer Character Pattern](#0xd20098-0xd200a0-transfer-character-pattern) will be restored to the initial state after a reset.
+
 ## Palette
 
 - VGS-X allows up to 16 palettes
@@ -302,7 +383,7 @@ Remarks:
 - The Name Table is a 256x256 x 4bytes two-dimensional array of the [attributes](#attribute). 
 - The visible displayed area is 40x25 in the Name Table (256x256).
 - By setting character patterns and attribute data to it, graphics can be displayed on the background layer.
-- The Name Table has a four-layer structure, with BG1 displayed on top of BG0, BG2 on top of BG1, BG3 on top of BG2, and BG4 on top of BG3.
+- The Name Table has a four-layer structure, with BG1 displayed on top of BG0, BG2 on top of BG1, and BG3 on top of BG2.
 
 | Address             | Size  | Name Table |
 |:-------------------:|:-----:|:----------:|
@@ -346,7 +427,7 @@ typedef struct {
     uint32_t slx;         // Scale Lock (X)
     uint32_t pri;         // High Priority Flag
     uint32_t ram_ptr;     // Bitmap Sprite Buffer (RGB888)
-    uint32_t reserved[3]; // Reserved
+    uint32_t reserved[3]; // Reserved (Specify 0 to maintain future compatibility.)
 } ObjectAttributeMemory;
 ```
 
@@ -714,7 +795,7 @@ The `vgs_print` function is defined in [log.h](./lib/log.h).
 
 - You can set the seed for random numbers by writing a value to 0xE00004.
 - Reading 0xE00004 allows you to obtain a random number (0 to 65535).
-- The random number generation in VGS-X guarantees that calling it 65,536 times will return each number from 0 to 65,535 exactly once.
+- The random number generation in VGS-X is deterministic and repeats every 65,536 reads for the same seed.
 
 ### 0xE00008-0xE00014[i/o] - Direct Memory Access
 
@@ -733,7 +814,7 @@ Remarks:
 
 - The upper 24 bits of `Argument` are ignored.
 - The `Source` must be either a Program Address (0x000000 to Size-of-Program) or a RAM Address (0xF00000 to 0xFFFFFF).
-- If the search results fall outside the valid address range, 0 is entered; if a search data is found, the found index is entered.
+- The return value is the byte offset from `Source` to the first matching byte. `0` may indicate either "found at `Source`" or "not found".
 - Please note that performing searches not expected to yield results can result in significant overhead.
 
 #### DMA Copy
@@ -770,8 +851,8 @@ The angle function can quickly calculate the degrees (from 0 to 359) between two
 ```c
 VGS_OUT_ANGLE_X1 = x1;
 VGS_OUT_ANGLE_Y1 = y1;
-VGS_OUT_ANGLE_X2 = x1;
-VGS_OUT_ANGLE_Y2 = y1;
+VGS_OUT_ANGLE_X2 = x2;
+VGS_OUT_ANGLE_Y2 = y2;
 // Get (and Set) degree of (x1,y1) and (x2,y2)
 int32_t degree = VGS_IO_ANGLE_DEGREE; 
 ```
@@ -922,28 +1003,79 @@ VGS_OUT_KEY_BUTTON_NAME = (uint32_t)buf;
 
 ### 0xE030xx[io] - SaveData
 
-You can save your save data to storage (save.dat file) or load saved save data.
+This interface allows the program to **save data from RAM to persistent storage (`save.dat`)** and **load previously saved data back into RAM**.
+The same I/O address is used for both operations, depending on whether it is accessed as an output or an input.
+
+#### Usage
 
 ```c
-VGS_OUT_SAVE_ADDRESS = (uint32_t)&mydata; // RAM address
-VGS_IO_SAVE_EXECUTE = sizeof(mydata);     // Write save.dat from RAM
-uint32_t size = VGS_IO_SAVE_EXECUTE;      // Read save.dat to RAM
+VGS_OUT_SAVE_ADDRESS = (uint32_t)&mydata; // Base RAM address for save/load
+VGS_IO_SAVE_EXECUTE = sizeof(mydata);     // Save: write RAM → save.dat
+uint32_t size = VGS_IO_SAVE_EXECUTE;      // Load: read save.dat → RAM
 ```
 
-Remarks
+* Writing a value to `VGS_IO_SAVE_EXECUTE` saves that number of bytes from RAM to `save.dat`.
+* Reading from `VGS_IO_SAVE_EXECUTE` loads data from `save.dat` into RAM and returns the number of bytes actually loaded.
 
-- `0xE03000 (VGS_OUT_SAVE_ADDRESS)` must be within the RAM address range (0xF00000 to 0xFFFFFF).
-- If the save data is corrupted or fails to load, the load result will be 0.
+#### Remarks
+
+* `VGS_OUT_SAVE_ADDRESS` must specify an address within the RAM range
+  **0xF00000 to 0xFFFFFF** (24-bit address space).
+* For save operations, the specified size must be between **1 and 0x100000 bytes**, and the address range must not exceed the RAM limit.
+* For load operations, if `save.dat` does not exist, has an invalid size, or cannot be read successfully, the load result will be **0**.
+* The returned value from a load operation represents the number of bytes loaded into RAM.
+* This interface does not perform integrity verification of the save data contents; only file existence, size validity, and read success are checked.
 
 ### 0xE031xx[io] - Large Sequencial File I/O
 
-VGS-X can perform sequential file I/O of up to 1MB in byte units.
+This interface provides **buffered sequential file I/O in byte units**, designed for recording and replaying **moderate-sized data streams** such as compact input logs or replay data.
 
-This feature is suitable for tasks such as saving game replay data.
+All data is accumulated in a **fixed-size internal memory buffer** and written to or read from a file in a single operation.
+This interface is **not intended for large or streaming data**.
 
-By continuously writing data that encodes key input information into 1-byte units per frame, it can record up to 1,048,576 frames (approximately 291 minutes) of replay data.
+#### File Model
 
-You can create up to 256 sequential files.
+* Up to **256 sequential files** can be used.
+* Files are identified by an **8-bit index (0–255)**.
+* Each file is stored as `saveNNN.dat` (`save000.dat` to `save255.dat`) in the save data directory.
+
+#### Write Operation
+
+```c
+VGS_IO_SEQ_OPEN_W = index;   // Select file index (0–255)
+VGS_IO_SEQ_WRITE  = value;   // Write 1 byte to internal buffer
+VGS_IO_SEQ_COMMIT = 0;       // Write buffer to saveNNN.dat
+```
+
+1. `VGS_IO_SEQ_OPEN_W` selects the target sequential file.
+2. Each write to `VGS_IO_SEQ_WRITE` appends **one byte** to an internal buffer.
+3. `VGS_IO_SEQ_COMMIT` writes the buffered data to the file, **overwriting any existing file** with the same index.
+
+#### Read Operation
+
+```c
+VGS_IO_SEQ_OPEN_R = index;        // Select file index (0–255)
+uint32_t value = VGS_IO_SEQ_READ; // Read next byte
+```
+
+1. `VGS_IO_SEQ_OPEN_R` loads the entire file into an internal buffer.
+2. Each read from `VGS_IO_SEQ_READ` returns the next byte in sequence.
+3. When all buffered data has been consumed, `VGS_IO_SEQ_READ` returns `0xFFFFFFFF`.
+
+#### Buffer Size and Limitations
+
+* The maximum size of a sequential file is limited by a **fixed internal buffer of approximately 64 KB**.
+* If the buffer becomes full during a write operation:
+  * Additional `VGS_IO_SEQ_WRITE` operations are **silently ignored**.
+* There is **no support for streaming, chunked I/O, or incremental flushing**.
+* The effective maximum recordable length depends entirely on this internal buffer size.
+
+#### Remarks
+
+* This interface performs **buffered file I/O only**; it is not suitable for large datasets or long-duration recordings.
+* No data integrity verification (such as checksums or versioning) is performed.
+* This design favors **simplicity and predictability** over scalability.
+
 
 #### (Write Large Sequencial File)
 
@@ -1085,6 +1217,7 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | system | `vgs_user_in` | [User-Defined I/O](#0xe8xxxxio---user-defined-io) (Input) |
 | system | `vgs_user_out` | [User-Defined I/O](#0xe8xxxxio---user-defined-io) (Output) |
 | cg | `vgs_ptn_copy` | [Copy Character Pattern](#0xd20090-0xd20094-copy-character-pattern). |
+| cg | `vgs_ptn_transfer` | [Transfer Character Pattern](#0xd20098-0xd200a0-transfer-character-pattern). |
 | cg | `vgs_pal_get` | Get a color code from the [Palette](#palette). |
 | cg | `vgs_pal_set` | Set a color code to the [Palette](#palette). |
 | cg:bg | `vgs_bg_width` | Get the [Name Table](#name-table) width in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode). |
@@ -1240,6 +1373,14 @@ vgs_putlog("d32=%d, u32=%u, str=%s", (int32_t)123, (uint32_t)456, "text");
 ```
 
 # Toolchain
+
+This section provides a **manual for the command-line tools included in this repository**.
+These tools are designed to assist each stage of the VGS-X development workflow, such as
+building programs, converting assets, and generating ROM images.
+
+You do not need to understand or use all of these tools from the beginning.
+Refer to the relevant tools as needed, depending on your implementation details
+and development phase.
 
 | Name | Description |
 |:-----|:------------|
@@ -1421,6 +1562,22 @@ usage: vgmplay /path/to/bgm.vgm
 
 # Runtime Implementation Guide
 
+This section is **not intended for developing VGS-X games**.  
+It provides guidance and reference information for developers who want to
+**implement a runtime environment (emulator or execution platform)**
+that runs the VGS-X virtual hardware specification.
+
+The SDL2-based runtime included in this repository is only one reference implementation,
+primarily intended for development and verification on PC platforms.
+VGS-X is designed as a platform-independent virtual hardware specification,
+and developers are free to implement their own runtimes
+for other environments or platforms as needed.
+
+The content of this section serves as **design guidance and implementation hints**
+to help interpret and realize the VGS-X specification correctly.
+Game developers do not need to read this section unless they are interested in
+runtime or emulator implementation.
+
 ## 1. Setup Your C++ Project
 
 1. Add the [core source code (./src)](./src/) to your C++ project. (For specific examples of the required core source code, refer to [./tools/sdl2/Makefile](./tools/sdl2/Makefile).)
@@ -1439,7 +1596,6 @@ vgsx.loadRom(romData, romSize);
 Note that the romData area **must not be freed** while VGS-X is running.
 
 > Booting the BIOS is optional, but it is recommended that you boot it whenever possible.
-
 
 ## 3. Main Loop Sequence
 
@@ -1482,9 +1638,18 @@ By utilizing user-defined I/O, you can implement native processing that cannot b
 
 # License
 
-- [SDL2](https://www.libsdl.org/)
-  - Copyright (C) 1997-2025 Sam Lantinga <slouken@libsdl.org>
-  - License: [ZLIB License](./LICENSE-SDL2.txt)
+This section lists the licenses of the software and assets related to VGS-X.
+
+Although VGS-X is built using multiple open-source components,
+**not all of them are strictly required in every use case**.
+Each library listed below serves a different purpose and has a different role
+within the overall system.
+
+## Required (Used Internally by VGS-X)
+
+The following components are used internally by the VGS-X virtual hardware
+and its reference implementation, and are considered **required parts of VGS-X**:
+
 - MC680x0 Emulator - [Musashi](https://github.com/kstenerud/Musashi)
   - Copyright © 1998-2001 Karl Stenerud
   - License: [MIT](./LICENSE-Musashi.txt)
@@ -1495,5 +1660,18 @@ By utilizing user-defined I/O, you can implement native processing that cannot b
   - Created by Num Kadoma
   - License: [Free Software](./LICENSE-k8x12.txt)
 - [VGS-X](https://github.com/suzukiplan/vgsx) and VGS Standard Library for MC68030
-  - Copyright (c) 2025 Yoji Suzuki.
+  - Copyright (c) 2025-2026 Yoji Suzuki.
   - License: [MIT](./LICENSE-VGSX.txt)
+
+## Optional (Runtime Implementation Dependent)
+
+The following component is **not required by the VGS-X specification itself**.
+It is only necessary when developing or using the SDL2-based runtime implementation
+included in this repository.
+
+- [SDL2](https://www.libsdl.org/)
+  - Copyright (C) 1997-2025 Sam Lantinga <slouken@libsdl.org>
+  - License: [ZLIB License](./LICENSE-SDL2.txt)
+
+If you implement your own runtime environment or target a platform
+that does not rely on SDL2, this dependency is not required.

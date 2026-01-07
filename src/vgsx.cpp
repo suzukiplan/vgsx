@@ -1113,7 +1113,8 @@ uint32_t VGSX::inPort(uint32_t address)
                 fclose(fp);
                 return 0;
             }
-            if (0x00FFFFFF < this->ctx.save.address + size) {
+            const uint64_t end = static_cast<uint64_t>(this->ctx.save.address) + static_cast<uint64_t>(size);
+            if (0x1000000ULL < end) {
                 putlog(LogLevel::E, "failed load request (Overflow: %X+%d)", this->ctx.save.address, size);
                 fclose(fp);
                 return 0;
@@ -1302,7 +1303,7 @@ void VGSX::outPort(uint32_t address, uint32_t value)
                 putlog(LogLevel::W, "ignored an invalid save request (addr=0x%X)", this->ctx.save.address);
             } else if (0x100000 < value || value < 1) {
                 putlog(LogLevel::W, "ignored an invalid save request (size=%u)", value);
-            } else if (0x00FFFFFF < this->ctx.save.address + value) {
+            } else if (0x1000000ULL < static_cast<uint64_t>(this->ctx.save.address) + static_cast<uint64_t>(value)) {
                 putlog(LogLevel::W, "ignored an invalid save request (addr=0x%X+%u)", this->ctx.save.address, value);
             } else {
                 std::string path = saveDataDir;
@@ -1327,8 +1328,9 @@ void VGSX::outPort(uint32_t address, uint32_t value)
             return;
 
         case VGS_ADDR_SEQ_WRITE: // Write Sequencial Data
-            this->ctx.sqw.buffer[this->ctx.sqw.size++] = value & 0xFF;
-            this->ctx.sqw.size &= 0xFFFFF;
+            if (this->ctx.sqw.size < sizeof(this->ctx.sqw.buffer)) {
+                this->ctx.sqw.buffer[this->ctx.sqw.size++] = value & 0xFF;
+            }
             return;
 
         case VGS_ADDR_SEQ_COMMIT: {
@@ -1396,7 +1398,7 @@ void VGSX::outPort(uint32_t address, uint32_t value)
             }
         case VGS_ADDR_BUTTON_NAME: {
             uint32_t addr = value & 0x00FFFFFF;
-            if (0xF00000 <= addr && addr + 16 < 0xFFFFFF) {
+            if (0xF00000 <= addr && static_cast<uint64_t>(addr) + 16 <= 0x1000000ULL) {
                 addr &= 0x0FFFFF;
                 auto str = getButtonIdString(this->ctx.getNameId);
                 memcpy(&this->ctx.ram[addr], str.c_str(), str.length() + 1);
@@ -1437,12 +1439,14 @@ void VGSX::dmaMemcpy()
     // putlog(LogLevel::I, "DMA_copy: dest=0x%06X, src=0x%06X, size=%u", destination, source, size);
 
     // validate size
-    if (size < 0x100000) {
-        // validate destination
-        if (0xF00000 <= destination && destination + size <= 0xFFFFFF) {
+    if (1 <= size && size <= 0x100000) {
+        const uint64_t destinationEnd = static_cast<uint64_t>(destination) + size;
+        // validate destination (RAM: 0xF00000..0xFFFFFF, end-exclusive: 0x1000000)
+        if (0xF00000 <= destination && destinationEnd <= 0x1000000ULL) {
             // validate source
             if (source < this->ctx.programSize) {
-                if (source + size <= this->ctx.programSize) {
+                const uint64_t sourceEnd = static_cast<uint64_t>(source) + size;
+                if (sourceEnd <= this->ctx.programSize) {
                     // Execute copy from ROM to RAM
                     memcpy(&this->ctx.ram[destination & 0x0FFFFF],
                            &this->ctx.program[source],
@@ -1450,7 +1454,8 @@ void VGSX::dmaMemcpy()
                     return;
                 }
             } else if (0xF00000 <= source) {
-                if (source + size <= 0xFFFFFF) {
+                const uint64_t sourceEnd = static_cast<uint64_t>(source) + size;
+                if (sourceEnd <= 0x1000000ULL) {
                     // Execute copy from RAM to RAM
                     memmove(&this->ctx.ram[destination & 0x0FFFFF],
                             &this->ctx.ram[source & 0x0FFFFF],
@@ -1472,9 +1477,10 @@ void VGSX::dmaMemset()
     // putlog(LogLevel::I, "DMA_set: dest=0x%06X, char=0x%02X, size=%u", destination, c, size);
 
     // validate size
-    if (size < 0x100000) {
-        // validate destination
-        if (0xF00000 <= destination && destination + size <= 0xFFFFFF) {
+    if (1 <= size && size <= 0x100000) {
+        const uint64_t destinationEnd = static_cast<uint64_t>(destination) + size;
+        // validate destination (RAM: 0xF00000..0xFFFFFF, end-exclusive: 0x1000000)
+        if (0xF00000 <= destination && destinationEnd <= 0x1000000ULL) {
             // Bulk set to RAM
             memset(&this->ctx.ram[destination & 0x0FFFFF], c, size);
             return;
@@ -1500,10 +1506,10 @@ uint32_t VGSX::dmaSearch()
             }
         }
         return 0; // not found
-    } else if (0xF00000 <= ptr && ptr < 0xFFFFFF) {
+    } else if (0xF00000 <= ptr && ptr <= 0xFFFFFF) {
         // Search from RAM
         ptr &= 0x0FFFFF;
-        for (; ptr < 0x1000000; ptr++, result++) {
+        for (; ptr < 0x100000; ptr++, result++) {
             if (this->ctx.ram[ptr] == search) {
                 return result; // found
             }
@@ -1522,13 +1528,13 @@ void VGSX::dmaU2S()
     // putlog(LogLevel::I, "DMA_u2s: dest=0x%06X, src=0x%06X", destination, source);
 
     // validate destination
-    if (0xF00000 <= destination) {
+    if (0xF00000 <= destination && destination <= 0xFFFFFF) {
         // validate source
         if (source < this->ctx.programSize) {
             u2s(&this->ctx.ram[destination & 0x0FFFFF],
                 &this->ctx.program[source]);
             return;
-        } else if (0xF00000 <= source) {
+        } else if (0xF00000 <= source && source <= 0xFFFFFF) {
             u2s(&this->ctx.ram[destination & 0x0FFFFF],
                 &this->ctx.ram[source & 0x0FFFFF]);
             return;

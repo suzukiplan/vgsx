@@ -31,13 +31,13 @@ extern "C" {
 
 /**
  * @brief Set master volume of sound effect
- * @param m Master Volume (0 to 256)
+ * @param m Master Volume (0 to 255)
  */
 static inline void vgs_sfx_master_volume(uint32_t m) { VGS_IO_SFX_MASTER = m; }
 
 /**
  * @brief Get master volume of sound effect
- * @return Master Volume (0 to 256)
+ * @return Master Volume (0 to 255)
  */
 static inline uint32_t vgs_sfx_master_volume_get(void) { return VGS_IO_SFX_MASTER; }
 

@@ -1,10 +1,6 @@
 # Changes
 
-## Next Version
-
-The current `master` branch is in a nightly state.
-
-Pending fixes:
+## Version 1.0.0 **(Disruptive)**
 
 - Added support for retrieving date/time information in the local time zone
 - Modified calendar API specifications **(Disruptive)**  
