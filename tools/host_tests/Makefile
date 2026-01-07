@@ -3,8 +3,8 @@ CC ?= gcc
 
 BUILD_DIR := build
 
-CXXFLAGS ?= -std=c++17 -O2 -I../../src -Wall -Wextra
-CFLAGS ?= -O2 -I../../src -Wall -Wextra
+CXXFLAGS ?= -std=c++17 -O2 -I../../src
+CFLAGS ?= -O2 -I../../src
 
 DEPFLAGS = -MMD -MP -MF $(@:.o=.d) -MT $@
 
@@ -33,13 +33,13 @@ $(BUILD_DIR)/vgsx.o: ../../src/vgsx.cpp | $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) $(DEPFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/musashi.o: ../../src/musashi.cpp | $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) $(DEPFLAGS) -c $< -o $@
+	$(CXX) -w $(CXXFLAGS) $(DEPFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/vgs0math.o: ../../src/vgs0math.cpp | $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) $(DEPFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/utf8_to_sjis.o: ../../src/utf8_to_sjis.cpp | $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) $(DEPFLAGS) -c $< -o $@
+	$(CXX) -w $(CXXFLAGS) $(DEPFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/bios.o: ../../src/bios.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) $(DEPFLAGS) -c $< -o $@
