@@ -1372,5 +1372,5 @@ vgsx.subscribeOutput([](uint32_t port, uint32_t value) {
   - Created by Num Kadoma
   - License: [Free Software](./LICENSE-k8x12.txt)
 - [VGS-X](https://github.com/suzukiplan/vgsx) and VGS Standard Library for MC68030
-  - Copyright (c) 2025 Yoji Suzuki.
+  - Copyright (c) 2025-2026 Yoji Suzuki.
   - License: [MIT](./LICENSE-VGSX.txt)

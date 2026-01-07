@@ -1540,5 +1540,5 @@ By utilizing user-defined I/O, you can implement native processing that cannot b
   - Created by Num Kadoma
   - License: [Free Software](./LICENSE-k8x12.txt)
 - [VGS-X](https://github.com/suzukiplan/vgsx) and VGS Standard Library for MC68030
-  - Copyright (c) 2025 Yoji Suzuki.
+  - Copyright (c) 2025-2026 Yoji Suzuki.
   - License: [MIT](./LICENSE-VGSX.txt)
