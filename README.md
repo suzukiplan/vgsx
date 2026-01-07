@@ -236,6 +236,9 @@ memory layout, VDP behavior, I/O semantics, or low-level system details.
 If you are new to VGS-X, it is perfectly fine to skip this section at first
 and return to it as your implementation progresses.
 
+> All hardware features described in this section can be accessed through the
+> **C-language runtime library explained later in the [VGS Standard Library](#vgs-standard-library)**.
+
 ## Screen Specification
 
 - It has a fixed screen resolution of **320x200** pixels.
