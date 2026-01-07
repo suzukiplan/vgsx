@@ -2,6 +2,38 @@
 
 ![vgsx.png](./vgsx.png)
 
+## VGS Philosophy
+
+VGS (SUZUKI PLAN - Video Game System) is designed around a single, consistent philosophy:
+**to define a stable virtual hardware model and preserve it over time through emulation**.
+
+Rather than treating a game engine as a collection of APIs or libraries,
+VGS defines the *computer itself* on which games run — including CPU, graphics, sound, and memory layout.
+By fixing this model, games are decoupled from real hardware, operating systems, and evolving toolchains.
+
+The goal of VGS is not technical novelty or maximum performance.
+Its value lies in allowing developers to continue creating games
+with the same mental model for decades, without being forced to adapt
+to external platform changes.
+
+VGS exists to make long-term game creation practical, sustainable,
+and intellectually stable.
+
+## Relationship to VGS-Zero
+
+VGS-X is the successor to [VGS-Zero](https://github.com/suzukiplan/vgszero), but it is **not a simple performance upgrade**.
+Both systems share the same core philosophy: defining a fixed virtual hardware model and
+preserving it long-term through emulation, independent of real hardware and operating systems.
+
+VGS-Zero was designed around an 8-bit Z80-based model, emphasizing strong constraints
+and a retro-style development mindset.
+VGS-X redefines this model around a 32-bit MC68030-based architecture,
+expanding the scale of computation, memory, and assets while preserving the same ease of development.
+
+Rather than competing on raw performance or novelty,
+VGS-X exists to provide a stable, long-lived virtual game platform
+where developers can continue creating games without changing their fundamental way of thinking.
+
 ## About VGS-X
 
 The VGS-X is a 16-bit game console featuring an MC68030 processor, the YM2612(OPN) FM sound chip, and a proprietary VDP optimized for MC68k architecture.
