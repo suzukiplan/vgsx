@@ -5,23 +5,25 @@ if [ "$#" -ne 1 ]; then
     exit 1
 fi
 
-if [ -d $1 ]; then
+if [ -d "$1" ]; then
     echo "Directory $1 already exist."
     exit 1
 fi
 
 mkdir -p "$1"
-export VGSX_Project_Path="$1"
-if ! [[ "$VGSX_Project_Path" =~ ^/ ]]; then
-    export VGSX_Project_Path="`realpath $1`"
-fi
+VGSX_Project_Path="$1"
+case "$VGSX_Project_Path" in
+    /*) ;;
+    *) VGSX_Project_Path="$(realpath "$1")" ;;
+esac
+export VGSX_Project_Path
 
 echo "Project directory: $VGSX_Project_Path"
 echo "Create an initial repository for VGS-X game development in the above directory."
 
-function ask_yes_no {
+ask_yes_no() {
   while true; do
-    /bin/echo -n "$* [y/n]: "
+    printf "%s [y/n]: " "$*"
     read ANS
     case $ANS in
       [Yy]*)
