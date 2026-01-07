@@ -25,14 +25,28 @@ VGS-X is the successor to [VGS-Zero](https://github.com/suzukiplan/vgszero), but
 Both systems share the same core philosophy: defining a fixed virtual hardware model and
 preserving it long-term through emulation, independent of real hardware and operating systems.
 
-VGS-Zero was designed around an 8-bit Z80-based model, emphasizing strong constraints
-and a retro-style development mindset.
-VGS-X redefines this model around a 32-bit MC68030-based architecture,
-expanding the scale of computation, memory, and assets while preserving the same ease of development.
+A key design principle common to both VGS-Zero and VGS-X is **real-clock–independent design**.
+This principle does not prohibit the use of modern host performance.
+Rather, it states that **the semantics and behavior of software must never be defined in terms of
+real CPU clocks, host execution speed, or frame timing characteristics**.
 
-Rather than competing on raw performance or novelty,
-VGS-X exists to provide a stable, long-lived virtual game platform
-where developers can continue creating games without changing their fundamental way of thinking.
+In VGS-X, all game logic, timing, and audiovisual behavior are expressed exclusively
+within the rules of the virtual hardware—CPU, VDP, sound system, DMA, and memory layout.
+Host performance is used only as an implementation resource to faithfully and stably
+realize this virtual machine, not as a variable that influences game behavior.
+
+VGS-Zero embodied this idea with an 8-bit Z80-based model, where strong constraints and
+complete isolation from host timing allowed games to be treated as artifacts bound to a
+timeless machine definition.
+VGS-X redefines the same concept around a 32-bit MC68030-based architecture,
+greatly expanding computational scale and asset capacity while preserving the same rule:
+**software behavior must remain invariant regardless of host performance**.
+
+Rather than competing on raw speed or technological novelty,
+VGS-X exists to provide a stable, long-lived virtual game platform.
+By clearly separating software semantics from implementation performance,
+developers can continue creating games for decades
+without changing their fundamental assumptions about time or execution.
 
 ## About VGS-X
 
