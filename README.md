@@ -108,6 +108,17 @@ In other words, VGS-X does not attempt to provide “every possible runtime”,
 but instead provides a stable virtual hardware specification that makes
 such implementations feasible when required.
 
+# First Step Guide
+
+This section describes the **first steps for developing applications for VGS-X**.
+It covers setting up the development environment, building and running the Example
+(*Hello, World*), creating a new project, and the guidelines necessary to
+**maintain compatibility of your game over time**.
+
+By the end of this section, you will be able to build and run a VGS-X application
+on your own environment and proceed with game development in a stable and
+future-proof manner.
+
 ## Setup Build Environment
 
 Since VGS-X can execute MC68030 ELF format modules, you must install `m68k-elf-gcc` to develop games for VGS-X.
@@ -215,7 +226,15 @@ As long as you keep the submodule versions that were generated when you ran the 
 
 # Architecture Reference Manual
 
-The following sections provide technical information useful for programming with VGS-X.
+This section provides a detailed reference to the VGS-X virtual hardware architecture.
+It is **not intended to be read linearly from start to finish**.
+
+The contents here are designed to be used **while writing actual game code**—
+as a technical reference you can consult whenever you need to understand
+memory layout, VDP behavior, I/O semantics, or low-level system details.
+
+If you are new to VGS-X, it is perfectly fine to skip this section at first
+and return to it as your implementation progresses.
 
 ## Screen Specification
 
@@ -1352,6 +1371,14 @@ vgs_putlog("d32=%d, u32=%u, str=%s", (int32_t)123, (uint32_t)456, "text");
 
 # Toolchain
 
+This section provides a **manual for the command-line tools included in this repository**.
+These tools are designed to assist each stage of the VGS-X development workflow, such as
+building programs, converting assets, and generating ROM images.
+
+You do not need to understand or use all of these tools from the beginning.
+Refer to the relevant tools as needed, depending on your implementation details
+and development phase.
+
 | Name | Description |
 |:-----|:------------|
 | [vgsx](#vgs-x-emulator-for-debug) | VGS-X Emulator for Debug |
@@ -1532,6 +1559,22 @@ usage: vgmplay /path/to/bgm.vgm
 
 # Runtime Implementation Guide
 
+This section is **not intended for developing VGS-X games**.  
+It provides guidance and reference information for developers who want to
+**implement a runtime environment (emulator or execution platform)**
+that runs the VGS-X virtual hardware specification.
+
+The SDL2-based runtime included in this repository is only one reference implementation,
+primarily intended for development and verification on PC platforms.
+VGS-X is designed as a platform-independent virtual hardware specification,
+and developers are free to implement their own runtimes
+for other environments or platforms as needed.
+
+The content of this section serves as **design guidance and implementation hints**
+to help interpret and realize the VGS-X specification correctly.
+Game developers do not need to read this section unless they are interested in
+runtime or emulator implementation.
+
 ## 1. Setup Your C++ Project
 
 1. Add the [core source code (./src)](./src/) to your C++ project. (For specific examples of the required core source code, refer to [./tools/sdl2/Makefile](./tools/sdl2/Makefile).)
@@ -1550,7 +1593,6 @@ vgsx.loadRom(romData, romSize);
 Note that the romData area **must not be freed** while VGS-X is running.
 
 > Booting the BIOS is optional, but it is recommended that you boot it whenever possible.
-
 
 ## 3. Main Loop Sequence
 
@@ -1593,9 +1635,18 @@ By utilizing user-defined I/O, you can implement native processing that cannot b
 
 # License
 
-- [SDL2](https://www.libsdl.org/)
-  - Copyright (C) 1997-2025 Sam Lantinga <slouken@libsdl.org>
-  - License: [ZLIB License](./LICENSE-SDL2.txt)
+This section lists the licenses of the software and assets related to VGS-X.
+
+Although VGS-X is built using multiple open-source components,
+**not all of them are strictly required in every use case**.
+Each library listed below serves a different purpose and has a different role
+within the overall system.
+
+## Required (Used Internally by VGS-X)
+
+The following components are used internally by the VGS-X virtual hardware
+and its reference implementation, and are considered **required parts of VGS-X**:
+
 - MC680x0 Emulator - [Musashi](https://github.com/kstenerud/Musashi)
   - Copyright © 1998-2001 Karl Stenerud
   - License: [MIT](./LICENSE-Musashi.txt)
@@ -1608,3 +1659,16 @@ By utilizing user-defined I/O, you can implement native processing that cannot b
 - [VGS-X](https://github.com/suzukiplan/vgsx) and VGS Standard Library for MC68030
   - Copyright (c) 2025-2026 Yoji Suzuki.
   - License: [MIT](./LICENSE-VGSX.txt)
+
+## Optional (Runtime Implementation Dependent)
+
+The following component is **not required by the VGS-X specification itself**.
+It is only necessary when developing or using the SDL2-based runtime implementation
+included in this repository.
+
+- [SDL2](https://www.libsdl.org/)
+  - Copyright (C) 1997-2025 Sam Lantinga <slouken@libsdl.org>
+  - License: [ZLIB License](./LICENSE-SDL2.txt)
+
+If you implement your own runtime environment or target a platform
+that does not rely on SDL2, this dependency is not required.
