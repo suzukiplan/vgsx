@@ -21,6 +21,7 @@ OBJS := \
 DEPS := $(OBJS:.o=.d)
 
 all: test_io
+	./test_io
 
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
