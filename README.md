@@ -88,6 +88,26 @@ In the future, we also plan to provide runtimes capable of running on Nintendo S
 
 VGS-X aims to provide game developers and publishers with an environment that enables them to deliver games that are fully compatible across any computer with certain performance specifications.
 
+## VGS-X Runtime Philosophy and Portability
+
+VGS-X is provided under the MIT License, which allows free modification,
+customization, and redistribution of both the specification and its
+reference implementations.
+
+The SDL2-based runtime included in this repository is provided as a
+**reference implementation**, intended for development, testing, and
+practical use on general-purpose platforms such as PC and Steam.
+It is not intended to be the only possible or mandatory runtime.
+
+VGS-X is designed so that developers who require a different execution
+environment — including proprietary hardware or console platforms —
+can implement their own runtime as needed, based on the published
+specification and I/O definitions.
+
+In other words, VGS-X does not attempt to provide “every possible runtime”,
+but instead provides a stable virtual hardware specification that makes
+such implementations feasible when required.
+
 ## Setup Build Environment
 
 Since VGS-X can execute MC68030 ELF format modules, you must install `m68k-elf-gcc` to develop games for VGS-X.
