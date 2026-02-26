@@ -13,6 +13,34 @@ struct Pixel {
 } _pixel[8192];
 int _pnum = 0;
 
+void vsync(void)
+{
+    static uint32_t skip;
+    if (0 == skip) {
+        if (vgs_key_start()) {
+            skip++;
+        }
+    }
+    if (skip) {
+        int i = skip - 1;
+        if (i < 100) {
+            vgs_sfx_master_volume(100 - i);
+            if (skip & 1) {
+                vgs_draw_lineH(3, 0, vgs_draw_height() / 2 - i, vgs_draw_width(), 1);
+                vgs_draw_lineH(3, 0, vgs_draw_height() / 2 + i, vgs_draw_width(), 1);
+                vgs_draw_lineH(3, 0, i + 1, vgs_draw_width(), 1);
+                vgs_draw_lineH(3, 0, vgs_draw_height() - i + 1, vgs_draw_width(), 1);
+            }
+        }
+        skip++;
+        if (100 == skip) {
+            vgs_sfx_stop_all();
+            vgs_exit(0);
+        }
+    }
+    vgs_vsync();
+}
+
 void put_pfont_n(uint8_t n, int32_t x, int32_t y, uint8_t pal, uint16_t ptn, const char* text, int len)
 {
     int32_t dx, dy, width;
@@ -145,7 +173,7 @@ int main(int argc, char* argv[])
         }
         vgs_oam(1)->scale = logo_scale;
         vgs_oam(1)->rotate = logo_rotate;
-        vgs_vsync();
+        vsync();
     }
 
     vgs_putlog("Boot ph.2");
@@ -168,7 +196,7 @@ int main(int argc, char* argv[])
                 logo_rotate_speed--;
             }
         }
-        vgs_vsync();
+        vsync();
     }
     int len = 0;
     const char* t0 = "16-bit Game Console";
@@ -207,7 +235,7 @@ int main(int argc, char* argv[])
         }
         if (0xF == (i & 0xF)) {
             ram_check();
-            vgs_vsync();
+            vsync();
         }
     }
     vgs_cls_bg(2, 0);
@@ -220,7 +248,7 @@ int main(int argc, char* argv[])
         put_pfont_n(1, t1x, 60, 0, 0, t1, len / 2);
         put_pfont_n(1, ptx, 158, 1, 0, pt, len);
         put_pfont_n(1, vtx, 168, 1, 0, vt, len - vgs_strlen(pt));
-        vgs_vsync();
+        vsync();
         if (len < 60) {
             alpha += 0x030303;
             vgs_oam(0)->alpha = alpha;
@@ -249,7 +277,7 @@ int main(int argc, char* argv[])
         vgs_draw_lineH(3, 0, i + 1, vgs_draw_width(), 1);
         vgs_draw_lineH(3, 0, vgs_draw_height() - i + 1, vgs_draw_width(), 1);
         pixel_move();
-        vgs_vsync();
+        vsync();
     }
 
     vgs_cls_bg_all(1);
