@@ -452,6 +452,19 @@ class VDP
         }
     }
 
+    void renderMouse(int ptn, int pal, int x, int y)
+    {
+        static OAM moam;
+        moam.alpha = 0xFFFFFFFF;
+        moam.attr = ((pal & 0x0F) << 16) | (ptn & 0xFFFF);
+        moam.scale = 50;
+        moam.size = 1;
+        moam.visible = 1;
+        moam.x = x;
+        moam.y = y;
+        renderSprite(&moam);
+    }
+
   private:
     void copyCharacterPattern()
     {

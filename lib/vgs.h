@@ -30,6 +30,7 @@
 #include "vgs_ctype.h"
 #include "vgs_io.h"
 #include "vgs_key.h"
+#include "vgs_mouse.h"
 #include "vgs_math.h"
 #include "vgs_save.h"
 #include "vgs_sfx.h"

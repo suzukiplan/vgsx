@@ -100,6 +100,28 @@ class VGSX
         uint8_t reserved[3];
     } SequencialData;
 
+    typedef struct {
+        uint32_t keepPushingFrames; // keep pushing frames
+        bool pushing;               // pushing flag
+        bool click;                 // click
+        int32_t pushStartX;         // push started X
+        int32_t pushStartY;         // push started Y
+    } MouseButtonStatus;
+
+    typedef struct {
+        bool enabled;            // enabled flag
+        bool hidden;             // hidden flag
+        bool moved;              // moved (current frame)
+        uint32_t ptn;            // pattern number
+        uint32_t pal;            // palette number
+        int32_t px;              // X (previous frame)
+        int32_t py;              // Y (previous frame)
+        int32_t cx;              // X (current frame)
+        int32_t cy;              // Y (current frame)
+        MouseButtonStatus left;  // left button
+        MouseButtonStatus right; // right button
+    } MouseInfo;
+
     struct Context {
         uint8_t ram[0x100000]; // WRAM (1MB)
         Binary vgmData[0x10000];
@@ -122,6 +144,7 @@ class VGSX
         uint32_t sfxMasterVolume;
         uint32_t fmChip;
         uint32_t fmOffset;
+        MouseInfo mouse;
     } ctx;
 
     struct KeyStatus {
@@ -193,7 +216,16 @@ class VGSX
         }
     }
 
+    inline void mouseReset(void) { memset(&this->ctx.mouse, 0, sizeof(this->ctx.mouse)); }
+    inline void mouseEnabled(void) { this->ctx.mouse.enabled = true; }
+    inline void mouseDisabled(void) { this->ctx.mouse.enabled = false; }
+    inline void mouseShow(void) { this->ctx.mouse.hidden = false; }
+    inline void mouseHidden(void) { this->ctx.mouse.hidden = true; }
+    void mouseUpdate(int x, int y, bool left, bool right);
+
   private:
+    void updateMouseButtonStatus(MouseButtonStatus* button, bool pushing, int x, int y);
+
     static struct tm* now()
     {
         time_t now = time(nullptr);
