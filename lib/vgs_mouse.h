@@ -30,6 +30,17 @@ extern "C" {
 #endif
 
 /**
+ * @brief Setup the mouse cursor pattern and palette
+ * @param ptn Character pattern index of cursor
+ * @param pal Palette index of cursor
+ */
+static inline void vgs_mouse_setup(uint16_t ptn, uint8_t pal)
+{
+    VGS_IO_MOUSE_PATTERN = ptn;
+    VGS_IO_MOUSE_PALETTE = pal;
+}
+
+/**
  * @brief Eanbled/Disabled the mouse
  * @param on ON: enabled, OFF: disabled
  */

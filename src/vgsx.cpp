@@ -1198,6 +1198,8 @@ uint32_t VGSX::inPort(uint32_t address)
         case VGS_ADDR_MOUSE_MOVING: return this->ctx.mouse.moved ? 1 : 0;
         case VGS_ADDR_MOUSE_X: return this->ctx.mouse.cx;
         case VGS_ADDR_MOUSE_Y: return this->ctx.mouse.cy;
+        case VGS_ADDR_MOUSE_PATTERN: return this->ctx.mouse.ptn;
+        case VGS_ADDR_MOUSE_PALETTE: return this->ctx.mouse.pal;
         case VGS_ADDR_MOUSE_LEFT: return this->ctx.mouse.left.pushing ? 1 : 0;
         case VGS_ADDR_MOUSE_LEFT_CLICK: return this->ctx.mouse.left.click ? 1 : 0;
         case VGS_ADDR_MOUSE_LEFT_CLICK_X: return this->ctx.mouse.left.pushStartX;
@@ -1438,6 +1440,12 @@ void VGSX::outPort(uint32_t address, uint32_t value)
             }
             break;
         }
+        case VGS_ADDR_MOUSE_PATTERN:
+            this->mouseSetPattern(value);
+            break;
+        case VGS_ADDR_MOUSE_PALETTE:
+            this->mouseSetPalette(value);
+            break;
         case VGS_ADDR_RESET:
             this->reset();
             return;
@@ -1684,8 +1692,8 @@ void VGSX::subscribeOutput(std::function<void(uint32_t port, uint32_t value)> ca
 
 void VGSX::mouseUpdate(int x, int y, bool left, bool right)
 {
-    if (this->ctx.mouse.enabled) {
-        return; // disabled
+    if (!this->ctx.mouse.enabled) {
+        return;
     }
     this->ctx.mouse.px = this->ctx.mouse.cx;
     this->ctx.mouse.py = this->ctx.mouse.cy;
