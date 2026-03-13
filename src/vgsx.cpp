@@ -1700,7 +1700,9 @@ void VGSX::mouseUpdate(int x, int y, bool left, bool right)
     this->ctx.mouse.cx = x;
     this->ctx.mouse.cy = y;
     if (0 <= x && x < 320 && 0 <= y && y < 200) {
-        this->ctx.mouse.moved = this->ctx.mouse.px != this->ctx.mouse.cx || this->ctx.mouse.py != this->ctx.mouse.cy;
+        if (0 < this->ctx.mouse.px && 0 < this->ctx.mouse.py) {
+            this->ctx.mouse.moved = this->ctx.mouse.px != this->ctx.mouse.cx || this->ctx.mouse.py != this->ctx.mouse.cy;
+        }
     } else {
         this->ctx.mouse.moved = false; // The outside of the screen (= Not Moved)
     }
