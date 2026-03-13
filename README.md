@@ -753,6 +753,21 @@ Note that all addresses and values for I/O instructions must be specified as 32-
 | 0xE0402C |  o  |  -  | [Local: Hour](#0xe040xxin---calendar)|
 | 0xE04030 |  o  |  -  | [Local: Minute](#0xe040xxin---calendar)|
 | 0xE04034 |  o  |  -  | [Local: Second](#0xe040xxin---calendar)|
+| 0xE05000 |  o  |  o  | [Mouse: Enabled](#0xe050xxio---mouse) |
+| 0xE05004 |  o  |  o  | [Mouse: Hidden](#0xe050xxio---mouse) |
+| 0xE05008 |  o  |  -  | [Mouse: Moving](#0xe050xxio---mouse) |
+| 0xE0500C |  o  |  -  | [Mouse: X](#0xe050xxio---mouse) |
+| 0xE05010 |  o  |  -  | [Mouse: Y](#0xe050xxio---mouse) |
+| 0xE05014 |  o  |  o  | [Mouse: Cursor Pattern](#0xe050xxio---mouse) |
+| 0xE05018 |  o  |  o  | [Mouse: Cursor Palette](#0xe050xxio---mouse) |
+| 0xE05100 |  o  |  -  | [Mouse: Left Button](#0xe050xxio---mouse) |
+| 0xE05104 |  o  |  -  | [Mouse: Left Click](#0xe050xxio---mouse) |
+| 0xE05108 |  o  |  -  | [Mouse: Left Click X](#0xe050xxio---mouse) |
+| 0xE0510C |  o  |  -  | [Mouse: Left Click Y](#0xe050xxio---mouse) |
+| 0xE05200 |  o  |  -  | [Mouse: Right Button](#0xe050xxio---mouse) |
+| 0xE05204 |  o  |  -  | [Mouse: Right Click](#0xe050xxio---mouse) |
+| 0xE05208 |  o  |  -  | [Mouse: Right Click X](#0xe050xxio---mouse) |
+| 0xE0520C |  o  |  -  | [Mouse: Right Click Y](#0xe050xxio---mouse) |
 | 0xE7FFF4 |  o  |  -  | [Abort](#0xe7fff4out---abort) |
 | 0xE7FFF8 |  -  |  o  | [Reset](#0xe7fff8out---reset) |
 | 0xE7FFFC |  -  |  o  | [Exit](#0xe7fffcout---exit) |
@@ -1147,6 +1162,47 @@ Local Time Zone:
 - 0xE04030: Minute (0 to 59)
 - 0xE04034: Second (0 to 59)
 
+### 0xE050xx[i/o] - Mouse
+
+The mouse interface exposes the current pointer state in screen coordinates (`320x200`) and allows the program to control the VGS-X cursor.
+
+| Address | In | Out | Description |
+|:-------:|:--:|:---:|:------------|
+| 0xE05000 | Enabled | Enabled | Mouse input enabled flag (`0`: disabled, non-zero: enabled) |
+| 0xE05004 | Hidden | Hidden | VGS-X cursor hidden flag (`0`: show, non-zero: hide) |
+| 0xE05008 | Moving | - | Whether the mouse moved during the current frame |
+| 0xE0500C | X | - | Current mouse X coordinate |
+| 0xE05010 | Y | - | Current mouse Y coordinate |
+| 0xE05014 | Cursor Pattern | Cursor Pattern | Base character pattern index of the cursor |
+| 0xE05018 | Cursor Palette | Cursor Palette | Palette index of the cursor |
+| 0xE05100 | Left Button | - | Left button pushing state |
+| 0xE05104 | Left Click | - | Left click detected during the current frame |
+| 0xE05108 | Left Click X | - | X coordinate where the left click started |
+| 0xE0510C | Left Click Y | - | Y coordinate where the left click started |
+| 0xE05200 | Right Button | - | Right button pushing state |
+| 0xE05204 | Right Click | - | Right click detected during the current frame |
+| 0xE05208 | Right Click X | - | X coordinate where the right click started |
+| 0xE0520C | Right Click Y | - | Y coordinate where the right click started |
+
+Remarks:
+
+- When the pointer is outside the visible screen, X and Y return `-1`.
+- `Moving`, `Left Click`, and `Right Click` are frame-based states.
+- The cursor pattern register specifies the base pattern number. A 16x16 cursor consumes four consecutive character patterns.
+- The hidden flag controls only the VGS-X cursor. The host runtime may hide or show the OS cursor independently.
+
+Example:
+
+```c
+vgs_mouse_setup(128, 0);
+vgs_mouse_enabled(ON);
+vgs_mouse_hidden(OFF);
+
+if (vgs_mouse_left_clicked(&x, &y)) {
+    // Handle click
+}
+```
+
 ### 0xE7FFF4[out] - Abort
 
 Displays a stack backtrace and terminates the program abnormally.
@@ -1289,6 +1345,16 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | gamepad | `vgs_button_id_y` | Get the [Button ID](#0xe021xxio---gamepad-types) for the Y button on the connected gamepad. |
 | gamepad | `vgs_button_id_start` | Get the [Button ID](#0xe021xxio---gamepad-types) for the Start button on the connected gamepad. |
 | gamepad | `vgs_button_name` | Get the [Name String](#0xe021xxio---gamepad-types) of the button identifier. |
+| mouse | `vgs_mouse_setup` | Set the mouse cursor [pattern](#0xe050xxio---mouse) and palette. |
+| mouse | `vgs_mouse_enabled` | Enable or disable the [mouse](#0xe050xxio---mouse). |
+| mouse | `vgs_mouse_hidden` | Show or hide the VGS-X [mouse cursor](#0xe050xxio---mouse). |
+| mouse | `vgs_mouse_moving` | Check whether the [mouse](#0xe050xxio---mouse) moved in the current frame. |
+| mouse | `vgs_mouse_x` | Get the current mouse X coordinate. |
+| mouse | `vgs_mouse_y` | Get the current mouse Y coordinate. |
+| mouse | `vgs_mouse_left` | Get the current left button pushing state. |
+| mouse | `vgs_mouse_right` | Get the current right button pushing state. |
+| mouse | `vgs_mouse_left_clicked` | Check for a left click and optionally get the click coordinates. |
+| mouse | `vgs_mouse_right_clicked` | Check for a right click and optionally get the click coordinates. |
 | save | `vgs_save` | Save [save data](#0xe030xxio---savedata). |
 | save | `vgs_load` | Load [save data](#0xe030xxio---savedata).　|
 | save | `vgs_save_check` | Check the size of [save data](#0xe030xxio---savedata).　|
