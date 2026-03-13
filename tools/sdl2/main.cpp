@@ -76,6 +76,49 @@ static void audioCallback(void* userdata, Uint8* stream, int len)
     pthread_mutex_unlock(&soundMutex);
 }
 
+static void updateMouse(SDL_Window* window)
+{
+    static bool osCursorHidden = false;
+    int x = -1;
+    int y = -1;
+    bool left = false;
+    bool right = false;
+
+    if (window) {
+        int globalX = 0;
+        int globalY = 0;
+        int windowX = 0;
+        int windowY = 0;
+        int windowWidth = 0;
+        int windowHeight = 0;
+        int topBorder = 0;
+        int leftBorder = 0;
+        int bottomBorder = 0;
+        int rightBorder = 0;
+        Uint32 buttons = SDL_GetGlobalMouseState(&globalX, &globalY);
+        SDL_GetWindowPosition(window, &windowX, &windowY);
+        SDL_GetWindowSize(window, &windowWidth, &windowHeight);
+        if (0 == SDL_GetWindowBordersSize(window, &topBorder, &leftBorder, &bottomBorder, &rightBorder)) {
+            windowX += leftBorder;
+            windowY += topBorder;
+        }
+        int localX = globalX - windowX;
+        int localY = globalY - windowY;
+        if (0 <= localX && localX < windowWidth && 0 <= localY && localY < windowHeight) {
+            x = localX * VDP_WIDTH / windowWidth;
+            y = localY * VDP_HEIGHT / windowHeight;
+        }
+        left = 0 != (buttons & SDL_BUTTON(SDL_BUTTON_LEFT));
+        right = 0 != (buttons & SDL_BUTTON(SDL_BUTTON_RIGHT));
+    }
+    bool insideScreen = 0 <= x && x < VDP_WIDTH && 0 <= y && y < VDP_HEIGHT;
+    if (insideScreen != osCursorHidden) {
+        SDL_ShowCursor(insideScreen ? SDL_DISABLE : SDL_ENABLE);
+        osCursorHidden = insideScreen;
+    }
+    vgsx.mouseUpdate(x, y, left, right);
+}
+
 static void file_dump(const char* fname)
 {
     FILE* fp = fopen(fname, "rb");
@@ -369,6 +412,7 @@ int main(int argc, char* argv[])
         }
         if (!quit) {
             pthread_mutex_lock(&soundMutex);
+            updateMouse(window);
             vgsx.tick();
             pthread_mutex_unlock(&soundMutex);
             totalClocks += vgsx.ctx.frameClocks;

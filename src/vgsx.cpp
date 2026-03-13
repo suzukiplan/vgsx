@@ -890,6 +890,7 @@ void VGSX::reset(void)
     this->ctx.vgmMasterVolume = VGS_MASTER_VOLUME_MAX - 1;
     this->ctx.sfxMasterVolume = VGS_MASTER_VOLUME_MAX - 1;
     this->vdp.reset();
+    this->mouseReset();
     ((VgmDriver*)this->vgmdrv)->reset();
     for (int i = 0; i < 0x100; i++) {
         this->ctx.sfxData[i].play = false;
@@ -988,6 +989,9 @@ void VGSX::tick(void)
         }
     }
     this->vdp.render();
+    if (this->ctx.mouse.enabled && !this->ctx.mouse.hidden) {
+        this->vdp.renderMouse(this->ctx.mouse.ptn, this->ctx.mouse.pal, this->ctx.mouse.cx, this->ctx.mouse.cy);
+    }
 
     if (this->exitFlag && this->pendingRomData.data) {
         this->ignoreReset = false;
@@ -1189,6 +1193,21 @@ uint32_t VGSX::inPort(uint32_t address)
         case VGS_ADDR_CAL2_HOUR: return now2()->tm_hour;
         case VGS_ADDR_CAL2_MINUTE: return now2()->tm_min;
         case VGS_ADDR_CAL2_SECOND: return now2()->tm_sec;
+        case VGS_ADDR_MOUSE_ENABLED: return this->ctx.mouse.enabled ? 1 : 0;
+        case VGS_ADDR_MOUSE_HIDDEN: return this->ctx.mouse.hidden ? 1 : 0;
+        case VGS_ADDR_MOUSE_MOVING: return this->ctx.mouse.moved ? 1 : 0;
+        case VGS_ADDR_MOUSE_X: return this->ctx.mouse.cx;
+        case VGS_ADDR_MOUSE_Y: return this->ctx.mouse.cy;
+        case VGS_ADDR_MOUSE_PATTERN: return this->ctx.mouse.ptn;
+        case VGS_ADDR_MOUSE_PALETTE: return this->ctx.mouse.pal;
+        case VGS_ADDR_MOUSE_LEFT: return this->ctx.mouse.left.pushing ? 1 : 0;
+        case VGS_ADDR_MOUSE_LEFT_CLICK: return this->ctx.mouse.left.click ? 1 : 0;
+        case VGS_ADDR_MOUSE_LEFT_CLICK_X: return this->ctx.mouse.left.pushStartX;
+        case VGS_ADDR_MOUSE_LEFT_CLICK_Y: return this->ctx.mouse.left.pushStartY;
+        case VGS_ADDR_MOUSE_RIGHT: return this->ctx.mouse.right.pushing ? 1 : 0;
+        case VGS_ADDR_MOUSE_RIGHT_CLICK: return this->ctx.mouse.right.click ? 1 : 0;
+        case VGS_ADDR_MOUSE_RIGHT_CLICK_X: return this->ctx.mouse.right.pushStartX;
+        case VGS_ADDR_MOUSE_RIGHT_CLICK_Y: return this->ctx.mouse.right.pushStartY;
     }
     if (VGS_ADDR_USER <= address) {
         if (!this->subscribedInput) {
@@ -1405,7 +1424,28 @@ void VGSX::outPort(uint32_t address, uint32_t value)
             }
             return;
         }
-
+        case VGS_ADDR_MOUSE_ENABLED: {
+            if (value) {
+                this->mouseEnabled();
+            } else {
+                this->mouseDisabled();
+            }
+            break;
+        }
+        case VGS_ADDR_MOUSE_HIDDEN: {
+            if (value) {
+                this->mouseHidden();
+            } else {
+                this->mouseShow();
+            }
+            break;
+        }
+        case VGS_ADDR_MOUSE_PATTERN:
+            this->mouseSetPattern(value);
+            break;
+        case VGS_ADDR_MOUSE_PALETTE:
+            this->mouseSetPalette(value);
+            break;
         case VGS_ADDR_RESET:
             this->reset();
             return;
@@ -1648,4 +1688,45 @@ void VGSX::subscribeOutput(std::function<void(uint32_t port, uint32_t value)> ca
 {
     this->subscribedOutput = true;
     this->outputCallback = callback;
+}
+
+void VGSX::mouseUpdate(int x, int y, bool left, bool right)
+{
+    if (!this->ctx.mouse.enabled) {
+        return;
+    }
+    this->ctx.mouse.px = this->ctx.mouse.cx;
+    this->ctx.mouse.py = this->ctx.mouse.cy;
+    this->ctx.mouse.cx = x;
+    this->ctx.mouse.cy = y;
+    if (0 <= x && x < 320 && 0 <= y && y < 200) {
+        this->ctx.mouse.moved = this->ctx.mouse.px != this->ctx.mouse.cx || this->ctx.mouse.py != this->ctx.mouse.cy;
+    } else {
+        this->ctx.mouse.moved = false; // The outside of the screen (= Not Moved)
+    }
+    updateMouseButtonStatus(&this->ctx.mouse.left, left, x, y);
+    updateMouseButtonStatus(&this->ctx.mouse.right, right, x, y);
+}
+
+void VGSX::updateMouseButtonStatus(MouseButtonStatus* button, bool pushing, int x, int y)
+{
+    button->click = false;
+    if (button->pushing) {
+        if (pushing) {
+            button->keepPushingFrames++;
+        } else {
+            if (button->keepPushingFrames < 30 && 0 < x && 0 < y && x < 320 && y < 200) {
+                button->click = true;
+            }
+            button->keepPushingFrames = 0;
+            button->pushing = false;
+        }
+    } else {
+        if (pushing) {
+            button->keepPushingFrames = 0;
+            button->pushing = true;
+            button->pushStartX = x;
+            button->pushStartY = y;
+        }
+    }
 }

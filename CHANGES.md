@@ -1,5 +1,11 @@
 # Changes
 
+## Version 1.1.0
+
+- Core: Added Mouse I/O and mouse cursor control.
+- CRT: Added the mouse functions: `vgs_mouse_setup`, `vgs_mouse_enabled`, `vgs_mouse_hidden`, `vgs_mouse_moving`, `vgs_mouse_x`, `vgs_mouse_y`, `vgs_mouse_left`, `vgs_mouse_right`, `vgs_mouse_left_clicked` and `vgs_mouse_right_clicked`
+- Example: Added `example/08_mouse`
+
 ## Version 1.0.0 **(Disruptive)**
 
 - Added support for retrieving date/time information in the local time zone
