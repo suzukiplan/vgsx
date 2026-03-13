@@ -76,6 +76,39 @@ static void audioCallback(void* userdata, Uint8* stream, int len)
     pthread_mutex_unlock(&soundMutex);
 }
 
+static void updateMouse(SDL_Window* window)
+{
+    static bool osCursorHidden = false;
+    int x = -1;
+    int y = -1;
+    bool left = false;
+    bool right = false;
+
+    if (window) {
+        Uint32 buttons = SDL_GetMouseState(&x, &y);
+        if (0 == (SDL_GetWindowFlags(window) & SDL_WINDOW_MOUSE_FOCUS)) {
+            x = -1;
+            y = -1;
+        } else {
+            int windowWidth = 0;
+            int windowHeight = 0;
+            SDL_GetWindowSize(window, &windowWidth, &windowHeight);
+            if (0 < windowWidth && 0 < windowHeight) {
+                x = x * VDP_WIDTH / windowWidth;
+                y = y * VDP_HEIGHT / windowHeight;
+            }
+        }
+        left = 0 != (buttons & SDL_BUTTON(SDL_BUTTON_LEFT));
+        right = 0 != (buttons & SDL_BUTTON(SDL_BUTTON_RIGHT));
+    }
+    bool insideScreen = 0 <= x && x < VDP_WIDTH && 0 <= y && y < VDP_HEIGHT;
+    if (insideScreen != osCursorHidden) {
+        SDL_ShowCursor(insideScreen ? SDL_DISABLE : SDL_ENABLE);
+        osCursorHidden = insideScreen;
+    }
+    vgsx.mouseUpdate(x, y, left, right);
+}
+
 static void file_dump(const char* fname)
 {
     FILE* fp = fopen(fname, "rb");
@@ -369,6 +402,7 @@ int main(int argc, char* argv[])
         }
         if (!quit) {
             pthread_mutex_lock(&soundMutex);
+            updateMouse(window);
             vgsx.tick();
             pthread_mutex_unlock(&soundMutex);
             totalClocks += vgsx.ctx.frameClocks;
