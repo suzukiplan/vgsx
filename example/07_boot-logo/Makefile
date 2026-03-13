@@ -12,13 +12,14 @@ clean:
 	rm -f program.rom program.elf *.chr palette.bin 
 
 execute: program.rom
-	${VGSX_ROOT}/tools/sdl2/vgsx program.rom
+	${VGSX_ROOT}/tools/sdl2/vgsx -m program.rom
 
-program.rom: program.elf font.chr logo.chr palette.bin ${SFX}
+program.rom: program.elf font.chr logo.chr mouse.chr palette.bin ${SFX}
 	${VGSX_ROOT}/tools/makerom/makerom \
 		-c palette.bin \
 		-g font.chr \
 		-g logo.chr \
+		-g mouse.chr \
 		-s ${SFX} \
 		-e program.elf \
 		-o program.rom
@@ -30,6 +31,9 @@ font.chr: font.bmp
 	${VGSX_ROOT}/tools/bmp2chr/bmp2chr $< $@
 
 logo.chr: logo.bmp
+	${VGSX_ROOT}/tools/bmp2chr/bmp2chr $< $@
+
+mouse.chr: mouse.bmp
 	${VGSX_ROOT}/tools/bmp2chr/bmp2chr $< $@
 
 palette.bin: font.bmp
