@@ -85,18 +85,28 @@ static void updateMouse(SDL_Window* window)
     bool right = false;
 
     if (window) {
-        Uint32 buttons = SDL_GetMouseState(&x, &y);
-        if (0 == (SDL_GetWindowFlags(window) & SDL_WINDOW_MOUSE_FOCUS)) {
-            x = -1;
-            y = -1;
-        } else {
-            int windowWidth = 0;
-            int windowHeight = 0;
-            SDL_GetWindowSize(window, &windowWidth, &windowHeight);
-            if (0 < windowWidth && 0 < windowHeight) {
-                x = x * VDP_WIDTH / windowWidth;
-                y = y * VDP_HEIGHT / windowHeight;
-            }
+        int globalX = 0;
+        int globalY = 0;
+        int windowX = 0;
+        int windowY = 0;
+        int windowWidth = 0;
+        int windowHeight = 0;
+        int topBorder = 0;
+        int leftBorder = 0;
+        int bottomBorder = 0;
+        int rightBorder = 0;
+        Uint32 buttons = SDL_GetGlobalMouseState(&globalX, &globalY);
+        SDL_GetWindowPosition(window, &windowX, &windowY);
+        SDL_GetWindowSize(window, &windowWidth, &windowHeight);
+        if (0 == SDL_GetWindowBordersSize(window, &topBorder, &leftBorder, &bottomBorder, &rightBorder)) {
+            windowX += leftBorder;
+            windowY += topBorder;
+        }
+        int localX = globalX - windowX;
+        int localY = globalY - windowY;
+        if (0 <= localX && localX < windowWidth && 0 <= localY && localY < windowHeight) {
+            x = localX * VDP_WIDTH / windowWidth;
+            y = localY * VDP_HEIGHT / windowHeight;
         }
         left = 0 != (buttons & SDL_BUTTON(SDL_BUTTON_LEFT));
         right = 0 != (buttons & SDL_BUTTON(SDL_BUTTON_RIGHT));
