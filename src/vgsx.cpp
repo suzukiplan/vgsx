@@ -544,6 +544,7 @@ VGSX::VGSX()
     this->consoleBuffer[0] = '\0';
     this->bootBios = true;
     this->ignoreReset = false;
+    this->mouseEnabledFlag = false;
     memset(&this->pendingRomData, 0, sizeof(pendingRomData));
     memset(&this->ctx, 0, sizeof(this->ctx));
     memset(&this->key, 0, sizeof(this->key));
@@ -989,7 +990,7 @@ void VGSX::tick(void)
         }
     }
     this->vdp.render();
-    if (this->ctx.mouse.enabled && !this->ctx.mouse.hidden) {
+    if (this->mouseEnabledFlag && !this->ctx.mouse.hidden) {
         this->vdp.renderMouse(this->ctx.mouse.ptn, this->ctx.mouse.pal, this->ctx.mouse.cx, this->ctx.mouse.cy);
     }
 
@@ -1193,7 +1194,7 @@ uint32_t VGSX::inPort(uint32_t address)
         case VGS_ADDR_CAL2_HOUR: return now2()->tm_hour;
         case VGS_ADDR_CAL2_MINUTE: return now2()->tm_min;
         case VGS_ADDR_CAL2_SECOND: return now2()->tm_sec;
-        case VGS_ADDR_MOUSE_ENABLED: return this->ctx.mouse.enabled ? 1 : 0;
+        case VGS_ADDR_MOUSE_ENABLED: return this->mouseEnabledFlag ? 1 : 0;
         case VGS_ADDR_MOUSE_HIDDEN: return this->ctx.mouse.hidden ? 1 : 0;
         case VGS_ADDR_MOUSE_MOVING: return this->ctx.mouse.moved ? 1 : 0;
         case VGS_ADDR_MOUSE_X: return this->ctx.mouse.cx;
@@ -1423,14 +1424,6 @@ void VGSX::outPort(uint32_t address, uint32_t value)
                 memcpy(&this->ctx.ram[addr], str.c_str(), str.length() + 1);
             }
             return;
-        }
-        case VGS_ADDR_MOUSE_ENABLED: {
-            if (value) {
-                this->mouseEnabled();
-            } else {
-                this->mouseDisabled();
-            }
-            break;
         }
         case VGS_ADDR_MOUSE_HIDDEN: {
             if (value) {
@@ -1692,7 +1685,7 @@ void VGSX::subscribeOutput(std::function<void(uint32_t port, uint32_t value)> ca
 
 void VGSX::mouseUpdate(int x, int y, bool left, bool right)
 {
-    if (!this->ctx.mouse.enabled) {
+    if (!this->mouseEnabledFlag) {
         return;
     }
     this->ctx.mouse.px = this->ctx.mouse.cx;

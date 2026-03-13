@@ -109,7 +109,6 @@ class VGSX
     } MouseButtonStatus;
 
     typedef struct {
-        bool enabled;            // enabled flag
         bool hidden;             // hidden flag
         bool moved;              // moved (current frame)
         uint32_t ptn;            // pattern number
@@ -217,8 +216,8 @@ class VGSX
     }
 
     inline void mouseReset(void) { memset(&this->ctx.mouse, 0, sizeof(this->ctx.mouse)); }
-    inline void mouseEnabled(void) { this->ctx.mouse.enabled = true; }
-    inline void mouseDisabled(void) { this->ctx.mouse.enabled = false; }
+    inline void mouseEnabled(void) { this->mouseEnabledFlag = true; }
+    inline void mouseDisabled(void) { this->mouseEnabledFlag = false; }
     inline void mouseShow(void) { this->ctx.mouse.hidden = false; }
     inline void mouseHidden(void) { this->ctx.mouse.hidden = true; }
     inline void mouseSetPattern(uint32_t ptn) { this->ctx.mouse.ptn = ptn & 0xFFFF; }
@@ -245,6 +244,7 @@ class VGSX
     bool subscribedOutput;
     std::function<uint32_t(uint32_t port)> inputCallback;
     std::function<void(uint32_t port, uint32_t value)> outputCallback;
+    bool mouseEnabledFlag;
 
     bool ignoreReset;
     struct PendingRomData {

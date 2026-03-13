@@ -30,10 +30,10 @@ extern "C" {
 #endif
 
 /**
- * @brief Eanbled/Disabled the mouse
- * @param on ON: enabled, OFF: disabled
+ * @brief Check Eanbled/Disabled the mouse
+ * @return ON: enabled, OFF: disabled
  */
-static inline void vgs_mouse_enabled(int on) { VGS_IO_MOUSE_ENABLED = on; }
+static inline int vgs_mouse_enabled(void) { return VGS_IN_MOUSE_ENABLED ? ON : OFF; }
 
 /**
  * @brief Setup the mouse cursor pattern and palette

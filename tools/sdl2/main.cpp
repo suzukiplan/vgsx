@@ -60,6 +60,7 @@ static void put_usage()
 {
     puts("usage: vgsx [-i]");
     puts("            [-d]");
+    puts("            [-m]");
     puts("            [-g /path/to/pattern.chr]");
     puts("            [-c /path/to/palette.bin]");
     puts("            [-b /path/to/bgm.vgm]");
@@ -76,7 +77,16 @@ static void audioCallback(void* userdata, Uint8* stream, int len)
     pthread_mutex_unlock(&soundMutex);
 }
 
-static void updateMouse(SDL_Window* window)
+static void applyMouseOption(bool enableMouse)
+{
+    if (enableMouse) {
+        vgsx.mouseEnabled();
+    } else {
+        vgsx.mouseDisabled();
+    }
+}
+
+static void updateMouse(SDL_Window* window, bool enableMouse)
 {
     static bool osCursorHidden = false;
     int x = -1;
@@ -112,9 +122,10 @@ static void updateMouse(SDL_Window* window)
         right = 0 != (buttons & SDL_BUTTON(SDL_BUTTON_RIGHT));
     }
     bool insideScreen = 0 <= x && x < VDP_WIDTH && 0 <= y && y < VDP_HEIGHT;
-    if (insideScreen != osCursorHidden) {
-        SDL_ShowCursor(insideScreen ? SDL_DISABLE : SDL_ENABLE);
-        osCursorHidden = insideScreen;
+    bool shouldHideOsCursor = enableMouse && insideScreen;
+    if (shouldHideOsCursor != osCursorHidden) {
+        SDL_ShowCursor(shouldHideOsCursor ? SDL_DISABLE : SDL_ENABLE);
+        osCursorHidden = shouldHideOsCursor;
     }
     vgsx.mouseUpdate(x, y, left, right);
 }
@@ -156,6 +167,7 @@ static void file_dump(const char* fname)
         printf("Size: %d bytes\n", totalSize);
     }
 }
+
 int main(int argc, char* argv[])
 {
     vgsx.setLogCallback([](VGSX::LogLevel level, const char* msg) {
@@ -177,6 +189,7 @@ int main(int argc, char* argv[])
     int32_t expectedExitCode = 0;
     bool isFirstOption = true;
     bool print_dump = false;
+    bool enableMouse = false;
     vgsx.disableBootBios();
     for (int i = 1; i < argc; i++) {
         if ('-' == argv[i][0]) {
@@ -277,6 +290,9 @@ int main(int argc, char* argv[])
                 case 'd':
                     print_dump = true;
                     break;
+                case 'm':
+                    enableMouse = true;
+                    break;
                 default:
                     put_usage();
                     return 1;
@@ -375,6 +391,7 @@ int main(int argc, char* argv[])
         SDL_PauseAudioDevice(audioDeviceId, 0);
     }
     vgsx.reset();
+    applyMouseOption(enableMouse);
     while (!quit && !vgsx.isExit()) {
         loopCount++;
         auto start = std::chrono::system_clock::now();
@@ -412,7 +429,7 @@ int main(int argc, char* argv[])
         }
         if (!quit) {
             pthread_mutex_lock(&soundMutex);
-            updateMouse(window);
+            updateMouse(window, enableMouse);
             vgsx.tick();
             pthread_mutex_unlock(&soundMutex);
             totalClocks += vgsx.ctx.frameClocks;
