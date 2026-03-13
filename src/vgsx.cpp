@@ -1715,7 +1715,7 @@ void VGSX::updateMouseButtonStatus(MouseButtonStatus* button, bool pushing, int 
         if (pushing) {
             button->keepPushingFrames++;
         } else {
-            if (button->keepPushingFrames < 30) {
+            if (button->keepPushingFrames < 30 && 0 < x && 0 < y && x < 320 && y < 200) {
                 button->click = true;
             }
             button->keepPushingFrames = 0;
