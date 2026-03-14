@@ -127,7 +127,7 @@ static void updateMouse(SDL_Window* window, bool enableMouse)
         SDL_ShowCursor(shouldHideOsCursor ? SDL_DISABLE : SDL_ENABLE);
         osCursorHidden = shouldHideOsCursor;
     }
-    vgsx.mouseUpdate(x, y, left, right);
+    vgsx.mouseUpdate(x, y, left, right, 0, 0); // todo: スクロール値を設定
 }
 
 static void file_dump(const char* fname)

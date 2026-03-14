@@ -1683,7 +1683,7 @@ void VGSX::subscribeOutput(std::function<void(uint32_t port, uint32_t value)> ca
     this->outputCallback = callback;
 }
 
-void VGSX::mouseUpdate(int x, int y, bool left, bool right)
+void VGSX::mouseUpdate(int x, int y, bool left, bool right, int scrV, int scrH)
 {
     if (!this->mouseEnabledFlag) {
         return;
@@ -1692,6 +1692,8 @@ void VGSX::mouseUpdate(int x, int y, bool left, bool right)
     this->ctx.mouse.py = this->ctx.mouse.cy;
     this->ctx.mouse.cx = x;
     this->ctx.mouse.cy = y;
+    this->ctx.mouse.scrV = scrV;
+    this->ctx.mouse.scrH = scrH;
     if (0 <= x && x < 320 && 0 <= y && y < 200) {
         if (0 < this->ctx.mouse.px && 0 < this->ctx.mouse.py) {
             this->ctx.mouse.moved = this->ctx.mouse.px != this->ctx.mouse.cx || this->ctx.mouse.py != this->ctx.mouse.cy;

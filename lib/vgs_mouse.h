@@ -116,6 +116,24 @@ static inline int vgs_mouse_right_clicked(int* x, int* y)
     }
 }
 
+/**
+ * @brief Get the mouse wheelie (vertical scroll)
+ * @return -256 ~ 255
+ */
+static inline int vgs_mouse_scroll_vertical(void)
+{
+    return VGS_IN_MOUSE_SCROLL_V;
+}
+
+/**
+ * @brief Get the mouse wheelie (horizontal scroll)
+ * @return -256 ~ 255
+ */
+static inline int vgs_mouse_scroll_horizontal(void)
+{
+    return VGS_IN_MOUSE_SCROLL_H;
+}
+
 #ifdef __cplusplus
 };
 #endif

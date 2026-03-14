@@ -117,6 +117,8 @@ class VGSX
         int32_t py;              // Y (previous frame)
         int32_t cx;              // X (current frame)
         int32_t cy;              // Y (current frame)
+        int32_t scrV;            // Scroll (vertical: -256 ~ 255)
+        int32_t scrH;            // Scroll (horizontal: -256 ~ 255)
         MouseButtonStatus left;  // left button
         MouseButtonStatus right; // right button
     } MouseInfo;
@@ -222,7 +224,7 @@ class VGSX
     inline void mouseHidden(void) { this->ctx.mouse.hidden = true; }
     inline void mouseSetPattern(uint32_t ptn) { this->ctx.mouse.ptn = ptn & 0xFFFF; }
     inline void mouseSetPalette(uint32_t pal) { this->ctx.mouse.pal = pal & 0x0F; }
-    void mouseUpdate(int x, int y, bool left, bool right);
+    void mouseUpdate(int x, int y, bool left, bool right, int scrV, int scrH);
 
   private:
     void updateMouseButtonStatus(MouseButtonStatus* button, bool pushing, int x, int y);
