@@ -232,7 +232,7 @@ class VGSX
 
   private:
     void updateMousePosition(int x, int y);
-    void updateMouseButtonStatus(MouseButtonStatus* button, bool pushing, int x, int y);
+    void updateMouseButtonStatus(MouseButtonStatus* button, bool pushing, int x, int y, int clickX, int clickY);
 
     static struct tm* now()
     {

@@ -1723,8 +1723,8 @@ void VGSX::mouseUpdate(int x, int y, bool left, bool right)
     if (!skipPositionUpdate && !positionUpdated) {
         this->updateMousePosition(x, y);
     }
-    updateMouseButtonStatus(&this->ctx.mouse.left, left, x, y);
-    updateMouseButtonStatus(&this->ctx.mouse.right, right, x, y);
+    updateMouseButtonStatus(&this->ctx.mouse.left, left, x, y, this->ctx.mouse.cx, this->ctx.mouse.cy);
+    updateMouseButtonStatus(&this->ctx.mouse.right, right, x, y, x, y);
 }
 
 void VGSX::updateMousePosition(int x, int y)
@@ -1740,14 +1740,16 @@ void VGSX::updateMousePosition(int x, int y)
     }
 }
 
-void VGSX::updateMouseButtonStatus(MouseButtonStatus* button, bool pushing, int x, int y)
+void VGSX::updateMouseButtonStatus(MouseButtonStatus* button, bool pushing, int x, int y, int clickX, int clickY)
 {
     button->click = false;
     if (button->pushing) {
         if (pushing) {
             button->keepPushingFrames++;
         } else {
-            if (button->keepPushingFrames < 30 && 0 < x && 0 < y && x < 320 && y < 200) {
+            if (button->keepPushingFrames < 30 && 0 <= clickX && 0 <= clickY && clickX < 320 && clickY < 200) {
+                button->pushStartX = clickX;
+                button->pushStartY = clickY;
                 button->click = true;
             }
             button->keepPushingFrames = 0;
