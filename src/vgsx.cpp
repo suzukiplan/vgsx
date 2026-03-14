@@ -545,6 +545,7 @@ VGSX::VGSX()
     this->bootBios = true;
     this->ignoreReset = false;
     this->mouseEnabledFlag = false;
+    this->mouseScrollReverseVFlag = false;
     memset(&this->pendingRomData, 0, sizeof(pendingRomData));
     memset(&this->ctx, 0, sizeof(this->ctx));
     memset(&this->key, 0, sizeof(this->key));
@@ -1201,6 +1202,8 @@ uint32_t VGSX::inPort(uint32_t address)
         case VGS_ADDR_MOUSE_Y: return this->ctx.mouse.cy;
         case VGS_ADDR_MOUSE_PATTERN: return this->ctx.mouse.ptn;
         case VGS_ADDR_MOUSE_PALETTE: return this->ctx.mouse.pal;
+        case VGS_ADDR_MOUSE_SCROLL_V: return this->ctx.mouse.scrV;
+        case VGS_ADDR_MOUSE_SCROLL_H: return this->ctx.mouse.scrH;
         case VGS_ADDR_MOUSE_LEFT: return this->ctx.mouse.left.pushing ? 1 : 0;
         case VGS_ADDR_MOUSE_LEFT_CLICK: return this->ctx.mouse.left.click ? 1 : 0;
         case VGS_ADDR_MOUSE_LEFT_CLICK_X: return this->ctx.mouse.left.pushStartX;
@@ -1692,7 +1695,7 @@ void VGSX::mouseUpdate(int x, int y, bool left, bool right, int scrV, int scrH)
     this->ctx.mouse.py = this->ctx.mouse.cy;
     this->ctx.mouse.cx = x;
     this->ctx.mouse.cy = y;
-    this->ctx.mouse.scrV = scrV;
+    this->ctx.mouse.scrV = this->mouseScrollReverseVFlag ? -scrV : scrV;
     this->ctx.mouse.scrH = scrH;
     if (0 <= x && x < 320 && 0 <= y && y < 200) {
         if (0 < this->ctx.mouse.px && 0 < this->ctx.mouse.py) {

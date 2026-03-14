@@ -13,6 +13,19 @@
 #include "../common/stb_image_write.h"
 
 static pthread_mutex_t soundMutex = PTHREAD_MUTEX_INITIALIZER;
+static int pendingMouseScrollV = 0;
+static int pendingMouseScrollH = 0;
+
+static int clampMouseScroll(int value)
+{
+    if (value < -256) {
+        return -256;
+    }
+    if (255 < value) {
+        return 255;
+    }
+    return value;
+}
 
 static bool writePng(const char* path, const uint32_t* display, int width, int height)
 {
@@ -61,6 +74,7 @@ static void put_usage()
     puts("usage: vgsx [-i]");
     puts("            [-d]");
     puts("            [-m]");
+    puts("            [-rsv]");
     puts("            [-g /path/to/pattern.chr]");
     puts("            [-c /path/to/palette.bin]");
     puts("            [-b /path/to/bgm.vgm]");
@@ -127,7 +141,9 @@ static void updateMouse(SDL_Window* window, bool enableMouse)
         SDL_ShowCursor(shouldHideOsCursor ? SDL_DISABLE : SDL_ENABLE);
         osCursorHidden = shouldHideOsCursor;
     }
-    vgsx.mouseUpdate(x, y, left, right, 0, 0); // todo: スクロール値を設定
+    vgsx.mouseUpdate(x, y, left, right, pendingMouseScrollV, pendingMouseScrollH);
+    pendingMouseScrollV = 0;
+    pendingMouseScrollH = 0;
 }
 
 static void file_dump(const char* fname)
@@ -293,6 +309,11 @@ int main(int argc, char* argv[])
                 case 'm':
                     enableMouse = true;
                     break;
+                case 'r':
+                    if (0 == strcasecmp(argv[i], "-rsv")) {
+                        vgsx.mouseScrollReverseV(true);
+                    }
+                    break;
                 default:
                     put_usage();
                     return 1;
@@ -398,6 +419,15 @@ int main(int argc, char* argv[])
         while (!consoleMode && SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 quit = true;
+            } else if (event.type == SDL_MOUSEWHEEL) {
+                int scrollX = event.wheel.x;
+                int scrollY = event.wheel.y;
+                if (SDL_MOUSEWHEEL_FLIPPED == event.wheel.direction) {
+                    scrollX = -scrollX;
+                    scrollY = -scrollY;
+                }
+                pendingMouseScrollH = clampMouseScroll(pendingMouseScrollH + scrollX);
+                pendingMouseScrollV = clampMouseScroll(pendingMouseScrollV + scrollY);
             } else if (event.type == SDL_KEYDOWN) {
                 switch (event.key.keysym.sym) {
                     case SDLK_UP: vgsx.key.up = 1; break;

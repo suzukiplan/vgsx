@@ -217,6 +217,7 @@ class VGSX
         }
     }
 
+    inline void mouseScrollReverseV(bool flag) { this->mouseScrollReverseVFlag = flag; }
     inline void mouseReset(void) { memset(&this->ctx.mouse, 0, sizeof(this->ctx.mouse)); }
     inline void mouseEnabled(void) { this->mouseEnabledFlag = true; }
     inline void mouseDisabled(void) { this->mouseEnabledFlag = false; }
@@ -247,6 +248,7 @@ class VGSX
     std::function<uint32_t(uint32_t port)> inputCallback;
     std::function<void(uint32_t port, uint32_t value)> outputCallback;
     bool mouseEnabledFlag;
+    bool mouseScrollReverseVFlag;
 
     bool ignoreReset;
     struct PendingRomData {
