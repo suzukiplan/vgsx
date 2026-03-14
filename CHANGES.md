@@ -1,5 +1,15 @@
 # Changes
 
+## Version 1.2.0 **(Disruptive)**
+
+- Moved mouse enable/disable control from the application layer to the VGS-X core configuration **(Disruptive)**
+  - Core: Removed the mouse enable/disable I/O
+  - CRT: Removed `vgs_mouse_enabled`
+- Added APIs for retrieving mouse scroll input
+  - Core: Added I/O for mouse scroll input
+  - CRT: Added `vgs_mouse_scroll_vertical` and `vgs_mouse_scroll_horizontal`
+  - Example: Added `example/09_mouse_scroll`
+
 ## Version 1.1.0
 
 - Core: Added Mouse I/O and mouse cursor control.

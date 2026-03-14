@@ -753,13 +753,14 @@ Note that all addresses and values for I/O instructions must be specified as 32-
 | 0xE0402C |  o  |  -  | [Local: Hour](#0xe040xxin---calendar)|
 | 0xE04030 |  o  |  -  | [Local: Minute](#0xe040xxin---calendar)|
 | 0xE04034 |  o  |  -  | [Local: Second](#0xe040xxin---calendar)|
-| 0xE05000 |  o  |  o  | [Mouse: Enabled](#0xe050xxio---mouse) |
 | 0xE05004 |  o  |  o  | [Mouse: Hidden](#0xe050xxio---mouse) |
 | 0xE05008 |  o  |  -  | [Mouse: Moving](#0xe050xxio---mouse) |
 | 0xE0500C |  o  |  -  | [Mouse: X](#0xe050xxio---mouse) |
 | 0xE05010 |  o  |  -  | [Mouse: Y](#0xe050xxio---mouse) |
 | 0xE05014 |  o  |  o  | [Mouse: Cursor Pattern](#0xe050xxio---mouse) |
 | 0xE05018 |  o  |  o  | [Mouse: Cursor Palette](#0xe050xxio---mouse) |
+| 0xE0501C |  o  |  -  | [Mouse: Scroll (Vertical)](#0xe050xxio---mouse) |
+| 0xE05020 |  o  |  -  | [Mouse: Scroll (Horizontal)](#0xe050xxio---mouse) |
 | 0xE05100 |  o  |  -  | [Mouse: Left Button](#0xe050xxio---mouse) |
 | 0xE05104 |  o  |  -  | [Mouse: Left Click](#0xe050xxio---mouse) |
 | 0xE05108 |  o  |  -  | [Mouse: Left Click X](#0xe050xxio---mouse) |
@@ -1175,6 +1176,8 @@ The mouse interface exposes the current pointer state in screen coordinates (`32
 | 0xE05010 | Y | - | Current mouse Y coordinate |
 | 0xE05014 | Cursor Pattern | Cursor Pattern | Base character pattern index of the cursor |
 | 0xE05018 | Cursor Palette | Cursor Palette | Palette index of the cursor |
+| 0xE0501C | -256 to 255 | - | Vertical scroll |
+| 0xE05020 | -256 to 255 | - | Horizontal scroll |
 | 0xE05100 | Left Button | - | Left button pushing state |
 | 0xE05104 | Left Click | - | Left click detected during the current frame |
 | 0xE05108 | Left Click X | - | X coordinate where the left click started |
@@ -1186,6 +1189,7 @@ The mouse interface exposes the current pointer state in screen coordinates (`32
 
 Remarks:
 
+- To use the mouse, it must be enabled on the VGS-X system side.
 - When the pointer is outside the visible screen, X and Y return `-1`.
 - `Moving`, `Left Click`, and `Right Click` are frame-based states.
 - The cursor pattern register specifies the base pattern number. A 16x16 cursor consumes four consecutive character patterns.
