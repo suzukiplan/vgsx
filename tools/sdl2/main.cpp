@@ -77,10 +77,15 @@ static void audioCallback(void* userdata, Uint8* stream, int len)
     pthread_mutex_unlock(&soundMutex);
 }
 
-static void applyMouseOption(bool enableMouse)
+static void applyMouseOption(bool enableMouse, bool enableMouseDelay)
 {
     if (enableMouse) {
         vgsx.mouseEnabled();
+        if (enableMouseDelay) {
+            vgsx.mouseEnableCoordinateDelayDetection();
+        } else {
+            vgsx.mouseDisableCoordinateDelayDetection();
+        }
     } else {
         vgsx.mouseDisabled();
     }
@@ -190,6 +195,7 @@ int main(int argc, char* argv[])
     bool isFirstOption = true;
     bool print_dump = false;
     bool enableMouse = false;
+    bool enableMouseDelay = false;
     vgsx.disableBootBios();
     for (int i = 1; i < argc; i++) {
         if ('-' == argv[i][0]) {
@@ -293,6 +299,9 @@ int main(int argc, char* argv[])
                 case 'm':
                     enableMouse = true;
                     break;
+                case 'y':
+                    enableMouseDelay = true;
+                    break;
                 default:
                     put_usage();
                     return 1;
@@ -391,7 +400,7 @@ int main(int argc, char* argv[])
         SDL_PauseAudioDevice(audioDeviceId, 0);
     }
     vgsx.reset();
-    applyMouseOption(enableMouse);
+    applyMouseOption(enableMouse, enableMouseDelay);
     while (!quit && !vgsx.isExit()) {
         loopCount++;
         auto start = std::chrono::system_clock::now();

@@ -545,6 +545,7 @@ VGSX::VGSX()
     this->bootBios = true;
     this->ignoreReset = false;
     this->mouseEnabledFlag = false;
+    this->mouseCoordinateDelayDetectionEnabled = false;
     memset(&this->pendingRomData, 0, sizeof(pendingRomData));
     memset(&this->ctx, 0, sizeof(this->ctx));
     memset(&this->key, 0, sizeof(this->key));
@@ -1685,22 +1686,58 @@ void VGSX::subscribeOutput(std::function<void(uint32_t port, uint32_t value)> ca
 
 void VGSX::mouseUpdate(int x, int y, bool left, bool right)
 {
+    static constexpr uint32_t MOUSE_COORDINATE_DELAY_FRAMES = 30;
     if (!this->mouseEnabledFlag) {
         return;
     }
+    this->ctx.mouse.moved = false;
+    bool leftPressedThisFrame = !this->ctx.mouse.left.pushing && left;
+    bool leftReleasedThisFrame = this->ctx.mouse.left.pushing && !left;
+    bool positionUpdated = false;
+    bool skipPositionUpdate = false;
+
+    if (this->mouseCoordinateDelayDetectionEnabled) {
+        if (leftPressedThisFrame) {
+            this->ctx.mouse.leftDelayActive = true;
+            this->ctx.mouse.leftDelayFrames = MOUSE_COORDINATE_DELAY_FRAMES - 1;
+            this->ctx.mouse.delayedX = x;
+            this->ctx.mouse.delayedY = y;
+            skipPositionUpdate = true;
+        } else if (this->ctx.mouse.leftDelayActive) {
+            this->ctx.mouse.delayedX = x;
+            this->ctx.mouse.delayedY = y;
+            if (leftReleasedThisFrame) {
+                this->updateMousePosition(this->ctx.mouse.delayedX, this->ctx.mouse.delayedY);
+                this->ctx.mouse.leftDelayActive = false;
+                this->ctx.mouse.leftDelayFrames = 0;
+                positionUpdated = true;
+            } else if (0 < this->ctx.mouse.leftDelayFrames) {
+                this->ctx.mouse.leftDelayFrames--;
+                skipPositionUpdate = true;
+            } else {
+                this->ctx.mouse.leftDelayActive = false;
+            }
+        }
+    }
+
+    if (!skipPositionUpdate && !positionUpdated) {
+        this->updateMousePosition(x, y);
+    }
+    updateMouseButtonStatus(&this->ctx.mouse.left, left, x, y);
+    updateMouseButtonStatus(&this->ctx.mouse.right, right, x, y);
+}
+
+void VGSX::updateMousePosition(int x, int y)
+{
     this->ctx.mouse.px = this->ctx.mouse.cx;
     this->ctx.mouse.py = this->ctx.mouse.cy;
     this->ctx.mouse.cx = x;
     this->ctx.mouse.cy = y;
-    if (0 <= x && x < 320 && 0 <= y && y < 200) {
-        if (0 < this->ctx.mouse.px && 0 < this->ctx.mouse.py) {
-            this->ctx.mouse.moved = this->ctx.mouse.px != this->ctx.mouse.cx || this->ctx.mouse.py != this->ctx.mouse.cy;
-        }
+    if (0 <= x && x < VDP_WIDTH && 0 <= y && y < VDP_HEIGHT) {
+        this->ctx.mouse.moved = this->ctx.mouse.px != this->ctx.mouse.cx || this->ctx.mouse.py != this->ctx.mouse.cy;
     } else {
-        this->ctx.mouse.moved = false; // The outside of the screen (= Not Moved)
+        this->ctx.mouse.moved = false;
     }
-    updateMouseButtonStatus(&this->ctx.mouse.left, left, x, y);
-    updateMouseButtonStatus(&this->ctx.mouse.right, right, x, y);
 }
 
 void VGSX::updateMouseButtonStatus(MouseButtonStatus* button, bool pushing, int x, int y)

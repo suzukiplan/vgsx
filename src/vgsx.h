@@ -109,16 +109,20 @@ class VGSX
     } MouseButtonStatus;
 
     typedef struct {
-        bool hidden;             // hidden flag
-        bool moved;              // moved (current frame)
-        uint32_t ptn;            // pattern number
-        uint32_t pal;            // palette number
-        int32_t px;              // X (previous frame)
-        int32_t py;              // Y (previous frame)
-        int32_t cx;              // X (current frame)
-        int32_t cy;              // Y (current frame)
-        MouseButtonStatus left;  // left button
-        MouseButtonStatus right; // right button
+        bool hidden;              // hidden flag
+        bool moved;               // moved (current frame)
+        bool leftDelayActive;     // left button coordinate delay active
+        uint32_t ptn;             // pattern number
+        uint32_t pal;             // palette number
+        uint32_t leftDelayFrames; // remaining left button coordinate delay frames
+        int32_t px;               // X (previous frame)
+        int32_t py;               // Y (previous frame)
+        int32_t cx;               // X (current frame)
+        int32_t cy;               // Y (current frame)
+        int32_t delayedX;         // delayed X
+        int32_t delayedY;         // delayed Y
+        MouseButtonStatus left;   // left button
+        MouseButtonStatus right;  // right button
     } MouseInfo;
 
     struct Context {
@@ -222,9 +226,12 @@ class VGSX
     inline void mouseHidden(void) { this->ctx.mouse.hidden = true; }
     inline void mouseSetPattern(uint32_t ptn) { this->ctx.mouse.ptn = ptn & 0xFFFF; }
     inline void mouseSetPalette(uint32_t pal) { this->ctx.mouse.pal = pal & 0x0F; }
+    inline void mouseEnableCoordinateDelayDetection(void) { this->mouseCoordinateDelayDetectionEnabled = true; }
+    inline void mouseDisableCoordinateDelayDetection(void) { this->mouseCoordinateDelayDetectionEnabled = false; }
     void mouseUpdate(int x, int y, bool left, bool right);
 
   private:
+    void updateMousePosition(int x, int y);
     void updateMouseButtonStatus(MouseButtonStatus* button, bool pushing, int x, int y);
 
     static struct tm* now()
@@ -245,6 +252,7 @@ class VGSX
     std::function<uint32_t(uint32_t port)> inputCallback;
     std::function<void(uint32_t port, uint32_t value)> outputCallback;
     bool mouseEnabledFlag;
+    bool mouseCoordinateDelayDetectionEnabled;
 
     bool ignoreReset;
     struct PendingRomData {
