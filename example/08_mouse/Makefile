@@ -8,7 +8,7 @@ clean:
 	rm -f program.rom program.elf font.chr mouse.chr palette.bin
 
 execute: program.rom
-	${VGSX_ROOT}/tools/sdl2/vgsx -m -y program.rom
+	${VGSX_ROOT}/tools/sdl2/vgsx -m program.rom
 
 program.rom: program.elf font.chr mouse.chr palette.bin
 	${VGSX_ROOT}/tools/makerom/makerom \

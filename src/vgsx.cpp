@@ -1691,51 +1691,31 @@ void VGSX::mouseUpdate(int x, int y, bool left, bool right)
         return;
     }
     this->ctx.mouse.moved = false;
-    bool leftPressedThisFrame = !this->ctx.mouse.leftPhysicalPushing && left;
-    bool leftReleasedThisFrame = this->ctx.mouse.leftPhysicalPushing && !left;
+    bool leftPressedThisFrame = !this->ctx.mouse.left.pushing && left;
+    bool leftReleasedThisFrame = this->ctx.mouse.left.pushing && !left;
     bool positionUpdated = false;
     bool skipPositionUpdate = false;
-    bool leftHandled = false;
-    this->ctx.mouse.left.click = false;
 
     if (this->mouseCoordinateDelayDetectionEnabled) {
         if (leftPressedThisFrame) {
             this->ctx.mouse.leftDelayActive = true;
-            this->ctx.mouse.leftDelayFrames = 1;
+            this->ctx.mouse.leftDelayFrames = MOUSE_COORDINATE_DELAY_FRAMES - 1;
             this->ctx.mouse.delayedX = x;
             this->ctx.mouse.delayedY = y;
-            this->ctx.mouse.left.pushing = false;
-            this->ctx.mouse.left.keepPushingFrames = 0;
             skipPositionUpdate = true;
-            leftHandled = true;
         } else if (this->ctx.mouse.leftDelayActive) {
             this->ctx.mouse.delayedX = x;
             this->ctx.mouse.delayedY = y;
             if (leftReleasedThisFrame) {
                 this->updateMousePosition(this->ctx.mouse.delayedX, this->ctx.mouse.delayedY);
-                if (0 <= this->ctx.mouse.cx && this->ctx.mouse.cx < VDP_WIDTH && 0 <= this->ctx.mouse.cy && this->ctx.mouse.cy < VDP_HEIGHT) {
-                    this->ctx.mouse.left.pushStartX = this->ctx.mouse.cx;
-                    this->ctx.mouse.left.pushStartY = this->ctx.mouse.cy;
-                    this->ctx.mouse.left.click = true;
-                }
-                this->ctx.mouse.left.pushing = false;
-                this->ctx.mouse.left.keepPushingFrames = 0;
                 this->ctx.mouse.leftDelayActive = false;
                 this->ctx.mouse.leftDelayFrames = 0;
                 positionUpdated = true;
-                leftHandled = true;
-            } else if (this->ctx.mouse.leftDelayFrames < MOUSE_COORDINATE_DELAY_FRAMES) {
-                this->ctx.mouse.leftDelayFrames++;
-                this->ctx.mouse.left.pushing = false;
-                this->ctx.mouse.left.keepPushingFrames = 0;
+            } else if (0 < this->ctx.mouse.leftDelayFrames) {
+                this->ctx.mouse.leftDelayFrames--;
                 skipPositionUpdate = true;
-                leftHandled = true;
             } else {
                 this->ctx.mouse.leftDelayActive = false;
-                this->ctx.mouse.left.pushing = true;
-                this->ctx.mouse.left.keepPushingFrames = MOUSE_COORDINATE_DELAY_FRAMES;
-                this->ctx.mouse.left.pushStartX = x;
-                this->ctx.mouse.left.pushStartY = y;
             }
         }
     }
@@ -1743,11 +1723,8 @@ void VGSX::mouseUpdate(int x, int y, bool left, bool right)
     if (!skipPositionUpdate && !positionUpdated) {
         this->updateMousePosition(x, y);
     }
-    if (!leftHandled) {
-        updateMouseButtonStatus(&this->ctx.mouse.left, left, x, y, this->ctx.mouse.cx, this->ctx.mouse.cy);
-    }
+    updateMouseButtonStatus(&this->ctx.mouse.left, left, x, y, this->ctx.mouse.cx, this->ctx.mouse.cy);
     updateMouseButtonStatus(&this->ctx.mouse.right, right, x, y, x, y);
-    this->ctx.mouse.leftPhysicalPushing = left;
 }
 
 void VGSX::updateMousePosition(int x, int y)

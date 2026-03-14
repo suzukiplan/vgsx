@@ -112,7 +112,6 @@ class VGSX
         bool hidden;              // hidden flag
         bool moved;               // moved (current frame)
         bool leftDelayActive;     // left button coordinate delay active
-        bool leftPhysicalPushing; // physical left button pushing
         uint32_t ptn;             // pattern number
         uint32_t pal;             // palette number
         uint32_t leftDelayFrames; // remaining left button coordinate delay frames
