@@ -109,7 +109,6 @@ class VGSX
     } MouseButtonStatus;
 
     typedef struct {
-        bool enabled;            // enabled flag
         bool hidden;             // hidden flag
         bool moved;              // moved (current frame)
         uint32_t ptn;            // pattern number
@@ -118,6 +117,8 @@ class VGSX
         int32_t py;              // Y (previous frame)
         int32_t cx;              // X (current frame)
         int32_t cy;              // Y (current frame)
+        int32_t scrV;            // Scroll (vertical: -256 ~ 255)
+        int32_t scrH;            // Scroll (horizontal: -256 ~ 255)
         MouseButtonStatus left;  // left button
         MouseButtonStatus right; // right button
     } MouseInfo;
@@ -216,14 +217,15 @@ class VGSX
         }
     }
 
+    inline void mouseScrollReverseV(bool flag) { this->mouseScrollReverseVFlag = flag; }
     inline void mouseReset(void) { memset(&this->ctx.mouse, 0, sizeof(this->ctx.mouse)); }
-    inline void mouseEnabled(void) { this->ctx.mouse.enabled = true; }
-    inline void mouseDisabled(void) { this->ctx.mouse.enabled = false; }
+    inline void mouseEnabled(void) { this->mouseEnabledFlag = true; }
+    inline void mouseDisabled(void) { this->mouseEnabledFlag = false; }
     inline void mouseShow(void) { this->ctx.mouse.hidden = false; }
     inline void mouseHidden(void) { this->ctx.mouse.hidden = true; }
     inline void mouseSetPattern(uint32_t ptn) { this->ctx.mouse.ptn = ptn & 0xFFFF; }
     inline void mouseSetPalette(uint32_t pal) { this->ctx.mouse.pal = pal & 0x0F; }
-    void mouseUpdate(int x, int y, bool left, bool right);
+    void mouseUpdate(int x, int y, bool left, bool right, int scrV, int scrH);
 
   private:
     void updateMouseButtonStatus(MouseButtonStatus* button, bool pushing, int x, int y);
@@ -245,6 +247,8 @@ class VGSX
     bool subscribedOutput;
     std::function<uint32_t(uint32_t port)> inputCallback;
     std::function<void(uint32_t port, uint32_t value)> outputCallback;
+    bool mouseEnabledFlag;
+    bool mouseScrollReverseVFlag;
 
     bool ignoreReset;
     struct PendingRomData {

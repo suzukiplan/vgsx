@@ -81,7 +81,6 @@ int main(int argc, char* argv[])
     vgs_pfont_init(FONT_PATTERN_INDEX);
     vgs_mouse_setup(MOUSE_PATTERN_INDEX, 0);
     vgs_mouse_hidden(OFF);
-    vgs_mouse_enabled(ON);
 
     draw_background();
     draw_message();

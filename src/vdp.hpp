@@ -460,8 +460,8 @@ class VDP
         moam.scale = 50;
         moam.size = 1;
         moam.visible = 1;
-        moam.x = x;
-        moam.y = y;
+        moam.x = x - 4;
+        moam.y = y - 4;
         renderSprite(&moam);
     }
 

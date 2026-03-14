@@ -16,8 +16,14 @@ int _pnum = 0;
 void vsync(void)
 {
     static uint32_t skip;
+    if (vgs_mouse_moving()) {
+        vgs_mouse_hidden(OFF);
+    }
+    if (vgs_key_code() || vgs_key_start()) {
+        vgs_mouse_hidden(ON);
+    }
     if (0 == skip) {
-        if (vgs_key_start()) {
+        if (vgs_key_start() || vgs_mouse_left_clicked(NULL, NULL)) {
             skip++;
         }
     }
@@ -149,6 +155,8 @@ int main(int argc, char* argv[])
     vgs_sprite_priority(1);
     vgs_pfont_init(0);
     vgs_cls_bg(0, 1);
+    vgs_mouse_setup(569, 2);
+    vgs_mouse_hidden(ON);
 
     vgs_sprite(1, ON, (vgs_draw_width() - 168) / 2, (vgs_draw_height() - 168) / 2, 168 / 8 - 1, 1, 128);
     vgs_oam(1)->scale = 1;

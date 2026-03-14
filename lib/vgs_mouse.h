@@ -30,10 +30,10 @@ extern "C" {
 #endif
 
 /**
- * @brief Eanbled/Disabled the mouse
- * @param on ON: enabled, OFF: disabled
+ * @brief Check Eanbled/Disabled the mouse
+ * @return ON: enabled, OFF: disabled
  */
-static inline void vgs_mouse_enabled(int on) { VGS_IO_MOUSE_ENABLED = on; }
+static inline int vgs_mouse_enabled(void) { return VGS_IN_MOUSE_ENABLED ? ON : OFF; }
 
 /**
  * @brief Setup the mouse cursor pattern and palette
@@ -114,6 +114,24 @@ static inline int vgs_mouse_right_clicked(int* x, int* y)
     } else {
         return OFF;
     }
+}
+
+/**
+ * @brief Get the mouse wheelie (vertical scroll)
+ * @return -256 ~ 255
+ */
+static inline int vgs_mouse_scroll_vertical(void)
+{
+    return VGS_IN_MOUSE_SCROLL_V;
+}
+
+/**
+ * @brief Get the mouse wheelie (horizontal scroll)
+ * @return -256 ~ 255
+ */
+static inline int vgs_mouse_scroll_horizontal(void)
+{
+    return VGS_IN_MOUSE_SCROLL_H;
 }
 
 #ifdef __cplusplus
