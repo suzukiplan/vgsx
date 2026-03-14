@@ -10,6 +10,10 @@
 #define MOUSE_PATTERN_INDEX FONT_PATTERN_COUNT
 #define COORD_WIDTH 120
 #define COORD_HEIGHT 14
+#define PUSHING_X 8
+#define PUSHING_Y 184
+#define PUSHING_WIDTH 120
+#define PUSHING_HEIGHT 14
 
 static char message[64];
 static char coord[32];
@@ -75,6 +79,14 @@ static void draw_coord(int x, int y)
     vgs_pfont_print(0, textX, 8, 0, FONT_PATTERN_INDEX, coord);
 }
 
+static void draw_left_pushing(int pushing)
+{
+    vgs_draw_boxf(0, PUSHING_X, PUSHING_Y, PUSHING_WIDTH, PUSHING_HEIGHT, 0x081018);
+    if (pushing) {
+        vgs_pfont_print(0, PUSHING_X, PUSHING_Y, 0, FONT_PATTERN_INDEX, "Left pushing");
+    }
+}
+
 int main(int argc, char* argv[])
 {
     vgs_draw_mode(0, ON);
@@ -93,6 +105,7 @@ int main(int argc, char* argv[])
         x = vgs_mouse_x();
         y = vgs_mouse_y();
         draw_coord(x, y);
+        draw_left_pushing(vgs_mouse_left());
         vgs_mouse_hidden(0 <= x && x < vgs_draw_width() && 0 <= y && y < vgs_draw_height() ? OFF : ON);
 
         if (vgs_mouse_left_clicked(&x, &y)) {
