@@ -1,5 +1,10 @@
 # Changes
 
+## Version 1.3.0
+
+- Core: Added I/O for YM2612 input
+- Example: Added `example/10_ym2612`
+
 ## Version 1.2.0 **(Disruptive)**
 
 - Moved mouse enable/disable control from the application layer to the VGS-X core configuration **(Disruptive)**

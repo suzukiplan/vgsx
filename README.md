@@ -769,6 +769,18 @@ Note that all addresses and values for I/O instructions must be specified as 32-
 | 0xE05204 |  o  |  -  | [Mouse: Right Click](#0xe050xxio---mouse) |
 | 0xE05208 |  o  |  -  | [Mouse: Right Click X](#0xe050xxio---mouse) |
 | 0xE0520C |  o  |  -  | [Mouse: Right Click Y](#0xe050xxio---mouse) |
+| 0xE06000 |  o  |  -  | [YM2612: Channel 0 Frequency](#0xe06000-0xe061fcin---ym2612) |
+| 0xE06004 |  o  |  -  | [YM2612: Channel 1 Frequency](#0xe06000-0xe061fcin---ym2612) |
+| 0xE06008 |  o  |  -  | [YM2612: Channel 2 Frequency](#0xe06000-0xe061fcin---ym2612) |
+| 0xE0600C |  o  |  -  | [YM2612: Channel 3 Frequency](#0xe06000-0xe061fcin---ym2612) |
+| 0xE06010 |  o  |  -  | [YM2612: Channel 4 Frequency](#0xe06000-0xe061fcin---ym2612) |
+| 0xE06014 |  o  |  -  | [YM2612: Channel 5 Frequency](#0xe06000-0xe061fcin---ym2612) |
+| 0xE06100 |  o  |  -  | [YM2612: Channel 0 Volume](#0xe06000-0xe061fcin---ym2612) |
+| 0xE06104 |  o  |  -  | [YM2612: Channel 1 Volume](#0xe06000-0xe061fcin---ym2612) |
+| 0xE06108 |  o  |  -  | [YM2612: Channel 2 Volume](#0xe06000-0xe061fcin---ym2612) |
+| 0xE0610C |  o  |  -  | [YM2612: Channel 3 Volume](#0xe06000-0xe061fcin---ym2612) |
+| 0xE06110 |  o  |  -  | [YM2612: Channel 4 Volume](#0xe06000-0xe061fcin---ym2612) |
+| 0xE06114 |  o  |  -  | [YM2612: Channel 5 Volume](#0xe06000-0xe061fcin---ym2612) |
 | 0xE7FFF4 |  o  |  -  | [Abort](#0xe7fff4out---abort) |
 | 0xE7FFF8 |  -  |  o  | [Reset](#0xe7fff8out---reset) |
 | 0xE7FFFC |  -  |  o  | [Exit](#0xe7fffcout---exit) |
@@ -1206,6 +1218,19 @@ if (vgs_mouse_left_clicked(&x, &y)) {
     // Handle click
 }
 ```
+
+### 0xE06000-0xE061FC[in] - YM2612
+
+You can read the current YM2612 playback state for each channel.
+
+- `0xE06000` to `0xE06014`: Channel frequency values for channels 0 to 5
+- `0xE06100` to `0xE06114`: Channel volume values for channels 0 to 5
+
+Remarks:
+
+- These registers are read-only.
+- Frequency values are approximate raw YM2612 `block/fnum` values.
+- Volume values are approximate current output amplitudes for each channel.
 
 ### 0xE7FFF4[out] - Abort
 

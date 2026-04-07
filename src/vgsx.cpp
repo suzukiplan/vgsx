@@ -1212,6 +1212,18 @@ uint32_t VGSX::inPort(uint32_t address)
         case VGS_ADDR_MOUSE_RIGHT_CLICK: return this->ctx.mouse.right.click ? 1 : 0;
         case VGS_ADDR_MOUSE_RIGHT_CLICK_X: return this->ctx.mouse.right.pushStartX;
         case VGS_ADDR_MOUSE_RIGHT_CLICK_Y: return this->ctx.mouse.right.pushStartY;
+        case VGS_ADDR_YM2612_FREQ0: return ((VgmDriver*)this->vgmdrv)->getFrequency(ChipType::YM2612, 0);
+        case VGS_ADDR_YM2612_FREQ1: return ((VgmDriver*)this->vgmdrv)->getFrequency(ChipType::YM2612, 1);
+        case VGS_ADDR_YM2612_FREQ2: return ((VgmDriver*)this->vgmdrv)->getFrequency(ChipType::YM2612, 2);
+        case VGS_ADDR_YM2612_FREQ3: return ((VgmDriver*)this->vgmdrv)->getFrequency(ChipType::YM2612, 3);
+        case VGS_ADDR_YM2612_FREQ4: return ((VgmDriver*)this->vgmdrv)->getFrequency(ChipType::YM2612, 4);
+        case VGS_ADDR_YM2612_FREQ5: return ((VgmDriver*)this->vgmdrv)->getFrequency(ChipType::YM2612, 5);
+        case VGS_ADDR_YM2612_VOL0: return ((VgmDriver*)this->vgmdrv)->getChannelVolume(ChipType::YM2612, 0);
+        case VGS_ADDR_YM2612_VOL1: return ((VgmDriver*)this->vgmdrv)->getChannelVolume(ChipType::YM2612, 1);
+        case VGS_ADDR_YM2612_VOL2: return ((VgmDriver*)this->vgmdrv)->getChannelVolume(ChipType::YM2612, 2);
+        case VGS_ADDR_YM2612_VOL3: return ((VgmDriver*)this->vgmdrv)->getChannelVolume(ChipType::YM2612, 3);
+        case VGS_ADDR_YM2612_VOL4: return ((VgmDriver*)this->vgmdrv)->getChannelVolume(ChipType::YM2612, 4);
+        case VGS_ADDR_YM2612_VOL5: return ((VgmDriver*)this->vgmdrv)->getChannelVolume(ChipType::YM2612, 5);
     }
     if (VGS_ADDR_USER <= address) {
         if (!this->subscribedInput) {
