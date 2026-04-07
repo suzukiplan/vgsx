@@ -36,6 +36,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <string>
+#include <array>
 #include <map>
 #include <vector>
 #include <iostream>
@@ -105,8 +106,11 @@ static ChipType getChipType(std::string chipName)
 class VgmDriver : public ymfm::ymfm_interface
 {
   private:
+    static constexpr int YM2612ChannelCount = 6;
     ymfm::ym2612 ym2612;
     std::vector<std::pair<uint32_t, uint8_t>> ym2612_queue;
+    std::array<uint8_t, YM2612ChannelCount> ym2612_frequency_low;
+    std::array<uint8_t, YM2612ChannelCount> ym2612_frequency_high;
     bool subscribedLog;
     std::function<void(bool isError, const char* msg)> logCallback;
 
@@ -152,6 +156,8 @@ class VgmDriver : public ymfm::ymfm_interface
         this->clocks.clear();
         this->ym2612.reset();
         this->ym2612_queue.clear();
+        this->ym2612_frequency_low.fill(0);
+        this->ym2612_frequency_high.fill(0);
     }
 
     bool load(const uint8_t* data, size_t size)
@@ -237,11 +243,13 @@ class VgmDriver : public ymfm::ymfm_interface
                 switch (it->first) {
                     case ChipType::YM2612: {
                         uint32_t addr1 = 0xffff, addr2 = 0xffff;
+                        uint32_t reg = 0;
                         uint8_t data1 = 0, data2 = 0;
 
                         // see if there is data to be written; if so, extract it and dequeue
                         if (!ym2612_queue.empty()) {
                             auto front = ym2612_queue.front();
+                            reg = front.first;
                             addr1 = 0 + 2 * ((front.first >> 8) & 3);
                             data1 = front.first & 0xff;
                             addr2 = addr1 + 1;
@@ -253,6 +261,7 @@ class VgmDriver : public ymfm::ymfm_interface
                         if (addr1 != 0xffff) {
                             ym2612.write(addr1, data1);
                             ym2612.write(addr2, data2);
+                            this->updateYm2612Frequency(reg, data2);
                         }
 
                         ymfm::ym2612::output_data out;
@@ -279,7 +288,38 @@ class VgmDriver : public ymfm::ymfm_interface
     inline bool isEnded() { return this->vgm.end; }
     inline void setEnded() { this->vgm.end = true; }
 
+    int getFrequency(ChipType type, int ch)
+    {
+        if (type != ChipType::YM2612 || ch < 0 || YM2612ChannelCount <= ch) {
+            return -1;
+        }
+        return ((this->ym2612_frequency_high[ch] & 0x3f) << 8) | this->ym2612_frequency_low[ch];
+    }
+    uint32_t getChannelVolume(ChipType type, int ch)
+    {
+        if (type != ChipType::YM2612 || ch < 0 || YM2612ChannelCount <= ch) {
+            return 0;
+        }
+        return this->ym2612.channel_volume(static_cast<uint32_t>(ch));
+    }
+
   private:
+    void updateYm2612Frequency(uint32_t reg, uint8_t data)
+    {
+        const int port = (reg >> 8) & 1;
+        const uint8_t addr = reg & 0xff;
+
+        if (0xa0 <= addr && addr <= 0xa2) {
+            const int ch = port * 3 + (addr - 0xa0);
+            this->ym2612_frequency_low[ch] = data;
+            return;
+        }
+        if (0xa4 <= addr && addr <= 0xa6) {
+            const int ch = port * 3 + (addr - 0xa4);
+            this->ym2612_frequency_high[ch] = data;
+        }
+    }
+
     void execute()
     {
         if (!vgm.data || vgm.end) {

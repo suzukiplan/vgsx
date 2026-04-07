@@ -53,6 +53,7 @@
 #include <algorithm>
 #include <array>
 #include <memory>
+#include <array>
 #include <string>
 #include <vector>
 
@@ -3034,6 +3035,7 @@ class ym2612
   public:
     using fm_engine = fm_engine_base<opna_registers>;
     static constexpr uint32_t OUTPUTS = fm_engine::OUTPUTS;
+    static constexpr uint32_t CHANNELS = fm_engine::CHANNELS;
     using output_data = fm_engine::output_data;
 
     // constructor
@@ -3068,6 +3070,10 @@ class ym2612
 
     // generate one sample of sound
     void generate(output_data* output, uint32_t numsamples = 1);
+    uint32_t channel_volume(uint32_t ch) const
+    {
+        return (ch < CHANNELS) ? m_channel_volume[ch] : 0;
+    }
 
   protected:
     // simulate the DAC discontinuity
@@ -3080,6 +3086,7 @@ class ym2612
     uint16_t m_address;   // address register
     uint16_t m_dac_data;  // 9-bit DAC data
     uint8_t m_dac_enable; // DAC enabled?
+    std::array<uint32_t, CHANNELS> m_channel_volume; // latest per-channel output magnitude
     fm_engine m_fm;       // core FM engine
 };
 
@@ -3504,8 +3511,10 @@ ym2612::ym2612(ymfm_interface& intf)
     : m_address(0),
       m_dac_data(0),
       m_dac_enable(0),
+      m_channel_volume(),
       m_fm(intf)
 {
+    m_channel_volume.fill(0);
 }
 
 //-------------------------------------------------
@@ -3516,6 +3525,7 @@ void ym2612::reset()
 {
     // reset the engines
     m_fm.reset();
+    m_channel_volume.fill(0);
 }
 
 //-------------------------------------------------
@@ -3685,16 +3695,25 @@ YMFM_HOT void ym2612::generate(output_data* output, uint32_t numsamples)
         for (int chan = 0; chan < last_fm_channel; chan++, chanmask <<= 1) {
             temp.clear();
             m_fm.output(temp, 5, 256, chanmask);
-            dst[0] += dac_discontinuity(temp.data[0]);
-            dst[1] += dac_discontinuity(temp.data[1]);
+            int32_t const left = dac_discontinuity(temp.data[0]);
+            int32_t const right = dac_discontinuity(temp.data[1]);
+            dst[0] += left;
+            dst[1] += right;
+            m_channel_volume[chan] = static_cast<uint32_t>((left < 0 ? -left : left) + (right < 0 ? -right : right));
+        }
+        for (uint32_t chan = last_fm_channel; chan < CHANNELS; chan++) {
+            m_channel_volume[chan] = 0;
         }
 
         // add in DAC
         if (YMFM_LIKELY(m_dac_enable)) {
             // DAC enabled: start with DAC value then add the first 5 channels only
             int32_t dacval = dac_discontinuity(int16_t(m_dac_data << 7) >> 7);
-            dst[0] += regs.ch_output_0(0x102) ? dacval : zero_discontinuity;
-            dst[1] += regs.ch_output_1(0x102) ? dacval : zero_discontinuity;
+            int32_t const left = regs.ch_output_0(0x102) ? dacval : zero_discontinuity;
+            int32_t const right = regs.ch_output_1(0x102) ? dacval : zero_discontinuity;
+            dst[0] += left;
+            dst[1] += right;
+            m_channel_volume[5] = static_cast<uint32_t>((left < 0 ? -left : left) + (right < 0 ? -right : right));
         }
 
         // output is technically multiplexed rather than mixed, but that requires
