@@ -42,6 +42,7 @@
 #include <iostream>
 #include <fstream>
 #include <functional>
+#include <cmath>
 #include "ymfm_opn2.hpp"
 
 // we use an int64_t as emulated time, as a 32.32 fixed point value
@@ -131,12 +132,20 @@ class VgmDriver : public ymfm::ymfm_interface
     emulated_time output_step;
     std::map<ChipType, uint32_t> clocks;
     int channels;
+    float postAmp;
+    bool dcCutEnabled;
+    float dcCutAlpha;
+    std::array<float, 2> dcCutLastInput;
+    std::array<float, 2> dcCutLastOutput;
 
   public:
     VgmDriver(int samples, int channels) : ym2612(*this)
     {
         this->output_step = 0x100000000ull / samples;
         this->channels = channels;
+        this->postAmp = 1.55f;
+        this->dcCutEnabled = true;
+        this->dcCutAlpha = 0.995f;
         this->reset();
     }
 
@@ -150,6 +159,33 @@ class VgmDriver : public ymfm::ymfm_interface
         this->logCallback = callback;
     }
 
+    void setYm2612ChipType(ymfm::ym2612::chip_type type)
+    {
+        this->ym2612.set_chip_type(type);
+    }
+
+    void setPostAmp(float value)
+    {
+        this->postAmp = value;
+    }
+
+    void setDcCutEnabled(bool enabled)
+    {
+        this->dcCutEnabled = enabled;
+        this->dcCutLastInput.fill(0.0f);
+        this->dcCutLastOutput.fill(0.0f);
+    }
+
+    void setDcCutAlpha(float alpha)
+    {
+        if (alpha < 0.0f) {
+            alpha = 0.0f;
+        } else if (alpha > 1.0f) {
+            alpha = 1.0f;
+        }
+        this->dcCutAlpha = alpha;
+    }
+
     void reset()
     {
         memset(&this->vgm, 0, sizeof(this->vgm));
@@ -158,6 +194,8 @@ class VgmDriver : public ymfm::ymfm_interface
         this->ym2612_queue.clear();
         this->ym2612_frequency_low.fill(0);
         this->ym2612_frequency_high.fill(0);
+        this->dcCutLastInput.fill(0.0f);
+        this->dcCutLastOutput.fill(0.0f);
     }
 
     bool load(const uint8_t* data, size_t size)
@@ -235,10 +273,7 @@ class VgmDriver : public ymfm::ymfm_interface
                 this->execute();
             }
             vgm.wait--;
-            buf[cursor] = 0;
-            if (2 <= this->channels) {
-                buf[cursor + 1] = 0;
-            }
+            int32_t mixed[2] = {0, 0};
             for (auto it = this->clocks.begin(); it != this->clocks.end(); it++) {
                 switch (it->first) {
                     case ChipType::YM2612: {
@@ -269,17 +304,22 @@ class VgmDriver : public ymfm::ymfm_interface
                             ym2612.generate(&out);
                         }
                         vgm.output_start += output_step;
-                        if (this->channels < 2) {
-                            buf[cursor++] += out.data[0]; // output left channel only (mono)
-                        } else {
-                            buf[cursor++] += out.data[0];
-                            buf[cursor++] += out.data[1];
-                        }
+                        mixed[0] += out.data[0];
+                        mixed[1] += out.data[1];
                         break;
                     }
                     case ChipType::Unsupported:
                         break;
                 }
+            }
+
+            int16_t left = this->postProcessSample(0, mixed[0]);
+            int16_t right = this->postProcessSample(1, mixed[1]);
+            if (this->channels < 2) {
+                buf[cursor++] = left;
+            } else {
+                buf[cursor++] = left;
+                buf[cursor++] = right;
             }
         }
     }
@@ -304,6 +344,22 @@ class VgmDriver : public ymfm::ymfm_interface
     }
 
   private:
+    int16_t postProcessSample(size_t channel, int32_t sample)
+    {
+        float value = static_cast<float>(sample) * this->postAmp;
+        if (this->dcCutEnabled) {
+            value = value - this->dcCutLastInput[channel] + (this->dcCutAlpha * this->dcCutLastOutput[channel]);
+            this->dcCutLastInput[channel] = static_cast<float>(sample) * this->postAmp;
+            this->dcCutLastOutput[channel] = value;
+        }
+        if (value < -32768.0f) {
+            value = -32768.0f;
+        } else if (value > 32767.0f) {
+            value = 32767.0f;
+        }
+        return static_cast<int16_t>(std::lround(value));
+    }
+
     void updateYm2612Frequency(uint32_t reg, uint8_t data)
     {
         const int port = (reg >> 8) & 1;

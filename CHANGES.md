@@ -1,5 +1,9 @@
 # Changes
 
+## Version 1.4.0
+
+- Core: Improved FM sound quality _(implemented post-amp and DC cut)_
+
 ## Version 1.3.0
 
 - Core: Added I/O for YM2612 input
