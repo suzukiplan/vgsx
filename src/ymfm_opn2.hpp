@@ -3033,6 +3033,12 @@ using opna_registers = opn_registers_base<true>;
 class ym2612
 {
   public:
+    enum class chip_type : uint8_t {
+        ym2612,
+        ym3438,
+        ymf276
+    };
+
     using fm_engine = fm_engine_base<opna_registers>;
     static constexpr uint32_t OUTPUTS = fm_engine::OUTPUTS;
     static constexpr uint32_t CHANNELS = fm_engine::CHANNELS;
@@ -3074,6 +3080,14 @@ class ym2612
     {
         return (ch < CHANNELS) ? m_channel_volume[ch] : 0;
     }
+    void set_chip_type(chip_type type)
+    {
+        m_chip_type = type;
+    }
+    chip_type get_chip_type() const
+    {
+        return m_chip_type;
+    }
 
   protected:
     // simulate the DAC discontinuity
@@ -3086,6 +3100,7 @@ class ym2612
     uint16_t m_address;   // address register
     uint16_t m_dac_data;  // 9-bit DAC data
     uint8_t m_dac_enable; // DAC enabled?
+    chip_type m_chip_type; // OPN2 output model
     std::array<uint32_t, CHANNELS> m_channel_volume; // latest per-channel output magnitude
     fm_engine m_fm;       // core FM engine
 };
@@ -3511,6 +3526,7 @@ ym2612::ym2612(ymfm_interface& intf)
     : m_address(0),
       m_dac_data(0),
       m_dac_enable(0),
+      m_chip_type(chip_type::ym2612),
       m_channel_volume(),
       m_fm(intf)
 {
@@ -3537,6 +3553,14 @@ void ym2612::save_restore(ymfm_saved_state& state)
     state.save_restore(m_address);
     state.save_restore(m_dac_data);
     state.save_restore(m_dac_enable);
+    if (state.saving()) {
+        uint8_t chip = static_cast<uint8_t>(m_chip_type);
+        state.save_restore(chip);
+    } else {
+        uint8_t chip = 0;
+        state.save_restore(chip);
+        m_chip_type = static_cast<chip_type>(chip <= static_cast<uint8_t>(chip_type::ymf276) ? chip : 0);
+    }
     m_fm.save_restore(state);
 }
 
@@ -3694,9 +3718,13 @@ YMFM_HOT void ym2612::generate(output_data* output, uint32_t numsamples)
         uint32_t chanmask = 1;
         for (int chan = 0; chan < last_fm_channel; chan++, chanmask <<= 1) {
             temp.clear();
-            m_fm.output(temp, 5, 256, chanmask);
-            int32_t const left = dac_discontinuity(temp.data[0]);
-            int32_t const right = dac_discontinuity(temp.data[1]);
+            m_fm.output(temp, m_chip_type == chip_type::ymf276 ? 0 : 5, m_chip_type == chip_type::ymf276 ? 8191 : 256, chanmask);
+            int32_t left = temp.data[0];
+            int32_t right = temp.data[1];
+            if (m_chip_type == chip_type::ym2612) {
+                left = dac_discontinuity(left);
+                right = dac_discontinuity(right);
+            }
             dst[0] += left;
             dst[1] += right;
             m_channel_volume[chan] = static_cast<uint32_t>((left < 0 ? -left : left) + (right < 0 ? -right : right));
@@ -3708,22 +3736,42 @@ YMFM_HOT void ym2612::generate(output_data* output, uint32_t numsamples)
         // add in DAC
         if (YMFM_LIKELY(m_dac_enable)) {
             // DAC enabled: start with DAC value then add the first 5 channels only
-            int32_t dacval = dac_discontinuity(int16_t(m_dac_data << 7) >> 7);
-            int32_t const left = regs.ch_output_0(0x102) ? dacval : zero_discontinuity;
-            int32_t const right = regs.ch_output_1(0x102) ? dacval : zero_discontinuity;
+            int32_t dacval = int16_t(m_dac_data << 7) >> 7;
+            int32_t left = regs.ch_output_0(0x102) ? dacval : 0;
+            int32_t right = regs.ch_output_1(0x102) ? dacval : 0;
+            if (m_chip_type == chip_type::ym2612) {
+                dacval = dac_discontinuity(dacval);
+                left = regs.ch_output_0(0x102) ? dacval : zero_discontinuity;
+                right = regs.ch_output_1(0x102) ? dacval : zero_discontinuity;
+            }
             dst[0] += left;
             dst[1] += right;
             m_channel_volume[5] = static_cast<uint32_t>((left < 0 ? -left : left) + (right < 0 ? -right : right));
         }
 
-        // output is technically multiplexed rather than mixed, but that requires
-        // a better sound mixer than we usually have, so just average over the six
-        // channels; also apply a 64/65 factor to account for the discontinuity
-        // adjustment above
-        constexpr int32_t scale_numer = 8192; // 128 * 64
-        constexpr int32_t scale_denom = 390;  // 6 * 65
-        dst[0] = static_cast<int32_t>((static_cast<int64_t>(dst[0]) * scale_numer) / scale_denom);
-        dst[1] = static_cast<int32_t>((static_cast<int64_t>(dst[1]) * scale_numer) / scale_denom);
+        switch (m_chip_type) {
+            case chip_type::ym2612: {
+                // output is technically multiplexed rather than mixed, but that requires
+                // a better sound mixer than we usually have, so just average over the six
+                // channels; also apply a 64/65 factor to account for the discontinuity
+                // adjustment above
+                constexpr int32_t scale_numer = 8192; // 128 * 64
+                constexpr int32_t scale_denom = 390;  // 6 * 65
+                dst[0] = static_cast<int32_t>((static_cast<int64_t>(dst[0]) * scale_numer) / scale_denom);
+                dst[1] = static_cast<int32_t>((static_cast<int64_t>(dst[1]) * scale_numer) / scale_denom);
+                break;
+            }
+            case chip_type::ym3438:
+                // YM3438 keeps multiplexed output but removes the YM2612 DAC discontinuity.
+                dst[0] = static_cast<int32_t>((static_cast<int64_t>(dst[0]) * 128) / 6);
+                dst[1] = static_cast<int32_t>((static_cast<int64_t>(dst[1]) * 128) / 6);
+                break;
+            case chip_type::ymf276:
+                // YMF276 uses the higher-resolution OPN output path and a proper mixed DAC.
+                dst[0] = clamp(dst[0] >> 1, -32768, 32767);
+                dst[1] = clamp(dst[1] >> 1, -32768, 32767);
+                break;
+        }
     }
 }
 
