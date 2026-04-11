@@ -535,6 +535,7 @@ VGSX::VGSX()
     ((VgmDriver*)this->vgmdrv)->subscribeLog([&](bool isError, const char* msg) {
         putlog(isError ? LogLevel::E : LogLevel::I, "%s", msg);
     });
+    ((VgmDriver*)this->vgmdrv)->useYm2612AnalogSubtlePreset();
     this->subscribedInput = false;
     this->subscribedOutput = false;
     this->gamepadType = GamepadType::Keyboard;
