@@ -15,6 +15,75 @@
 static pthread_mutex_t soundMutex = PTHREAD_MUTEX_INITIALIZER;
 static int pendingMouseScrollV = 0;
 static int pendingMouseScrollH = 0;
+static bool enableCrtFilter = false;
+
+static inline int clampIndex(int value, int min, int max)
+{
+    if (value < min) {
+        return min;
+    }
+    if (max < value) {
+        return max;
+    }
+    return value;
+}
+
+static inline uint8_t clampColor(float value)
+{
+    if (value < 0.0f) {
+        return 0;
+    }
+    if (255.0f < value) {
+        return 255;
+    }
+    return (uint8_t)value;
+}
+
+static void applyCrtFilter(const uint32_t* src, uint32_t* dst, int width, int height)
+{
+    static const float blurWeights[5] = {0.05f, 0.20f, 0.50f, 0.20f, 0.05f};
+
+    for (int y = 0; y < height; y++) {
+        const float scanline = (y & 1) ? 0.82f : 1.00f;
+        const int row = y * width;
+        for (int x = 0; x < width; x++) {
+            float r = 0.0f;
+            float g = 0.0f;
+            float b = 0.0f;
+
+            // Keep the filter local and cheap: horizontal blur only, then a scanline brightness step.
+            for (int i = 0; i < 5; i++) {
+                const int sampleX = clampIndex(x + i - 2, 0, width - 1);
+                const uint32_t pixel = src[row + sampleX];
+                const float weight = blurWeights[i];
+                r += (float)((pixel >> 16) & 0xFF) * weight;
+                g += (float)((pixel >> 8) & 0xFF) * weight;
+                b += (float)(pixel & 0xFF) * weight;
+            }
+
+            r *= scanline;
+            g *= scanline;
+            b *= scanline;
+            dst[row + x] = ((uint32_t)clampColor(r) << 16) | ((uint32_t)clampColor(g) << 8) | clampColor(b);
+        }
+    }
+}
+
+static void blitDisplayToWindowSurface(SDL_Surface* windowSurface, const uint32_t* display, int width, int height)
+{
+    auto pcDisplay = (unsigned int*)windowSurface->pixels;
+    const int pitch = windowSurface->pitch / windowSurface->format->BytesPerPixel;
+    const int offsetX = 0;
+    const int offsetY = 0;
+    pcDisplay += offsetY;
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            pcDisplay[offsetX + x] = display[x];
+        }
+        pcDisplay += pitch;
+        display += width;
+    }
+}
 
 static int clampMouseScroll(int value)
 {
@@ -352,6 +421,7 @@ int main(int argc, char* argv[])
     SDL_AudioDeviceID audioDeviceId = 0;
     SDL_Window* window = nullptr;
     SDL_Surface* windowSurface = nullptr;
+    std::vector<uint32_t> crtFilteredDisplay;
 
     if (!consoleMode) {
         SDL_version sdlVersion;
@@ -397,6 +467,7 @@ int main(int argc, char* argv[])
             printf("unsupported pixel format (support only 4 bytes / pixel)\n");
             exit(-1);
         }
+        crtFilteredDisplay.resize((size_t)vgsx.getDisplayWidth() * vgsx.getDisplayHeight());
         SDL_UpdateWindowSurface(window);
     }
 
@@ -439,6 +510,10 @@ int main(int argc, char* argv[])
                     case SDLK_a: vgsx.key.x = 1; break;
                     case SDLK_s: vgsx.key.y = 1; break;
                     case SDLK_SPACE: vgsx.key.start = 1; break;
+                    case SDLK_f:
+                        enableCrtFilter = !enableCrtFilter;
+                        printf("CRT filter: %s\n", enableCrtFilter ? "ON" : "OFF");
+                        break;
                     case SDLK_q: quit = true; break;
                     case SDLK_r: vgsx.reset(); break;
                     case SDLK_c: screenShot(); break;
@@ -468,19 +543,14 @@ int main(int argc, char* argv[])
                 printf("Update the peak CPU clock rate: %dHz per frame.\n", maxClocks);
             }
             if (!consoleMode) {
-                auto vgsDisplay = vgsx.getDisplay();
-                auto pcDisplay = (unsigned int*)windowSurface->pixels;
-                auto pitch = windowSurface->pitch / windowSurface->format->BytesPerPixel;
-                const int offsetX = 0;
-                const int offsetY = 0;
-                pcDisplay += offsetY;
-                for (int y = 0; y < vgsx.getDisplayHeight(); y++) {
-                    for (int x = 0; x < vgsx.getDisplayWidth(); x++) {
-                        pcDisplay[offsetX + x] = vgsDisplay[x];
-                    }
-                    pcDisplay += pitch;
-                    vgsDisplay += vgsx.getDisplayWidth();
+                const int displayWidth = vgsx.getDisplayWidth();
+                const int displayHeight = vgsx.getDisplayHeight();
+                const uint32_t* display = vgsx.getDisplay();
+                if (enableCrtFilter) {
+                    applyCrtFilter(display, crtFilteredDisplay.data(), displayWidth, displayHeight);
+                    display = crtFilteredDisplay.data();
                 }
+                blitDisplayToWindowSurface(windowSurface, display, displayWidth, displayHeight);
                 SDL_UpdateWindowSurface(window);
             }
             // sync 60fps
