@@ -769,18 +769,34 @@ Note that all addresses and values for I/O instructions must be specified as 32-
 | 0xE05204 |  o  |  -  | [Mouse: Right Click](#0xe050xxio---mouse) |
 | 0xE05208 |  o  |  -  | [Mouse: Right Click X](#0xe050xxio---mouse) |
 | 0xE0520C |  o  |  -  | [Mouse: Right Click Y](#0xe050xxio---mouse) |
-| 0xE06000 |  o  |  -  | [YM2612: Channel 0 Frequency](#0xe06000-0xe061fcin---ym2612) |
-| 0xE06004 |  o  |  -  | [YM2612: Channel 1 Frequency](#0xe06000-0xe061fcin---ym2612) |
-| 0xE06008 |  o  |  -  | [YM2612: Channel 2 Frequency](#0xe06000-0xe061fcin---ym2612) |
-| 0xE0600C |  o  |  -  | [YM2612: Channel 3 Frequency](#0xe06000-0xe061fcin---ym2612) |
-| 0xE06010 |  o  |  -  | [YM2612: Channel 4 Frequency](#0xe06000-0xe061fcin---ym2612) |
-| 0xE06014 |  o  |  -  | [YM2612: Channel 5 Frequency](#0xe06000-0xe061fcin---ym2612) |
-| 0xE06100 |  o  |  -  | [YM2612: Channel 0 Volume](#0xe06000-0xe061fcin---ym2612) |
-| 0xE06104 |  o  |  -  | [YM2612: Channel 1 Volume](#0xe06000-0xe061fcin---ym2612) |
-| 0xE06108 |  o  |  -  | [YM2612: Channel 2 Volume](#0xe06000-0xe061fcin---ym2612) |
-| 0xE0610C |  o  |  -  | [YM2612: Channel 3 Volume](#0xe06000-0xe061fcin---ym2612) |
-| 0xE06110 |  o  |  -  | [YM2612: Channel 4 Volume](#0xe06000-0xe061fcin---ym2612) |
-| 0xE06114 |  o  |  -  | [YM2612: Channel 5 Volume](#0xe06000-0xe061fcin---ym2612) |
+| 0xE06000 |  o  |  -  | [YM2612: Channel 0 Frequency](#0xe06xxx---ym2612) |
+| 0xE06004 |  o  |  -  | [YM2612: Channel 1 Frequency](#0xe06xxx---ym2612) |
+| 0xE06008 |  o  |  -  | [YM2612: Channel 2 Frequency](#0xe06xxx---ym2612) |
+| 0xE0600C |  o  |  -  | [YM2612: Channel 3 Frequency](#0xe06xxx---ym2612) |
+| 0xE06010 |  o  |  -  | [YM2612: Channel 4 Frequency](#0xe06xxx---ym2612) |
+| 0xE06014 |  o  |  -  | [YM2612: Channel 5 Frequency](#0xe06xxx---ym2612) |
+| 0xE06100 |  o  |  -  | [YM2612: Channel 0 Volume](#0xe06xxx---ym2612) |
+| 0xE06104 |  o  |  -  | [YM2612: Channel 1 Volume](#0xe06xxx---ym2612) |
+| 0xE06108 |  o  |  -  | [YM2612: Channel 2 Volume](#0xe06xxx---ym2612) |
+| 0xE0610C |  o  |  -  | [YM2612: Channel 3 Volume](#0xe06xxx---ym2612) |
+| 0xE06110 |  o  |  -  | [YM2612: Channel 4 Volume](#0xe06xxx---ym2612) |
+| 0xE06114 |  o  |  -  | [YM2612: Channel 5 Volume](#0xe06xxx---ym2612) |
+| 0xE06200 |  o  |  o  | [YM2612: Channel 0 Mute](#0xe06xxx---ym2612) |
+| 0xE06204 |  o  |  o  | [YM2612: Channel 1 Mute](#0xe06xxx---ym2612) |
+| 0xE06208 |  o  |  o  | [YM2612: Channel 2 Mute](#0xe06xxx---ym2612) |
+| 0xE0620C |  o  |  o  | [YM2612: Channel 3 Mute](#0xe06xxx---ym2612) |
+| 0xE06210 |  o  |  o  | [YM2612: Channel 4 Mute](#0xe06xxx---ym2612) |
+| 0xE06214 |  o  |  o  | [YM2612: Channel 5 Mute](#0xe06xxx---ym2612) |
+| 0xE07000 |  o  |  -  | [Debug Switch](#0xe070xx---debug-switch) |
+| 0xE07004 |  o  |  -  | [Debug Switch](#0xe070xx---debug-switch) |
+| 0xE07008 |  o  |  -  | [Debug Switch](#0xe070xx---debug-switch) |
+| 0xE0700C |  o  |  -  | [Debug Switch](#0xe070xx---debug-switch) |
+| 0xE07010 |  o  |  -  | [Debug Switch](#0xe070xx---debug-switch) |
+| 0xE07014 |  o  |  -  | [Debug Switch](#0xe070xx---debug-switch) |
+| 0xE07018 |  o  |  -  | [Debug Switch](#0xe070xx---debug-switch) |
+| 0xE0701C |  o  |  -  | [Debug Switch](#0xe070xx---debug-switch) |
+| 0xE07020 |  o  |  -  | [Debug Switch](#0xe070xx---debug-switch) |
+| 0xE07024 |  o  |  -  | [Debug Switch](#0xe070xx---debug-switch) |
 | 0xE7FFF4 |  o  |  -  | [Abort](#0xe7fff4out---abort) |
 | 0xE7FFF8 |  -  |  o  | [Reset](#0xe7fff8out---reset) |
 | 0xE7FFFC |  -  |  o  | [Exit](#0xe7fffcout---exit) |
@@ -1219,18 +1235,38 @@ if (vgs_mouse_left_clicked(&x, &y)) {
 }
 ```
 
-### 0xE06000-0xE061FC[in] - YM2612
+### 0xE06xxx - YM2612
 
 You can read the current YM2612 playback state for each channel.
 
-- `0xE06000` to `0xE06014`: Channel frequency values for channels 0 to 5
-- `0xE06100` to `0xE06114`: Channel volume values for channels 0 to 5
+- `0xE06000` to `0xE06014`: Channel frequency values for channels 0 to 5 (input only)
+- `0xE06100` to `0xE06114`: Channel volume values for channels 0 to 5 (input only)
+- `0xE06200` to `0xE06214`: Channel mute flags for channels 0 to 5 (input/output)
 
 Remarks:
 
-- These registers are read-only.
 - Frequency values are approximate raw YM2612 `block/fnum` values.
 - Volume values are approximate current output amplitudes for each channel.
+
+### 0xE070xx - Debug Switch
+
+You can retrieve push events from switches intended for debugging use.
+
+- `0xE07000`: Switch `0`
+- `0xE07004`: Switch `1`
+- `0xE07008`: Switch `2`
+- `0xE0700C`: Switch `3`
+- `0xE07010`: Switch `4`
+- `0xE07014`: Switch `5`
+- `0xE07018`: Switch `6`
+- `0xE0701C`: Switch `7`
+- `0xE07020`: Switch `8`
+- `0xE07024`: Switch `9`
+
+Remarks:
+
+- Switch input is mapped to the PC keyboard number keys `0` through `9`.
+- A switch becomes non-zero only on the frame where the key is newly pressed.
 
 ### 0xE7FFF4[out] - Abort
 
