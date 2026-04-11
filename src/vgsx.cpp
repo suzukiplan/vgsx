@@ -1094,7 +1094,16 @@ uint32_t VGSX::inPort(uint32_t address)
         case VGS_ADDR_KEY_X: return this->key.x;
         case VGS_ADDR_KEY_Y: return this->key.y;
         case VGS_ADDR_KEY_START: return this->key.start;
-
+        case VGS_ADDR_SW_PUSH0: return this->key.sw_push[0];
+        case VGS_ADDR_SW_PUSH1: return this->key.sw_push[1];
+        case VGS_ADDR_SW_PUSH2: return this->key.sw_push[2];
+        case VGS_ADDR_SW_PUSH3: return this->key.sw_push[3];
+        case VGS_ADDR_SW_PUSH4: return this->key.sw_push[4];
+        case VGS_ADDR_SW_PUSH5: return this->key.sw_push[5];
+        case VGS_ADDR_SW_PUSH6: return this->key.sw_push[6];
+        case VGS_ADDR_SW_PUSH7: return this->key.sw_push[7];
+        case VGS_ADDR_SW_PUSH8: return this->key.sw_push[8];
+        case VGS_ADDR_SW_PUSH9: return this->key.sw_push[9];
         case VGS_ADDR_SAVE_EXECUTE: // Execute Load
         {
             this->ctx.save.address &= 0x00FFFFFF;

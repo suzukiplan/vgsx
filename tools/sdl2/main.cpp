@@ -7,6 +7,7 @@
 #include <fstream>
 #include <chrono>
 #include <cmath>
+#include <cstring>
 #include <vector>
 #include "vgsx.h"
 
@@ -21,6 +22,23 @@ static bool gammaLutInitialized = false;
 static float gammaExpandLut[256];
 static constexpr int GAMMA_COMPRESS_LUT_SIZE = 4096;
 static uint8_t gammaCompressLut[GAMMA_COMPRESS_LUT_SIZE];
+
+static int getSwitchIndexFromKeycode(SDL_Keycode keycode)
+{
+    switch (keycode) {
+        case SDLK_0: return 0;
+        case SDLK_1: return 1;
+        case SDLK_2: return 2;
+        case SDLK_3: return 3;
+        case SDLK_4: return 4;
+        case SDLK_5: return 5;
+        case SDLK_6: return 6;
+        case SDLK_7: return 7;
+        case SDLK_8: return 8;
+        case SDLK_9: return 9;
+    }
+    return -1;
+}
 
 static inline int clampIndex(int value, int min, int max)
 {
@@ -510,8 +528,10 @@ int main(int argc, char* argv[])
     const int waitFps60[3] = {17000, 17000, 16000};
     bool quit = false;
     bool stabled = true;
+    bool swPressed[10];
     double totalClocks = 0.0;
     uint32_t maxClocks = 0;
+    memset(swPressed, 0, sizeof(swPressed));
     if (!consoleMode) {
         SDL_PauseAudioDevice(audioDeviceId, 0);
     }
@@ -520,6 +540,7 @@ int main(int argc, char* argv[])
     while (!quit && !vgsx.isExit()) {
         loopCount++;
         auto start = std::chrono::system_clock::now();
+        memset(vgsx.key.sw_push, 0, sizeof(vgsx.key.sw_push));
         while (!consoleMode && SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 quit = true;
@@ -533,6 +554,14 @@ int main(int argc, char* argv[])
                 pendingMouseScrollH = clampMouseScroll(pendingMouseScrollH + scrollX);
                 pendingMouseScrollV = clampMouseScroll(pendingMouseScrollV + scrollY);
             } else if (event.type == SDL_KEYDOWN) {
+                const int switchIndex = getSwitchIndexFromKeycode(event.key.keysym.sym);
+                if (0 <= switchIndex) {
+                    if (!swPressed[switchIndex]) {
+                        vgsx.key.sw_push[switchIndex] = 1;
+                        swPressed[switchIndex] = true;
+                    }
+                    continue;
+                }
                 switch (event.key.keysym.sym) {
                     case SDLK_UP: vgsx.key.up = 1; break;
                     case SDLK_DOWN: vgsx.key.down = 1; break;
@@ -552,6 +581,11 @@ int main(int argc, char* argv[])
                     case SDLK_c: screenShot(); break;
                 }
             } else if (event.type == SDL_KEYUP) {
+                const int switchIndex = getSwitchIndexFromKeycode(event.key.keysym.sym);
+                if (0 <= switchIndex) {
+                    swPressed[switchIndex] = false;
+                    continue;
+                }
                 switch (event.key.keysym.sym) {
                     case SDLK_UP: vgsx.key.up = 0; break;
                     case SDLK_DOWN: vgsx.key.down = 0; break;
