@@ -114,6 +114,7 @@ class VgmDriver : public ymfm::ymfm_interface
     std::vector<std::pair<uint32_t, uint8_t>> ym2612_queue;
     std::array<uint8_t, YM2612ChannelCount> ym2612_frequency_low;
     std::array<uint8_t, YM2612ChannelCount> ym2612_frequency_high;
+    std::array<bool, YM2612ChannelCount> ym2612_mute;
     bool subscribedLog;
     std::function<void(bool isError, const char* msg)> logCallback;
 
@@ -309,9 +310,13 @@ class VgmDriver : public ymfm::ymfm_interface
         this->ym2612_queue.clear();
         this->ym2612_frequency_low.fill(0);
         this->ym2612_frequency_high.fill(0);
+        this->ym2612_mute.fill(false);
         this->dcCutLastInput.fill(0.0f);
         this->dcCutLastOutput.fill(0.0f);
         this->ym2612AnalogState.reset();
+        for (int ch = 0; ch < YM2612ChannelCount; ch++) {
+            this->ym2612.set_channel_mute(static_cast<uint32_t>(ch), false);
+        }
     }
 
     bool load(const uint8_t* data, size_t size)
@@ -456,7 +461,27 @@ class VgmDriver : public ymfm::ymfm_interface
         if (type != ChipType::YM2612 || ch < 0 || YM2612ChannelCount <= ch) {
             return 0;
         }
+        if (this->ym2612_mute[ch]) {
+            return 0;
+        }
         return this->ym2612.channel_volume(static_cast<uint32_t>(ch));
+    }
+
+    bool getMute(ChipType type, int ch)
+    {
+        if (type != ChipType::YM2612 || ch < 0 || YM2612ChannelCount <= ch) {
+            return false;
+        }
+        return this->ym2612_mute[ch];
+    }
+
+    void setMute(ChipType type, int ch, bool enabled)
+    {
+        if (type != ChipType::YM2612 || ch < 0 || YM2612ChannelCount <= ch) {
+            return;
+        }
+        this->ym2612_mute[ch] = enabled;
+        this->ym2612.set_channel_mute(static_cast<uint32_t>(ch), enabled);
     }
 
   private:

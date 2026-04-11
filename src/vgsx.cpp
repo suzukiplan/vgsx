@@ -1234,6 +1234,12 @@ uint32_t VGSX::inPort(uint32_t address)
         case VGS_ADDR_YM2612_VOL3: return ((VgmDriver*)this->vgmdrv)->getChannelVolume(ChipType::YM2612, 3);
         case VGS_ADDR_YM2612_VOL4: return ((VgmDriver*)this->vgmdrv)->getChannelVolume(ChipType::YM2612, 4);
         case VGS_ADDR_YM2612_VOL5: return ((VgmDriver*)this->vgmdrv)->getChannelVolume(ChipType::YM2612, 5);
+        case VGS_ADDR_YM2612_MUTE0: return ((VgmDriver*)this->vgmdrv)->getMute(ChipType::YM2612, 0) ? 1 : 0;
+        case VGS_ADDR_YM2612_MUTE1: return ((VgmDriver*)this->vgmdrv)->getMute(ChipType::YM2612, 1) ? 1 : 0;
+        case VGS_ADDR_YM2612_MUTE2: return ((VgmDriver*)this->vgmdrv)->getMute(ChipType::YM2612, 2) ? 1 : 0;
+        case VGS_ADDR_YM2612_MUTE3: return ((VgmDriver*)this->vgmdrv)->getMute(ChipType::YM2612, 3) ? 1 : 0;
+        case VGS_ADDR_YM2612_MUTE4: return ((VgmDriver*)this->vgmdrv)->getMute(ChipType::YM2612, 4) ? 1 : 0;
+        case VGS_ADDR_YM2612_MUTE5: return ((VgmDriver*)this->vgmdrv)->getMute(ChipType::YM2612, 5) ? 1 : 0;
     }
     if (VGS_ADDR_USER <= address) {
         if (!this->subscribedInput) {
@@ -1338,6 +1344,13 @@ void VGSX::outPort(uint32_t address, uint32_t value)
         case VGS_ADDR_SFX_STOP:
             this->ctx.sfxData[value & 0xFF].play = false;
             return;
+
+        case VGS_ADDR_YM2612_MUTE0: ((VgmDriver*)this->vgmdrv)->setMute(ChipType::YM2612, 0, 0 != value); return;
+        case VGS_ADDR_YM2612_MUTE1: ((VgmDriver*)this->vgmdrv)->setMute(ChipType::YM2612, 1, 0 != value); return;
+        case VGS_ADDR_YM2612_MUTE2: ((VgmDriver*)this->vgmdrv)->setMute(ChipType::YM2612, 2, 0 != value); return;
+        case VGS_ADDR_YM2612_MUTE3: ((VgmDriver*)this->vgmdrv)->setMute(ChipType::YM2612, 3, 0 != value); return;
+        case VGS_ADDR_YM2612_MUTE4: ((VgmDriver*)this->vgmdrv)->setMute(ChipType::YM2612, 4, 0 != value); return;
+        case VGS_ADDR_YM2612_MUTE5: ((VgmDriver*)this->vgmdrv)->setMute(ChipType::YM2612, 5, 0 != value); return;
 
         case VGS_ADDR_SAVE_ADDRESS: // Save Data
             this->ctx.save.address = value;
