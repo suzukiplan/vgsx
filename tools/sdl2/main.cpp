@@ -6,6 +6,7 @@
 #include <iostream>
 #include <fstream>
 #include <chrono>
+#include <cmath>
 #include <vector>
 #include "vgsx.h"
 
@@ -16,6 +17,10 @@ static pthread_mutex_t soundMutex = PTHREAD_MUTEX_INITIALIZER;
 static int pendingMouseScrollV = 0;
 static int pendingMouseScrollH = 0;
 static bool enableCrtFilter = false;
+static bool gammaLutInitialized = false;
+static float gammaExpandLut[256];
+static constexpr int GAMMA_COMPRESS_LUT_SIZE = 4096;
+static uint8_t gammaCompressLut[GAMMA_COMPRESS_LUT_SIZE];
 
 static inline int clampIndex(int value, int min, int max)
 {
@@ -28,15 +33,42 @@ static inline int clampIndex(int value, int min, int max)
     return value;
 }
 
-static inline uint8_t clampColor(float value)
+static inline float clampLinear(float value)
 {
     if (value < 0.0f) {
-        return 0;
+        return 0.0f;
     }
-    if (255.0f < value) {
-        return 255;
+    if (1.0f < value) {
+        return 1.0f;
     }
-    return (uint8_t)value;
+    return value;
+}
+
+static void initGammaLut()
+{
+    if (gammaLutInitialized) {
+        return;
+    }
+    for (int i = 0; i < 256; i++) {
+        gammaExpandLut[i] = powf((float)i / 255.0f, 2.2f);
+    }
+    for (int i = 0; i < GAMMA_COMPRESS_LUT_SIZE; i++) {
+        const float linear = (float)i / (float)(GAMMA_COMPRESS_LUT_SIZE - 1);
+        gammaCompressLut[i] = (uint8_t)(powf(linear, 1.0f / 2.2f) * 255.0f + 0.5f);
+    }
+    gammaLutInitialized = true;
+}
+
+static inline float linearFromSrgb8(uint8_t value)
+{
+    return gammaExpandLut[value];
+}
+
+static inline uint8_t srgb8FromLinear(float value)
+{
+    const float linear = clampLinear(value);
+    const int index = (int)(linear * (float)(GAMMA_COMPRESS_LUT_SIZE - 1) + 0.5f);
+    return gammaCompressLut[index];
 }
 
 static void applyCrtFilter(const uint32_t* src, uint32_t* dst, int width, int height)
@@ -56,15 +88,15 @@ static void applyCrtFilter(const uint32_t* src, uint32_t* dst, int width, int he
                 const int sampleX = clampIndex(x + i - 2, 0, width - 1);
                 const uint32_t pixel = src[row + sampleX];
                 const float weight = blurWeights[i];
-                r += (float)((pixel >> 16) & 0xFF) * weight;
-                g += (float)((pixel >> 8) & 0xFF) * weight;
-                b += (float)(pixel & 0xFF) * weight;
+                r += linearFromSrgb8((pixel >> 16) & 0xFF) * weight;
+                g += linearFromSrgb8((pixel >> 8) & 0xFF) * weight;
+                b += linearFromSrgb8(pixel & 0xFF) * weight;
             }
 
             r *= scanline;
             g *= scanline;
             b *= scanline;
-            dst[row + x] = ((uint32_t)clampColor(r) << 16) | ((uint32_t)clampColor(g) << 8) | clampColor(b);
+            dst[row + x] = ((uint32_t)srgb8FromLinear(r) << 16) | ((uint32_t)srgb8FromLinear(g) << 8) | srgb8FromLinear(b);
         }
     }
 }
@@ -255,6 +287,7 @@ static void file_dump(const char* fname)
 
 int main(int argc, char* argv[])
 {
+    initGammaLut();
     vgsx.setLogCallback([](VGSX::LogLevel level, const char* msg) {
         std::string lv;
         switch (level) {
