@@ -6,10 +6,10 @@
 #include <iostream>
 #include <fstream>
 #include <chrono>
-#include <cmath>
 #include <cstring>
 #include <vector>
 #include "vgsx.h"
+#include "../../src/crt_helper.hpp"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "../common/stb_image_write.h"
@@ -18,10 +18,8 @@ static pthread_mutex_t soundMutex = PTHREAD_MUTEX_INITIALIZER;
 static int pendingMouseScrollV = 0;
 static int pendingMouseScrollH = 0;
 static bool enableCrtFilter = false;
-static bool gammaLutInitialized = false;
-static float gammaExpandLut[256];
-static constexpr int GAMMA_COMPRESS_LUT_SIZE = 4096;
-static uint8_t gammaCompressLut[GAMMA_COMPRESS_LUT_SIZE];
+static crt_helper::Filter crtFilter;
+static constexpr int kDisplayScale2x = 2;
 
 static int getSwitchIndexFromKeycode(SDL_Keycode keycode)
 {
@@ -40,98 +38,21 @@ static int getSwitchIndexFromKeycode(SDL_Keycode keycode)
     return -1;
 }
 
-static inline int clampIndex(int value, int min, int max)
+static void scaleDisplay2x(const uint32_t* src, uint32_t* dst, int width, int height)
 {
-    if (value < min) {
-        return min;
-    }
-    if (max < value) {
-        return max;
-    }
-    return value;
-}
-
-static inline float clampLinear(float value)
-{
-    if (value < 0.0f) {
-        return 0.0f;
-    }
-    if (1.0f < value) {
-        return 1.0f;
-    }
-    return value;
-}
-
-static void initGammaLut()
-{
-    if (gammaLutInitialized) {
-        return;
-    }
-    for (int i = 0; i < 256; i++) {
-        gammaExpandLut[i] = powf((float)i / 255.0f, 2.2f);
-    }
-    for (int i = 0; i < GAMMA_COMPRESS_LUT_SIZE; i++) {
-        const float linear = (float)i / (float)(GAMMA_COMPRESS_LUT_SIZE - 1);
-        gammaCompressLut[i] = (uint8_t)(powf(linear, 1.0f / 2.2f) * 255.0f + 0.5f);
-    }
-    gammaLutInitialized = true;
-}
-
-static inline float linearFromSrgb8(uint8_t value)
-{
-    return gammaExpandLut[value];
-}
-
-static inline uint8_t srgb8FromLinear(float value)
-{
-    const float linear = clampLinear(value);
-    const int index = (int)(linear * (float)(GAMMA_COMPRESS_LUT_SIZE - 1) + 0.5f);
-    return gammaCompressLut[index];
-}
-
-static void applyCrtFilter(const uint32_t* src, uint32_t* dst, int width, int height)
-{
-    static const float blurWeights[5] = {0.05f, 0.20f, 0.50f, 0.20f, 0.05f};
-
+    const int dstWidth = width * kDisplayScale2x;
     for (int y = 0; y < height; y++) {
-        const float scanline = (y & 1) ? 0.82f : 1.00f;
-        const int row = y * width;
+        const int srcRow = y * width;
+        const int dstRowTop = (y * kDisplayScale2x) * dstWidth;
+        const int dstRowBottom = dstRowTop + dstWidth;
         for (int x = 0; x < width; x++) {
-            float r = 0.0f;
-            float g = 0.0f;
-            float b = 0.0f;
-
-            // Keep the filter local and cheap: horizontal blur only, then a scanline brightness step.
-            for (int i = 0; i < 5; i++) {
-                const int sampleX = clampIndex(x + i - 2, 0, width - 1);
-                const uint32_t pixel = src[row + sampleX];
-                const float weight = blurWeights[i];
-                r += linearFromSrgb8((pixel >> 16) & 0xFF) * weight;
-                g += linearFromSrgb8((pixel >> 8) & 0xFF) * weight;
-                b += linearFromSrgb8(pixel & 0xFF) * weight;
-            }
-
-            r *= scanline;
-            g *= scanline;
-            b *= scanline;
-            dst[row + x] = ((uint32_t)srgb8FromLinear(r) << 16) | ((uint32_t)srgb8FromLinear(g) << 8) | srgb8FromLinear(b);
+            const uint32_t pixel = 0xFF000000u | src[srcRow + x];
+            const int dstX = x * kDisplayScale2x;
+            dst[dstRowTop + dstX] = pixel;
+            dst[dstRowTop + dstX + 1] = pixel;
+            dst[dstRowBottom + dstX] = pixel;
+            dst[dstRowBottom + dstX + 1] = pixel;
         }
-    }
-}
-
-static void blitDisplayToWindowSurface(SDL_Surface* windowSurface, const uint32_t* display, int width, int height)
-{
-    auto pcDisplay = (unsigned int*)windowSurface->pixels;
-    const int pitch = windowSurface->pitch / windowSurface->format->BytesPerPixel;
-    const int offsetX = 0;
-    const int offsetY = 0;
-    pcDisplay += offsetY;
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            pcDisplay[offsetX + x] = display[x];
-        }
-        pcDisplay += pitch;
-        display += width;
     }
 }
 
@@ -305,7 +226,7 @@ static void file_dump(const char* fname)
 
 int main(int argc, char* argv[])
 {
-    initGammaLut();
+    crtFilter.init();
     vgsx.setLogCallback([](VGSX::LogLevel level, const char* msg) {
         std::string lv;
         switch (level) {
@@ -471,8 +392,9 @@ int main(int argc, char* argv[])
 
     SDL_AudioDeviceID audioDeviceId = 0;
     SDL_Window* window = nullptr;
-    SDL_Surface* windowSurface = nullptr;
-    std::vector<uint32_t> crtFilteredDisplay;
+    SDL_Renderer* renderer = nullptr;
+    SDL_Texture* displayTexture = nullptr;
+    std::vector<uint32_t> scaledDisplay;
 
     if (!consoleMode) {
         SDL_version sdlVersion;
@@ -509,17 +431,27 @@ int main(int argc, char* argv[])
             vgsx.getDisplayWidth(),
             vgsx.getDisplayHeight(),
             0);
-        windowSurface = SDL_GetWindowSurface(window);
-        if (!windowSurface) {
-            printf("SDL_GetWindowSurface failed: %s\n", SDL_GetError());
+        if (!window) {
+            printf("SDL_CreateWindow failed: %s\n", SDL_GetError());
             exit(-1);
         }
-        if (4 != windowSurface->format->BytesPerPixel) {
-            printf("unsupported pixel format (support only 4 bytes / pixel)\n");
+        renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+        if (!renderer) {
+            printf("SDL_CreateRenderer failed: %s\n", SDL_GetError());
             exit(-1);
         }
-        crtFilteredDisplay.resize((size_t)vgsx.getDisplayWidth() * vgsx.getDisplayHeight());
-        SDL_UpdateWindowSurface(window);
+        displayTexture = SDL_CreateTexture(
+            renderer,
+            SDL_PIXELFORMAT_ARGB8888,
+            SDL_TEXTUREACCESS_STREAMING,
+            vgsx.getDisplayWidth() * kDisplayScale2x,
+            vgsx.getDisplayHeight() * kDisplayScale2x);
+        if (!displayTexture) {
+            printf("SDL_CreateTexture failed: %s\n", SDL_GetError());
+            exit(-1);
+        }
+        SDL_SetTextureBlendMode(displayTexture, SDL_BLENDMODE_NONE);
+        scaledDisplay.resize((size_t)vgsx.getDisplayWidth() * kDisplayScale2x * vgsx.getDisplayHeight() * kDisplayScale2x);
     }
 
     printf("Start main loop.\n");
@@ -613,12 +545,28 @@ int main(int argc, char* argv[])
                 const int displayWidth = vgsx.getDisplayWidth();
                 const int displayHeight = vgsx.getDisplayHeight();
                 const uint32_t* display = vgsx.getDisplay();
+                uint32_t* texturePixels = nullptr;
+                int texturePitchBytes = 0;
                 if (enableCrtFilter) {
-                    applyCrtFilter(display, crtFilteredDisplay.data(), displayWidth, displayHeight);
-                    display = crtFilteredDisplay.data();
+                    crtFilter.apply2x(display, scaledDisplay.data(), displayWidth, displayHeight);
+                } else {
+                    scaleDisplay2x(display, scaledDisplay.data(), displayWidth, displayHeight);
                 }
-                blitDisplayToWindowSurface(windowSurface, display, displayWidth, displayHeight);
-                SDL_UpdateWindowSurface(window);
+                if (SDL_LockTexture(displayTexture, nullptr, (void**)&texturePixels, &texturePitchBytes)) {
+                    printf("SDL_LockTexture failed: %s\n", SDL_GetError());
+                    quit = true;
+                } else {
+                    const int textureWidth = displayWidth * kDisplayScale2x;
+                    const int textureHeight = displayHeight * kDisplayScale2x;
+                    const int texturePitchPixels = texturePitchBytes / (int)sizeof(uint32_t);
+                    for (int y = 0; y < textureHeight; y++) {
+                        memcpy(&texturePixels[y * texturePitchPixels], &scaledDisplay[(size_t)y * textureWidth], (size_t)textureWidth * sizeof(uint32_t));
+                    }
+                    SDL_UnlockTexture(displayTexture);
+                    SDL_RenderClear(renderer);
+                    SDL_RenderCopy(renderer, displayTexture, nullptr, nullptr);
+                    SDL_RenderPresent(renderer);
+                }
             }
             // sync 60fps
             std::chrono::duration<double> diff = std::chrono::system_clock::now() - start;
@@ -696,6 +644,12 @@ int main(int argc, char* argv[])
         printf("Maximum MC68030 Clocks: %.1fkHz per second.\n", max / 1000);
     } else {
         printf("Maximum MC68030 Clocks: %.1fMHz per second.\n", max / 1000000);
+    }
+    if (displayTexture) {
+        SDL_DestroyTexture(displayTexture);
+    }
+    if (renderer) {
+        SDL_DestroyRenderer(renderer);
     }
     SDL_Quit();
 
