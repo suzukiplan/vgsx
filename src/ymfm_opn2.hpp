@@ -3080,6 +3080,16 @@ class ym2612
     {
         return (ch < CHANNELS) ? m_channel_volume[ch] : 0;
     }
+    bool channel_mute(uint32_t ch) const
+    {
+        return (ch < CHANNELS) ? m_channel_mute[ch] : false;
+    }
+    void set_channel_mute(uint32_t ch, bool enabled)
+    {
+        if (ch < CHANNELS) {
+            m_channel_mute[ch] = enabled;
+        }
+    }
     void set_chip_type(chip_type type)
     {
         m_chip_type = type;
@@ -3102,6 +3112,7 @@ class ym2612
     uint8_t m_dac_enable; // DAC enabled?
     chip_type m_chip_type; // OPN2 output model
     std::array<uint32_t, CHANNELS> m_channel_volume; // latest per-channel output magnitude
+    std::array<bool, CHANNELS> m_channel_mute; // per-channel mute state
     fm_engine m_fm;       // core FM engine
 };
 
@@ -3528,9 +3539,11 @@ ym2612::ym2612(ymfm_interface& intf)
       m_dac_enable(0),
       m_chip_type(chip_type::ym2612),
       m_channel_volume(),
+      m_channel_mute(),
       m_fm(intf)
 {
     m_channel_volume.fill(0);
+    m_channel_mute.fill(false);
 }
 
 //-------------------------------------------------
@@ -3542,6 +3555,7 @@ void ym2612::reset()
     // reset the engines
     m_fm.reset();
     m_channel_volume.fill(0);
+    m_channel_mute.fill(false);
 }
 
 //-------------------------------------------------
@@ -3725,6 +3739,10 @@ YMFM_HOT void ym2612::generate(output_data* output, uint32_t numsamples)
                 left = dac_discontinuity(left);
                 right = dac_discontinuity(right);
             }
+            if (m_channel_mute[chan]) {
+                left = 0;
+                right = 0;
+            }
             dst[0] += left;
             dst[1] += right;
             m_channel_volume[chan] = static_cast<uint32_t>((left < 0 ? -left : left) + (right < 0 ? -right : right));
@@ -3739,10 +3757,14 @@ YMFM_HOT void ym2612::generate(output_data* output, uint32_t numsamples)
             int32_t dacval = int16_t(m_dac_data << 7) >> 7;
             int32_t left = regs.ch_output_0(0x102) ? dacval : 0;
             int32_t right = regs.ch_output_1(0x102) ? dacval : 0;
+            if (m_channel_mute[5]) {
+                left = 0;
+                right = 0;
+            }
             if (m_chip_type == chip_type::ym2612) {
                 dacval = dac_discontinuity(dacval);
-                left = regs.ch_output_0(0x102) ? dacval : zero_discontinuity;
-                right = regs.ch_output_1(0x102) ? dacval : zero_discontinuity;
+                left = m_channel_mute[5] ? 0 : (regs.ch_output_0(0x102) ? dacval : zero_discontinuity);
+                right = m_channel_mute[5] ? 0 : (regs.ch_output_1(0x102) ? dacval : zero_discontinuity);
             }
             dst[0] += left;
             dst[1] += right;

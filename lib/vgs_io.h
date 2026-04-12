@@ -110,6 +110,22 @@
 #define VGS_ADDR_YM2612_VOL3 0xE0610C
 #define VGS_ADDR_YM2612_VOL4 0xE06110
 #define VGS_ADDR_YM2612_VOL5 0xE06114
+#define VGS_ADDR_YM2612_MUTE0 0xE06200
+#define VGS_ADDR_YM2612_MUTE1 0xE06204
+#define VGS_ADDR_YM2612_MUTE2 0xE06208
+#define VGS_ADDR_YM2612_MUTE3 0xE0620C
+#define VGS_ADDR_YM2612_MUTE4 0xE06210
+#define VGS_ADDR_YM2612_MUTE5 0xE06214
+#define VGS_ADDR_SW_PUSH0 0xE07000
+#define VGS_ADDR_SW_PUSH1 0xE07004
+#define VGS_ADDR_SW_PUSH2 0xE07008
+#define VGS_ADDR_SW_PUSH3 0xE0700C
+#define VGS_ADDR_SW_PUSH4 0xE07010
+#define VGS_ADDR_SW_PUSH5 0xE07014
+#define VGS_ADDR_SW_PUSH6 0xE07018
+#define VGS_ADDR_SW_PUSH7 0xE0701C
+#define VGS_ADDR_SW_PUSH8 0xE07020
+#define VGS_ADDR_SW_PUSH9 0xE07024
 #define VGS_ADDR_ABORT 0xE7FFF4
 #define VGS_ADDR_RESET 0xE7FFF8
 #define VGS_ADDR_EXIT 0xE7FFFC
@@ -201,6 +217,22 @@
 #define VGS_IN_YM2612_VOL3 *((volatile uint32_t*)VGS_ADDR_YM2612_VOL3)
 #define VGS_IN_YM2612_VOL4 *((volatile uint32_t*)VGS_ADDR_YM2612_VOL4)
 #define VGS_IN_YM2612_VOL5 *((volatile uint32_t*)VGS_ADDR_YM2612_VOL5)
+#define VGS_IO_YM2612_MUTE0 *((volatile uint32_t*)VGS_ADDR_YM2612_MUTE0)
+#define VGS_IO_YM2612_MUTE1 *((volatile uint32_t*)VGS_ADDR_YM2612_MUTE1)
+#define VGS_IO_YM2612_MUTE2 *((volatile uint32_t*)VGS_ADDR_YM2612_MUTE2)
+#define VGS_IO_YM2612_MUTE3 *((volatile uint32_t*)VGS_ADDR_YM2612_MUTE3)
+#define VGS_IO_YM2612_MUTE4 *((volatile uint32_t*)VGS_ADDR_YM2612_MUTE4)
+#define VGS_IO_YM2612_MUTE5 *((volatile uint32_t*)VGS_ADDR_YM2612_MUTE5)
+#define VGS_IN_SW_PUSH0 *((volatile uint32_t*)VGS_ADDR_SW_PUSH0)
+#define VGS_IN_SW_PUSH1 *((volatile uint32_t*)VGS_ADDR_SW_PUSH1)
+#define VGS_IN_SW_PUSH2 *((volatile uint32_t*)VGS_ADDR_SW_PUSH2)
+#define VGS_IN_SW_PUSH3 *((volatile uint32_t*)VGS_ADDR_SW_PUSH3)
+#define VGS_IN_SW_PUSH4 *((volatile uint32_t*)VGS_ADDR_SW_PUSH4)
+#define VGS_IN_SW_PUSH5 *((volatile uint32_t*)VGS_ADDR_SW_PUSH5)
+#define VGS_IN_SW_PUSH6 *((volatile uint32_t*)VGS_ADDR_SW_PUSH6)
+#define VGS_IN_SW_PUSH7 *((volatile uint32_t*)VGS_ADDR_SW_PUSH7)
+#define VGS_IN_SW_PUSH8 *((volatile uint32_t*)VGS_ADDR_SW_PUSH8)
+#define VGS_IN_SW_PUSH9 *((volatile uint32_t*)VGS_ADDR_SW_PUSH9
 #define VGS_OUT_ABORT *((volatile int32_t*)VGS_ADDR_ABORT)
 #define VGS_OUT_RESET *((volatile int32_t*)VGS_ADDR_RESET)
 #define VGS_OUT_EXIT *((volatile int32_t*)VGS_ADDR_EXIT)

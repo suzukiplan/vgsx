@@ -4,6 +4,7 @@ enum {
     YM2612_CHANNELS = 6,
     PIANO_KEYS = 88,
     YM2612_VOLUME_IDLE = 8,
+    KEYBOARD_WHITE_KEYS = 52,
 };
 
 static const uint32_t noteMetrics[PIANO_KEYS] = {
@@ -153,6 +154,44 @@ static uint32_t getYm2612Volume(int ch)
     return 0;
 }
 
+static BOOL getYm2612Mute(int ch)
+{
+    switch (ch) {
+        case 0: return VGS_IO_YM2612_MUTE0 ? TRUE : FALSE;
+        case 1: return VGS_IO_YM2612_MUTE1 ? TRUE : FALSE;
+        case 2: return VGS_IO_YM2612_MUTE2 ? TRUE : FALSE;
+        case 3: return VGS_IO_YM2612_MUTE3 ? TRUE : FALSE;
+        case 4: return VGS_IO_YM2612_MUTE4 ? TRUE : FALSE;
+        case 5: return VGS_IO_YM2612_MUTE5 ? TRUE : FALSE;
+    }
+    return FALSE;
+}
+
+static void setYm2612Mute(int ch, BOOL enabled)
+{
+    switch (ch) {
+        case 0: VGS_IO_YM2612_MUTE0 = enabled ? 1 : 0; break;
+        case 1: VGS_IO_YM2612_MUTE1 = enabled ? 1 : 0; break;
+        case 2: VGS_IO_YM2612_MUTE2 = enabled ? 1 : 0; break;
+        case 3: VGS_IO_YM2612_MUTE3 = enabled ? 1 : 0; break;
+        case 4: VGS_IO_YM2612_MUTE4 = enabled ? 1 : 0; break;
+        case 5: VGS_IO_YM2612_MUTE5 = enabled ? 1 : 0; break;
+    }
+}
+
+static uint32_t getSwPush(int index)
+{
+    switch (index) {
+        case 1: return VGS_IN_SW_PUSH1;
+        case 2: return VGS_IN_SW_PUSH2;
+        case 3: return VGS_IN_SW_PUSH3;
+        case 4: return VGS_IN_SW_PUSH4;
+        case 5: return VGS_IN_SW_PUSH5;
+        case 6: return VGS_IN_SW_PUSH6;
+    }
+    return 0;
+}
+
 // octave 0 の A (A0) から 88 鍵
 static void renderKeyboard(int bx, int by, int ch, int activeKey)
 {
@@ -211,6 +250,8 @@ static int getPianoKeyFromFrequency(uint32_t frequency)
 static void render(int bx, int by)
 {
     char chtext[4];
+    static const char muteText[] = "mute";
+    const int muteX = bx + KEYBOARD_WHITE_KEYS * 5 + 4;
     vgs_strcpy(chtext, "FM1");
     for (int ch = 0; ch < YM2612_CHANNELS; ch++) {
         uint32_t volume;
@@ -222,6 +263,10 @@ static void render(int bx, int by)
             activeKey = getPianoKeyFromFrequency(getYm2612Frequency(ch));
         }
         renderKeyboard(bx, by, ch, activeKey);
+        vgs_draw_clear(0, muteX, by + ch * 20 + 4, vgs_pfont_strlen(muteText), 8);
+        if (getYm2612Mute(ch)) {
+            vgs_pfont_print(0, muteX, by + ch * 20 + 4, 0, 0, muteText);
+        }
     }
 }
 
@@ -245,6 +290,11 @@ int main(int argc, char* argv[])
     vgs_bgm_play(0);
 
     while (ON) {
+        for (int ch = 0; ch < YM2612_CHANNELS; ch++) {
+            if (getSwPush(ch + 1)) {
+                setYm2612Mute(ch, getYm2612Mute(ch) ? FALSE : TRUE);
+            }
+        }
         render(bx, by);
         vgs_vsync();
     }

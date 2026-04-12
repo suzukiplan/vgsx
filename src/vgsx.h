@@ -158,6 +158,7 @@ class VGSX
         uint8_t x;
         uint8_t y;
         uint8_t start;
+        uint8_t sw_push[10];
     } key;
 
     enum class LogLevel {

@@ -1,5 +1,11 @@
 # Changes
 
+## Version 1.5.0
+
+- Core: Improved FM sound quality _(reduces the emulator-specific harsh, piercing high-frequency tone)_
+- Core: Added FM channel mute functionality
+- Core: Added debug key functionality
+
 ## Version 1.4.0
 
 - Core: Improved FM sound quality _(implemented post-amp and DC cut)_

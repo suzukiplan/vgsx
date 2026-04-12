@@ -36,6 +36,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <string>
+#include <algorithm>
 #include <array>
 #include <map>
 #include <vector>
@@ -108,10 +109,12 @@ class VgmDriver : public ymfm::ymfm_interface
 {
   private:
     static constexpr int YM2612ChannelCount = 6;
+    static constexpr size_t OutputChannelCount = 2;
     ymfm::ym2612 ym2612;
     std::vector<std::pair<uint32_t, uint8_t>> ym2612_queue;
     std::array<uint8_t, YM2612ChannelCount> ym2612_frequency_low;
     std::array<uint8_t, YM2612ChannelCount> ym2612_frequency_high;
+    std::array<bool, YM2612ChannelCount> ym2612_mute;
     bool subscribedLog;
     std::function<void(bool isError, const char* msg)> logCallback;
 
@@ -135,8 +138,39 @@ class VgmDriver : public ymfm::ymfm_interface
     float postAmp;
     bool dcCutEnabled;
     float dcCutAlpha;
-    std::array<float, 2> dcCutLastInput;
-    std::array<float, 2> dcCutLastOutput;
+    std::array<float, OutputChannelCount> dcCutLastInput;
+    std::array<float, OutputChannelCount> dcCutLastOutput;
+
+  public:
+    struct Ym2612AnalogConfig {
+        bool enabled;
+        float hpAlpha;
+        float lpAlpha;
+        float asymPosGain;
+        float asymNegGain;
+        float asymPosCurve;
+        float asymNegCurve;
+        bool busSaturationEnabled;
+        float saturatorDrive;
+        float outputGain;
+    };
+
+  private:
+    struct Ym2612AnalogState {
+        std::array<float, OutputChannelCount> hpLastInput;
+        std::array<float, OutputChannelCount> hpLastOutput;
+        std::array<float, OutputChannelCount> lpLastOutput;
+
+        void reset()
+        {
+            this->hpLastInput.fill(0.0f);
+            this->hpLastOutput.fill(0.0f);
+            this->lpLastOutput.fill(0.0f);
+        }
+    };
+
+    Ym2612AnalogConfig ym2612AnalogConfig;
+    Ym2612AnalogState ym2612AnalogState;
 
   public:
     VgmDriver(int samples, int channels) : ym2612(*this)
@@ -146,6 +180,7 @@ class VgmDriver : public ymfm::ymfm_interface
         this->postAmp = 1.55f;
         this->dcCutEnabled = true;
         this->dcCutAlpha = 0.995f;
+        this->ym2612AnalogConfig = this->makeYm2612AnalogSubtlePreset();
         this->reset();
     }
 
@@ -186,6 +221,87 @@ class VgmDriver : public ymfm::ymfm_interface
         this->dcCutAlpha = alpha;
     }
 
+    static Ym2612AnalogConfig makeYm2612AnalogCleanPreset()
+    {
+        return {
+            false,
+            0.9965f,
+            0.40f,
+            1.0f,
+            1.0f,
+            0.0f,
+            0.0f,
+            false,
+            1.0f,
+            1.0f,
+        };
+    }
+
+    static Ym2612AnalogConfig makeYm2612AnalogSubtlePreset()
+    {
+        return {
+            true,
+            0.9965f,
+            0.34f,
+            1.000f,
+            0.994f,
+            0.010f,
+            0.016f,
+            true,
+            1.05f,
+            0.985f,
+        };
+    }
+
+    static Ym2612AnalogConfig makeYm2612AnalogWarmPreset()
+    {
+        return {
+            true,
+            0.9955f,
+            0.27f,
+            1.002f,
+            0.990f,
+            0.016f,
+            0.024f,
+            true,
+            1.10f,
+            0.965f,
+        };
+    }
+
+    void setYm2612AnalogConfig(const Ym2612AnalogConfig& config)
+    {
+        this->ym2612AnalogConfig = config;
+        this->clampYm2612AnalogConfig();
+        this->ym2612AnalogState.reset();
+    }
+
+    const Ym2612AnalogConfig& getYm2612AnalogConfig() const
+    {
+        return this->ym2612AnalogConfig;
+    }
+
+    void setYm2612AnalogEnabled(bool enabled)
+    {
+        this->ym2612AnalogConfig.enabled = enabled;
+        this->ym2612AnalogState.reset();
+    }
+
+    void useYm2612AnalogCleanPreset()
+    {
+        this->setYm2612AnalogConfig(this->makeYm2612AnalogCleanPreset());
+    }
+
+    void useYm2612AnalogSubtlePreset()
+    {
+        this->setYm2612AnalogConfig(this->makeYm2612AnalogSubtlePreset());
+    }
+
+    void useYm2612AnalogWarmPreset()
+    {
+        this->setYm2612AnalogConfig(this->makeYm2612AnalogWarmPreset());
+    }
+
     void reset()
     {
         memset(&this->vgm, 0, sizeof(this->vgm));
@@ -194,8 +310,13 @@ class VgmDriver : public ymfm::ymfm_interface
         this->ym2612_queue.clear();
         this->ym2612_frequency_low.fill(0);
         this->ym2612_frequency_high.fill(0);
+        this->ym2612_mute.fill(false);
         this->dcCutLastInput.fill(0.0f);
         this->dcCutLastOutput.fill(0.0f);
+        this->ym2612AnalogState.reset();
+        for (int ch = 0; ch < YM2612ChannelCount; ch++) {
+            this->ym2612.set_channel_mute(static_cast<uint32_t>(ch), false);
+        }
     }
 
     bool load(const uint8_t* data, size_t size)
@@ -340,17 +461,102 @@ class VgmDriver : public ymfm::ymfm_interface
         if (type != ChipType::YM2612 || ch < 0 || YM2612ChannelCount <= ch) {
             return 0;
         }
+        if (this->ym2612_mute[ch]) {
+            return 0;
+        }
         return this->ym2612.channel_volume(static_cast<uint32_t>(ch));
     }
 
+    bool getMute(ChipType type, int ch)
+    {
+        if (type != ChipType::YM2612 || ch < 0 || YM2612ChannelCount <= ch) {
+            return false;
+        }
+        return this->ym2612_mute[ch];
+    }
+
+    void setMute(ChipType type, int ch, bool enabled)
+    {
+        if (type != ChipType::YM2612 || ch < 0 || YM2612ChannelCount <= ch) {
+            return;
+        }
+        this->ym2612_mute[ch] = enabled;
+        this->ym2612.set_channel_mute(static_cast<uint32_t>(ch), enabled);
+    }
+
   private:
+    static float clampUnit(float value)
+    {
+        if (value < -1.0f) {
+            return -1.0f;
+        }
+        if (value > 1.0f) {
+            return 1.0f;
+        }
+        return value;
+    }
+
+    void clampYm2612AnalogConfig()
+    {
+        this->ym2612AnalogConfig.hpAlpha = std::clamp(this->ym2612AnalogConfig.hpAlpha, 0.0f, 1.0f);
+        this->ym2612AnalogConfig.lpAlpha = std::clamp(this->ym2612AnalogConfig.lpAlpha, 0.0f, 1.0f);
+        this->ym2612AnalogConfig.asymPosGain = std::clamp(this->ym2612AnalogConfig.asymPosGain, 0.5f, 1.5f);
+        this->ym2612AnalogConfig.asymNegGain = std::clamp(this->ym2612AnalogConfig.asymNegGain, 0.5f, 1.5f);
+        this->ym2612AnalogConfig.asymPosCurve = std::clamp(this->ym2612AnalogConfig.asymPosCurve, 0.0f, 0.25f);
+        this->ym2612AnalogConfig.asymNegCurve = std::clamp(this->ym2612AnalogConfig.asymNegCurve, 0.0f, 0.25f);
+        this->ym2612AnalogConfig.saturatorDrive = std::clamp(this->ym2612AnalogConfig.saturatorDrive, 1.0f, 2.0f);
+        this->ym2612AnalogConfig.outputGain = std::clamp(this->ym2612AnalogConfig.outputGain, 0.0f, 2.0f);
+    }
+
+    float applyLegacyDcCut(size_t channel, float value)
+    {
+        if (!this->dcCutEnabled) {
+            return value;
+        }
+        float filtered = value - this->dcCutLastInput[channel] + (this->dcCutAlpha * this->dcCutLastOutput[channel]);
+        this->dcCutLastInput[channel] = value;
+        this->dcCutLastOutput[channel] = filtered;
+        return filtered;
+    }
+
+    float applyYm2612AnalogPipeline(size_t channel, float sample)
+    {
+        const Ym2612AnalogConfig& cfg = this->ym2612AnalogConfig;
+
+        // Gentle DC cut keeps the downstream nonlinearity from biasing.
+        float value = sample - this->ym2612AnalogState.hpLastInput[channel] + (cfg.hpAlpha * this->ym2612AnalogState.hpLastOutput[channel]);
+        this->ym2612AnalogState.hpLastInput[channel] = sample;
+        this->ym2612AnalogState.hpLastOutput[channel] = value;
+
+        // YM2612 character is approximated with a tiny asymmetric curve.
+        if (value >= 0.0f) {
+            value = (value * cfg.asymPosGain) + (cfg.asymPosCurve * value * value);
+        } else {
+            value = (value * cfg.asymNegGain) - (cfg.asymNegCurve * value * value);
+        }
+        value = clampUnit(value);
+
+        // A one-pole low-pass lightly rounds the sharpest digital edge.
+        float& lp = this->ym2612AnalogState.lpLastOutput[channel];
+        lp += cfg.lpAlpha * (value - lp);
+        value = lp;
+
+        if (cfg.busSaturationEnabled) {
+            float driven = value * cfg.saturatorDrive;
+            value = driven / (1.0f + ((cfg.saturatorDrive - 1.0f) * std::fabs(driven)));
+        }
+
+        value *= cfg.outputGain;
+        return clampUnit(value);
+    }
+
     int16_t postProcessSample(size_t channel, int32_t sample)
     {
         float value = static_cast<float>(sample) * this->postAmp;
-        if (this->dcCutEnabled) {
-            value = value - this->dcCutLastInput[channel] + (this->dcCutAlpha * this->dcCutLastOutput[channel]);
-            this->dcCutLastInput[channel] = static_cast<float>(sample) * this->postAmp;
-            this->dcCutLastOutput[channel] = value;
+        if (this->ym2612AnalogConfig.enabled) {
+            value = this->applyYm2612AnalogPipeline(channel, value / 32768.0f) * 32768.0f;
+        } else {
+            value = this->applyLegacyDcCut(channel, value);
         }
         if (value < -32768.0f) {
             value = -32768.0f;

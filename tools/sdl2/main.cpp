@@ -6,8 +6,10 @@
 #include <iostream>
 #include <fstream>
 #include <chrono>
+#include <cstring>
 #include <vector>
 #include "vgsx.h"
+#include "../../src/crt_helper.hpp"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "../common/stb_image_write.h"
@@ -15,6 +17,44 @@
 static pthread_mutex_t soundMutex = PTHREAD_MUTEX_INITIALIZER;
 static int pendingMouseScrollV = 0;
 static int pendingMouseScrollH = 0;
+static bool enableCrtFilter = false;
+static crt_helper::Filter crtFilter;
+static constexpr int kDisplayScale2x = 2;
+
+static int getSwitchIndexFromKeycode(SDL_Keycode keycode)
+{
+    switch (keycode) {
+        case SDLK_0: return 0;
+        case SDLK_1: return 1;
+        case SDLK_2: return 2;
+        case SDLK_3: return 3;
+        case SDLK_4: return 4;
+        case SDLK_5: return 5;
+        case SDLK_6: return 6;
+        case SDLK_7: return 7;
+        case SDLK_8: return 8;
+        case SDLK_9: return 9;
+    }
+    return -1;
+}
+
+static void scaleDisplay2x(const uint32_t* src, uint32_t* dst, int width, int height)
+{
+    const int dstWidth = width * kDisplayScale2x;
+    for (int y = 0; y < height; y++) {
+        const int srcRow = y * width;
+        const int dstRowTop = (y * kDisplayScale2x) * dstWidth;
+        const int dstRowBottom = dstRowTop + dstWidth;
+        for (int x = 0; x < width; x++) {
+            const uint32_t pixel = 0xFF000000u | src[srcRow + x];
+            const int dstX = x * kDisplayScale2x;
+            dst[dstRowTop + dstX] = pixel;
+            dst[dstRowTop + dstX + 1] = pixel;
+            dst[dstRowBottom + dstX] = pixel;
+            dst[dstRowBottom + dstX + 1] = pixel;
+        }
+    }
+}
 
 static int clampMouseScroll(int value)
 {
@@ -186,6 +226,7 @@ static void file_dump(const char* fname)
 
 int main(int argc, char* argv[])
 {
+    crtFilter.init();
     vgsx.setLogCallback([](VGSX::LogLevel level, const char* msg) {
         std::string lv;
         switch (level) {
@@ -351,7 +392,9 @@ int main(int argc, char* argv[])
 
     SDL_AudioDeviceID audioDeviceId = 0;
     SDL_Window* window = nullptr;
-    SDL_Surface* windowSurface = nullptr;
+    SDL_Renderer* renderer = nullptr;
+    SDL_Texture* displayTexture = nullptr;
+    std::vector<uint32_t> scaledDisplay;
 
     if (!consoleMode) {
         SDL_version sdlVersion;
@@ -388,16 +431,27 @@ int main(int argc, char* argv[])
             vgsx.getDisplayWidth(),
             vgsx.getDisplayHeight(),
             0);
-        windowSurface = SDL_GetWindowSurface(window);
-        if (!windowSurface) {
-            printf("SDL_GetWindowSurface failed: %s\n", SDL_GetError());
+        if (!window) {
+            printf("SDL_CreateWindow failed: %s\n", SDL_GetError());
             exit(-1);
         }
-        if (4 != windowSurface->format->BytesPerPixel) {
-            printf("unsupported pixel format (support only 4 bytes / pixel)\n");
+        renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+        if (!renderer) {
+            printf("SDL_CreateRenderer failed: %s\n", SDL_GetError());
             exit(-1);
         }
-        SDL_UpdateWindowSurface(window);
+        displayTexture = SDL_CreateTexture(
+            renderer,
+            SDL_PIXELFORMAT_ARGB8888,
+            SDL_TEXTUREACCESS_STREAMING,
+            vgsx.getDisplayWidth() * kDisplayScale2x,
+            vgsx.getDisplayHeight() * kDisplayScale2x);
+        if (!displayTexture) {
+            printf("SDL_CreateTexture failed: %s\n", SDL_GetError());
+            exit(-1);
+        }
+        SDL_SetTextureBlendMode(displayTexture, SDL_BLENDMODE_NONE);
+        scaledDisplay.resize((size_t)vgsx.getDisplayWidth() * kDisplayScale2x * vgsx.getDisplayHeight() * kDisplayScale2x);
     }
 
     printf("Start main loop.\n");
@@ -406,8 +460,10 @@ int main(int argc, char* argv[])
     const int waitFps60[3] = {17000, 17000, 16000};
     bool quit = false;
     bool stabled = true;
+    bool swPressed[10];
     double totalClocks = 0.0;
     uint32_t maxClocks = 0;
+    memset(swPressed, 0, sizeof(swPressed));
     if (!consoleMode) {
         SDL_PauseAudioDevice(audioDeviceId, 0);
     }
@@ -416,6 +472,7 @@ int main(int argc, char* argv[])
     while (!quit && !vgsx.isExit()) {
         loopCount++;
         auto start = std::chrono::system_clock::now();
+        memset(vgsx.key.sw_push, 0, sizeof(vgsx.key.sw_push));
         while (!consoleMode && SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 quit = true;
@@ -429,6 +486,14 @@ int main(int argc, char* argv[])
                 pendingMouseScrollH = clampMouseScroll(pendingMouseScrollH + scrollX);
                 pendingMouseScrollV = clampMouseScroll(pendingMouseScrollV + scrollY);
             } else if (event.type == SDL_KEYDOWN) {
+                const int switchIndex = getSwitchIndexFromKeycode(event.key.keysym.sym);
+                if (0 <= switchIndex) {
+                    if (!swPressed[switchIndex]) {
+                        vgsx.key.sw_push[switchIndex] = 1;
+                        swPressed[switchIndex] = true;
+                    }
+                    continue;
+                }
                 switch (event.key.keysym.sym) {
                     case SDLK_UP: vgsx.key.up = 1; break;
                     case SDLK_DOWN: vgsx.key.down = 1; break;
@@ -439,11 +504,20 @@ int main(int argc, char* argv[])
                     case SDLK_a: vgsx.key.x = 1; break;
                     case SDLK_s: vgsx.key.y = 1; break;
                     case SDLK_SPACE: vgsx.key.start = 1; break;
+                    case SDLK_f:
+                        enableCrtFilter = !enableCrtFilter;
+                        printf("CRT filter: %s\n", enableCrtFilter ? "ON" : "OFF");
+                        break;
                     case SDLK_q: quit = true; break;
                     case SDLK_r: vgsx.reset(); break;
                     case SDLK_c: screenShot(); break;
                 }
             } else if (event.type == SDL_KEYUP) {
+                const int switchIndex = getSwitchIndexFromKeycode(event.key.keysym.sym);
+                if (0 <= switchIndex) {
+                    swPressed[switchIndex] = false;
+                    continue;
+                }
                 switch (event.key.keysym.sym) {
                     case SDLK_UP: vgsx.key.up = 0; break;
                     case SDLK_DOWN: vgsx.key.down = 0; break;
@@ -468,20 +542,31 @@ int main(int argc, char* argv[])
                 printf("Update the peak CPU clock rate: %dHz per frame.\n", maxClocks);
             }
             if (!consoleMode) {
-                auto vgsDisplay = vgsx.getDisplay();
-                auto pcDisplay = (unsigned int*)windowSurface->pixels;
-                auto pitch = windowSurface->pitch / windowSurface->format->BytesPerPixel;
-                const int offsetX = 0;
-                const int offsetY = 0;
-                pcDisplay += offsetY;
-                for (int y = 0; y < vgsx.getDisplayHeight(); y++) {
-                    for (int x = 0; x < vgsx.getDisplayWidth(); x++) {
-                        pcDisplay[offsetX + x] = vgsDisplay[x];
-                    }
-                    pcDisplay += pitch;
-                    vgsDisplay += vgsx.getDisplayWidth();
+                const int displayWidth = vgsx.getDisplayWidth();
+                const int displayHeight = vgsx.getDisplayHeight();
+                const uint32_t* display = vgsx.getDisplay();
+                uint32_t* texturePixels = nullptr;
+                int texturePitchBytes = 0;
+                if (enableCrtFilter) {
+                    crtFilter.apply2x(display, scaledDisplay.data(), displayWidth, displayHeight);
+                } else {
+                    scaleDisplay2x(display, scaledDisplay.data(), displayWidth, displayHeight);
                 }
-                SDL_UpdateWindowSurface(window);
+                if (SDL_LockTexture(displayTexture, nullptr, (void**)&texturePixels, &texturePitchBytes)) {
+                    printf("SDL_LockTexture failed: %s\n", SDL_GetError());
+                    quit = true;
+                } else {
+                    const int textureWidth = displayWidth * kDisplayScale2x;
+                    const int textureHeight = displayHeight * kDisplayScale2x;
+                    const int texturePitchPixels = texturePitchBytes / (int)sizeof(uint32_t);
+                    for (int y = 0; y < textureHeight; y++) {
+                        memcpy(&texturePixels[y * texturePitchPixels], &scaledDisplay[(size_t)y * textureWidth], (size_t)textureWidth * sizeof(uint32_t));
+                    }
+                    SDL_UnlockTexture(displayTexture);
+                    SDL_RenderClear(renderer);
+                    SDL_RenderCopy(renderer, displayTexture, nullptr, nullptr);
+                    SDL_RenderPresent(renderer);
+                }
             }
             // sync 60fps
             std::chrono::duration<double> diff = std::chrono::system_clock::now() - start;
@@ -559,6 +644,12 @@ int main(int argc, char* argv[])
         printf("Maximum MC68030 Clocks: %.1fkHz per second.\n", max / 1000);
     } else {
         printf("Maximum MC68030 Clocks: %.1fMHz per second.\n", max / 1000000);
+    }
+    if (displayTexture) {
+        SDL_DestroyTexture(displayTexture);
+    }
+    if (renderer) {
+        SDL_DestroyRenderer(renderer);
     }
     SDL_Quit();
 
