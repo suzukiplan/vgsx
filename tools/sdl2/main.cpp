@@ -21,6 +21,13 @@ static bool enableCrtFilter = false;
 static crt_helper::Filter crtFilter;
 static constexpr int kDisplayScale2x = 2;
 
+enum class YmAnalogOption {
+    Off,
+    Clean,
+    Subtle,
+    Warm,
+};
+
 static int getSwitchIndexFromKeycode(SDL_Keycode keycode)
 {
     switch (keycode) {
@@ -115,6 +122,7 @@ static void put_usage()
     puts("            [-d]");
     puts("            [-m]");
     puts("            [-rsv]");
+    puts("            [--ym-analog=off|clean|subtle|warm]");
     puts("            [-g /path/to/pattern.chr]");
     puts("            [-c /path/to/palette.bin]");
     puts("            [-b /path/to/bgm.vgm]");
@@ -247,9 +255,27 @@ int main(int argc, char* argv[])
     bool isFirstOption = true;
     bool print_dump = false;
     bool enableMouse = false;
+    YmAnalogOption ymAnalogOption = YmAnalogOption::Subtle;
     vgsx.disableBootBios();
     for (int i = 1; i < argc; i++) {
         if ('-' == argv[i][0]) {
+            if (0 == strncmp(argv[i], "--ym-analog=", 12)) {
+                const char* value = argv[i] + 12;
+                if (0 == strcmp(value, "off")) {
+                    ymAnalogOption = YmAnalogOption::Off;
+                } else if (0 == strcmp(value, "clean")) {
+                    ymAnalogOption = YmAnalogOption::Clean;
+                } else if (0 == strcmp(value, "subtle")) {
+                    ymAnalogOption = YmAnalogOption::Subtle;
+                } else if (0 == strcmp(value, "warm")) {
+                    ymAnalogOption = YmAnalogOption::Warm;
+                } else {
+                    put_usage();
+                    return 1;
+                }
+                isFirstOption = false;
+                continue;
+            }
             switch (tolower(argv[i][1])) {
                 case 'x': {
                     if (argc <= i + 1) {
@@ -389,6 +415,21 @@ int main(int argc, char* argv[])
         }
     }
     puts("Load succeed.");
+
+    switch (ymAnalogOption) {
+        case YmAnalogOption::Off:
+            vgsx.setYm2612AnalogEnabled(false);
+            break;
+        case YmAnalogOption::Clean:
+            vgsx.useYm2612AnalogCleanPreset();
+            break;
+        case YmAnalogOption::Subtle:
+            vgsx.useYm2612AnalogSubtlePreset();
+            break;
+        case YmAnalogOption::Warm:
+            vgsx.useYm2612AnalogWarmPreset();
+            break;
+    }
 
     SDL_AudioDeviceID audioDeviceId = 0;
     SDL_Window* window = nullptr;

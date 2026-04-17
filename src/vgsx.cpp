@@ -563,6 +563,26 @@ VGSX::~VGSX()
     delete (VgmDriver*)this->vgmdrv;
 }
 
+void VGSX::setYm2612AnalogEnabled(bool enabled)
+{
+    ((VgmDriver*)this->vgmdrv)->setYm2612AnalogEnabled(enabled);
+}
+
+void VGSX::useYm2612AnalogCleanPreset()
+{
+    ((VgmDriver*)this->vgmdrv)->useYm2612AnalogCleanPreset();
+}
+
+void VGSX::useYm2612AnalogSubtlePreset()
+{
+    ((VgmDriver*)this->vgmdrv)->useYm2612AnalogSubtlePreset();
+}
+
+void VGSX::useYm2612AnalogWarmPreset()
+{
+    ((VgmDriver*)this->vgmdrv)->useYm2612AnalogWarmPreset();
+}
+
 void VGSX::setLastError(const char* format, ...)
 {
     va_list args;

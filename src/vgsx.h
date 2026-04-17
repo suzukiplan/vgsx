@@ -203,6 +203,10 @@ class VGSX
     ButtonId getButtonIdStart();
     void subscribeInput(std::function<uint32_t(uint32_t port)> callback);
     void subscribeOutput(std::function<void(uint32_t port, uint32_t value)> callback);
+    void setYm2612AnalogEnabled(bool enabled);
+    void useYm2612AnalogCleanPreset();
+    void useYm2612AnalogSubtlePreset();
+    void useYm2612AnalogWarmPreset();
 
     void setSaveDataDirectory(const char* dir)
     {
