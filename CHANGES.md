@@ -1,5 +1,10 @@
 # Changes
 
+## Version 1.6.0 (WIP)
+
+- Toolchain: Added the `--ym-analog=off|clean|subtle|warm` startup option to the SDL2 emulator to select the YM2612 analog effect preset. (`subtle` is the default)
+- Core: Added the `VGSX` public methods `setYm2612AnalogEnabled`, `useYm2612AnalogCleanPreset`, `useYm2612AnalogSubtlePreset`, and `useYm2612AnalogWarmPreset`.
+
 ## Version 1.5.0
 
 - Core: Improved FM sound quality _(reduces the emulator-specific harsh, piercing high-frequency tone)_
