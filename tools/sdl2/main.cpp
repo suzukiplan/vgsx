@@ -25,6 +25,7 @@ enum class YmAnalogOption {
     Off,
     Clean,
     Subtle,
+    Real,
     Warm,
 };
 
@@ -122,7 +123,7 @@ static void put_usage()
     puts("            [-d]");
     puts("            [-m]");
     puts("            [-rsv]");
-    puts("            [--ym-analog=off|clean|subtle|warm]");
+    puts("            [--ym-analog=off|clean|subtle|real|warm]");
     puts("            [-g /path/to/pattern.chr]");
     puts("            [-c /path/to/palette.bin]");
     puts("            [-b /path/to/bgm.vgm]");
@@ -255,7 +256,7 @@ int main(int argc, char* argv[])
     bool isFirstOption = true;
     bool print_dump = false;
     bool enableMouse = false;
-    YmAnalogOption ymAnalogOption = YmAnalogOption::Subtle;
+    YmAnalogOption ymAnalogOption = YmAnalogOption::Real;
     vgsx.disableBootBios();
     for (int i = 1; i < argc; i++) {
         if ('-' == argv[i][0]) {
@@ -267,6 +268,8 @@ int main(int argc, char* argv[])
                     ymAnalogOption = YmAnalogOption::Clean;
                 } else if (0 == strcmp(value, "subtle")) {
                     ymAnalogOption = YmAnalogOption::Subtle;
+                } else if (0 == strcmp(value, "real")) {
+                    ymAnalogOption = YmAnalogOption::Real;
                 } else if (0 == strcmp(value, "warm")) {
                     ymAnalogOption = YmAnalogOption::Warm;
                 } else {
@@ -425,6 +428,9 @@ int main(int argc, char* argv[])
             break;
         case YmAnalogOption::Subtle:
             vgsx.useYm2612AnalogSubtlePreset();
+            break;
+        case YmAnalogOption::Real:
+            vgsx.useYm2612AnalogRealPreset();
             break;
         case YmAnalogOption::Warm:
             vgsx.useYm2612AnalogWarmPreset();

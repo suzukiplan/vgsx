@@ -132,6 +132,23 @@ class VgmDriver : public ymfm::ymfm_interface
         emulated_time step;
     } vgm;
 
+    struct Ym2612ResampleState {
+        bool primed;
+        emulated_time previousTime;
+        emulated_time nextTime;
+        std::array<int32_t, OutputChannelCount> previousSample;
+        std::array<int32_t, OutputChannelCount> nextSample;
+
+        void reset()
+        {
+            this->primed = false;
+            this->previousTime = 0;
+            this->nextTime = 0;
+            this->previousSample.fill(0);
+            this->nextSample.fill(0);
+        }
+    } ym2612ResampleState;
+
     emulated_time output_step;
     std::map<ChipType, uint32_t> clocks;
     int channels;
@@ -150,37 +167,64 @@ class VgmDriver : public ymfm::ymfm_interface
         float asymNegGain;
         float asymPosCurve;
         float asymNegCurve;
+        float postLpAlpha;
+        bool notchEnabled;
+        float notchFrequencyHz;
+        float notchQ;
+        float notchMix;
         bool busSaturationEnabled;
         float saturatorDrive;
         float outputGain;
     };
 
   private:
+    struct Ym2612AnalogNotchCoefficients {
+        float b0;
+        float b1;
+        float b2;
+        float a1;
+        float a2;
+    };
+
     struct Ym2612AnalogState {
         std::array<float, OutputChannelCount> hpLastInput;
         std::array<float, OutputChannelCount> hpLastOutput;
         std::array<float, OutputChannelCount> lpLastOutput;
+        std::array<float, OutputChannelCount> postLpLastOutput;
+        std::array<float, OutputChannelCount> notchInput1;
+        std::array<float, OutputChannelCount> notchInput2;
+        std::array<float, OutputChannelCount> notchOutput1;
+        std::array<float, OutputChannelCount> notchOutput2;
 
         void reset()
         {
             this->hpLastInput.fill(0.0f);
             this->hpLastOutput.fill(0.0f);
             this->lpLastOutput.fill(0.0f);
+            this->postLpLastOutput.fill(0.0f);
+            this->notchInput1.fill(0.0f);
+            this->notchInput2.fill(0.0f);
+            this->notchOutput1.fill(0.0f);
+            this->notchOutput2.fill(0.0f);
         }
     };
 
     Ym2612AnalogConfig ym2612AnalogConfig;
+    Ym2612AnalogNotchCoefficients ym2612AnalogNotch;
     Ym2612AnalogState ym2612AnalogState;
+    float outputSampleRate;
 
   public:
     VgmDriver(int samples, int channels) : ym2612(*this)
     {
         this->output_step = 0x100000000ull / samples;
         this->channels = channels;
+        this->outputSampleRate = static_cast<float>(samples);
         this->postAmp = 1.55f;
         this->dcCutEnabled = true;
         this->dcCutAlpha = 0.995f;
-        this->ym2612AnalogConfig = this->makeYm2612AnalogSubtlePreset();
+        this->ym2612AnalogConfig = this->makeYm2612AnalogRealPreset();
+        this->updateYm2612AnalogNotchCoefficients();
         this->reset();
     }
 
@@ -231,6 +275,11 @@ class VgmDriver : public ymfm::ymfm_interface
             1.0f,
             0.0f,
             0.0f,
+            1.0f,
+            false,
+            4900.0f,
+            2.5f,
+            0.0f,
             false,
             1.0f,
             1.0f,
@@ -247,9 +296,35 @@ class VgmDriver : public ymfm::ymfm_interface
             0.994f,
             0.010f,
             0.016f,
+            1.0f,
+            false,
+            4900.0f,
+            2.5f,
+            0.0f,
             true,
             1.05f,
             0.985f,
+        };
+    }
+
+    static Ym2612AnalogConfig makeYm2612AnalogRealPreset()
+    {
+        return {
+            true,
+            0.9971f,
+            0.62f,
+            1.000f,
+            0.996f,
+            0.006f,
+            0.009f,
+            0.94f,
+            true,
+            4900.0f,
+            9.0f,
+            0.020f,
+            true,
+            1.006f,
+            0.940f,
         };
     }
 
@@ -263,6 +338,11 @@ class VgmDriver : public ymfm::ymfm_interface
             0.990f,
             0.016f,
             0.024f,
+            1.0f,
+            false,
+            4900.0f,
+            2.5f,
+            0.0f,
             true,
             1.10f,
             0.965f,
@@ -273,6 +353,7 @@ class VgmDriver : public ymfm::ymfm_interface
     {
         this->ym2612AnalogConfig = config;
         this->clampYm2612AnalogConfig();
+        this->updateYm2612AnalogNotchCoefficients();
         this->ym2612AnalogState.reset();
     }
 
@@ -297,6 +378,11 @@ class VgmDriver : public ymfm::ymfm_interface
         this->setYm2612AnalogConfig(this->makeYm2612AnalogSubtlePreset());
     }
 
+    void useYm2612AnalogRealPreset()
+    {
+        this->setYm2612AnalogConfig(this->makeYm2612AnalogRealPreset());
+    }
+
     void useYm2612AnalogWarmPreset()
     {
         this->setYm2612AnalogConfig(this->makeYm2612AnalogWarmPreset());
@@ -314,6 +400,7 @@ class VgmDriver : public ymfm::ymfm_interface
         this->dcCutLastInput.fill(0.0f);
         this->dcCutLastOutput.fill(0.0f);
         this->ym2612AnalogState.reset();
+        this->ym2612ResampleState.reset();
         for (int ch = 0; ch < YM2612ChannelCount; ch++) {
             this->ym2612.set_channel_mute(static_cast<uint32_t>(ch), false);
         }
@@ -420,13 +507,8 @@ class VgmDriver : public ymfm::ymfm_interface
                             this->updateYm2612Frequency(reg, data2);
                         }
 
-                        ymfm::ym2612::output_data out;
-                        for (; vgm.pos <= vgm.output_start; vgm.pos += vgm.step) {
-                            ym2612.generate(&out);
-                        }
+                        this->sampleYm2612At(vgm.output_start, mixed);
                         vgm.output_start += output_step;
-                        mixed[0] += out.data[0];
-                        mixed[1] += out.data[1];
                         break;
                     }
                     case ChipType::Unsupported:
@@ -504,8 +586,48 @@ class VgmDriver : public ymfm::ymfm_interface
         this->ym2612AnalogConfig.asymNegGain = std::clamp(this->ym2612AnalogConfig.asymNegGain, 0.5f, 1.5f);
         this->ym2612AnalogConfig.asymPosCurve = std::clamp(this->ym2612AnalogConfig.asymPosCurve, 0.0f, 0.25f);
         this->ym2612AnalogConfig.asymNegCurve = std::clamp(this->ym2612AnalogConfig.asymNegCurve, 0.0f, 0.25f);
+        this->ym2612AnalogConfig.postLpAlpha = std::clamp(this->ym2612AnalogConfig.postLpAlpha, 0.0f, 1.0f);
+        this->ym2612AnalogConfig.notchFrequencyHz = std::clamp(this->ym2612AnalogConfig.notchFrequencyHz, 1000.0f, 12000.0f);
+        this->ym2612AnalogConfig.notchQ = std::clamp(this->ym2612AnalogConfig.notchQ, 0.2f, 12.0f);
+        this->ym2612AnalogConfig.notchMix = std::clamp(this->ym2612AnalogConfig.notchMix, 0.0f, 1.0f);
         this->ym2612AnalogConfig.saturatorDrive = std::clamp(this->ym2612AnalogConfig.saturatorDrive, 1.0f, 2.0f);
         this->ym2612AnalogConfig.outputGain = std::clamp(this->ym2612AnalogConfig.outputGain, 0.0f, 2.0f);
+    }
+
+    void updateYm2612AnalogNotchCoefficients()
+    {
+        const float sampleRate = std::max(this->outputSampleRate, 1.0f);
+        const float omega = 2.0f * static_cast<float>(M_PI) * this->ym2612AnalogConfig.notchFrequencyHz / sampleRate;
+        const float alpha = std::sin(omega) / (2.0f * this->ym2612AnalogConfig.notchQ);
+        const float cosOmega = std::cos(omega);
+        const float a0 = 1.0f + alpha;
+
+        this->ym2612AnalogNotch.b0 = 1.0f / a0;
+        this->ym2612AnalogNotch.b1 = (-2.0f * cosOmega) / a0;
+        this->ym2612AnalogNotch.b2 = 1.0f / a0;
+        this->ym2612AnalogNotch.a1 = (-2.0f * cosOmega) / a0;
+        this->ym2612AnalogNotch.a2 = (1.0f - alpha) / a0;
+    }
+
+    float applyYm2612AnalogNotch(size_t channel, float value)
+    {
+        if (!this->ym2612AnalogConfig.notchEnabled || this->ym2612AnalogConfig.notchMix <= 0.0f) {
+            return value;
+        }
+
+        const Ym2612AnalogNotchCoefficients& notch = this->ym2612AnalogNotch;
+        float filtered = (notch.b0 * value)
+                       + (notch.b1 * this->ym2612AnalogState.notchInput1[channel])
+                       + (notch.b2 * this->ym2612AnalogState.notchInput2[channel])
+                       - (notch.a1 * this->ym2612AnalogState.notchOutput1[channel])
+                       - (notch.a2 * this->ym2612AnalogState.notchOutput2[channel]);
+
+        this->ym2612AnalogState.notchInput2[channel] = this->ym2612AnalogState.notchInput1[channel];
+        this->ym2612AnalogState.notchInput1[channel] = value;
+        this->ym2612AnalogState.notchOutput2[channel] = this->ym2612AnalogState.notchOutput1[channel];
+        this->ym2612AnalogState.notchOutput1[channel] = filtered;
+
+        return (value * (1.0f - this->ym2612AnalogConfig.notchMix)) + (filtered * this->ym2612AnalogConfig.notchMix);
     }
 
     float applyLegacyDcCut(size_t channel, float value)
@@ -546,8 +668,65 @@ class VgmDriver : public ymfm::ymfm_interface
             value = driven / (1.0f + ((cfg.saturatorDrive - 1.0f) * std::fabs(driven)));
         }
 
+        float& postLp = this->ym2612AnalogState.postLpLastOutput[channel];
+        postLp += cfg.postLpAlpha * (value - postLp);
+        value = postLp;
+
+        value = this->applyYm2612AnalogNotch(channel, value);
+
         value *= cfg.outputGain;
         return clampUnit(value);
+    }
+
+    void generateYm2612Output(std::array<int32_t, OutputChannelCount>& sample)
+    {
+        ymfm::ym2612::output_data out;
+        ym2612.generate(&out);
+        sample[0] = out.data[0];
+        sample[1] = out.data[1];
+    }
+
+    void primeYm2612Resampler()
+    {
+        this->generateYm2612Output(this->ym2612ResampleState.previousSample);
+        this->ym2612ResampleState.previousTime = 0;
+        vgm.pos = vgm.step;
+        this->generateYm2612Output(this->ym2612ResampleState.nextSample);
+        this->ym2612ResampleState.nextTime = vgm.pos;
+        vgm.pos += vgm.step;
+        this->ym2612ResampleState.primed = true;
+    }
+
+    void advanceYm2612Resampler(emulated_time targetTime)
+    {
+        if (!this->ym2612ResampleState.primed) {
+            this->primeYm2612Resampler();
+        }
+        while (this->ym2612ResampleState.nextTime <= targetTime) {
+            this->ym2612ResampleState.previousTime = this->ym2612ResampleState.nextTime;
+            this->ym2612ResampleState.previousSample = this->ym2612ResampleState.nextSample;
+            this->generateYm2612Output(this->ym2612ResampleState.nextSample);
+            this->ym2612ResampleState.nextTime = vgm.pos;
+            vgm.pos += vgm.step;
+        }
+    }
+
+    void sampleYm2612At(emulated_time targetTime, int32_t mixed[OutputChannelCount])
+    {
+        this->advanceYm2612Resampler(targetTime);
+
+        const emulated_time interval = this->ym2612ResampleState.nextTime - this->ym2612ResampleState.previousTime;
+        double fraction = 0.0;
+        if (interval > 0) {
+            fraction = static_cast<double>(targetTime - this->ym2612ResampleState.previousTime) / static_cast<double>(interval);
+        }
+        fraction = std::clamp(fraction, 0.0, 1.0);
+
+        for (size_t channel = 0; channel < OutputChannelCount; channel++) {
+            const double previous = static_cast<double>(this->ym2612ResampleState.previousSample[channel]);
+            const double next = static_cast<double>(this->ym2612ResampleState.nextSample[channel]);
+            mixed[channel] += static_cast<int32_t>(std::lround(previous + ((next - previous) * fraction)));
+        }
     }
 
     int16_t postProcessSample(size_t channel, int32_t sample)

@@ -578,6 +578,11 @@ void VGSX::useYm2612AnalogSubtlePreset()
     ((VgmDriver*)this->vgmdrv)->useYm2612AnalogSubtlePreset();
 }
 
+void VGSX::useYm2612AnalogRealPreset()
+{
+    ((VgmDriver*)this->vgmdrv)->useYm2612AnalogRealPreset();
+}
+
 void VGSX::useYm2612AnalogWarmPreset()
 {
     ((VgmDriver*)this->vgmdrv)->useYm2612AnalogWarmPreset();

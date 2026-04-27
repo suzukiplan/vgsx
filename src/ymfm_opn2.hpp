@@ -3106,11 +3106,49 @@ class ym2612
         return (value < 0) ? (value - 3) : (value + 4);
     }
 
+    // approximate the per-pin YM2612/YM3438 output over one 24-phase window
+    static constexpr int32_t pin_level_sample(int32_t left, int32_t right, bool pan_left, bool pan_right)
+    {
+        return pan_left ? left : (pan_right ? right : 0);
+    }
+
+    static constexpr int32_t ym2612_pin_sign(int32_t value)
+    {
+        return (value < 0) ? -1 : 1;
+    }
+
+    static constexpr int32_t ym2612_pin_active(int32_t value)
+    {
+        return value + ((value >= 0) ? 1 : 0);
+    }
+
+    static constexpr int64_t ym2612_pin_numerator(int32_t value, bool active)
+    {
+        const int32_t sign = ym2612_pin_sign(value);
+        if (!active) {
+            return static_cast<int64_t>(12) * sign;
+        }
+        return static_cast<int64_t>(3) * (ym2612_pin_active(value) + (3 * sign));
+    }
+
+    static constexpr int64_t ym3438_pin_numerator(int32_t value, bool active)
+    {
+        return active ? (static_cast<int64_t>(3) * value) : 0;
+    }
+
     // internal state
     uint16_t m_address;   // address register
     uint16_t m_dac_data;  // 9-bit DAC data
     uint8_t m_dac_enable; // DAC enabled?
     chip_type m_chip_type; // OPN2 output model
+    uint8_t m_pin_ch_out_valid; // ch_out latch primed?
+    uint8_t m_pin_output_valid; // output latch primed?
+    std::array<int32_t, CHANNELS> m_pin_ch_out_value; // current_value captured into ch_out
+    std::array<uint8_t, CHANNELS> m_pin_ch_out_pan_left; // ch_out pan state for left pin
+    std::array<uint8_t, CHANNELS> m_pin_ch_out_pan_right; // ch_out pan state for right pin
+    std::array<int32_t, CHANNELS> m_pin_output_value; // current_value captured into output latch
+    std::array<uint8_t, CHANNELS> m_pin_output_pan_left; // output latch pan state for left pin
+    std::array<uint8_t, CHANNELS> m_pin_output_pan_right; // output latch pan state for right pin
     std::array<uint32_t, CHANNELS> m_channel_volume; // latest per-channel output magnitude
     std::array<bool, CHANNELS> m_channel_mute; // per-channel mute state
     fm_engine m_fm;       // core FM engine
@@ -3538,10 +3576,24 @@ ym2612::ym2612(ymfm_interface& intf)
       m_dac_data(0),
       m_dac_enable(0),
       m_chip_type(chip_type::ym2612),
+      m_pin_ch_out_valid(0),
+      m_pin_output_valid(0),
+      m_pin_ch_out_value(),
+      m_pin_ch_out_pan_left(),
+      m_pin_ch_out_pan_right(),
+      m_pin_output_value(),
+      m_pin_output_pan_left(),
+      m_pin_output_pan_right(),
       m_channel_volume(),
       m_channel_mute(),
       m_fm(intf)
 {
+    m_pin_ch_out_value.fill(0);
+    m_pin_ch_out_pan_left.fill(0);
+    m_pin_ch_out_pan_right.fill(0);
+    m_pin_output_value.fill(0);
+    m_pin_output_pan_left.fill(0);
+    m_pin_output_pan_right.fill(0);
     m_channel_volume.fill(0);
     m_channel_mute.fill(false);
 }
@@ -3554,6 +3606,14 @@ void ym2612::reset()
 {
     // reset the engines
     m_fm.reset();
+    m_pin_ch_out_valid = 0;
+    m_pin_output_valid = 0;
+    m_pin_ch_out_value.fill(0);
+    m_pin_ch_out_pan_left.fill(0);
+    m_pin_ch_out_pan_right.fill(0);
+    m_pin_output_value.fill(0);
+    m_pin_output_pan_left.fill(0);
+    m_pin_output_pan_right.fill(0);
     m_channel_volume.fill(0);
     m_channel_mute.fill(false);
 }
@@ -3574,6 +3634,16 @@ void ym2612::save_restore(ymfm_saved_state& state)
         uint8_t chip = 0;
         state.save_restore(chip);
         m_chip_type = static_cast<chip_type>(chip <= static_cast<uint8_t>(chip_type::ymf276) ? chip : 0);
+    }
+    state.save_restore(m_pin_ch_out_valid);
+    state.save_restore(m_pin_output_valid);
+    for (uint32_t chan = 0; chan < CHANNELS; chan++) {
+        state.save_restore(m_pin_ch_out_value[chan]);
+        state.save_restore(m_pin_ch_out_pan_left[chan]);
+        state.save_restore(m_pin_ch_out_pan_right[chan]);
+        state.save_restore(m_pin_output_value[chan]);
+        state.save_restore(m_pin_output_pan_left[chan]);
+        state.save_restore(m_pin_output_pan_right[chan]);
     }
     m_fm.save_restore(state);
 }
@@ -3715,36 +3785,47 @@ void ym2612::write(uint32_t offset, uint8_t data)
 
 YMFM_HOT void ym2612::generate(output_data* output, uint32_t numsamples)
 {
-    constexpr int32_t zero_discontinuity = 4; // dac_discontinuity(0)
     auto& regs = m_fm.regs();
     output_data temp;
     for (uint32_t samp = 0; samp < numsamples; samp++, output++) {
         // clock the system
         m_fm.clock(fm_engine::ALL_CHANNELS);
 
-        // sum individual channels to apply DAC discontinuity on each
         int32_t* const dst = output->data;
-        dst[0] = 0;
-        dst[1] = 0;
+        int64_t mixed_sum[2] = {0, 0};
+        std::array<int32_t, CHANNELS> current_value = {};
+        std::array<uint8_t, CHANNELS> current_pan_left = {};
+        std::array<uint8_t, CHANNELS> current_pan_right = {};
 
-        // first do FM-only channels; OPN2 is 9-bit with intermediate clipping
+        // ymfm clocks the whole 24-phase OPN2 core per sample, so approximate the
+        // output pins by averaging one full pin-multiplex window instead of replaying
+        // the per-phase MOL/MOR waveform directly. Model the output path as
+        // current -> ch_out latch -> output latch so the pin average is based on a
+        // value that has passed through two latch stages like the low-level cores.
         int const last_fm_channel = m_dac_enable ? 5 : 6;
         uint32_t chanmask = 1;
         for (int chan = 0; chan < last_fm_channel; chan++, chanmask <<= 1) {
+            const uint32_t choffs = (static_cast<uint32_t>(chan) % 3) + (0x100 * (static_cast<uint32_t>(chan) / 3));
+            const bool pan_left = regs.ch_output_0(choffs) != 0;
+            const bool pan_right = regs.ch_output_1(choffs) != 0;
             temp.clear();
             m_fm.output(temp, m_chip_type == chip_type::ymf276 ? 0 : 5, m_chip_type == chip_type::ymf276 ? 8191 : 256, chanmask);
             int32_t left = temp.data[0];
             int32_t right = temp.data[1];
-            if (m_chip_type == chip_type::ym2612) {
-                left = dac_discontinuity(left);
-                right = dac_discontinuity(right);
-            }
+            const int32_t channel_value = pin_level_sample(left, right, pan_left, pan_right);
+            current_value[chan] = channel_value;
+            current_pan_left[chan] = pan_left ? 1 : 0;
+            current_pan_right[chan] = pan_right ? 1 : 0;
             if (m_channel_mute[chan]) {
                 left = 0;
                 right = 0;
             }
-            dst[0] += left;
-            dst[1] += right;
+            mixed_sum[0] += left;
+            mixed_sum[1] += right;
+            if (m_chip_type == chip_type::ym2612) {
+                left = pan_left ? dac_discontinuity(channel_value) : (ym2612_pin_sign(channel_value) * 3);
+                right = pan_right ? dac_discontinuity(channel_value) : (ym2612_pin_sign(channel_value) * 3);
+            }
             m_channel_volume[chan] = static_cast<uint32_t>((left < 0 ? -left : left) + (right < 0 ? -right : right));
         }
         for (uint32_t chan = last_fm_channel; chan < CHANNELS; chan++) {
@@ -3755,45 +3836,100 @@ YMFM_HOT void ym2612::generate(output_data* output, uint32_t numsamples)
         if (YMFM_LIKELY(m_dac_enable)) {
             // DAC enabled: start with DAC value then add the first 5 channels only
             int32_t dacval = int16_t(m_dac_data << 7) >> 7;
-            int32_t left = regs.ch_output_0(0x102) ? dacval : 0;
-            int32_t right = regs.ch_output_1(0x102) ? dacval : 0;
+            const uint32_t choffs = 0x102;
+            const bool pan_left = regs.ch_output_0(choffs) != 0;
+            const bool pan_right = regs.ch_output_1(choffs) != 0;
+            int32_t left = pan_left ? dacval : 0;
+            int32_t right = pan_right ? dacval : 0;
+            current_value[5] = dacval;
+            current_pan_left[5] = pan_left ? 1 : 0;
+            current_pan_right[5] = pan_right ? 1 : 0;
             if (m_channel_mute[5]) {
                 left = 0;
                 right = 0;
             }
+            mixed_sum[0] += left;
+            mixed_sum[1] += right;
             if (m_chip_type == chip_type::ym2612) {
-                dacval = dac_discontinuity(dacval);
-                left = m_channel_mute[5] ? 0 : (regs.ch_output_0(0x102) ? dacval : zero_discontinuity);
-                right = m_channel_mute[5] ? 0 : (regs.ch_output_1(0x102) ? dacval : zero_discontinuity);
+                left = m_channel_mute[5] ? 0 : (pan_left ? dac_discontinuity(dacval) : (ym2612_pin_sign(dacval) * 3));
+                right = m_channel_mute[5] ? 0 : (pan_right ? dac_discontinuity(dacval) : (ym2612_pin_sign(dacval) * 3));
             }
-            dst[0] += left;
-            dst[1] += right;
             m_channel_volume[5] = static_cast<uint32_t>((left < 0 ? -left : left) + (right < 0 ? -right : right));
         }
 
         switch (m_chip_type) {
             case chip_type::ym2612: {
-                // output is technically multiplexed rather than mixed, but that requires
-                // a better sound mixer than we usually have, so just average over the six
-                // channels; also apply a 64/65 factor to account for the discontinuity
-                // adjustment above
-                constexpr int32_t scale_numer = 8192; // 128 * 64
-                constexpr int32_t scale_denom = 390;  // 6 * 65
-                dst[0] = static_cast<int32_t>((static_cast<int64_t>(dst[0]) * scale_numer) / scale_denom);
-                dst[1] = static_cast<int32_t>((static_cast<int64_t>(dst[1]) * scale_numer) / scale_denom);
+                int64_t pin_sum_numerator[2] = {0, 0};
+                const auto* latched_value = &current_value;
+                const auto* latched_pan_left = &current_pan_left;
+                const auto* latched_pan_right = &current_pan_right;
+                if (m_pin_output_valid) {
+                    latched_value = &m_pin_output_value;
+                    latched_pan_left = &m_pin_output_pan_left;
+                    latched_pan_right = &m_pin_output_pan_right;
+                } else if (m_pin_ch_out_valid) {
+                    latched_value = &m_pin_ch_out_value;
+                    latched_pan_left = &m_pin_ch_out_pan_left;
+                    latched_pan_right = &m_pin_ch_out_pan_right;
+                }
+                for (uint32_t chan = 0; chan < CHANNELS; chan++) {
+                    if (m_channel_mute[chan]) {
+                        continue;
+                    }
+                    pin_sum_numerator[0] += ym2612_pin_numerator((*latched_value)[chan], (*latched_pan_left)[chan] != 0);
+                    pin_sum_numerator[1] += ym2612_pin_numerator((*latched_value)[chan], (*latched_pan_right)[chan] != 0);
+                }
+                // Average a 1-active / 3-sign YM2612 pin waveform while preserving
+                // the existing full-scale calibration for the active phase.
+                constexpr int64_t scale_numer = 4096;
+                constexpr int64_t scale_denom = 585;
+                dst[0] = clamp(static_cast<int32_t>((pin_sum_numerator[0] * scale_numer) / scale_denom), -32768, 32767);
+                dst[1] = clamp(static_cast<int32_t>((pin_sum_numerator[1] * scale_numer) / scale_denom), -32768, 32767);
                 break;
             }
-            case chip_type::ym3438:
-                // YM3438 keeps multiplexed output but removes the YM2612 DAC discontinuity.
-                dst[0] = static_cast<int32_t>((static_cast<int64_t>(dst[0]) * 128) / 6);
-                dst[1] = static_cast<int32_t>((static_cast<int64_t>(dst[1]) * 128) / 6);
+            case chip_type::ym3438: {
+                int64_t pin_sum_numerator[2] = {0, 0};
+                const auto* latched_value = &current_value;
+                const auto* latched_pan_left = &current_pan_left;
+                const auto* latched_pan_right = &current_pan_right;
+                if (m_pin_output_valid) {
+                    latched_value = &m_pin_output_value;
+                    latched_pan_left = &m_pin_output_pan_left;
+                    latched_pan_right = &m_pin_output_pan_right;
+                } else if (m_pin_ch_out_valid) {
+                    latched_value = &m_pin_ch_out_value;
+                    latched_pan_left = &m_pin_ch_out_pan_left;
+                    latched_pan_right = &m_pin_ch_out_pan_right;
+                }
+                for (uint32_t chan = 0; chan < CHANNELS; chan++) {
+                    if (m_channel_mute[chan]) {
+                        continue;
+                    }
+                    pin_sum_numerator[0] += ym3438_pin_numerator((*latched_value)[chan], (*latched_pan_left)[chan] != 0);
+                    pin_sum_numerator[1] += ym3438_pin_numerator((*latched_value)[chan], (*latched_pan_right)[chan] != 0);
+                }
+                // YM3438 removes the sign-discontinuity but still only drives each
+                // pin for three phases out of four.
+                dst[0] = clamp(static_cast<int32_t>((pin_sum_numerator[0] * 64) / 9), -32768, 32767);
+                dst[1] = clamp(static_cast<int32_t>((pin_sum_numerator[1] * 64) / 9), -32768, 32767);
                 break;
+            }
             case chip_type::ymf276:
-                // YMF276 uses the higher-resolution OPN output path and a proper mixed DAC.
-                dst[0] = clamp(dst[0] >> 1, -32768, 32767);
-                dst[1] = clamp(dst[1] >> 1, -32768, 32767);
+                // YMF276 uses the higher-resolution mixed-DAC path without the OPN2
+                // multiplexed sign stage.
+                dst[0] = clamp(static_cast<int32_t>((mixed_sum[0] * 2) / 3), -32768, 32767);
+                dst[1] = clamp(static_cast<int32_t>((mixed_sum[1] * 2) / 3), -32768, 32767);
                 break;
         }
+
+        m_pin_output_value = m_pin_ch_out_value;
+        m_pin_output_pan_left = m_pin_ch_out_pan_left;
+        m_pin_output_pan_right = m_pin_ch_out_pan_right;
+        m_pin_output_valid = m_pin_ch_out_valid;
+        m_pin_ch_out_value = current_value;
+        m_pin_ch_out_pan_left = current_pan_left;
+        m_pin_ch_out_pan_right = current_pan_right;
+        m_pin_ch_out_valid = 1;
     }
 }
 

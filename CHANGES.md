@@ -1,9 +1,27 @@
 # Changes
 
-## Version 1.6.0 (WIP)
+## Version 1.6.0
 
-- Toolchain: Added the `--ym-analog=off|clean|subtle|warm` startup option to the SDL2 emulator to select the YM2612 analog effect preset. (`subtle` is the default)
-- Core: Added the `VGSX` public methods `setYm2612AnalogEnabled`, `useYm2612AnalogCleanPreset`, `useYm2612AnalogSubtlePreset`, and `useYm2612AnalogWarmPreset`.
+- Toolchain: Added the `--ym-analog=off|clean|subtle|real|warm` startup option to the SDL2 emulator to select the YM2612 analog effect preset. (`real` is the default)
+- Core: Added the `VGSX` public methods `setYm2612AnalogEnabled`, `useYm2612AnalogCleanPreset`, `useYm2612AnalogSubtlePreset`, `useYm2612AnalogRealPreset`, and `useYm2612AnalogWarmPreset`.
+- Core: Changed the default YM2612 analog preset from `subtle` to `real`.
+- Core: Added a dedicated `real` YM2612 analog preset tuned for hardware comparison.
+  - Keeps the stronger low-end foundation while reducing the excessive rounding/compression that `subtle` introduced in hardware A/B captures.
+  - Uses a dedicated post-LPF and narrow notch stage in addition to the existing HPF, asymmetric curve, bus saturation, and output gain stages.
+- Core: Extended the YM2612 analog pipeline configuration.
+  - Added `postLpAlpha`, `notchEnabled`, `notchFrequencyHz`, `notchQ`, and `notchMix`.
+  - Added runtime coefficient generation for the notch filter and persistent state for the extra filter stages.
+- Core: Improved YM2612 output resampling in `VgmDriver`.
+  - Replaced the previous "take the last generated internal sample" behavior with a linear interpolation resampler between YM2612 internal sample times and the host output clock.
+  - This reduces the emulator-specific pitched high-frequency whistle that was audible especially when the analog pipeline was disabled or relaxed.
+- Core: Reworked the YM2612/OPN2 output model in `ymfm_opn2.hpp`.
+  - Added selectable output behavior for `ym2612`, `ym3438`, and `ymf276`.
+  - Replaced the simple "sum six channels and average them" YM2612 approximation with a pin-output-inspired model that separately handles active output phases and side-off sign output.
+  - Added `ch_out` / `output` two-stage latch state so the averaged YM2612 output is based on latched channel values instead of the same-cycle FM sum.
+  - Preserved the higher-resolution mixed-DAC path for `ymf276` and kept `ym3438` free from the YM2612 DAC discontinuity model.
+- Core: Updated the YM2612 DAC/discontinuity handling.
+  - YM2612 channel-volume tracking now follows the pin-output-style active/sign behavior instead of the previous always-mixed path.
+  - DAC channel 6 output and FM output are both fed through the same latch-oriented output approximation so hardware-comparison recordings stay internally consistent.
 
 ## Version 1.5.0
 
