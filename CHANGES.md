@@ -1,5 +1,9 @@
 # Changes
 
+## Version 1.7.0 (WIP)
+
+- Toolchain: Added the `vgm2wav`
+
 ## Version 1.6.0
 
 - Toolchain: Added the `--ym-analog=off|clean|subtle|real|warm` startup option to the SDL2 emulator to select the YM2612 analog effect preset. (`real` is the default)
