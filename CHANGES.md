@@ -3,6 +3,9 @@
 ## Version 1.7.0 (WIP)
 
 - Toolchain: Added the `vgm2wav`
+- Core: Added the `re1e` YM2612 analog preset, a lighter hardware-comparison preset tuned from `clean` toward the `test_re1.wav` recording.
+- Toolchain: Added the `--ym-analog=re1e` startup option to the SDL2 emulator to select the YM2612 analog effect preset.
+- Core: Added the `VGSX` public method `useYm2612AnalogRe1ePreset`.
 
 ## Version 1.6.0
 

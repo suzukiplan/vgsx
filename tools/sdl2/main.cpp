@@ -26,6 +26,7 @@ enum class YmAnalogOption {
     Clean,
     Subtle,
     Real,
+    Re1e,
     Warm,
 };
 
@@ -123,7 +124,7 @@ static void put_usage()
     puts("            [-d]");
     puts("            [-m]");
     puts("            [-rsv]");
-    puts("            [--ym-analog=off|clean|subtle|real|warm]");
+    puts("            [--ym-analog=off|clean|subtle|real|re1e|warm]");
     puts("            [-g /path/to/pattern.chr]");
     puts("            [-c /path/to/palette.bin]");
     puts("            [-b /path/to/bgm.vgm]");
@@ -270,6 +271,8 @@ int main(int argc, char* argv[])
                     ymAnalogOption = YmAnalogOption::Subtle;
                 } else if (0 == strcmp(value, "real")) {
                     ymAnalogOption = YmAnalogOption::Real;
+                } else if (0 == strcmp(value, "re1e")) {
+                    ymAnalogOption = YmAnalogOption::Re1e;
                 } else if (0 == strcmp(value, "warm")) {
                     ymAnalogOption = YmAnalogOption::Warm;
                 } else {
@@ -431,6 +434,9 @@ int main(int argc, char* argv[])
             break;
         case YmAnalogOption::Real:
             vgsx.useYm2612AnalogRealPreset();
+            break;
+        case YmAnalogOption::Re1e:
+            vgsx.useYm2612AnalogRe1ePreset();
             break;
         case YmAnalogOption::Warm:
             vgsx.useYm2612AnalogWarmPreset();

@@ -16,6 +16,15 @@ static constexpr int OutputChannels = 2;
 static constexpr int FadeSeconds = 3;
 static constexpr int FadeSamples = OutputSampleRate * FadeSeconds;
 
+enum class YmAnalogOption {
+    Off,
+    Clean,
+    Subtle,
+    Real,
+    Re1e,
+    Warm,
+};
+
 static std::vector<uint8_t> loadFile(const std::string& path)
 {
     std::ifstream ifs(path, std::ios::binary);
@@ -117,11 +126,12 @@ struct Options {
     std::string inputPath;
     std::string outputPath;
     uint32_t loopCount = 1;
+    YmAnalogOption ymAnalogOption = YmAnalogOption::Real;
 };
 
 static void printUsage()
 {
-    std::puts("usage: vgm2wav /path/to/file.vgm [-l loop_count] [-o file.wav]");
+    std::puts("usage: vgm2wav /path/to/file.vgm [-l loop_count] [-o file.wav] [--ym-analog=off|clean|subtle|real|re1e|warm]");
 }
 
 static uint32_t parseLoopCount(const char* value)
@@ -138,7 +148,24 @@ static Options parseOptions(int argc, char** argv)
 {
     Options options;
     for (int i = 1; i < argc; i++) {
-        if (std::strcmp(argv[i], "-l") == 0) {
+        if (std::strncmp(argv[i], "--ym-analog=", 12) == 0) {
+            const char* value = argv[i] + 12;
+            if (std::strcmp(value, "off") == 0) {
+                options.ymAnalogOption = YmAnalogOption::Off;
+            } else if (std::strcmp(value, "clean") == 0) {
+                options.ymAnalogOption = YmAnalogOption::Clean;
+            } else if (std::strcmp(value, "subtle") == 0) {
+                options.ymAnalogOption = YmAnalogOption::Subtle;
+            } else if (std::strcmp(value, "real") == 0) {
+                options.ymAnalogOption = YmAnalogOption::Real;
+            } else if (std::strcmp(value, "re1e") == 0) {
+                options.ymAnalogOption = YmAnalogOption::Re1e;
+            } else if (std::strcmp(value, "warm") == 0) {
+                options.ymAnalogOption = YmAnalogOption::Warm;
+            } else {
+                throw std::runtime_error("invalid --ym-analog value: " + std::string(value));
+            }
+        } else if (std::strcmp(argv[i], "-l") == 0) {
             if (++i >= argc) {
                 throw std::runtime_error("-l requires a value");
             }
@@ -166,9 +193,34 @@ static Options parseOptions(int argc, char** argv)
     return options;
 }
 
-static std::vector<int16_t> renderVgm(const std::vector<uint8_t>& data, uint32_t loopCount)
+static void applyYmAnalogOption(VgmDriver& driver, YmAnalogOption option)
+{
+    switch (option) {
+        case YmAnalogOption::Off:
+            driver.setYm2612AnalogEnabled(false);
+            break;
+        case YmAnalogOption::Clean:
+            driver.useYm2612AnalogCleanPreset();
+            break;
+        case YmAnalogOption::Subtle:
+            driver.useYm2612AnalogSubtlePreset();
+            break;
+        case YmAnalogOption::Real:
+            driver.useYm2612AnalogRealPreset();
+            break;
+        case YmAnalogOption::Re1e:
+            driver.useYm2612AnalogRe1ePreset();
+            break;
+        case YmAnalogOption::Warm:
+            driver.useYm2612AnalogWarmPreset();
+            break;
+    }
+}
+
+static std::vector<int16_t> renderVgm(const std::vector<uint8_t>& data, uint32_t loopCount, YmAnalogOption ymAnalogOption)
 {
     VgmDriver driver(OutputSampleRate, OutputChannels);
+    applyYmAnalogOption(driver, ymAnalogOption);
     if (!driver.load(data.data(), data.size())) {
         throw std::runtime_error("failed to load VGM");
     }
@@ -211,7 +263,7 @@ int main(int argc, char** argv)
 
         const Options options = parseOptions(argc, argv);
         const std::vector<uint8_t> data = loadFile(options.inputPath);
-        const std::vector<int16_t> pcm = renderVgm(data, options.loopCount);
+        const std::vector<int16_t> pcm = renderVgm(data, options.loopCount, options.ymAnalogOption);
         writeWav(options.outputPath, pcm);
         std::printf("wrote %s\n", options.outputPath.c_str());
     } catch (const std::exception& e) {

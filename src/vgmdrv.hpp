@@ -328,6 +328,27 @@ class VgmDriver : public ymfm::ymfm_interface
         };
     }
 
+    static Ym2612AnalogConfig makeYm2612AnalogRe1ePreset()
+    {
+        return {
+            true,
+            0.995f,
+            0.9985f,
+            1.000f,
+            1.000f,
+            0.0f,
+            0.0f,
+            1.0f,
+            false,
+            4900.0f,
+            9.0f,
+            0.0f,
+            false,
+            1.000f,
+            1.0f,
+        };
+    }
+
     static Ym2612AnalogConfig makeYm2612AnalogWarmPreset()
     {
         return {
@@ -381,6 +402,11 @@ class VgmDriver : public ymfm::ymfm_interface
     void useYm2612AnalogRealPreset()
     {
         this->setYm2612AnalogConfig(this->makeYm2612AnalogRealPreset());
+    }
+
+    void useYm2612AnalogRe1ePreset()
+    {
+        this->setYm2612AnalogConfig(this->makeYm2612AnalogRe1ePreset());
     }
 
     void useYm2612AnalogWarmPreset()

@@ -207,6 +207,7 @@ class VGSX
     void useYm2612AnalogCleanPreset();
     void useYm2612AnalogSubtlePreset();
     void useYm2612AnalogRealPreset();
+    void useYm2612AnalogRe1ePreset();
     void useYm2612AnalogWarmPreset();
 
     void setSaveDataDirectory(const char* dir)
