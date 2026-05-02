@@ -36,7 +36,7 @@ FM音源の音が生成されるメカニズム:
 以下4つの機器・エミュレータで同一の曲を再生して波形特性を比較しました:
 
 1. YM2612 実チップ環境: Project RE:birth RE1-YM2612/3438
-2. Nuked OPN2 (別の OPN2 エミュレータ)
+2. Nuked OPN2 (別の OPN2 エミュレータ) の [fork](https://github.com/suzukiplan/Nuked-OPN2)
 3. VGS-X のアナログエミュレーション無し: `clean` プリセット
 4. VGS-X のアナログエミュレーション有り: `re1e` プリセット
 
