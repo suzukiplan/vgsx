@@ -2,6 +2,7 @@
 #include <SDL.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <cstring>
 #include <iostream>
 #include <fstream>
 #include <chrono>
@@ -12,6 +13,25 @@ static pthread_mutex_t soundMutex = PTHREAD_MUTEX_INITIALIZER;
 extern "C" {
 extern const unsigned char vgmplay_elf[18852];
 };
+
+enum class YmAnalogOption {
+    Off,
+    Clean,
+    Subtle,
+    Real,
+    Re1e,
+    Warm,
+};
+
+struct Options {
+    const char* inputPath = nullptr;
+    YmAnalogOption ymAnalogOption = YmAnalogOption::Real;
+};
+
+static void putUsage()
+{
+    puts("usage: vgmplay [--ym-analog=off|clean|subtle|real|re1e|warm] /path/to/bgm.vgm");
+}
 
 static uint8_t* loadBinary(const char* path, int* size)
 {
@@ -36,16 +56,80 @@ static void audioCallback(void* userdata, Uint8* stream, int len)
     pthread_mutex_unlock(&soundMutex);
 }
 
+static bool parseYmAnalogOption(const char* value, YmAnalogOption* option)
+{
+    if (0 == strcmp(value, "off")) {
+        *option = YmAnalogOption::Off;
+    } else if (0 == strcmp(value, "clean")) {
+        *option = YmAnalogOption::Clean;
+    } else if (0 == strcmp(value, "subtle")) {
+        *option = YmAnalogOption::Subtle;
+    } else if (0 == strcmp(value, "real")) {
+        *option = YmAnalogOption::Real;
+    } else if (0 == strcmp(value, "re1e")) {
+        *option = YmAnalogOption::Re1e;
+    } else if (0 == strcmp(value, "warm")) {
+        *option = YmAnalogOption::Warm;
+    } else {
+        return false;
+    }
+    return true;
+}
+
+static bool parseOptions(int argc, char* argv[], Options* options)
+{
+    for (int i = 1; i < argc; i++) {
+        if (0 == strncmp(argv[i], "--ym-analog=", 12)) {
+            if (!parseYmAnalogOption(argv[i] + 12, &options->ymAnalogOption)) {
+                return false;
+            }
+        } else if (!argv[i][0] || argv[i][0] == '-') {
+            return false;
+        } else if (!options->inputPath) {
+            options->inputPath = argv[i];
+        } else {
+            return false;
+        }
+    }
+    return nullptr != options->inputPath;
+}
+
+static void applyYmAnalogOption(YmAnalogOption option)
+{
+    switch (option) {
+        case YmAnalogOption::Off:
+            vgsx.setYm2612AnalogEnabled(false);
+            break;
+        case YmAnalogOption::Clean:
+            vgsx.useYm2612AnalogCleanPreset();
+            break;
+        case YmAnalogOption::Subtle:
+            vgsx.useYm2612AnalogSubtlePreset();
+            break;
+        case YmAnalogOption::Real:
+            vgsx.useYm2612AnalogRealPreset();
+            break;
+        case YmAnalogOption::Re1e:
+            vgsx.useYm2612AnalogRe1ePreset();
+            break;
+        case YmAnalogOption::Warm:
+            vgsx.useYm2612AnalogWarmPreset();
+            break;
+    }
+}
+
 int main(int argc, char* argv[])
 {
-    if (argc < 2) {
-        puts("usage: vgmplay /path/to/bgm.vgm");
+    Options options;
+    if (!parseOptions(argc, argv, &options)) {
+        putUsage();
         exit(1);
     }
 
     vgsx.loadProgram(vgmplay_elf, sizeof(vgmplay_elf));
+    applyYmAnalogOption(options.ymAnalogOption);
     int vgmSize;
-    const void* vgm = loadBinary(argv[1], &vgmSize);
+    const void* vgm = loadBinary(options.inputPath, &vgmSize);
     if (!vgsx.loadVgm(0, vgm, vgmSize)) {
         printf("%s\n", vgsx.getLastError());
         return -1;
