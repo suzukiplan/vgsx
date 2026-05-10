@@ -894,6 +894,7 @@ bool VGSX::loadWav(uint8_t index, const void* data, size_t size)
         this->setLastError("Invalid wav format: invalid sub chunk size");
         return false;
     }
+    wav += 4;
     size -= 4;
     this->ctx.sfxData[index].data = (const int16_t*)wav;
     this->ctx.sfxData[index].count = size / 2;

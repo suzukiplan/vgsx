@@ -1,11 +1,12 @@
 # Changes
 
-## Version 1.7.0 (WIP)
+## Version 1.7.0
 
 - Toolchain: Added the `--ym-analog=off|clean|subtle|real|re1e|warm` option to `vgm2wav` and `vgmplay`.
 - Core: Added the `re1e` YM2612 analog preset, a lighter hardware-comparison preset tuned from `clean` toward the `test_re1.wav` recording.
 - Toolchain: Added the `--ym-analog=re1e` startup option to the SDL2 emulator to select the YM2612 analog effect preset.
 - Core: Added the `VGSX` public method `useYm2612AnalogRe1ePreset`.
+- Core: Fixed a WAV SFX loading issue where the `data` chunk size bytes were treated as PCM data, causing noise at the start of playback.
 
 ## Version 1.6.0
 
