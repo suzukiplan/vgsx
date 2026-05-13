@@ -1580,13 +1580,14 @@ Generates a VGS-X [Character Pattern](#character-pattern) from either
 a 256-color or 16-color `.bmp` (Windows Bitmap) file, **or** a 256-color `.png` file without an alpha channel.
 
 ```
-usage: bmp2chr input.png output.chr
+usage: bmp2chr [-s sizeMinus1] {input.bmp|input.png} output.chr
 ```
 
 Remarks:
 
-- The image width and height must be multiples of 8.  
-- Tiles are read sequentially from the top-left corner in 8×8-pixel units.
+- The image width and height must be multiples of `(sizeMinus1 + 1) * 8`.
+- If `-s` is omitted, `sizeMinus1` is treated as `0`.
+- Tiles are read sequentially from the top-left corner in `(sizeMinus1 + 1)×(sizeMinus1 + 1)` tile blocks.
 
 ## bmp2img
 

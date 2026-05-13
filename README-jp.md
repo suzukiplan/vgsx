@@ -1419,11 +1419,12 @@ bin2var /path/to/binary.rom [u8|u16|u16l|u16b]
 256 色または 16 色の .bmp（Windows bitmap）ファイルまたは 256 色かつアルファチャンネルを含まない .png ファイルから VGS-X 用 [Character Pattern](#character-pattern) を生成します。
 
 ```
-usage: bmp2chr input.png output.chr
+usage: bmp2chr [-s sizeMinus1] {input.bmp|input.png} output.chr
 ```
 
-- 画像の幅・高さは 8 の倍数である必要があります。
-- 左上から 8x8 ピクセル単位で順に読み込みます。
+- 画像の幅・高さは `(sizeMinus1 + 1) * 8` の倍数である必要があります。
+- `-s` を省略した場合、`sizeMinus1` は `0` として扱います。
+- 左上から `(sizeMinus1 + 1)x(sizeMinus1 + 1)` タイルのブロック単位で順に読み込みます。
 
 ## bmp2img
 

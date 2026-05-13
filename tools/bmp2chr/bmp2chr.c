@@ -54,6 +54,31 @@ static unsigned char paeth(unsigned char a, unsigned char b, unsigned char c)
     return c;
 }
 
+static void put_usage(void)
+{
+    fprintf(stderr, "usage: bmp2chr [-s sizeMinus1] {input.bmp|input.png} output.chr\n");
+}
+
+static int parse_int(const char* s, int* value)
+{
+    int v = 0;
+    if (!s || !*s) {
+        return 0;
+    }
+    while (*s) {
+        if (!isdigit((unsigned char)*s)) {
+            return 0;
+        }
+        if (v > (0x7FFFFFFF - (*s - '0')) / 10) {
+            return 0;
+        }
+        v = v * 10 + (*s - '0');
+        s++;
+    }
+    *value = v;
+    return 1;
+}
+
 static int load_indexed_png(const char* path, struct DatHead* dh, unsigned char** out_pixels, unsigned int* palette, int* palette_size)
 {
     static const unsigned char sig[8] = {0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A};
@@ -270,26 +295,50 @@ int main(int argc, char* argv[])
     int is_png = 0;
     unsigned int png_palette[256];
     int png_palette_size = 0;
+    int sizeMinus1 = 0;
+    int input_index = 1;
+    int output_index = 2;
+    int block_tiles = 1;
+    int block_pixels = 8;
+    int tile_y, tile_x;
 
     /* 引数チェック */
     rc++;
-    if (argc < 3) {
-        fprintf(stderr, "usage: bmp2chr {input.bmp|input.png} output.chr\n");
+    if (argc != 3 && argc != 5) {
+        put_usage();
         goto ENDPROC;
     }
+    if (argc == 5) {
+        if (strcmp(argv[1], "-s")) {
+            put_usage();
+            goto ENDPROC;
+        }
+        if (!parse_int(argv[2], &sizeMinus1)) {
+            fprintf(stderr, "ERROR: Invalid sizeMinus1: %s\n", argv[2]);
+            goto ENDPROC;
+        }
+        input_index = 3;
+        output_index = 4;
+    }
+    if (sizeMinus1 > 0x7FFFFFFF / 8 - 1) {
+        fprintf(stderr, "ERROR: Invalid sizeMinus1: %d\n", sizeMinus1);
+        goto ENDPROC;
+    }
+    block_tiles = sizeMinus1 + 1;
+    block_pixels = block_tiles * 8;
 
-    is_png = is_png_file(argv[1]);
+    is_png = is_png_file(argv[input_index]);
     if (is_png) {
         rc++;
-        if (!load_indexed_png(argv[1], &dh, (unsigned char**)&bmp, png_palette, &png_palette_size)) {
-            fprintf(stderr, "ERROR: Could not load indexed png: %s\n", argv[1]);
+        if (!load_indexed_png(argv[input_index], &dh, (unsigned char**)&bmp, png_palette, &png_palette_size)) {
+            fprintf(stderr, "ERROR: Could not load indexed png: %s\n", argv[input_index]);
             goto ENDPROC;
         }
     } else {
         /* 読み込みファイルをオープン */
         rc++;
-        if (NULL == (fpR = fopen(argv[1], "rb"))) {
-            fprintf(stderr, "ERROR: Could not open: %s\n", argv[1]);
+        if (NULL == (fpR = fopen(argv[input_index], "rb"))) {
+            fprintf(stderr, "ERROR: Could not open: %s\n", argv[input_index]);
             goto ENDPROC;
         }
 
@@ -317,10 +366,10 @@ int main(int argc, char* argv[])
 
     printf("INPUT: width=%d, height=%d, bits=%d\n", dh.width, dh.height, (int)dh.bits);
 
-    /* 8の倍数 */
+    /* ブロックサイズの倍数 */
     rc++;
-    if (dh.width % 8 || dh.height % 8 || !dh.width || !dh.height) {
-        fprintf(stderr, "ERROR: Invalid input bitmap size. (128x128 only)");
+    if (dh.width % block_pixels || dh.height % block_pixels || !dh.width || !dh.height) {
+        fprintf(stderr, "ERROR: Invalid input bitmap size. width and height must be multiples of %d.\n", block_pixels);
         goto ENDPROC;
     }
 
@@ -401,16 +450,22 @@ int main(int argc, char* argv[])
         goto ENDPROC;
     }
     unsigned char* ptr = ptn;
-    for (y = 0; y < dh.height / 8; y++) {
-        for (x = 0; x < dh.width / 8; x++) {
-            for (j = 0; j < 8; j++) {
-                for (i = 0; i < 4; i++) {
-                    char* bp = &bmp[y * dh.width * 8 + x * 8 + j * dh.width + i * 2];
-                    unsigned char c = bp[0] & 0x0F;
-                    c <<= 4;
-                    c |= bp[1] & 0x0F;
-                    *ptr = c;
-                    ptr++;
+    for (y = 0; y < dh.height / 8; y += block_tiles) {
+        for (x = 0; x < dh.width / 8; x += block_tiles) {
+            for (tile_y = 0; tile_y < block_tiles; tile_y++) {
+                for (tile_x = 0; tile_x < block_tiles; tile_x++) {
+                    int src_y = y + tile_y;
+                    int src_x = x + tile_x;
+                    for (j = 0; j < 8; j++) {
+                        for (i = 0; i < 4; i++) {
+                            char* bp = &bmp[src_y * dh.width * 8 + src_x * 8 + j * dh.width + i * 2];
+                            unsigned char c = bp[0] & 0x0F;
+                            c <<= 4;
+                            c |= bp[1] & 0x0F;
+                            *ptr = c;
+                            ptr++;
+                        }
+                    }
                 }
             }
         }
@@ -418,12 +473,12 @@ int main(int argc, char* argv[])
 
     /* 書き込みファイルをオープンしてchrを書き込む */
     rc++;
-    if (NULL == (fpW = fopen(argv[2], "wb"))) {
-        fprintf(stderr, "ERROR: Could not open: %s\n", argv[2]);
+    if (NULL == (fpW = fopen(argv[output_index], "wb"))) {
+        fprintf(stderr, "ERROR: Could not open: %s\n", argv[output_index]);
         goto ENDPROC;
     }
     if (dh.width * dh.height / 2 != fwrite(ptn, 1, dh.width * dh.height / 2, fpW)) {
-        fprintf(stderr, "ERROR: File write error: %s\n", argv[2]);
+        fprintf(stderr, "ERROR: File write error: %s\n", argv[output_index]);
         goto ENDPROC;
     }
 

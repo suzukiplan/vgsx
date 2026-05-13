@@ -1,5 +1,9 @@
 # Changes
 
+## Version 1.8.0 (WIP)
+
+- Toolchain: Added the `bmp2chr -s sizeMinus1` option to convert character patterns in `(sizeMinus1 + 1) * 8` pixel block units.
+
 ## Version 1.7.0
 
 - Toolchain: Added the `--ym-analog=off|clean|subtle|real|re1e|warm` option to `vgm2wav` and `vgmplay`.
