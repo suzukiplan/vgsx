@@ -70,7 +70,7 @@ VDP Features:
 - BG 向け [ハードウェアスクロール](#0xd20008-0xd20024-hardware-scroll) 機能
 - [キャラクタパターン](#character-pattern) 数: 65,536
 - [OAM](#oam-object-attribute-memory)（スプライト）数: 1,024
-- [スプライトサイズ](#size-of-sprite): 8x8～256x256 ピクセル
+- [スプライトサイズ](#size-of-sprite): 8x8～512x512 ピクセル
 - 各スプライト単位で [回転](#rotate-of-sprite)・[拡大縮小](#scale-of-sprite)・[アルファブレンド](#alpha-blend-of-sprite)・[マスク](#mask-of-sprite) をサポート
 - [ビットマップモード](#0xd20028-0xd20034-bitmap-mode) 向け [ビットマップ描画](#0xd2004c-0xd20068-bitmap-graphic-draw) 機能を搭載
 - [ビットマップモード](#0xd20028-0xd20034-bitmap-mode) 向け [プロポーショナルフォント](#0xd2007c-0xd2008c-Proportional-font) 機能を搭載
@@ -398,7 +398,7 @@ typedef struct {
     int32_t y;            // Position (Y)
     int32_t x;            // Position (X)
     uint32_t attr;        // Attribute
-    uint32_t size;        // Size (0: 8x8, 1: 16x16, 2: 24x24, 3: 32x32 ... 31: 256x256)
+    uint32_t size;        // Size (0: 8x8, 1: 16x16, 2: 24x24, 3: 32x32 ... 63: 512x512)
     int32_t rotate;       // Rotate (-360 ~ 360)
     uint32_t scale;       // Scale (0 ~ 3200 percent)
     uint32_t alpha;       // Alpha (0: disabled, or 0x000001 ~ 0xFFFFFF)
@@ -419,7 +419,7 @@ typedef struct {
 | y | -32768 ~ 32767 | スプライトの Y 座標 |
 | x | -32768 ~ 32767 | スプライトの X 座標 |
 | attr | 32bit | [Attribute](#attribute) |
-| size | 0 ~ 31 | [Size](#size-of-sprite) |
+| size | 0 ~ 63 | [Size](#size-of-sprite) |
 | rotate | -360 ~ 360 | [Rotate](#rotate-of-sprite) |
 | scale | 0 ~ 3200 | [Scale](#scale-of-sprite) |
 | alpha | 0 or 0xRRGGBB | [Alpha Blend](#alpha-blend-of-sprite) |

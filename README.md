@@ -72,7 +72,7 @@ VDP Features:
 - Supported the BG [Hardware Scroll](#0xd20008-0xd20024-hardware-scroll) function
 - [Character Pattern](#character-pattern) number: 65,536
 - Number of [OAM](#oam-object-attribute-memory) (Sprites): 1,024
-- [Size of Sprite](#size-of-sprite): from 8x8 pixels to 256x256 pixels
+- [Size of Sprite](#size-of-sprite): from 8x8 pixels to 512x512 pixels
 - Supports [Rotation](#rotate-of-sprite), [Scaling](#scale-of-sprite), [Alpha-blending](#alpha-blend-of-sprite) and [Mask](#mask-of-sprite) for each sprites
 - Supports the [Bitmap Graphic Draw](#0xd2004c-0xd20068-bitmap-graphic-draw) functions for [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode)
 - Supports the [Proportional Font](#0xd2007c-0xd2008c-Proportional-font) functions for [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode)
@@ -418,7 +418,7 @@ typedef struct {
     int32_t y;            // Position (Y)
     int32_t x;            // Position (X)
     uint32_t attr;        // Attribute
-    uint32_t size;        // Size (0: 8x8, 1: 16x16, 2: 24x24, 3: 32x32 ... 31: 256x256)
+    uint32_t size;        // Size (0: 8x8, 1: 16x16, 2: 24x24, 3: 32x32 ... 63: 512x512)
     int32_t rotate;       // Rotate (-360 ~ 360)
     uint32_t scale;       // Scale (0 ~ 3200 percent)
     uint32_t alpha;       // Alpha (0: disabled, or 0x000001 ~ 0xFFFFFF)
@@ -439,7 +439,7 @@ The specifications for each attribute are shown in the table below.
 | y       | -32768 ~ 32767 | Sprite display coordinates |
 | x       | -32768 ~ 32767 | Sprite display coordinates |
 | attr    | 32bit          | [Attribute](#attribute) |
-| size    | 0 ~ 31         | [Size](#size-of-sprite) |
+| size    | 0 ~ 63         | [Size](#size-of-sprite) |
 | rotate  | -360 ~ 360     | [Rotate](#rotate-of-sprite) |
 | scale   | 0 ~ 3200       | [Scale](#scale-of-sprite) |
 | alpha   | 0 or 0xRRGGBB  | [Alpha Blend](#alpha-blend-of-sprite) |

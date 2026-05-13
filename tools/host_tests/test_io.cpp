@@ -90,6 +90,35 @@ static int test_seq_write_clamps_to_1mb(VGSX& vgs)
     return 0;
 }
 
+static int test_sprite_size_63_renders_512_pixels()
+{
+    VDP vdp;
+    std::vector<uint8_t> ram(1024 * 1024, 0);
+    const int spriteWidth = 512;
+    const int sourceX = 300;
+    const uint32_t color = 0x123456;
+    const int ramOffset = sourceX * 4;
+    ram[ramOffset + 1] = (color >> 16) & 0xFF;
+    ram[ramOffset + 2] = (color >> 8) & 0xFF;
+    ram[ramOffset + 3] = color & 0xFF;
+
+    vdp.setCpuRam(ram.data());
+    vdp.reset();
+    vdp.ctx.oam[0].visible = 1;
+    vdp.ctx.oam[0].size = 63;
+    vdp.ctx.oam[0].scale = 50;
+    vdp.ctx.oam[0].alpha = 0xFFFFFF;
+    vdp.ctx.oam[0].ram_ptr = 1;
+    vdp.render();
+
+    const int displayX = ((spriteWidth * 2 - spriteWidth) / 2) + sourceX + 1;
+    const int displayY = (spriteWidth * 2 - spriteWidth) / 2;
+    if (vdp.ctx.display[displayY * VDP_DISPLAY_WIDTH + displayX] != color) {
+        return fail("sprite size 63 did not render a source pixel beyond the old 256px limit");
+    }
+    return 0;
+}
+
 int main()
 {
     vgsx.disableBootBios();
@@ -98,6 +127,7 @@ int main()
     if (int rc = test_random_full_cycle(vgsx); rc) return rc;
     if (int rc = test_dma_memset_last_byte(vgsx); rc) return rc;
     if (int rc = test_seq_write_clamps_to_1mb(vgsx); rc) return rc;
+    if (int rc = test_sprite_size_63_renders_512_pixels(); rc) return rc;
 
     std::fprintf(stderr, "OK\n");
     return 0;

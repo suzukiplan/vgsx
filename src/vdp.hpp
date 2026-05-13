@@ -258,7 +258,7 @@ class VDP
         int32_t y;            // Position (Y)
         int32_t x;            // Position (X)
         uint32_t attr;        // Attribute
-        uint32_t size;        // Size (0: 8x8, 1: 16x16, 2: 24x24, 3: 32x32 ... 31: 256x256)
+        uint32_t size;        // Size (0: 8x8, 1: 16x16, 2: 24x24, 3: 32x32 ... 63: 512x512)
         int32_t rotate;       // Rotate (-360 ~ 360)
         uint32_t scale;       // Scale (0 ~ 3200 percent)
         uint32_t alpha;       // Alpha (0x000000 ~ 0xFFFFFF)
@@ -766,8 +766,8 @@ class VDP
 
     inline void renderSprite(OAM* oam)
     {
-        int psize = (oam->size & 0x1F) + 1; // 1 ~ 32
-        int size = psize << 3;              // 8 ~ 256
+        int psize = (oam->size & 0x3F) + 1; // 1 ~ 64
+        int size = psize << 3;              // 8 ~ 512
         int ptn = oam->attr & 0xFFFF;
         int pal = (oam->attr & 0xF0000) >> 16;
         bool flipH = (oam->attr & 0x80000000) ? true : false;
