@@ -400,7 +400,7 @@ typedef struct {
     uint32_t attr;        // Attribute
     uint32_t size;        // Size (0: 8x8, 1: 16x16, 2: 24x24, 3: 32x32 ... 31: 256x256)
     int32_t rotate;       // Rotate (-360 ~ 360)
-    uint32_t scale;       // Scale (0: disabled, or 1 ~ 400 percent)
+    uint32_t scale;       // Scale (0 ~ 3200 percent)
     uint32_t alpha;       // Alpha (0: disabled, or 0x000001 ~ 0xFFFFFF)
     uint32_t mask;        // Mask (0: disabled, or RGB888)
     uint32_t sly;         // Scale Lock (Y)
@@ -421,7 +421,7 @@ typedef struct {
 | attr | 32bit | [Attribute](#attribute) |
 | size | 0 ~ 31 | [Size](#size-of-sprite) |
 | rotate | -360 ~ 360 | [Rotate](#rotate-of-sprite) |
-| scale | 0 ~ 400 | [Scale](#scale-of-sprite) |
+| scale | 0 ~ 3200 | [Scale](#scale-of-sprite) |
 | alpha | 0 or 0xRRGGBB | [Alpha Blend](#alpha-blend-of-sprite) |
 | mask | 0 or 0xRRGGBB | [Mask](#mask-of-sprite) |
 | sly  | 0 or 1 | Lock [Scale](#scale-of-sprite) (Y) |
@@ -467,7 +467,7 @@ Size 3 Pattern Number Layout
 
 ### (Scale of Sprite)
 
-- `scale` に 0〜400 の範囲で拡大率（パーセンテージ）を指定できます。
+- `scale` に 0〜3200 の範囲で拡大率（パーセンテージ）を指定できます。
 - `slx` または `sly` のいずれかを 0 以外の値に設定すると、X 軸または Y 軸のいずれかのスケーリングが防止されます。
 
 ### (Alpha Blend of Sprite)

@@ -420,7 +420,7 @@ typedef struct {
     uint32_t attr;        // Attribute
     uint32_t size;        // Size (0: 8x8, 1: 16x16, 2: 24x24, 3: 32x32 ... 31: 256x256)
     int32_t rotate;       // Rotate (-360 ~ 360)
-    uint32_t scale;       // Scale (0: disabled, or 1 ~ 400 percent)
+    uint32_t scale;       // Scale (0 ~ 3200 percent)
     uint32_t alpha;       // Alpha (0: disabled, or 0x000001 ~ 0xFFFFFF)
     uint32_t mask;        // Mask (0: disabled, or RGB888)
     uint32_t sly;         // Scale Lock (Y)
@@ -441,7 +441,7 @@ The specifications for each attribute are shown in the table below.
 | attr    | 32bit          | [Attribute](#attribute) |
 | size    | 0 ~ 31         | [Size](#size-of-sprite) |
 | rotate  | -360 ~ 360     | [Rotate](#rotate-of-sprite) |
-| scale   | 0 ~ 400        | [Scale](#scale-of-sprite) |
+| scale   | 0 ~ 3200       | [Scale](#scale-of-sprite) |
 | alpha   | 0 or 0xRRGGBB  | [Alpha Blend](#alpha-blend-of-sprite) |
 | mask    | 0 or 0xRRGGBB  | [Mask](#mask-of-sprite) |
 | sly     | 0 or 1         | Lock [Scale](#scale-of-sprite) (Y) |
@@ -487,7 +487,7 @@ The Sprite rotation feature is useful when combined with the [Angle](#0xe00100-0
 
 ### (Scale of Sprite)
 
-- You can specify the magnification rate as a percentage on the `scale` within the range of 0 to 400.
+- You can specify the magnification rate as a percentage on the `scale` within the range of 0 to 3200.
 - Setting either `slx` or `sly` to a value other than zero will prevent scaling of either the X or Y axis.
 
 ### (Alpha Blend of Sprite)

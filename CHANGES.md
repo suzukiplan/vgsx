@@ -2,6 +2,7 @@
 
 ## Version 1.8.0 (WIP)
 
+- Core: Extended the maximum sprite scaling value for `OAM.scale` from 400% to 3200%.
 - Toolchain: Added the `bmp2chr -s sizeMinus1` option to convert character patterns in `(sizeMinus1 + 1) * 8` pixel block units.
 
 ## Version 1.7.0
