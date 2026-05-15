@@ -633,7 +633,7 @@ bool VGSX::loadPalette(const void* data, size_t size)
         this->setLastError("No data.");
         return false;
     }
-    if (size < 4 || 1024 < size || (size & 3)) {
+    if (size < 4 || VDP_PALETTE_NUM * VDP_PALETTE_COLOR_NUM * 4 < size || (size & 3)) {
         this->setLastError("Invalid data size.");
         return false;
     }

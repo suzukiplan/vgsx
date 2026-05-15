@@ -2,6 +2,8 @@
 
 ## Version 1.8.0 (WIP)
 
+- Core+CRT: Extended VDP palettes from 16 to 1,024 by using a 10-bit palette number in BG/OAM attributes.
+- Toolchain: Extended `bmp2pal` PNG input to generate up to 1,024 palettes.
 - Core: Extended the maximum sprite scaling value for `OAM.scale` from 400% to 3200%.
 - Core: Extended the maximum sprite display size for `OAM.size` from 31 (256x256 pixels) to 63 (512x512 pixels).
 - Toolchain: Added the `bmp2chr -s sizeMinus1` option to convert character patterns in `(sizeMinus1 + 1) * 8` pixel block units.

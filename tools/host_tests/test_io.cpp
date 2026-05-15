@@ -119,6 +119,55 @@ static int test_sprite_size_63_renders_512_pixels()
     return 0;
 }
 
+static int test_palette_1024_addressing_and_rendering(VGSX& vgs)
+{
+    std::vector<uint32_t> palette(VDP_PALETTE_NUM * VDP_PALETTE_COLOR_NUM, 0);
+    if (!vgs.loadPalette(palette.data(), palette.size() * sizeof(palette[0]))) {
+        return fail("64KB palette data was rejected");
+    }
+    if (vgs.loadPalette(palette.data(), (palette.size() + 1) * sizeof(palette[0]))) {
+        return fail("palette data larger than 64KB was accepted");
+    }
+
+    VDP vdp;
+    vdp.reset();
+
+    constexpr uint32_t kColor = 0x123456;
+    constexpr uint32_t kAttr = (1023U << 16);
+    vdp.write(0xD1FFFC, kColor);
+    if (vdp.read(0xD1FFFC) != kColor) {
+        return fail("palette 1023 color 15 read/write failed");
+    }
+
+    vdp.ctx.ptn[0][0] = 0x10;
+    vdp.ctx.palette[1023][1] = kColor;
+    vdp.ctx.nametbl[0][0] = kAttr;
+    vdp.ctx.reg.skip1 = 1;
+    vdp.ctx.reg.skip2 = 1;
+    vdp.ctx.reg.skip3 = 1;
+    vdp.render();
+    if (vdp.ctx.display[0] != kColor) {
+        return fail("BG did not render with palette 1023");
+    }
+
+    vdp.reset();
+    vdp.ctx.ptn[0][0] = 0x10;
+    vdp.ctx.palette[1023][1] = kColor;
+    vdp.ctx.oam[0].visible = 1;
+    vdp.ctx.oam[0].attr = kAttr;
+    vdp.ctx.oam[0].scale = 100;
+    vdp.ctx.oam[0].alpha = 0xFFFFFF;
+    vdp.ctx.reg.skip1 = 1;
+    vdp.ctx.reg.skip2 = 1;
+    vdp.ctx.reg.skip3 = 1;
+    vdp.render();
+    if (vdp.ctx.display[0] != kColor) {
+        return fail("sprite did not render with palette 1023");
+    }
+
+    return 0;
+}
+
 int main()
 {
     vgsx.disableBootBios();
@@ -128,6 +177,7 @@ int main()
     if (int rc = test_dma_memset_last_byte(vgsx); rc) return rc;
     if (int rc = test_seq_write_clamps_to_1mb(vgsx); rc) return rc;
     if (int rc = test_sprite_size_63_renders_512_pixels(); rc) return rc;
+    if (int rc = test_palette_1024_addressing_and_rendering(vgsx); rc) return rc;
 
     std::fprintf(stderr, "OK\n");
     return 0;

@@ -24,7 +24,7 @@
  */
 #include <vgs.h>
 
-void vgs_pfont_print(uint8_t n, int32_t x, int32_t y, uint8_t pal, uint16_t ptn, const char* text)
+void vgs_pfont_print(uint8_t n, int32_t x, int32_t y, uint16_t pal, uint16_t ptn, const char* text)
 {
     int32_t dx, dy, width;
     for (; *text && x < VRAM_WIDTH; text++) {

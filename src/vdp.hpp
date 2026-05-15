@@ -38,6 +38,8 @@
 #define VDP_DISPLAY_WIDTH (VDP_WIDTH * VDP_DISPLAY_SCALE)
 #define VDP_DISPLAY_HEIGHT (VDP_HEIGHT * VDP_DISPLAY_SCALE)
 #define VDP_DISPLAY_PIXELS (VDP_DISPLAY_WIDTH * VDP_DISPLAY_HEIGHT)
+#define VDP_PALETTE_NUM 1024
+#define VDP_PALETTE_COLOR_NUM 16
 
 extern "C" {
 extern const int vgsx_sin[360];
@@ -112,6 +114,7 @@ class VDP
 
     void resetPalette()
     {
+        memset(this->ctx.palette, 0, sizeof(this->ctx.palette));
         const uint8_t* ptr = this->rom.pal;
         int size = (int)this->rom.palSize;
         int pindex = 0;
@@ -122,7 +125,7 @@ class VDP
             cindex &= 0x0F;
             if (0 == cindex) {
                 pindex++;
-                pindex &= 0x0F;
+                pindex &= 0x3FF;
             }
             ptr += 4;
             size -= 4;
@@ -271,6 +274,9 @@ class VDP
     } OAM;
 
     static constexpr int kSpriteScaleMaxPercent = 3200;
+    static constexpr uint32_t kPaletteMask = VDP_PALETTE_NUM - 1;
+    static constexpr uint32_t kAttributePaletteShift = 16;
+    static constexpr uint32_t kAttributePaletteMask = kPaletteMask << kAttributePaletteShift;
 
     typedef struct {
         int32_t dx;
@@ -284,7 +290,7 @@ class VDP
         uint8_t ptn[65536][32];               // Character Pattern (ROM)
         uint32_t nametbl[VDP_BG_NUM][65536];  // Name Table
         OAM oam[1024];                        // OAM
-        uint32_t palette[16][16];             // Palette
+        uint32_t palette[VDP_PALETTE_NUM][VDP_PALETTE_COLOR_NUM]; // Palette
         PropotionalInfo pinfo[0x80];          // Propotional Info
         Register reg;                         // Register
         int wx1[VDP_BG_NUM];                  // BG Window X1
@@ -363,7 +369,7 @@ class VDP
                     return rawOam[arg];
                 }
                 case 0xD10000: {
-                    uint8_t pn = (address & 0x3C0) >> 6;
+                    uint16_t pn = (address & 0xFFC0) >> 6;
                     uint8_t cn = (address & 0x03C) >> 2;
                     return this->ctx.palette[pn][cn];
                 }
@@ -399,7 +405,7 @@ class VDP
                     return;
                 }
                 case 0xD10000: {
-                    uint8_t pn = (address & 0x3C0) >> 6;
+                    uint16_t pn = (address & 0xFFC0) >> 6;
                     uint8_t cn = (address & 0x03C) >> 2;
                     this->ctx.palette[pn][cn] = value;
                     return;
@@ -458,7 +464,7 @@ class VDP
     {
         static OAM moam;
         moam.alpha = 0xFFFFFFFF;
-        moam.attr = ((pal & 0x0F) << 16) | (ptn & 0xFFFF);
+        moam.attr = ((pal & kPaletteMask) << kAttributePaletteShift) | (ptn & 0xFFFF);
         moam.scale = 50;
         moam.size = 1;
         moam.visible = 1;
@@ -696,6 +702,11 @@ class VDP
         return readPatternPixel((base + tileOffset) & 0xFFFF, px & 7, py & 7);
     }
 
+    inline uint16_t readPaletteNumber(uint32_t attr) const
+    {
+        return (attr & kAttributePaletteMask) >> kAttributePaletteShift;
+    }
+
     inline void renderBG(int n)
     {
         uint32_t* display = this->ctx.display;
@@ -730,7 +741,7 @@ class VDP
                     auto attr = this->ctx.nametbl[n][(((wy >> 3) & 0xFF) << 8) | (wx >> 3) & 0xFF];
                     const bool flipH = (attr & 0x80000000) != 0;
                     const bool flipV = (attr & 0x40000000) != 0;
-                    uint8_t pal = (attr & 0xF0000) >> 16;
+                    uint16_t pal = readPaletteNumber(attr);
                     int px = wx & 7;
                     int py = wy & 7;
                     if (flipH) px = 7 - px;
@@ -769,7 +780,7 @@ class VDP
         int psize = (oam->size & 0x3F) + 1; // 1 ~ 64
         int size = psize << 3;              // 8 ~ 512
         int ptn = oam->attr & 0xFFFF;
-        int pal = (oam->attr & 0xF0000) >> 16;
+        int pal = readPaletteNumber(oam->attr);
         bool flipH = (oam->attr & 0x80000000) ? true : false;
         bool flipV = (oam->attr & 0x40000000) ? true : false;
         int32_t angle = 90 - oam->rotate;
@@ -1005,7 +1016,7 @@ static inline void graphicDrawCharacter(VDP* vdp)
     uint32_t* vram = vdp->ctx.nametbl[vdp->ctx.reg.g_bg & 3];
     int32_t x = (int32_t)vdp->ctx.reg.g_x1;
     int32_t y = (int32_t)vdp->ctx.reg.g_y1;
-    uint8_t pal = (int32_t)vdp->ctx.reg.g_col & 0x0F;
+    uint16_t pal = (int32_t)vdp->ctx.reg.g_col & VDP::kPaletteMask;
     uint8_t* ptn = vdp->ctx.ptn[vdp->ctx.reg.g_opt & 0xFFFF];
     bool drawZero = vdp->ctx.reg.g_col & 0x80000000 ? true : false;
 

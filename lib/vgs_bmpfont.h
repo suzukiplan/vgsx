@@ -74,11 +74,11 @@ static inline void vgs_pfont_set(uint8_t code, int32_t dx, int32_t dy, int32_t w
  * @param n Number of BG (0 to 3)
  * @param x X-coordinate
  * @param y Y-coordinate
- * @param pal Palette Number
+ * @param pal Palette Number (0 to 1023)
  * @param ptn The starting number for character patterns used in the font.
  * @param text A pointer to a null-terminated buffer containing the string to be displayed.
  */
-void vgs_pfont_print(uint8_t n, int32_t x, int32_t y, uint8_t pal, uint16_t ptn, const char* text);
+void vgs_pfont_print(uint8_t n, int32_t x, int32_t y, uint16_t pal, uint16_t ptn, const char* text);
 
 /**
  * @brief Width of a string displayed in a proportional font (in pixels).

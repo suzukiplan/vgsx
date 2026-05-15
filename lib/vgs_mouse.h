@@ -38,9 +38,9 @@ static inline int vgs_mouse_enabled(void) { return VGS_IN_MOUSE_ENABLED ? ON : O
 /**
  * @brief Setup the mouse cursor pattern and palette
  * @param ptn Character pattern index of cursor
- * @param pal Palette index of cursor
+ * @param pal Palette index of cursor (0 to 1023)
  */
-static inline void vgs_mouse_setup(uint16_t ptn, uint8_t pal)
+static inline void vgs_mouse_setup(uint16_t ptn, uint16_t pal)
 {
     VGS_IO_MOUSE_PATTERN = ptn;
     VGS_IO_MOUSE_PALETTE = pal;

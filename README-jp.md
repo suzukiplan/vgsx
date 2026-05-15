@@ -340,7 +340,7 @@ VGS-X では最大 65,536 個のキャラクタパターンを利用できます
 
 ## Palette
 
-- 最大 16 個のパレットを使用できます。
+- 最大 1,024 個のパレットを使用できます。
 - 各パレットは RGB888 形式で 16 色を保持します。
 - カラー番号 0 は透明色です。
 - パレット 0 のカラー番号 0 は背景（バックドロップ）色になります。
@@ -351,11 +351,13 @@ VGS-X では最大 65,536 個のキャラクタパターンを利用できます
 | 0xD10004 ~ 0xD10007 |        0       |        1     |
 | ... | ... | ... |
 | 0xD103FC ~ 0xD103FF |       15       |       15     |
+| ... | ... | ... |
+| 0xD1FFFC ~ 0xD1FFFF |      1023      |       15     |
 
 備考:
 
 - ビットレイアウト: `******** rrrrrrrr gggggggg bbbbbbbb`
-- 0xD10400 ～ 0xD1FFFF は 0xD10000 ～ 0xD103FF のミラーです（1024 バイト）。
+- パレットテーブルは 0xD10000 ～ 0xD1FFFF の全域（64KB）を使用します。
 - パレットテーブルへのアクセスは常に 4 バイト境界で行う必要があります。
 
 ## Name Table
@@ -382,11 +384,11 @@ VGS-X では最大 65,536 個のキャラクタパターンを利用できます
 
 | Bit | Mnemonic | Description |
 |:---:|:--------:|:------------|
-| 0 | F/H | 水平方向の反転表示 |
-| 1 | F/V | 垂直方向の反転表示 |
-| 2~7 | reserved | 将来互換性のため 0 を設定してください |
-| 12~15 | PAL | [Palette](#palette) 番号 (0~15) |
-| 16~31 | PTN | [Character Pattern](#character-pattern) 番号 (0~65535) |
+| 0~15 | PTN | [Character Pattern](#character-pattern) 番号 (0~65535) |
+| 16~25 | PAL | [Palette](#palette) 番号 (0~1023) |
+| 26~29 | reserved | 将来互換性のため 0 を設定してください |
+| 30 | F/V | 垂直方向の反転表示 |
+| 31 | F/H | 水平方向の反転表示 |
 
 ## OAM (Object Attribute Memory)
 
@@ -1062,7 +1064,7 @@ uint32_t value = VGS_IO_SEQ_READ; // 次の 1 byte を読み出し
 | 0xE0500C | X | - | 現在のマウス X 座標 |
 | 0xE05010 | Y | - | 現在のマウス Y 座標 |
 | 0xE05014 | Cursor Pattern | Cursor Pattern | カーソルの基底キャラクタパターン番号 |
-| 0xE05018 | Cursor Palette | Cursor Palette | カーソルのパレット番号 |
+| 0xE05018 | Cursor Palette | Cursor Palette | カーソルのパレット番号（0～1023） |
 | 0xE0501C | -256 〜 255 | - | 縦スクロール |
 | 0xE05020 | -256 〜 255 | - | 横スクロール |
 | 0xE05100 | Left Button | - | 左ボタンの押下状態 |
@@ -1443,7 +1445,10 @@ Usage: bmp2img input.(png|bmp) output.img
 
 パス: [./tools/bmp2pal](./tools/bmp2pal/)
 
-256 色または 16 色の .bmp（Windows bitmap）ファイルまたは 256 色かつアルファチャンネルを含まない .png ファイルから VGS-X 用の初期 [Palette](#palette) を生成します。
+256 色または 16 色の .bmp（Windows bitmap）ファイル、またはアルファチャンネルを含まない .png ファイルから VGS-X 用の初期 [Palette](#palette) を生成します。
+
+- .bmp 入力では従来通り 256 色のパレットデータを生成します。
+- .png 入力では最大 16,384 色（1,024 パレット x 16 色）のパレットデータを生成できます。
 
 ```
 usage: bmp2pal input.png palette.dat

@@ -231,7 +231,7 @@ class VGSX
     inline void mouseShow(void) { this->ctx.mouse.hidden = false; }
     inline void mouseHidden(void) { this->ctx.mouse.hidden = true; }
     inline void mouseSetPattern(uint32_t ptn) { this->ctx.mouse.ptn = ptn & 0xFFFF; }
-    inline void mouseSetPalette(uint32_t pal) { this->ctx.mouse.pal = pal & 0x0F; }
+    inline void mouseSetPalette(uint32_t pal) { this->ctx.mouse.pal = pal & 0x3FF; }
     void mouseUpdate(int x, int y, bool left, bool right, int scrV, int scrH);
 
   private:

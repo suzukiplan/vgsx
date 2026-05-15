@@ -27,10 +27,10 @@
 
 // Name table (256x256)
 // Bit Layout:
-// - attribute (12bit): F/H F/V 0 0 - 0 0 0 0 - 0 0 0 0
+// - attribute (6bit): F/H F/V 0 0 - 0 0
 //   - F/H: Flip Horizontal
 //   - F/V: Flip Vertical
-// - palette (4bit)
+// - palette (10bit)
 // - pattern number (16bit)
 #define BG_WIDTH 256
 #define BG_HEIGHT 256
@@ -69,7 +69,9 @@ typedef struct {
 #define OAM ((ObjectAttributeMemory*)0xD00000)
 
 // Palette Table
-// 16 x 16 x 4bits
+// 1024 palettes x 16 colors x 32bits
+#define PALETTE_MAX 1024
+#define PALETTE_COLOR_MAX 16
 #define PALETTE ((volatile uint32_t*)0xD10000)
 
 // VDP Register
@@ -170,25 +172,25 @@ static inline int vgs_chr_height()
 
 /**
  * @brief Set a color code to the palette.
- * @param pal Number of palette (0-15)
+ * @param pal Number of palette (0-1023)
  * @param col Number of color (0-15)
  * @param rgb888 24bit color code (RGB888)
  */
-static inline void vgs_pal_set(uint8_t pal, uint8_t col, uint32_t rgb888)
+static inline void vgs_pal_set(uint16_t pal, uint8_t col, uint32_t rgb888)
 {
-    PALETTE[((pal & 0x0F) << 4) | (col & 0x0F)] = rgb888;
+    PALETTE[((pal & 0x03FF) << 4) | (col & 0x0F)] = rgb888;
 }
 
 /**
  * @brief Get a color code from the palette.
- * @param pal Number of palette (0-15)
+ * @param pal Number of palette (0-1023)
  * @param col Number of color (0-15)
  * @return 24bit color code (RGB888)
  */
-static inline uint32_t vgs_pal_get(uint8_t pal, uint8_t col)
+static inline uint32_t vgs_pal_get(uint16_t pal, uint8_t col)
 {
 
-    return PALETTE[((pal & 0x0F) << 4) | (col & 0x0F)];
+    return PALETTE[((pal & 0x03FF) << 4) | (col & 0x0F)];
 }
 
 /**
@@ -245,7 +247,7 @@ static inline void vgs_put_bg(uint8_t n, uint8_t x, uint8_t y, uint32_t attr)
  * @param pal Palette number
  * @param text Buffer pointer pointing to the beginning of a buffer containing text terminated by a null character
  */
-void vgs_print_bg(uint8_t n, uint8_t x, uint8_t y, uint8_t pal, const char* text);
+void vgs_print_bg(uint8_t n, uint8_t x, uint8_t y, uint16_t pal, const char* text);
 
 /**
  * @brief Clear all BGs
@@ -394,11 +396,11 @@ void vgs_draw_clear(uint8_t n, int32_t x, int32_t y, int32_t width, int32_t heig
  * @param x X-coordinate of VRAM (0 to 319)
  * @param y Y-coordinate of VRAM (0 to 199)
  * @param draw0 TRUE: Draw color number 0, FLASE: Skip color number 0
- * @param pal Palette number (0 to 15)
+ * @param pal Palette number (0 to 1023)
  * @param ptn Character pattern number (0 to 65535)
  * @remark Drawing outside the screen area will be skipped.
  */
-void vgs_draw_character(uint8_t n, int32_t x, int32_t y, BOOL draw0, uint8_t pal, uint16_t ptn);
+void vgs_draw_character(uint8_t n, int32_t x, int32_t y, BOOL draw0, uint16_t pal, uint16_t ptn);
 
 /**
  * @brief Scroll BG (X)
@@ -448,13 +450,13 @@ static inline void vgs_sprite_priority(uint8_t bg)
  * @param visible TRUE: Visible, FALSE: Hidden
  * @param x X-coordinate of VRAM (0 to 319)
  * @param y Y-coordinate of VRAM (0 to 199)
- * @param size Sprite size (0: 8x8, 1: 16x16, 2: 24x24 ... 15: 256x256)
- * @param pal Palette number (0 to 15)
+ * @param size Sprite size (0: 8x8, 1: 16x16, 2: 24x24 ... 63: 512x512)
+ * @param pal Palette number (0 to 1023)
  * @param ptn Character pattern number (0 to 65535)
  * @remark Drawing outside the screen area will be skipped.
  * @remark Individual parameters can be referenced and/or updated via OAM[n].
  */
-void vgs_sprite(uint16_t n, BOOL visible, int16_t x, int16_t y, uint8_t size, uint8_t pal, uint16_t ptn);
+void vgs_sprite(uint16_t n, BOOL visible, int16_t x, int16_t y, uint8_t size, uint16_t pal, uint16_t ptn);
 
 /**
  * @brief Make all sprites invisible.

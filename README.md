@@ -350,7 +350,7 @@ Remarks:
 
 ## Palette
 
-- VGS-X allows up to 16 palettes
+- VGS-X allows up to 1,024 palettes
 - Each palette can contain 16 colors in RGB888 format
 - Color number 0 is the transparent color
 - Color number 0 in Palette number 0 becomes the backdrop (overall background) color.
@@ -371,11 +371,15 @@ Remarks:
 | 0xD103F4 ~ 0xD103F7 |       15       |       13     |
 | 0xD103F8 ~ 0xD103FB |       15       |       14     |
 | 0xD103FC ~ 0xD103FF |       15       |       15     |
+|          :          |        :       |        :     |
+| 0xD1FFF4 ~ 0xD1FFF7 |      1023      |       13     |
+| 0xD1FFF8 ~ 0xD1FFFB |      1023      |       14     |
+| 0xD1FFFC ~ 0xD1FFFF |      1023      |       15     |
 
 Remarks:
 
 - Bit Layout: `******** rrrrrrrr gggggggg bbbbbbbb`
-- 0xD10400 ~ 0xD1FFFF is a mirror of 0xD10000 ~ 0xD103FF (1024 bytes).
+- The palette table uses the full 0xD10000 ~ 0xD1FFFF range (64KB).
 - Please note that access to the palette table must always be 4-byte aligned.
 
 ## Name Table
@@ -400,13 +404,13 @@ Please note that access to the name table must always be 4-byte aligned.
 
 The Bit-Layout of the Name Table and OAM's attribute are as follows:
 
-|  Bit  | Mnemonic | Description |
-|:-----:|:--------:|:------------|
-|   0   |   F/H    | Flip Horizontal |
-|   1   |   F/V    | Flip Vertical |
-|  2~7  | reserved | Specify 0 to maintain future compatibility. |
-| 12~15 |   PAL    | [Palette](#palette) Number (0~15) |
-| 16~31 |   PTN    | [Character Pattern](#character-pattern) Number (0~65535) |
+|   Bit   | Mnemonic | Description |
+|:-------:|:--------:|:------------|
+|  0~15   |   PTN    | [Character Pattern](#character-pattern) Number (0~65535) |
+|  16~25  |   PAL    | [Palette](#palette) Number (0~1023) |
+|  26~29  | reserved | Specify 0 to maintain future compatibility. |
+|   30    |   F/V    | Flip Vertical |
+|   31    |   F/H    | Flip Horizontal |
 
 ## OAM (Object Attribute Memory)
 
@@ -635,7 +639,7 @@ Drawing processing is executed when the execution identifier is written to `G_EX
 Remarks:
 
 1. Reading `G_EXE` allows you to read the color of the pixel drawn at the (`G_X1`, `G_Y1`) position on the background plane specified by `G_BG`.
-2. When drawing a character, specify the palette number (0 to 15) in `G_COL` and the pattern number (0 to 65535) in `G_OPT`. Additionally, setting the most significant bit of `G_COL (0x80000000)` draws the transparent color, while resetting it skips drawing the transparent color.
+2. When drawing a character, specify the palette number (0 to 1023) in `G_COL` and the pattern number (0 to 65535) in `G_OPT`. Additionally, setting the most significant bit of `G_COL (0x80000000)` draws the transparent color, while resetting it skips drawing the transparent color.
 
 > Please note that character drawing performance is not as good as in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode).
 
@@ -1203,7 +1207,7 @@ The mouse interface exposes the current pointer state in screen coordinates (`32
 | 0xE0500C | X | - | Current mouse X coordinate |
 | 0xE05010 | Y | - | Current mouse Y coordinate |
 | 0xE05014 | Cursor Pattern | Cursor Pattern | Base character pattern index of the cursor |
-| 0xE05018 | Cursor Palette | Cursor Palette | Palette index of the cursor |
+| 0xE05018 | Cursor Palette | Cursor Palette | Palette index of the cursor (0 to 1023) |
 | 0xE0501C | -256 to 255 | - | Vertical scroll |
 | 0xE05020 | -256 to 255 | - | Horizontal scroll |
 | 0xE05100 | Left Button | - | Left button pushing state |
@@ -1608,7 +1612,10 @@ Usage: bmp2img input.(png|bmp) output.img
 Path: [./tools/bmp2pal](./tools/bmp2pal/)
 
 Generates initial [Palette](#palette) data for VGS-X from either  
-a 256-color or 16-color `.bmp` (Windows Bitmap) file, **or** a 256-color `.png` file without an alpha channel.
+a 256-color or 16-color `.bmp` (Windows Bitmap) file, **or** a `.png` file without an alpha channel.
+
+- `.bmp` input produces the legacy 256-color palette data.
+- `.png` input can produce up to 16,384 colors (1,024 palettes x 16 colors).
 
 ```
 usage: bmp2pal input.png palette.dat

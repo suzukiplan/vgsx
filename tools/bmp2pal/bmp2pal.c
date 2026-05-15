@@ -9,6 +9,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "../common/stb_image.h"
 
+#define BMP_PALETTE_COLORS 256
+#define VGS_PALETTE_COLORS (1024 * 16)
+
 static int is_png_file(const char* path)
 {
     size_t len = strlen(path);
@@ -41,7 +44,7 @@ int main(int argc, char* argv[])
     FILE* fpW = NULL;
     int rc = 0;
     char fh[14];
-    unsigned int pal256[256] = {0};
+    unsigned int palette[VGS_PALETTE_COLORS] = {0};
     struct DatHead dh;
     unsigned char bh, bl;
     unsigned char mh[4];
@@ -50,6 +53,7 @@ int main(int argc, char* argv[])
     int is_png = 0;
     int png_comp = 0;
     int palette_size = 0;
+    int output_palette_size = BMP_PALETTE_COLORS;
 
     /* 引数チェック */
     rc++;
@@ -124,7 +128,7 @@ int main(int argc, char* argv[])
                 }
                 palette_size = chunk_len / 3;
                 for (i = 0; i < palette_size; i++) {
-                    pal256[i] = ((unsigned int)pal_buf[i * 3] << 16) | ((unsigned int)pal_buf[i * 3 + 1] << 8) | pal_buf[i * 3 + 2];
+                    palette[i] = ((unsigned int)pal_buf[i * 3] << 16) | ((unsigned int)pal_buf[i * 3 + 1] << 8) | pal_buf[i * 3 + 2];
                 }
                 palette_loaded = 1;
             } else {
@@ -165,8 +169,8 @@ int main(int argc, char* argv[])
             dh.ctype = 0;
             dh.cnum = palette_size;
             dh.inum = 0;
-            for (; palette_size < 256; palette_size++) {
-                pal256[palette_size] = 0;
+            for (; palette_size < BMP_PALETTE_COLORS; palette_size++) {
+                palette[palette_size] = 0;
             }
         } else {
             rc++;
@@ -200,17 +204,17 @@ int main(int argc, char* argv[])
                 unsigned int color = ((unsigned int)ptr[0] << 16) | ((unsigned int)ptr[1] << 8) | ptr[2];
                 int found = 0;
                 for (j = 0; j < palette_size; j++) {
-                    if (pal256[j] == color) {
+                    if (palette[j] == color) {
                         found = 1;
                         break;
                     }
                 }
                 if (!found) {
-                    if (palette_size >= 256) {
-                        fprintf(stderr, "ERROR: PNG has more than 256 colors: %s\n", argv[1]);
+                    if (palette_size >= VGS_PALETTE_COLORS) {
+                        fprintf(stderr, "ERROR: PNG has more than %d colors: %s\n", VGS_PALETTE_COLORS, argv[1]);
                         goto ENDPROC;
                     }
-                    pal256[palette_size] = color;
+                    palette[palette_size] = color;
                     palette_size++;
                 }
             }
@@ -218,8 +222,9 @@ int main(int argc, char* argv[])
                 fprintf(stderr, "ERROR: PNG has no color data: %s\n", argv[1]);
                 goto ENDPROC;
             }
-            for (; palette_size < 256; palette_size++) {
-                pal256[palette_size] = 0;
+            output_palette_size = palette_size <= BMP_PALETTE_COLORS ? BMP_PALETTE_COLORS : ((palette_size + 15) & ~15);
+            for (; palette_size < output_palette_size; palette_size++) {
+                palette[palette_size] = 0;
             }
         }
     } else {
@@ -271,7 +276,7 @@ int main(int argc, char* argv[])
     if (!is_png) {
         /* パレットを読み込む */
         rc++;
-        if (sizeof(pal256) != fread(pal256, 1, sizeof(pal256), fpR)) {
+        if (BMP_PALETTE_COLORS * sizeof(palette[0]) != fread(palette, 1, BMP_PALETTE_COLORS * sizeof(palette[0]), fpR)) {
             fprintf(stderr, "ERROR: Could not read palette data.\n");
             goto ENDPROC;
         }
@@ -279,14 +284,14 @@ int main(int argc, char* argv[])
 
     /* VGS-X の Palette RAM 形式でファイルを書き出す */
     rc++;
-    for (int i = 0; i < 256; i++) {
-        pal256[i] = pal256[i] & 0x00FFFFFF; // mask alpha channel
+    for (int i = 0; i < output_palette_size; i++) {
+        palette[i] = palette[i] & 0x00FFFFFF; // mask alpha channel
     }
     if (NULL == (fpW = fopen(argv[2], "wb"))) {
         fprintf(stderr, "ERROR: Could not open: %s\n", argv[2]);
         goto ENDPROC;
     }
-    fwrite(pal256, 1, sizeof(pal256), fpW);
+    fwrite(palette, sizeof(palette[0]), output_palette_size, fpW);
 
     rc = 0;
 

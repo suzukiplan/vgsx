@@ -40,10 +40,10 @@ void vgs_draw_window(uint8_t n, int32_t x, int32_t y, int32_t width, int32_t hei
     VGS_VREG_G_EXE = VGS_DRAW_WINDOW;
 }
 
-void vgs_print_bg(uint8_t n, uint8_t x, uint8_t y, uint8_t pal, const char* text)
+void vgs_print_bg(uint8_t n, uint8_t x, uint8_t y, uint16_t pal, const char* text)
 {
     uint32_t attr;
-    attr = pal;
+    attr = pal & 0x03FF;
     attr <<= 16;
     while (*text) {
         vgs_put_bg(n, x++, y, attr | *text);
@@ -143,24 +143,24 @@ void vgs_draw_clear(uint8_t n, int32_t x, int32_t y, int32_t width, int32_t heig
     VGS_VREG_G_EXE = VGS_DRAW_CLEAR;
 }
 
-void vgs_draw_character(uint8_t n, int32_t x, int32_t y, BOOL draw0, uint8_t pal, uint16_t ptn)
+void vgs_draw_character(uint8_t n, int32_t x, int32_t y, BOOL draw0, uint16_t pal, uint16_t ptn)
 {
     VGS_VREG_G_BG = n;
     VGS_VREG_G_X1 = (uint32_t)x;
     VGS_VREG_G_Y1 = (uint32_t)y;
     VGS_VREG_G_OPT = (uint32_t)ptn;
-    VGS_VREG_G_COL = ((uint32_t)pal) | (draw0 ? 0x80000000 : 0);
+    VGS_VREG_G_COL = ((uint32_t)(pal & 0x03FF)) | (draw0 ? 0x80000000 : 0);
     VGS_VREG_G_EXE = VGS_DRAW_CHR;
 }
 
-void vgs_sprite(uint16_t n, BOOL visible, int16_t x, int16_t y, uint8_t size, uint8_t pal, uint16_t ptn)
+void vgs_sprite(uint16_t n, BOOL visible, int16_t x, int16_t y, uint8_t size, uint16_t pal, uint16_t ptn)
 {
     n &= 0x3FF;
     OAM[n].visible = visible;
     OAM[n].x = x;
     OAM[n].y = y;
     OAM[n].size = size;
-    OAM[n].attr = pal & 0x0F;
+    OAM[n].attr = pal & 0x03FF;
     OAM[n].attr <<= 16;
     OAM[n].attr |= ptn;
     OAM[n].rotate = 0;
