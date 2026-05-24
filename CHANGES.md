@@ -1,6 +1,6 @@
 # Changes
 
-## Version 1.8.0 (WIP)
+## Version 1.8.0
 
 - Core+CRT: Extended VDP palettes from 16 to 1,024 by using a 10-bit palette number in BG/OAM attributes.
 - Toolchain: Extended `bmp2pal` PNG input to generate up to 1,024 palettes.
