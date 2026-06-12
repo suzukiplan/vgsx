@@ -6,7 +6,7 @@ all: test00.elf
 clean:
 	rm -f test00.elf
 
-run: test00.elf
+run:
 	cd ${VGSX_ROOT}/tools && make
 	${VGSX_ROOT}/tools/sdl2/vgsx -d -x 59 test00.elf
 	@${VGSX_ROOT}/tools/sdl2/vgsx -d -x 59 test00.elf > test00_result.txt
