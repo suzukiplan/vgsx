@@ -37,6 +37,12 @@ uint16_t vgs_rand(void)
     return _random;
 }
 
+uint16_t vgs_rand_get_seed(void)
+{
+    _random = VGS_IN_RANDOM_SEED;
+    return _random;
+}
+
 uint32_t vgs_rand32(void)
 {
     uint32_t result = vgs_rand();

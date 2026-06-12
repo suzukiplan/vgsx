@@ -703,10 +703,11 @@ Note that all addresses and values for I/O instructions must be specified as 32-
 | 0xE00000 |  o  |  -  | [V-SYNC](#0xe00000in---v-sync) |
 | 0xE00000 |  -  |  o  | [Console Output](#0xe00000out---console-output) |
 | 0xE00004 |  o  |  o  | [Random](#0xe00004io---random) |
-| 0xE00008 |  -  |  o  | [DMA: Destination](#0xe00008-0xe00014io---direct-memory-access) |
-| 0xE0000C |  -  |  o  | [DMA: Source](#0xe00008-0xe00014io---direct-memory-access) |
+| 0xE00008 |  -  |  o  | [DMA: Source](#0xe00008-0xe00014io---direct-memory-access) |
+| 0xE0000C |  -  |  o  | [DMA: Destination](#0xe00008-0xe00014io---direct-memory-access) |
 | 0xE00010 |  -  |  o  | [DMA: Argument](#0xe00008-0xe00014io---direct-memory-access) |
 | 0xE00014 |  o  |  o  | [DMA: Execute](#0xe00008-0xe00014io---direct-memory-access) |
+| 0xE00018 |  o  |  -  | [Current Random Seed](#0xe00004io---random) |
 | 0xE00100 |  -  |  o  | [Angle: X1](#0xe00100-0xe00118io---angle) |
 | 0xE00104 |  -  |  o  | [Angle: Y1](#0xe00100-0xe00118io---angle) |
 | 0xE00108 |  -  |  o  | [Angle: X2](#0xe00100-0xe00118io---angle) |
@@ -841,8 +842,9 @@ The `vgs_print` function is defined in [log.h](./lib/log.h).
 
 ### 0xE00004[i/o] - Random
 
-- You can set the seed for random numbers by writing a value to 0xE00004.
-- Reading 0xE00004 allows you to obtain a random number (0 to 65535).
+- Writing `VGS_IO_RANDOM` (0xE00004) sets the current random seed to the lower 16 bits of the value.
+- Reading `VGS_IO_RANDOM` returns the random number (0 to 65535) corresponding to the current seed, then increments the seed modulo 65,536.
+- Reading `VGS_IN_RANDOM_SEED` (0xE00018) returns the current seed without changing it.
 - The random number generation in VGS-X is deterministic and repeats every 65,536 reads for the same seed.
 
 ### 0xE00008-0xE00014[i/o] - Direct Memory Access
@@ -1451,6 +1453,7 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 |:------|:---------|:------------|
 | stdlib | `vgs_rand` | Obtain a 16-bit [random](#0xe00004io---random) value |
 | stdlib | `vgs_rand32` | Obtain a 32-bit [random](#0xe00004io---random) value |
+| stdlib | `vgs_rand_get_seed` | Obtain the current [random number](#0xe00004io---random) seed |
 | stdlib | `vgs_srand` | Set the [random number](#0xe00004io---random) seed |
 | stdlib | `vgs_exit` | [Exit](#0xe7fffcout---exit) process |
 | string | `vgs_d32str` | Convert a 32-bit signed integer to a string |

@@ -1,5 +1,11 @@
 # Changes
 
+## Version 1.9.0 (WIP)
+
+- Core: Added the input-only `VGS_IN_RANDOM_SEED` I/O for retrieving the current random seed.
+- Core: Changed random reads to return the value for the current seed before incrementing the seed.
+- Standard Library: Added `vgs_rand_get_seed` for retrieving the current random seed.
+
 ## Version 1.8.0
 
 - Core+CRT: Extended VDP palettes from 16 to 1,024 by using a 10-bit palette number in BG/OAM attributes.

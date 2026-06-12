@@ -42,6 +42,12 @@ void vgs_srand(uint16_t seed);
 uint16_t vgs_rand(void);
 
 /**
+ * @brief Obtain the current random number seed.
+ * @return Random number seed (0-65535)
+ */
+uint16_t vgs_rand_get_seed(void);
+
+/**
  * @brief Obtain a 32-bit random value.
  * @return Random value (0-4294967295)
  * @remark This function calls vgs_rand twice, returns the result of the logical OR operation between the first value (shifted 16 bits to the left) and the second value.

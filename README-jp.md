@@ -637,10 +637,11 @@ VGS-X における I/O は 0xE00000～0xEFFFFF のメモリ領域に 32 ビッ�
 | 0xE00000 |  o  |  -  | [V-SYNC](#0xe00000in---v-sync) |
 | 0xE00000 |  -  |  o  | [Console Output](#0xe00000out---console-output) |
 | 0xE00004 |  o  |  o  | [Random](#0xe00004io---random) |
-| 0xE00008 |  -  |  o  | [DMA: Destination](#0xe00008-0xe00014io---direct-memory-access) |
-| 0xE0000C |  -  |  o  | [DMA: Source](#0xe00008-0xe00014io---direct-memory-access) |
+| 0xE00008 |  -  |  o  | [DMA: Source](#0xe00008-0xe00014io---direct-memory-access) |
+| 0xE0000C |  -  |  o  | [DMA: Destination](#0xe00008-0xe00014io---direct-memory-access) |
 | 0xE00010 |  -  |  o  | [DMA: Argument](#0xe00008-0xe00014io---direct-memory-access) |
 | 0xE00014 |  o  |  o  | [DMA: Execute](#0xe00008-0xe00014io---direct-memory-access) |
+| 0xE00018 |  o  |  -  | [現在の乱数シード](#0xe00004io---random) |
 | 0xE00100 |  -  |  o  | [Angle: X1](#0xe00100-0xe00118io---angle) |
 | 0xE00104 |  -  |  o  | [Angle: Y1](#0xe00100-0xe00118io---angle) |
 | 0xE00108 |  -  |  o  | [Angle: X2](#0xe00100-0xe00118io---angle) |
@@ -771,8 +772,9 @@ vgs_print("Hello, World!\n");
 
 ### 0xE00004[i/o] - Random
 
-- 0xE00004 に書き込むと乱数シードを設定できます。
-- 0xE00004 を読み出すと 0～65535 の乱数を取得できます。
+- `VGS_IO_RANDOM` (0xE00004) に書き込むと、その値の下位 16 ビットを現在の乱数シードに設定します。
+- `VGS_IO_RANDOM` を読み出すと、現在のシードに対応する 0～65535 の乱数を返した後、シードを 65,536 でラップするようにインクリメントします。
+- `VGS_IN_RANDOM_SEED` (0xE00018) を読み出すと、シードを変更せずに現在値を取得できます。
 - 同一のシードであれば結果は決定的で、65,536 回の読み出しで周期的に繰り返します。
 
 ### 0xE00008-0xE00014[io] - Direct Memory Access
@@ -1303,6 +1305,7 @@ VGS Standard Library（Video Game System Standard Library）は、VGS-X と将�
 |:---------|:---------|:------------|
 | stdlib | `vgs_rand` | 16 ビットの [乱数](#0xe00004io---random) を取得する |
 | stdlib | `vgs_rand32` | 32 ビットの [乱数](#0xe00004io---random) を取得する |
+| stdlib | `vgs_rand_get_seed` | 現在の [乱数](#0xe00004io---random) シードを取得する |
 | stdlib | `vgs_srand` | [乱数](#0xe00004io---random) のシードを設定する |
 | stdlib | `vgs_exit` | プログラムを [Exit](#0xe7fffcout---exit) させる |
 | string | `vgs_d32str` | 32 ビット符号付き整数を文字列に変換する |

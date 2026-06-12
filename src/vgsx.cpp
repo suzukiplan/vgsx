@@ -1095,10 +1095,12 @@ uint32_t VGSX::inPort(uint32_t address)
         case VGS_ADDR_VSYNC: // V-SYNC
             this->detectReferVSync = true;
             return 1;
-        case VGS_ADDR_RANDOM: // Random
-            this->ctx.randomIndex++;
-            this->ctx.randomIndex &= 0xFFFF;
-            return vgs0_rand16[this->ctx.randomIndex];
+        case VGS_ADDR_RANDOM: { // Random
+            auto result = vgs0_rand16[this->ctx.randomIndex];
+            this->ctx.randomIndex = (this->ctx.randomIndex + 1) & 0xFFFF;
+            return result;
+        }
+        case VGS_ADDR_RANDOM_SEED: return this->ctx.randomIndex;
         case VGS_ADDR_DMA_EXECUTE: return this->dmaSearch();
 
         case VGS_ADDR_ANGLE_DEGREE: { // atan2
@@ -1300,7 +1302,7 @@ void VGSX::outPort(uint32_t address, uint32_t value)
             }
             return;
         case VGS_ADDR_RANDOM: // Setup Random
-            this->ctx.randomIndex = (int)value;
+            this->ctx.randomIndex = value & 0xFFFF;
             return;
         case VGS_ADDR_DMA_SOURCE: // DMA (Source)
             this->ctx.dma.source = value;

@@ -51,6 +51,11 @@ int main(int argc, char* argv)
     vgs_putlog("vgs_atoi(\"-12345\") = %d", expect32d(vgs_atoi("-12345"), -12345));
     vgs_putlog("vgs_atoi(\" 12345\") = %d", expect32d(vgs_atoi(" 12345"), 0));
 
+    vgs_srand(12345);
+    vgs_putlog("vgs_rand_get_seed() = %d", expect32d(vgs_rand_get_seed(), 12345));
+    vgs_rand();
+    vgs_putlog("vgs_rand_get_seed() = %d", expect32d(vgs_rand_get_seed(), 12346));
+
     vgs_putlog("vgs_isdigit(\'0\') ... %d", expect32d(vgs_isdigit('0'), TRUE));
     vgs_putlog("vgs_isdigit(\'9\') ... %d", expect32d(vgs_isdigit('9'), TRUE));
     vgs_putlog("vgs_isdigit(\'a\') ... %d", expect32d(vgs_isdigit('a'), FALSE));

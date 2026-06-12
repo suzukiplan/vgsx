@@ -66,6 +66,33 @@ static int test_random_full_cycle(VGSX& vgs)
     return 0;
 }
 
+static int test_random_seed_io(VGSX& vgs)
+{
+    vgs.outPort(VGS_ADDR_RANDOM, 0);
+    if (vgs.inPort(VGS_ADDR_RANDOM_SEED) != 0) {
+        return fail("random seed was not set to zero");
+    }
+    if (vgs.inPort(VGS_ADDR_RANDOM) != 0xCC5D) {
+        return fail("random value did not use the current seed");
+    }
+    if (vgs.inPort(VGS_ADDR_RANDOM_SEED) != 1) {
+        return fail("random seed was not incremented after reading random");
+    }
+    if (vgs.inPort(VGS_ADDR_RANDOM_SEED) != 1) {
+        return fail("reading random seed changed the seed");
+    }
+
+    vgs.outPort(VGS_ADDR_RANDOM, 0xFFFFFFFF);
+    if (vgs.inPort(VGS_ADDR_RANDOM_SEED) != 0xFFFF) {
+        return fail("random seed was not normalized to 16 bits");
+    }
+    vgs.inPort(VGS_ADDR_RANDOM);
+    if (vgs.inPort(VGS_ADDR_RANDOM_SEED) != 0) {
+        return fail("random seed did not wrap after 65535");
+    }
+    return 0;
+}
+
 static int test_dma_memset_last_byte(VGSX& vgs)
 {
     vgs.outPort(VGS_ADDR_DMA_DESTINATION, 0x00FFFFFF);
@@ -174,6 +201,7 @@ int main()
 
     if (int rc = test_readme_vdp_register_doc(); rc) return rc;
     if (int rc = test_random_full_cycle(vgsx); rc) return rc;
+    if (int rc = test_random_seed_io(vgsx); rc) return rc;
     if (int rc = test_dma_memset_last_byte(vgsx); rc) return rc;
     if (int rc = test_seq_write_clamps_to_1mb(vgsx); rc) return rc;
     if (int rc = test_sprite_size_63_renders_512_pixels(); rc) return rc;
