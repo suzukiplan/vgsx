@@ -138,10 +138,101 @@ static int test_sprite_size_63_renders_512_pixels()
     vdp.ctx.oam[0].ram_ptr = 1;
     vdp.render();
 
-    const int displayX = ((spriteWidth * 2 - spriteWidth) / 2) + sourceX + 1;
+    const int displayX = ((spriteWidth * 2 - spriteWidth) / 2) + sourceX;
     const int displayY = (spriteWidth * 2 - spriteWidth) / 2;
     if (vdp.ctx.display[displayY * VDP_DISPLAY_WIDTH + displayX] != color) {
         return fail("sprite size 63 did not render a source pixel beyond the old 256px limit");
+    }
+    return 0;
+}
+
+static int test_sprite_large_scale_is_clipped_to_display()
+{
+    VDP vdp;
+    std::vector<uint8_t> ram(1024 * 1024, 0);
+    constexpr uint32_t kColor = 0x345678;
+    for (int i = 0; i < 320 * 320; i++) {
+        ram[i * 4 + 1] = (kColor >> 16) & 0xFF;
+        ram[i * 4 + 2] = (kColor >> 8) & 0xFF;
+        ram[i * 4 + 3] = kColor & 0xFF;
+    }
+
+    vdp.setCpuRam(ram.data());
+    vdp.reset();
+    vdp.ctx.oam[0].visible = 1;
+    vdp.ctx.oam[0].size = 39; // 320x320
+    vdp.ctx.oam[0].scale = 1600;
+    vdp.ctx.oam[0].alpha = 0x808080;
+    vdp.ctx.oam[0].ram_ptr = 1;
+    vdp.ctx.oam[0].x = 2400;
+    vdp.ctx.oam[0].y = 2400;
+    vdp.render();
+
+    if (vdp.ctx.display[VDP_DISPLAY_WIDTH * 200 + 320] == 0) {
+        return fail("large scaled translucent sprite was not rendered inside the clipped display");
+    }
+    return 0;
+}
+
+static int test_sprite_vertical_flip_and_bitmap_origin()
+{
+    constexpr uint32_t kColor = 0x123456;
+
+    VDP vdp;
+    vdp.reset();
+    vdp.ctx.ptn[0][0] = 0x10;
+    vdp.ctx.palette[0][1] = kColor;
+    vdp.ctx.oam[0].visible = 1;
+    vdp.ctx.oam[0].attr = 0x40000000;
+    vdp.ctx.oam[0].scale = 100;
+    vdp.ctx.oam[0].alpha = 0xFFFFFF;
+    vdp.ctx.reg.skip0 = 1;
+    vdp.ctx.reg.skip1 = 1;
+    vdp.ctx.reg.skip2 = 1;
+    vdp.ctx.reg.skip3 = 1;
+    vdp.render();
+    if (vdp.ctx.display[14 * VDP_DISPLAY_WIDTH] != kColor || vdp.ctx.display[0] == kColor) {
+        return fail("sprite vertical flip did not use the vertical flip attribute");
+    }
+
+    std::vector<uint8_t> ram(1024 * 1024, 0);
+    ram[1] = (kColor >> 16) & 0xFF;
+    ram[2] = (kColor >> 8) & 0xFF;
+    ram[3] = kColor & 0xFF;
+    vdp.setCpuRam(ram.data());
+    vdp.reset();
+    vdp.ctx.oam[0].visible = 1;
+    vdp.ctx.oam[0].scale = 100;
+    vdp.ctx.oam[0].alpha = 0xFFFFFF;
+    vdp.ctx.oam[0].ram_ptr = 1;
+    vdp.ctx.reg.skip0 = 1;
+    vdp.ctx.reg.skip1 = 1;
+    vdp.ctx.reg.skip2 = 1;
+    vdp.ctx.reg.skip3 = 1;
+    vdp.render();
+    if (vdp.ctx.display[0] != kColor) {
+        return fail("bitmap sprite origin was shifted by one pixel");
+    }
+    return 0;
+}
+
+static int test_sprite_alpha_uses_low_24_bits()
+{
+    VDP vdp;
+    vdp.reset();
+    vdp.ctx.palette[0][0] = 0x112233;
+    vdp.ctx.ptn[0][0] = 0x10;
+    vdp.ctx.palette[0][1] = 0xFFFFFF;
+    vdp.ctx.oam[0].visible = 1;
+    vdp.ctx.oam[0].scale = 3200;
+    vdp.ctx.oam[0].alpha = 0xFF000000;
+    vdp.ctx.reg.skip0 = 1;
+    vdp.ctx.reg.skip1 = 1;
+    vdp.ctx.reg.skip2 = 1;
+    vdp.ctx.reg.skip3 = 1;
+    vdp.render();
+    if (vdp.ctx.display[0] != 0x112233) {
+        return fail("sprite alpha ignored the low-24-bit fully transparent value");
     }
     return 0;
 }
@@ -205,6 +296,9 @@ int main()
     if (int rc = test_dma_memset_last_byte(vgsx); rc) return rc;
     if (int rc = test_seq_write_clamps_to_1mb(vgsx); rc) return rc;
     if (int rc = test_sprite_size_63_renders_512_pixels(); rc) return rc;
+    if (int rc = test_sprite_large_scale_is_clipped_to_display(); rc) return rc;
+    if (int rc = test_sprite_vertical_flip_and_bitmap_origin(); rc) return rc;
+    if (int rc = test_sprite_alpha_uses_low_24_bits(); rc) return rc;
     if (int rc = test_palette_1024_addressing_and_rendering(vgsx); rc) return rc;
 
     std::fprintf(stderr, "OK\n");

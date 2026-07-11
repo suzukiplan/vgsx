@@ -788,7 +788,8 @@ class VDP
         const int displayWidth = VDP_DISPLAY_WIDTH;
         const int displayHeight = VDP_DISPLAY_HEIGHT;
         int scale = oam->scale;
-        if (scale == 0 || oam->alpha == 0) {
+        const uint32_t alpha = oam->alpha & 0xFFFFFF;
+        if (scale == 0 || alpha == 0) {
             return;
         }
         scale *= coordScale;
@@ -800,63 +801,128 @@ class VDP
         if (angle < 0) {
             angle += 360;
         }
-        // Scale & Rotate
+        // Scale & Rotate. Rasterize only the part of the destination bounding box
+        // that intersects the display. This keeps very large sprites proportional
+        // to the display size instead of their (mostly off-screen) scaled size.
         int scaledSizeX = oam->slx ? size * 200 / 100 : size * scale / 100;
         int scaledSizeY = oam->sly ? size * 200 / 100 : size * scale / 100;
-        double ratioX = size;
-        ratioX /= scaledSizeX;
-        double ratioY = size;
-        ratioY /= scaledSizeY;
+        if (scaledSizeX <= 0 || scaledSizeY <= 0) {
+            return;
+        }
         int offsetX = ((size * 2 - scaledSizeX) / 2);
         int offsetY = ((size * 2 - scaledSizeY) / 2);
         int halfSizeX = scaledSizeX / 2;
         int halfSizeY = scaledSizeY / 2;
         int scaledX = oam->x * coordScale;
         int scaledY = oam->y * coordScale;
-        for (int dy = scaledY + offsetY, by = 0; by < scaledSizeY; dy++, by++) {
-            int py = (int)(by * ratioY);
-            int wy = flipH ? size - py - 1 : py;
-            for (int dx = scaledX + offsetX, bx = 0; bx < scaledSizeX; dx++, bx++) {
-                int px = (int)(bx * ratioX);
-                int wx = flipH ? size - px - 1 : px;
-                int ddy = ((by - halfSizeY) * vgsx_sin[angle] + (bx - halfSizeX) * vgsx_cos[angle]) / 256 + halfSizeY;
-                ddy += scaledY + offsetY;
-                if (ddy < 0 || displayHeight <= ddy) {
-                    continue; // Out of screen top (check next line)
+        const int originX = scaledX + offsetX;
+        const int originY = scaledY + offsetY;
+        const int sinValue = vgsx_sin[angle];
+        const int cosValue = vgsx_cos[angle];
+        const uint32_t ar = (alpha >> 16) & 0xFF;
+        const uint32_t ag = (alpha >> 8) & 0xFF;
+        const uint32_t ab = alpha & 0xFF;
+        const uint32_t iar = 255 - ar;
+        const uint32_t iag = 255 - ag;
+        const uint32_t iab = 255 - ab;
+
+        auto draw = [&](int displayAddress, int wx, int wy) {
+            uint32_t color;
+            if (oam->ram_ptr) {
+                const int address = (oam->ram_ptr + (wx + wy * size) * 4) & 0xFFFFC;
+                color = ((uint32_t)cpu_ram[address + 1] << 16) |
+                        ((uint32_t)cpu_ram[address + 2] << 8) |
+                        cpu_ram[address + 3];
+                if (!color) {
+                    return;
                 }
-                int ddx = ((bx - halfSizeX) * vgsx_sin[angle] - (by - halfSizeY) * vgsx_cos[angle]) / 256 + halfSizeX;
-                ddx += scaledX + offsetX;
-                if (ddx < 0 || displayWidth <= ddx) {
-                    continue; // Out of screen left (check next pixel)
+            } else {
+                const uint8_t col = readSpritePixel(ptn, psize, wx, wy);
+                if (!col) {
+                    return;
                 }
-                // Render Pixel
-                if (oam->ram_ptr) {
-                    const int ram_ptr = (oam->ram_ptr + (wx + (wy * psize * 8)) * 4) & 0xFFFFC;
-                    uint32_t rgb = cpu_ram[ram_ptr + 1];
-                    rgb <<= 8;
-                    rgb |= cpu_ram[ram_ptr + 2];
-                    rgb <<= 8;
-                    rgb |= cpu_ram[ram_ptr + 3];
-                    if (rgb) {
-                        this->renderSpritePixel(ddy * displayWidth + ddx + 1, rgb, oam->alpha, oam->mask);
-                        if (angle % 90 && ddx + 1 < displayWidth) {
-                            this->renderSpritePixel(ddy * displayWidth + ddx + 1, rgb, oam->alpha, oam->mask);
-                        }
-                    }
-                } else {
-                    const uint8_t col = readSpritePixel(ptn, psize, wx, wy);
-                    if (col) {
-                        this->renderSpritePixel(ddy * displayWidth + ddx, this->ctx.palette[pal][col], oam->alpha, oam->mask);
-                        if (angle % 90 && ddx + 1 < displayWidth) {
-                            this->renderSpritePixel(ddy * displayWidth + ddx + 1, this->ctx.palette[pal][col], oam->alpha, oam->mask);
-                        }
-                    }
+                color = this->ctx.palette[pal][col];
+            }
+            this->renderSpritePixel(displayAddress, color, alpha, oam->mask, ar, ag, ab, iar, iag, iab);
+        };
+
+        if (angle == 90) {
+            // Common no-rotation path: clipped nearest-neighbour scaling.
+            const int fromX = originX < 0 ? 0 : originX;
+            const int fromY = originY < 0 ? 0 : originY;
+            const int toX = originX + scaledSizeX < displayWidth ? originX + scaledSizeX : displayWidth;
+            const int toY = originY + scaledSizeY < displayHeight ? originY + scaledSizeY : displayHeight;
+            int sourceX[VDP_DISPLAY_WIDTH];
+            for (int dx = fromX; dx < toX; dx++) {
+                int wx = (int)((int64_t)(dx - originX) * size / scaledSizeX);
+                sourceX[dx] = flipH ? size - wx - 1 : wx;
+            }
+            for (int dy = fromY; dy < toY; dy++) {
+                int wy = (int)((int64_t)(dy - originY) * size / scaledSizeY);
+                if (flipV) {
+                    wy = size - wy - 1;
                 }
+                int displayAddress = dy * displayWidth + fromX;
+                for (int dx = fromX; dx < toX; dx++, displayAddress++) {
+                    draw(displayAddress, sourceX[dx], wy);
+                }
+            }
+            return;
+        }
+
+        int minX = displayWidth;
+        int minY = displayHeight;
+        int maxX = -1;
+        int maxY = -1;
+        const int cornersX[4] = {0, scaledSizeX - 1, 0, scaledSizeX - 1};
+        const int cornersY[4] = {0, 0, scaledSizeY - 1, scaledSizeY - 1};
+        for (int i = 0; i < 4; i++) {
+            const int bx = cornersX[i];
+            const int by = cornersY[i];
+            const int dx = ((bx - halfSizeX) * sinValue - (by - halfSizeY) * cosValue) / 256 +
+                           halfSizeX + originX;
+            const int dy = ((by - halfSizeY) * sinValue + (bx - halfSizeX) * cosValue) / 256 +
+                           halfSizeY + originY;
+            if (dx < minX) minX = dx;
+            if (maxX < dx) maxX = dx;
+            if (dy < minY) minY = dy;
+            if (maxY < dy) maxY = dy;
+        }
+        if (minX < 0) minX = 0;
+        if (minY < 0) minY = 0;
+        if (displayWidth <= maxX) maxX = displayWidth - 1;
+        if (displayHeight <= maxY) maxY = displayHeight - 1;
+
+        const int centerX = originX + halfSizeX;
+        const int centerY = originY + halfSizeY;
+        for (int dy = minY; dy <= maxY; dy++) {
+            for (int dx = minX; dx <= maxX; dx++) {
+                const int relativeX = dx - centerX;
+                const int relativeY = dy - centerY;
+                const int bx = (relativeX * sinValue + relativeY * cosValue) / 256 + halfSizeX;
+                const int by = (-relativeX * cosValue + relativeY * sinValue) / 256 + halfSizeY;
+                if (bx < 0 || scaledSizeX <= bx || by < 0 || scaledSizeY <= by) {
+                    continue;
+                }
+                int wx = (int)((int64_t)bx * size / scaledSizeX);
+                int wy = (int)((int64_t)by * size / scaledSizeY);
+                if (flipH) wx = size - wx - 1;
+                if (flipV) wy = size - wy - 1;
+                draw(dy * displayWidth + dx, wx, wy);
             }
         }
     }
 
-    inline void renderSpritePixel(int displayAddress, uint32_t color, uint32_t alpha, uint32_t mask)
+    inline void renderSpritePixel(int displayAddress,
+                                  uint32_t color,
+                                  uint32_t alpha,
+                                  uint32_t mask,
+                                  uint32_t ar,
+                                  uint32_t ag,
+                                  uint32_t ab,
+                                  uint32_t iar,
+                                  uint32_t iag,
+                                  uint32_t iab)
     {
         if (mask) {
             color = mask;
@@ -869,18 +935,15 @@ class VDP
             return;
         }
         uint32_t src = this->ctx.display[displayAddress];
-        uint32_t ar = (alpha & 0xFF0000) >> 16;
-        uint32_t ag = (alpha & 0x00FF00) >> 8;
-        uint32_t ab = alpha & 0x0000FF;
         uint32_t sr = (src & 0xFF0000) >> 16;
         uint32_t sg = (src & 0x00FF00) >> 8;
         uint32_t sb = src & 0x0000FF;
         uint32_t dr = (color & 0xFF0000) >> 16;
         uint32_t dg = (color & 0x00FF00) >> 8;
         uint32_t db = color & 0x0000FF;
-        sr *= (255 - ar);
-        sg *= (255 - ag);
-        sb *= (255 - ab);
+        sr *= iar;
+        sg *= iag;
+        sb *= iab;
         dr *= ar;
         dg *= ag;
         db *= ab;

@@ -4,6 +4,8 @@
 
 - Core: Added the input-only `VGS_IN_RANDOM_SEED` I/O for retrieving the current random seed.
 - Core: Changed random reads to return the value for the current seed before incrementing the seed.
+- Core: Optimized clipped, scaled, rotated, and alpha-blended sprite rendering, especially for very large sprites.
+- Core: Fixed vertical sprite flipping and a one-pixel offset in bitmap sprite rendering.
 - Standard Library: Added `vgs_rand_get_seed` for retrieving the current random seed.
 
 ## Version 1.8.0
