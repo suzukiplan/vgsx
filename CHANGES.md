@@ -1,6 +1,6 @@
 # Changes
 
-## Version 1.9.0 (WIP)
+## Version 1.9.0
 
 - Core: Added the input-only `VGS_IN_RANDOM_SEED` I/O for retrieving the current random seed.
 - Core: Changed random reads to return the value for the current seed before incrementing the seed.
