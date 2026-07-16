@@ -783,21 +783,18 @@ class VDP
         int pal = readPaletteNumber(oam->attr);
         bool flipH = (oam->attr & 0x80000000) ? true : false;
         bool flipV = (oam->attr & 0x40000000) ? true : false;
-        int32_t angle = 90 - oam->rotate;
+        int angle = (int)((90LL - (int64_t)oam->rotate) % 360);
         const int coordScale = VDP_DISPLAY_SCALE;
         const int displayWidth = VDP_DISPLAY_WIDTH;
         const int displayHeight = VDP_DISPLAY_HEIGHT;
-        int scale = oam->scale;
         const uint32_t alpha = oam->alpha & 0xFFFFFF;
-        if (scale == 0 || alpha == 0) {
+        if (oam->scale == 0 || alpha == 0) {
             return;
         }
-        scale *= coordScale;
-        const int maxScale = kSpriteScaleMaxPercent * coordScale;
-        if (scale > maxScale) {
-            scale = maxScale;
-        }
-        angle %= 360;
+        const uint32_t scalePercent = oam->scale > (uint32_t)kSpriteScaleMaxPercent
+                                          ? (uint32_t)kSpriteScaleMaxPercent
+                                          : oam->scale;
+        const int scale = (int)scalePercent * coordScale;
         if (angle < 0) {
             angle += 360;
         }
@@ -813,10 +810,8 @@ class VDP
         int offsetY = ((size * 2 - scaledSizeY) / 2);
         int halfSizeX = scaledSizeX / 2;
         int halfSizeY = scaledSizeY / 2;
-        int scaledX = oam->x * coordScale;
-        int scaledY = oam->y * coordScale;
-        const int originX = scaledX + offsetX;
-        const int originY = scaledY + offsetY;
+        const int64_t originX = (int64_t)oam->x * coordScale + offsetX;
+        const int64_t originY = (int64_t)oam->y * coordScale + offsetY;
         const int sinValue = vgsx_sin[angle];
         const int cosValue = vgsx_cos[angle];
         const uint32_t ar = (alpha >> 16) & 0xFF;
@@ -848,14 +843,21 @@ class VDP
 
         if (angle == 90) {
             // Common no-rotation path: clipped nearest-neighbour scaling.
-            const int fromX = originX < 0 ? 0 : originX;
-            const int fromY = originY < 0 ? 0 : originY;
-            const int toX = originX + scaledSizeX < displayWidth ? originX + scaledSizeX : displayWidth;
-            const int toY = originY + scaledSizeY < displayHeight ? originY + scaledSizeY : displayHeight;
-            int sourceX[VDP_DISPLAY_WIDTH];
+            auto clipCoordinate = [](int64_t value, int limit) {
+                if (value <= 0) return 0;
+                if (limit <= value) return limit;
+                return (int)value;
+            };
+            const int fromX = clipCoordinate(originX, displayWidth);
+            const int fromY = clipCoordinate(originY, displayHeight);
+            const int64_t endX = originX + scaledSizeX;
+            const int64_t endY = originY + scaledSizeY;
+            const int toX = clipCoordinate(endX, displayWidth);
+            const int toY = clipCoordinate(endY, displayHeight);
+            uint16_t sourceX[VDP_DISPLAY_WIDTH];
             for (int dx = fromX; dx < toX; dx++) {
-                int wx = (int)((int64_t)(dx - originX) * size / scaledSizeX);
-                sourceX[dx] = flipH ? size - wx - 1 : wx;
+                int wx = (int)(((int64_t)dx - originX) * size / scaledSizeX);
+                sourceX[dx - fromX] = (uint16_t)(flipH ? size - wx - 1 : wx);
             }
             for (int dy = fromY; dy < toY; dy++) {
                 int wy = (int)((int64_t)(dy - originY) * size / scaledSizeY);
@@ -864,48 +866,55 @@ class VDP
                 }
                 int displayAddress = dy * displayWidth + fromX;
                 for (int dx = fromX; dx < toX; dx++, displayAddress++) {
-                    draw(displayAddress, sourceX[dx], wy);
+                    draw(displayAddress, sourceX[dx - fromX], wy);
                 }
             }
             return;
         }
 
-        int minX = displayWidth;
-        int minY = displayHeight;
-        int maxX = -1;
-        int maxY = -1;
+        int64_t minX = displayWidth;
+        int64_t minY = displayHeight;
+        int64_t maxX = -1;
+        int64_t maxY = -1;
         const int cornersX[4] = {0, scaledSizeX - 1, 0, scaledSizeX - 1};
         const int cornersY[4] = {0, 0, scaledSizeY - 1, scaledSizeY - 1};
         for (int i = 0; i < 4; i++) {
             const int bx = cornersX[i];
             const int by = cornersY[i];
-            const int dx = ((bx - halfSizeX) * sinValue - (by - halfSizeY) * cosValue) / 256 +
-                           halfSizeX + originX;
-            const int dy = ((by - halfSizeY) * sinValue + (bx - halfSizeX) * cosValue) / 256 +
-                           halfSizeY + originY;
+            const int64_t dx = ((int64_t)(bx - halfSizeX) * sinValue -
+                                (int64_t)(by - halfSizeY) * cosValue) /
+                                   256 +
+                               halfSizeX + originX;
+            const int64_t dy = ((int64_t)(by - halfSizeY) * sinValue +
+                                (int64_t)(bx - halfSizeX) * cosValue) /
+                                   256 +
+                               halfSizeY + originY;
             if (dx < minX) minX = dx;
             if (maxX < dx) maxX = dx;
             if (dy < minY) minY = dy;
             if (maxY < dy) maxY = dy;
+        }
+        if (maxX < 0 || maxY < 0 || displayWidth <= minX || displayHeight <= minY) {
+            return;
         }
         if (minX < 0) minX = 0;
         if (minY < 0) minY = 0;
         if (displayWidth <= maxX) maxX = displayWidth - 1;
         if (displayHeight <= maxY) maxY = displayHeight - 1;
 
-        const int centerX = originX + halfSizeX;
-        const int centerY = originY + halfSizeY;
-        for (int dy = minY; dy <= maxY; dy++) {
-            for (int dx = minX; dx <= maxX; dx++) {
-                const int relativeX = dx - centerX;
-                const int relativeY = dy - centerY;
-                const int bx = (relativeX * sinValue + relativeY * cosValue) / 256 + halfSizeX;
-                const int by = (-relativeX * cosValue + relativeY * sinValue) / 256 + halfSizeY;
+        const int64_t centerX = originX + halfSizeX;
+        const int64_t centerY = originY + halfSizeY;
+        for (int dy = (int)minY; dy <= (int)maxY; dy++) {
+            for (int dx = (int)minX; dx <= (int)maxX; dx++) {
+                const int64_t relativeX = (int64_t)dx - centerX;
+                const int64_t relativeY = (int64_t)dy - centerY;
+                const int64_t bx = (relativeX * sinValue + relativeY * cosValue) / 256 + halfSizeX;
+                const int64_t by = (-relativeX * cosValue + relativeY * sinValue) / 256 + halfSizeY;
                 if (bx < 0 || scaledSizeX <= bx || by < 0 || scaledSizeY <= by) {
                     continue;
                 }
-                int wx = (int)((int64_t)bx * size / scaledSizeX);
-                int wy = (int)((int64_t)by * size / scaledSizeY);
+                int wx = (int)(bx * size / scaledSizeX);
+                int wy = (int)(by * size / scaledSizeY);
                 if (flipH) wx = size - wx - 1;
                 if (flipV) wy = size - wy - 1;
                 draw(dy * displayWidth + dx, wx, wy);
