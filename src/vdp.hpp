@@ -100,6 +100,8 @@ class VDP
 
     void resetPattern()
     {
+        // Patterns not supplied by ROM must not depend on prior heap contents.
+        memset(this->ctx.ptn, 0, sizeof(this->ctx.ptn));
         for (auto ptn : this->rom.ptn) {
             int index = ptn->index;
             const uint8_t* ptr = ptn->ptn;
@@ -243,7 +245,16 @@ class VDP
         uint32_t tr_addr;             // R38: Transfer Character Pattern (address)
         uint32_t tr_size;             // R39: Transfer Character Pattern (size)
         uint32_t tr_to;               // R40: Transfer Character Pattern (to)
-        uint32_t reserved[215];       // Reserved (Specify 0 to maintain future compatibility.)
+        uint32_t m7_en[VDP_BG_NUM]; // R41-44: Mode 7 EN
+        uint32_t m7_a[VDP_BG_NUM]; // R45-48: Mode 7 A
+        uint32_t m7_b[VDP_BG_NUM]; // R49-52: Mode 7 B
+        uint32_t m7_c[VDP_BG_NUM]; // R53-56: Mode 7 C
+        uint32_t m7_d[VDP_BG_NUM]; // R57-60: Mode 7 D
+        uint32_t m7_cx[VDP_BG_NUM]; // R61-64: Mode 7 CX
+        uint32_t m7_cy[VDP_BG_NUM]; // R65-68: Mode 7 CY
+        uint32_t m7_tx[VDP_BG_NUM]; // R69-72: Mode 7 TX
+        uint32_t m7_ty[VDP_BG_NUM]; // R73-76: Mode 7 TY
+        uint32_t reserved[179];       // Reserved (Specify 0 to maintain future compatibility.)
     } Register;
 
     static constexpr uint32_t kVdpRegisterFirstReservedIndex =
@@ -334,6 +345,8 @@ class VDP
         memset(this->ctx.oam, 0, sizeof(this->ctx.oam));
         memset(&this->ctx.reg, 0, sizeof(Register));
         for (int i = 0; i < VDP_BG_NUM; i++) {
+            this->ctx.reg.m7_a[i] = 0x100;
+            this->ctx.reg.m7_d[i] = 0x100;
             this->ctx.wx1[i] = 0;
             this->ctx.wy1[i] = 0;
             this->ctx.wx2[i] = VDP_WIDTH - 1;
@@ -413,6 +426,11 @@ class VDP
                 case 0xD20000: {
                     uint8_t index = (address & 0x3FC) >> 2;
                     uint32_t* rawReg = (uint32_t*)&this->ctx.reg;
+                    if (41 <= index && index <= 44) {
+                        value &= 1;
+                    } else if (45 <= index && index <= 60) {
+                        value &= 0xFFFF;
+                    }
                     rawReg[index] = value;
                     switch (index) {
                         case 2: this->bitmapScrollX(0, (int)value); break;
@@ -707,8 +725,67 @@ class VDP
         return (attr & kAttributePaletteMask) >> kAttributePaletteShift;
     }
 
+    inline void renderMode7(int n)
+    {
+        // CPU execution pauses during frame rendering, so these parameters remain
+        // fixed until the next V-SYNC. Promote before subtracting or multiplying.
+        const Register& reg = this->ctx.reg;
+        const int64_t a = (int16_t)reg.m7_a[n];
+        const int64_t b = (int16_t)reg.m7_b[n];
+        const int64_t c = (int16_t)reg.m7_c[n];
+        const int64_t d = (int16_t)reg.m7_d[n];
+        const int64_t cx = (int32_t)reg.m7_cx[n];
+        const int64_t cy = (int32_t)reg.m7_cy[n];
+        const bool bitmap = reg.bmp[n] != 0;
+        const int64_t originX = cx + (int32_t)reg.m7_tx[n] + (bitmap ? 0 : reg.scrollX[n] & 2047);
+        const int64_t originY = cy + (int32_t)reg.m7_ty[n] + (bitmap ? 0 : reg.scrollY[n] & 2047);
+        const int width = bitmap ? VDP_WIDTH : 2048;
+        const int height = bitmap ? VDP_HEIGHT : 2048;
+        const int fromX = bitmap ? this->ctx.wx1[n] : 0;
+        const int fromY = bitmap ? this->ctx.wy1[n] : 0;
+        const int toX = bitmap ? this->ctx.wx2[n] : VDP_WIDTH - 1;
+        const int toY = bitmap ? this->ctx.wy2[n] : VDP_HEIGHT - 1;
+        // C++ division truncates toward zero; negative fractional samples must
+        // stay outside the left/top edge instead of leaking into pixel zero.
+        auto floor256 = [](int64_t value) {
+            return value / 256 - (value % 256 < 0 ? 1 : 0);
+        };
+        for (int y = fromY; y <= toY; y++) {
+            int64_t sampleX = a * (fromX - cx) + b * (y - cy);
+            int64_t sampleY = c * (fromX - cx) + d * (y - cy);
+            for (int x = fromX; x <= toX; x++, sampleX += a, sampleY += c) {
+                const int64_t sx = floor256(sampleX) + originX;
+                const int64_t sy = floor256(sampleY) + originY;
+                if (sx < 0 || width <= sx || sy < 0 || height <= sy) {
+                    continue;
+                }
+                uint32_t color;
+                if (bitmap) {
+                    color = this->ctx.nametbl[n][sy * VDP_WIDTH + sx];
+                    if (!color) continue;
+                } else {
+                    const uint32_t attr = this->ctx.nametbl[n][(sy >> 3) * 256 + (sx >> 3)];
+                    const int px = (attr & 0x80000000) ? 7 - (sx & 7) : sx & 7;
+                    const int py = (attr & 0x40000000) ? 7 - (sy & 7) : sy & 7;
+                    const uint8_t index = readPatternPixel(attr & 0xFFFF, px, py);
+                    if (!index) continue;
+                    color = this->ctx.palette[readPaletteNumber(attr)][index];
+                }
+                const int dest = y * VDP_DISPLAY_SCALE * VDP_DISPLAY_WIDTH + x * VDP_DISPLAY_SCALE;
+                this->ctx.display[dest] = color;
+                this->ctx.display[dest + 1] = color;
+                this->ctx.display[dest + VDP_DISPLAY_WIDTH] = color;
+                this->ctx.display[dest + VDP_DISPLAY_WIDTH + 1] = color;
+            }
+        }
+    }
+
     inline void renderBG(int n)
     {
+        if (this->ctx.reg.m7_en[n] & 1) {
+            this->renderMode7(n);
+            return;
+        }
         uint32_t* display = this->ctx.display;
         const int scaledWidth = VDP_DISPLAY_WIDTH;
         if (this->ctx.reg.bmp[n]) {

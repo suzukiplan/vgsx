@@ -1,3 +1,4 @@
+#include <cmath>
 #include <cstdint>
 #include <cstring>
 #include <cstdio>
@@ -445,11 +446,146 @@ static int test_palette_1024_addressing_and_rendering(VGSX& vgs)
     return 0;
 }
 
+static int test_mode7()
+{
+    auto vdp = std::make_unique<VDP>();
+    vdp->reset();
+    std::memset(vdp->ctx.ptn, 0, sizeof(vdp->ctx.ptn));
+    for (int n = 0; n < 4; n++) {
+        for (int group = 0; group < 9; group++) {
+            const uint32_t address = 0xD200A4 + group * 16 + n * 4;
+            const uint32_t initial = group == 1 || group == 4 ? 256 : 0;
+            if (vdp->read(address) != initial) return fail("Mode 7 reset registers");
+            vdp->write(address, 0xFFFFFFFF);
+            const uint32_t expected = group == 0 ? 1 : group <= 4 ? 65535 : 0xFFFFFFFF;
+            if (vdp->read(address) != expected) return fail("Mode 7 register masks/readback");
+        }
+    }
+    vdp->reset();
+    vdp->ctx.reg.skip1 = vdp->ctx.reg.skip2 = vdp->ctx.reg.skip3 = 1;
+    vdp->write(0xD20028, 1);
+    vdp->write(0xD200A4, 1);
+    for (int y = 0; y < 200; y++) {
+        for (int x = 0; x < 320; x++) {
+            vdp->ctx.nametbl[0][y * 320 + x] = 1 + y * 320 + x;
+        }
+    }
+    const int matrices[][4] = {
+        {256, 0, 0, 256}, {128, 0, 0, 128}, {128, 128, -128, 128}, {512, 0, 0, 512},
+        {0, 256, -256, 0}, {256, -128, 0, 256}, {0, 0, 0, 0},
+        {-1, 0, 0, -1}, {-32768, 32767, 32767, -32768},
+    };
+    for (const auto& m : matrices) {
+        for (int variant = 0; variant < 3; variant++) {
+            const int32_t cx = variant == 0 ? 0 : variant == 1 ? 160 : INT32_MIN;
+            const int32_t cy = variant == 0 ? 0 : variant == 1 ? 100 : INT32_MAX;
+            const int32_t tx = variant == 2 ? INT32_MAX : 0;
+            const int32_t ty = variant == 2 ? INT32_MIN : 0;
+            for (int i = 0; i < 4; i++) vdp->write(0xD200B4 + i * 16, (uint32_t)m[i]);
+            vdp->write(0xD200F4, cx);
+            vdp->write(0xD20104, cy);
+            vdp->write(0xD20114, tx);
+            vdp->write(0xD20124, ty);
+            vdp->render();
+            for (int y = 0; y < 200; y++) {
+                for (int x = 0; x < 320; x++) {
+                    // Independent floating-point reference, exact for these inputs.
+                    const long double u = (long double)x - cx, v = (long double)y - cy;
+                    const long double sx = std::floor((m[0] * u + m[1] * v) / 256) + cx + (long double)tx;
+                    const long double sy = std::floor((m[2] * u + m[3] * v) / 256) + cy + (long double)ty;
+                    const uint32_t expected = sx < 0 || sx >= 320 || sy < 0 || sy >= 200
+                                                  ? 0 : 1 + (int)sy * 320 + (int)sx;
+                    for (int dy = 0; dy < 2; dy++) {
+                        for (int dx = 0; dx < 2; dx++) {
+                            if (vdp->ctx.display[(y * 2 + dy) * 640 + x * 2 + dx] != expected)
+                                return fail("Mode 7 bitmap transform/reference mismatch");
+                        }
+                    }
+                }
+            }
+        }
+    }
+    // Four independently translated layers, mixing both source formats.
+    vdp->reset();
+    std::memset(vdp->ctx.ptn, 0, sizeof(vdp->ctx.ptn));
+    vdp->ctx.ptn[0][31] = 0x01;
+    vdp->ctx.palette[1023][1] = 0x123456;
+    for (int n = 0; n < 4; n++) {
+        vdp->write(0xD200A4 + n * 4, 1);
+        vdp->write(0xD20114 + n * 4, (uint32_t)-n);
+        if (n % 2) {
+            vdp->write(0xD20028 + n * 4, 1);
+            vdp->ctx.nametbl[n][0] = 0x100 + n;
+        } else {
+            vdp->ctx.nametbl[n][0] = 0xC3FF0000; // Both tile flips, palette 1023.
+        }
+    }
+    vdp->render();
+    for (int n = 0; n < 4; n++) {
+        const uint32_t expected = n % 2 ? 0x100 + n : 0x123456;
+        if (vdp->ctx.display[n * 2] != expected) return fail("Mode 7 four-layer composition/flips/palette");
+    }
+    vdp->ctx.ptn[1][0] = 0x10;
+    vdp->ctx.palette[0][1] = 0x654321;
+    auto& sprite = vdp->ctx.oam[0];
+    sprite.visible = 1;
+    sprite.attr = 1;
+    sprite.x = 3;
+    sprite.scale = 100;
+    sprite.alpha = 0xFFFFFF;
+    vdp->ctx.reg.spos = 2;
+    vdp->render();
+    if (vdp->ctx.display[6] != 0x103) return fail("Mode 7 BG above sprite");
+    vdp->ctx.reg.spos = 3;
+    vdp->render();
+    if (vdp->ctx.display[6] != 0x654321) return fail("Mode 7 sprite above BG");
+    sprite.visible = 0;
+    vdp->ctx.reg.skip0 = vdp->ctx.reg.skip1 = vdp->ctx.reg.skip2 = 1;
+    vdp->write(0xD20014, 1); // Bitmap BG3 scrolls its stored pixel right once.
+    vdp->render();
+    if (vdp->ctx.display[8] != 0x103 || vdp->ctx.display[10] != 0)
+        return fail("Mode 7 bitmap scroll was applied twice");
+    vdp->ctx.wx1[3] = 5;
+    vdp->render();
+    if (vdp->ctx.display[8]) return fail("Mode 7 bitmap window is not destination clipping");
+    // Character source edge must become transparent, then wrap again when disabled.
+    vdp->reset();
+    std::memset(vdp->ctx.ptn, 0x11, sizeof(vdp->ctx.ptn));
+    vdp->ctx.palette[0][1] = 0xABCDEF;
+    vdp->ctx.reg.skip1 = vdp->ctx.reg.skip2 = vdp->ctx.reg.skip3 = 1;
+    vdp->write(0xD20008, 2047);
+    vdp->write(0xD20018, 2047);
+    vdp->write(0xD200A4, 1);
+    vdp->render();
+    if (vdp->ctx.display[0] != 0xABCDEF || vdp->ctx.display[2] || vdp->ctx.display[1280])
+        return fail("Mode 7 character bounds/scroll");
+    vdp->write(0xD200A4, 0);
+    vdp->render();
+    if (vdp->ctx.display[2] != 0xABCDEF) return fail("Mode 7 disable restores wrapping");
+    vdp->write(0xD200A4, 1);
+    vdp->render();
+    if (vdp->ctx.display[2]) return fail("Mode 7 re-enable preserves parameters");
+    vdp->ctx.reg.skip = 1;
+    vdp->ctx.palette[0][1] = 0;
+    vdp->render();
+    if (vdp->ctx.display[0] != 0xABCDEF) return fail("Mode 7 screen skip");
+    uint8_t pattern[32];
+    std::memset(pattern, 0x22, sizeof(pattern));
+    vdp->addPattern(1, pattern, sizeof(pattern));
+    vdp->reset();
+    if (vdp->ctx.ptn[0][0] != 0 || vdp->ctx.ptn[1][0] != 0x22 || vdp->ctx.ptn[65535][31] != 0)
+        return fail("Reset must clear unspecified patterns and restore ROM patterns");
+    if (vdp->read(0xD200A4) || vdp->read(0xD200B4) != 256 || vdp->read(0xD20114))
+        return fail("Mode 7 reset after use");
+    return 0;
+}
+
 int main()
 {
     vgsx.disableBootBios();
 
     if (int rc = test_readme_vdp_register_doc(); rc) return rc;
+    if (int rc = test_mode7(); rc) return rc;
     if (int rc = test_random_full_cycle(vgsx); rc) return rc;
     if (int rc = test_random_seed_io(vgsx); rc) return rc;
     if (int rc = test_dma_memset_last_byte(vgsx); rc) return rc;

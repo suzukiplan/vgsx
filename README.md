@@ -565,42 +565,42 @@ _* RAM buffer size = `((size + 1) * 8)²`_
 |0xD20098 |  R38 | TR_ADDR  | [Transfer Character Pattern (address)](#0xd20098-0xd200a0-transfer-character-pattern) |
 |0xD2009C |  R39 | TR_SIZE  | [Transfer Character Pattern (size)](#0xd20098-0xd200a0-transfer-character-pattern) |
 |0xD200A0 |  R40 | TR_TO  | [Transfer Character Pattern (pattern)](#0xd20098-0xd200a0-transfer-character-pattern) |
-|0xD200A4 | R41 | M7_EN0 | [Mode 7 enable of BG0 (proposal)](#0xd200a4-0xd20130-mode-7-proposal) |
-|0xD200A8 | R42 | M7_EN1 | [Mode 7 enable of BG1 (proposal)](#0xd200a4-0xd20130-mode-7-proposal) |
-|0xD200AC | R43 | M7_EN2 | [Mode 7 enable of BG2 (proposal)](#0xd200a4-0xd20130-mode-7-proposal) |
-|0xD200B0 | R44 | M7_EN3 | [Mode 7 enable of BG3 (proposal)](#0xd200a4-0xd20130-mode-7-proposal) |
-|0xD200B4 | R45 | M7_A0 | [Mode 7 matrix A of BG0 (proposal)](#0xd200a4-0xd20130-mode-7-proposal) |
-|0xD200B8 | R46 | M7_A1 | [Mode 7 matrix A of BG1 (proposal)](#0xd200a4-0xd20130-mode-7-proposal) |
-|0xD200BC | R47 | M7_A2 | [Mode 7 matrix A of BG2 (proposal)](#0xd200a4-0xd20130-mode-7-proposal) |
-|0xD200C0 | R48 | M7_A3 | [Mode 7 matrix A of BG3 (proposal)](#0xd200a4-0xd20130-mode-7-proposal) |
-|0xD200C4 | R49 | M7_B0 | [Mode 7 matrix B of BG0 (proposal)](#0xd200a4-0xd20130-mode-7-proposal) |
-|0xD200C8 | R50 | M7_B1 | [Mode 7 matrix B of BG1 (proposal)](#0xd200a4-0xd20130-mode-7-proposal) |
-|0xD200CC | R51 | M7_B2 | [Mode 7 matrix B of BG2 (proposal)](#0xd200a4-0xd20130-mode-7-proposal) |
-|0xD200D0 | R52 | M7_B3 | [Mode 7 matrix B of BG3 (proposal)](#0xd200a4-0xd20130-mode-7-proposal) |
-|0xD200D4 | R53 | M7_C0 | [Mode 7 matrix C of BG0 (proposal)](#0xd200a4-0xd20130-mode-7-proposal) |
-|0xD200D8 | R54 | M7_C1 | [Mode 7 matrix C of BG1 (proposal)](#0xd200a4-0xd20130-mode-7-proposal) |
-|0xD200DC | R55 | M7_C2 | [Mode 7 matrix C of BG2 (proposal)](#0xd200a4-0xd20130-mode-7-proposal) |
-|0xD200E0 | R56 | M7_C3 | [Mode 7 matrix C of BG3 (proposal)](#0xd200a4-0xd20130-mode-7-proposal) |
-|0xD200E4 | R57 | M7_D0 | [Mode 7 matrix D of BG0 (proposal)](#0xd200a4-0xd20130-mode-7-proposal) |
-|0xD200E8 | R58 | M7_D1 | [Mode 7 matrix D of BG1 (proposal)](#0xd200a4-0xd20130-mode-7-proposal) |
-|0xD200EC | R59 | M7_D2 | [Mode 7 matrix D of BG2 (proposal)](#0xd200a4-0xd20130-mode-7-proposal) |
-|0xD200F0 | R60 | M7_D3 | [Mode 7 matrix D of BG3 (proposal)](#0xd200a4-0xd20130-mode-7-proposal) |
-|0xD200F4 | R61 | M7_CX0 | [Mode 7 center X of BG0 (proposal)](#0xd200a4-0xd20130-mode-7-proposal) |
-|0xD200F8 | R62 | M7_CX1 | [Mode 7 center X of BG1 (proposal)](#0xd200a4-0xd20130-mode-7-proposal) |
-|0xD200FC | R63 | M7_CX2 | [Mode 7 center X of BG2 (proposal)](#0xd200a4-0xd20130-mode-7-proposal) |
-|0xD20100 | R64 | M7_CX3 | [Mode 7 center X of BG3 (proposal)](#0xd200a4-0xd20130-mode-7-proposal) |
-|0xD20104 | R65 | M7_CY0 | [Mode 7 center Y of BG0 (proposal)](#0xd200a4-0xd20130-mode-7-proposal) |
-|0xD20108 | R66 | M7_CY1 | [Mode 7 center Y of BG1 (proposal)](#0xd200a4-0xd20130-mode-7-proposal) |
-|0xD2010C | R67 | M7_CY2 | [Mode 7 center Y of BG2 (proposal)](#0xd200a4-0xd20130-mode-7-proposal) |
-|0xD20110 | R68 | M7_CY3 | [Mode 7 center Y of BG3 (proposal)](#0xd200a4-0xd20130-mode-7-proposal) |
-|0xD20114 | R69 | M7_TX0 | [Mode 7 translation X of BG0 (proposal)](#0xd200a4-0xd20130-mode-7-proposal) |
-|0xD20118 | R70 | M7_TX1 | [Mode 7 translation X of BG1 (proposal)](#0xd200a4-0xd20130-mode-7-proposal) |
-|0xD2011C | R71 | M7_TX2 | [Mode 7 translation X of BG2 (proposal)](#0xd200a4-0xd20130-mode-7-proposal) |
-|0xD20120 | R72 | M7_TX3 | [Mode 7 translation X of BG3 (proposal)](#0xd200a4-0xd20130-mode-7-proposal) |
-|0xD20124 | R73 | M7_TY0 | [Mode 7 translation Y of BG0 (proposal)](#0xd200a4-0xd20130-mode-7-proposal) |
-|0xD20128 | R74 | M7_TY1 | [Mode 7 translation Y of BG1 (proposal)](#0xd200a4-0xd20130-mode-7-proposal) |
-|0xD2012C | R75 | M7_TY2 | [Mode 7 translation Y of BG2 (proposal)](#0xd200a4-0xd20130-mode-7-proposal) |
-|0xD20130 | R76 | M7_TY3 | [Mode 7 translation Y of BG3 (proposal)](#0xd200a4-0xd20130-mode-7-proposal) |
+|0xD200A4 | R41 | M7_EN0 | [Mode 7 enable of BG0](#0xd200a4-0xd20130-mode-7) |
+|0xD200A8 | R42 | M7_EN1 | [Mode 7 enable of BG1](#0xd200a4-0xd20130-mode-7) |
+|0xD200AC | R43 | M7_EN2 | [Mode 7 enable of BG2](#0xd200a4-0xd20130-mode-7) |
+|0xD200B0 | R44 | M7_EN3 | [Mode 7 enable of BG3](#0xd200a4-0xd20130-mode-7) |
+|0xD200B4 | R45 | M7_A0 | [Mode 7 matrix A of BG0](#0xd200a4-0xd20130-mode-7) |
+|0xD200B8 | R46 | M7_A1 | [Mode 7 matrix A of BG1](#0xd200a4-0xd20130-mode-7) |
+|0xD200BC | R47 | M7_A2 | [Mode 7 matrix A of BG2](#0xd200a4-0xd20130-mode-7) |
+|0xD200C0 | R48 | M7_A3 | [Mode 7 matrix A of BG3](#0xd200a4-0xd20130-mode-7) |
+|0xD200C4 | R49 | M7_B0 | [Mode 7 matrix B of BG0](#0xd200a4-0xd20130-mode-7) |
+|0xD200C8 | R50 | M7_B1 | [Mode 7 matrix B of BG1](#0xd200a4-0xd20130-mode-7) |
+|0xD200CC | R51 | M7_B2 | [Mode 7 matrix B of BG2](#0xd200a4-0xd20130-mode-7) |
+|0xD200D0 | R52 | M7_B3 | [Mode 7 matrix B of BG3](#0xd200a4-0xd20130-mode-7) |
+|0xD200D4 | R53 | M7_C0 | [Mode 7 matrix C of BG0](#0xd200a4-0xd20130-mode-7) |
+|0xD200D8 | R54 | M7_C1 | [Mode 7 matrix C of BG1](#0xd200a4-0xd20130-mode-7) |
+|0xD200DC | R55 | M7_C2 | [Mode 7 matrix C of BG2](#0xd200a4-0xd20130-mode-7) |
+|0xD200E0 | R56 | M7_C3 | [Mode 7 matrix C of BG3](#0xd200a4-0xd20130-mode-7) |
+|0xD200E4 | R57 | M7_D0 | [Mode 7 matrix D of BG0](#0xd200a4-0xd20130-mode-7) |
+|0xD200E8 | R58 | M7_D1 | [Mode 7 matrix D of BG1](#0xd200a4-0xd20130-mode-7) |
+|0xD200EC | R59 | M7_D2 | [Mode 7 matrix D of BG2](#0xd200a4-0xd20130-mode-7) |
+|0xD200F0 | R60 | M7_D3 | [Mode 7 matrix D of BG3](#0xd200a4-0xd20130-mode-7) |
+|0xD200F4 | R61 | M7_CX0 | [Mode 7 center X of BG0](#0xd200a4-0xd20130-mode-7) |
+|0xD200F8 | R62 | M7_CX1 | [Mode 7 center X of BG1](#0xd200a4-0xd20130-mode-7) |
+|0xD200FC | R63 | M7_CX2 | [Mode 7 center X of BG2](#0xd200a4-0xd20130-mode-7) |
+|0xD20100 | R64 | M7_CX3 | [Mode 7 center X of BG3](#0xd200a4-0xd20130-mode-7) |
+|0xD20104 | R65 | M7_CY0 | [Mode 7 center Y of BG0](#0xd200a4-0xd20130-mode-7) |
+|0xD20108 | R66 | M7_CY1 | [Mode 7 center Y of BG1](#0xd200a4-0xd20130-mode-7) |
+|0xD2010C | R67 | M7_CY2 | [Mode 7 center Y of BG2](#0xd200a4-0xd20130-mode-7) |
+|0xD20110 | R68 | M7_CY3 | [Mode 7 center Y of BG3](#0xd200a4-0xd20130-mode-7) |
+|0xD20114 | R69 | M7_TX0 | [Mode 7 translation X of BG0](#0xd200a4-0xd20130-mode-7) |
+|0xD20118 | R70 | M7_TX1 | [Mode 7 translation X of BG1](#0xd200a4-0xd20130-mode-7) |
+|0xD2011C | R71 | M7_TX2 | [Mode 7 translation X of BG2](#0xd200a4-0xd20130-mode-7) |
+|0xD20120 | R72 | M7_TX3 | [Mode 7 translation X of BG3](#0xd200a4-0xd20130-mode-7) |
+|0xD20124 | R73 | M7_TY0 | [Mode 7 translation Y of BG0](#0xd200a4-0xd20130-mode-7) |
+|0xD20128 | R74 | M7_TY1 | [Mode 7 translation Y of BG1](#0xd200a4-0xd20130-mode-7) |
+|0xD2012C | R75 | M7_TY2 | [Mode 7 translation Y of BG2](#0xd200a4-0xd20130-mode-7) |
+|0xD20130 | R76 | M7_TY3 | [Mode 7 translation Y of BG3](#0xd200a4-0xd20130-mode-7) |
 
 Please note that access to the VDP register must always be 4-byte aligned.
 
@@ -728,13 +728,13 @@ Remarks:
 - `TR_SIZE` must be a multiple of 32.
 - The transfer completes immediately when `TR_TO` is written.
 
-### 0xD200A4-0xD20130: Mode 7 (Proposal)
+### 0xD200A4-0xD20130: Mode 7
 
-> This section proposes a future extension; these registers are not implemented yet. R0-R40 retain their existing addresses and behavior. R41-R76 are proposed below; R77-R255 remain reserved.
+R0-R40 retain their existing addresses and behavior. R41-R76 configure Mode 7; R77-R255 remain reserved.
 
 Mode 7 applies an affine transformation (rotation, scaling, skew, reflection, and translation) independently to each of BG0 through BG3. All four BGs can use different transformations in the same frame. It is an additional rendering option for both Character Pattern Mode and Bitmap Mode, selected by the existing `BMPn` register.
 
-The matrix-based scaling approach is inspired by [SNES Mode 7](https://wiki.superfamicom.org/mode-7-scaling). This proposal uses VGS-X's existing VRAM formats and layer composition. Any sample outside the source BG is transparent; there is no wrapping, repeated tile, or selectable outside color.
+The matrix-based scaling approach is inspired by [SNES Mode 7](https://wiki.superfamicom.org/mode-7-scaling). VGS-X Mode 7 uses the existing VRAM formats and layer composition. Any sample outside the source BG is transparent; there is no wrapping, repeated tile, or selectable outside color.
 
 #### Register layout and values
 
@@ -754,7 +754,7 @@ For BG index `n` (0-3), each address below is the BG0 address plus `4 * n`. All 
 
 For matrix registers, bits 31-16 are ignored on write and read as zero. Interpret bits 15-0 as a two's-complement signed 16-bit integer and divide by 256: the range is -128 to 127.99609375, with a step of 1/256. For example, +0.5 is `0x00000080`, +1.0 is `0x00000100`, and -1.0 is `0x0000FF00`. This retains SNES-style coefficient precision while fitting the VGS-X 32-bit register interface. Center and translation registers use all 32 bits in two's-complement representation, without masking or clamping.
 
-Disabling Mode 7 preserves its parameters. Reset disables it on all four BGs and restores the identity matrix and zero centers/translations. Write parameters before enabling the BG, and finish updates before the next [V-SYNC](#0xe00000in---v-sync). Rendering uses one snapshot of the settings for the whole frame at V-SYNC; this proposal does not include per-scanline registers, HDMA, or perspective projection.
+Disabling Mode 7 preserves its parameters. Reset disables it on all four BGs and restores the identity matrix and zero centers/translations. Write parameters before enabling the BG, and finish updates before the next [V-SYNC](#0xe00000in---v-sync). Rendering uses one snapshot of the settings for the whole frame at V-SYNC; Mode 7 does not include per-scanline registers, HDMA, or perspective projection.
 
 #### Coordinate transformation
 
@@ -807,7 +807,7 @@ The following values apply to one BG. Set `M7_ENn = 1`, `M7_CXn = 160`, `M7_CYn 
 
 For an arbitrary clockwise displayed rotation `theta` and positive uniform display scale `s`, set `A = cos(theta)/s`, `B = sin(theta)/s`, `C = -sin(theta)/s`, and `D = cos(theta)/s`, quantized to signed 8.8. Values must fit the coefficient range. A single affine matrix provides a constant skew across the BG; a perspective floor with scale varying by scanline would require a separate future extension.
 
-#### Acceptance criteria for implementation
+#### Validation criteria
 
 - Enable different transforms on all four BGs simultaneously, including a mixture of Character Pattern and Bitmap sources; verify layer order and sprite insertion.
 - Verify identity, enlargement, reduction, rotation, skew, negative coefficients, and a singular matrix against the coordinate formula.
