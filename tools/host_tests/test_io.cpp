@@ -580,12 +580,248 @@ static int test_mode7()
     return 0;
 }
 
+static int test_mode7_depth()
+{
+    auto vdp = std::make_unique<VDP>();
+    vdp->reset();
+    for (int bg = 0; bg < 4; bg++) {
+        const uint32_t address = 0xD20134 + bg * 4;
+        if (vdp->read(address)) return fail("Mode 7 perspective reset");
+        vdp->write(address, 0xFFFFFFFF);
+        if (vdp->read(address) != 75) return fail("Mode 7 perspective angle clamp");
+        vdp->write(address, 0);
+    }
+    vdp->ctx.reg.skip1 = vdp->ctx.reg.skip2 = vdp->ctx.reg.skip3 = 1;
+    vdp->write(0xD20028, 1);
+    vdp->write(0xD200A4, 1);
+    for (int i = 0; i < 320 * 200; i++) vdp->ctx.nametbl[0][i] = i + 1;
+    int previousTop = -1;
+    int previousWidth = 321;
+    for (int angle : {0, 15, 30, 60, 75}) {
+        vdp->write(0xD20134, angle);
+        vdp->render();
+        int top = 200;
+        for (int y = 0; y < 200; y++) {
+            for (int x = 0; x < 320; x++) {
+                const uint32_t pixel = vdp->ctx.display[y * 1280 + x * 2];
+                if (pixel && y < top) top = y;
+                if (pixel) {
+                    // The destination must lie within the forward projection of
+                    // the sampled pixel's unit square (including steep angles).
+                    const double sourceX = (pixel - 1) % 320;
+                    const double sourceY = (pixel - 1) / 320;
+                    const double sine = vgsx_sin[angle] / 256.0;
+                    const double cosine = vgsx_cos[angle] / 256.0;
+                    const double nearDen = 1 - 99 * sine / 200;
+                    double px[4], py[4];
+                    const int ox[4] = {0, 1, 1, 0}, oy[4] = {0, 0, 1, 1};
+                    for (int corner = 0; corner < 4; corner++) {
+                        const double v = sourceY + oy[corner] - 100;
+                        const double factor = 1 - v * sine / 200;
+                        px[corner] = 160 + (sourceX + ox[corner] - 160) * nearDen / factor;
+                        py[corner] = 199 - 99 * cosine / nearDen + v * cosine / factor;
+                    }
+                    for (int corner = 0; corner < 4; corner++) {
+                        const int next = (corner + 1) % 4;
+                        const double cross = (px[next] - px[corner]) * (y - py[corner]) -
+                                             (py[next] - py[corner]) * (x - px[corner]);
+                        if (cross < -1e-7) return fail("Mode 7 perspective forward projection");
+                    }
+                }
+            }
+        }
+        if (top < previousTop || top == 200) return fail("Mode 7 perspective top margin");
+        previousTop = top;
+        int topWidth = 0;
+        for (int x = 0; x < 320; x++) {
+            if (vdp->ctx.display[top * 1280 + x * 2]) topWidth++;
+            if (vdp->ctx.display[199 * 1280 + x * 2] != (uint32_t)(199 * 320 + x + 1))
+                return fail("Mode 7 perspective bottom must remain aligned and full-width");
+        }
+        if (topWidth >= previousWidth) return fail("Mode 7 far edge must narrow as depth increases");
+        previousWidth = topWidth;
+    }
+    vdp->write(0xD20134, 0);
+    vdp->render();
+    for (int y = 0; y < 200; y++) {
+        for (int x = 0; x < 320; x++) {
+            if (vdp->ctx.display[y * 1280 + x * 2] != (uint32_t)(y * 320 + x + 1))
+                return fail("Disabling perspective must restore exact affine output");
+        }
+    }
+    vdp->write(0xD20134, 30);
+    vdp->ctx.reg.m7_cx[0] = INT32_MIN;
+    vdp->ctx.reg.m7_cy[0] = INT32_MAX;
+    vdp->ctx.reg.m7_a[0] = vdp->ctx.reg.m7_b[0] = 0x8000;
+    vdp->ctx.reg.m7_c[0] = vdp->ctx.reg.m7_d[0] = 0x7FFF;
+    vdp->render(); // Extreme affine inputs must remain safe under perspective.
+    for (int bg = 0; bg < 4; bg++) {
+        vdp->reset();
+        std::memset(vdp->ctx.ptn[0], 0x11, 32);
+        vdp->ctx.palette[0][0] = 0x112233;
+        vdp->ctx.palette[0][1] = 0xABCDEF;
+        for (int n = 0; n < 4; n++) vdp->write(0xD2006C + n * 4, n != bg);
+        vdp->write(0xD200A4 + bg * 4, 1);
+        vdp->write(0xD20134 + bg * 4, 30);
+        if (bg & 1) {
+            vdp->write(0xD20028 + bg * 4, 1);
+            for (int i = 0; i < 320 * 200; i++) vdp->ctx.nametbl[bg][i] = 0xABCDEF;
+        }
+        vdp->render();
+        if (vdp->ctx.display[0] != 0x112233 || vdp->ctx.display[199 * 1280] != 0xABCDEF)
+            return fail("Perspective must work independently on all BGs and source modes");
+        if (bg & 1) {
+            vdp->ctx.wy2[bg] = 198;
+            vdp->render();
+            if (vdp->ctx.display[199 * 1280] != 0x112233)
+                return fail("Perspective must respect bitmap destination clipping");
+        }
+    }
+    vdp->reset();
+    if (vdp->read(0xD20134)) return fail("Mode 7 perspective reset after use");
+    return 0;
+}
+
+static int test_mode7_perspective_horizontal_coverage()
+{
+    auto vdp = std::make_unique<VDP>();
+    for (bool bitmap : {false, true}) {
+        vdp->reset();
+        vdp->ctx.reg.skip1 = vdp->ctx.reg.skip2 = vdp->ctx.reg.skip3 = 1;
+        vdp->write(0xD200A4, 1);
+        vdp->write(0xD20028, bitmap);
+        vdp->write(0xD200F4, 160);
+        if (bitmap) {
+            // A zoomed bitmap also has valid samples beyond the unprojected
+            // viewport. Encode X in the color to detect stretched edge pixels.
+            vdp->write(0xD200B4, 64);
+            for (int y = 0; y < 200; y++) {
+                for (int x = 0; x < 320; x++) vdp->ctx.nametbl[0][y * 320 + x] = x + 1;
+            }
+        } else {
+            vdp->write(0xD20114, 800);
+            std::memset(vdp->ctx.ptn[0], 0x11, 32);
+            vdp->ctx.palette[0][1] = 0xABCDEF;
+        }
+        for (int depth : {30, 65, 75}) {
+            vdp->write(0xD20134, depth);
+            vdp->render();
+            int top = 0;
+            while (top < 200 && !vdp->ctx.display[top * 1280 + 320]) top++;
+            if (top == 0 || top == 200) return fail("Perspective must preserve the upper margin");
+            for (int y = 0; y < 200; y++) {
+                for (int x = 0; x < 320; x++) {
+                    const uint32_t color = vdp->ctx.display[y * 1280 + x * 2];
+                    if ((color != 0) != (y >= top))
+                        return fail("Perspective must cover both sides of the reference trapezoid");
+                }
+            }
+            if (bitmap) {
+                const auto* line = &vdp->ctx.display[top * 1280];
+                if (!(line[0] < line[32] && line[32] < line[320] && line[320] < line[606] && line[606] < line[638]))
+                    return fail("Perspective sides must sample the map instead of repeating borders");
+            }
+        }
+        // Keep genuine source bounds transparent; do not wrap or clamp them.
+        vdp->write(0xD20114, 0);
+        vdp->write(0xD200B4, 256);
+        vdp->render();
+        if (vdp->ctx.display[150 * 1280] != 0)
+            return fail("Perspective must still reject samples outside the source BG");
+    }
+    return 0;
+}
+
+static int test_mode7_fractional_translation()
+{
+    auto vdp = std::make_unique<VDP>();
+    for (int bg = 0; bg < 4; bg++) {
+        vdp->reset();
+        const uint32_t fractionAddress = 0xD20144 + 4 * bg;
+        if (vdp->read(fractionAddress)) return fail("Fractional translation reset");
+        vdp->write(fractionAddress, 0xFFFFFFFF);
+        if (vdp->read(fractionAddress) != 65535) return fail("Fractional translation reserved bits");
+        for (int n = 0; n < 4; n++) vdp->write(0xD2006C + n * 4, n != bg);
+        vdp->write(0xD20028 + bg * 4, 1);
+        vdp->write(0xD200A4 + bg * 4, 1);
+        for (int i = 0; i < 320 * 200; i++) vdp->ctx.nametbl[bg][i] = i + 1;
+        vdp->write(0xD200E4 + bg * 4, 128);
+        for (int depth : {0, 30, 75}) {
+            vdp->write(0xD20134 + bg * 4, depth);
+            for (bool negative : {false, true}) {
+                vdp->write(0xD200B4 + bg * 4, negative ? 0xFF80 : 128);
+                vdp->write(0xD20114 + bg * 4, negative ? 1 : 0);
+                for (int fx : {0, 127, 128, 255}) {
+                    for (int fy : {0, 127, 128, 255}) {
+                        vdp->write(fractionAddress, fx | (fy << 8));
+                        vdp->render();
+                        // The bottom edge's inverse perspective is exact. At
+                        // x=1,y=199 the affine parts end in half-pixel fractions.
+                        const uint32_t expected = (99 + (fy >= 128)) * 320 + (fx >= 128) + 1;
+                        if (vdp->ctx.display[199 * 1280 + 2] != expected)
+                            return fail("Fractional translation must precede source rounding");
+                    }
+                }
+            }
+        }
+    }
+    vdp->reset();
+    for (int bg = 0; bg < 4; bg++) {
+        if (vdp->read(0xD20144 + bg * 4)) return fail("Fractional translation reset after use");
+    }
+    return 0;
+}
+
+static int test_mode7_focal_length()
+{
+    auto vdp = std::make_unique<VDP>();
+    vdp->reset();
+    for (int bg = 0; bg < 4; bg++) {
+        uint32_t address = 0xD20154 + 4 * bg;
+        if (vdp->read(address) != 200) return fail("Perspective focal default must preserve existing projection");
+        vdp->write(address, 0);
+        if (vdp->read(address) != 100) return fail("Perspective focal lower bound");
+        vdp->write(address, 0xFFFFFFFF);
+        if (vdp->read(address) != 4096) return fail("Perspective focal upper bound");
+    }
+    vdp->ctx.reg.skip1 = vdp->ctx.reg.skip2 = vdp->ctx.reg.skip3 = 1;
+    vdp->write(0xD20028, 1);
+    vdp->write(0xD200A4, 1);
+    for (int i = 0; i < 320 * 200; i++) vdp->ctx.nametbl[0][i] = i + 1;
+    uint32_t previousSample = 0;
+    for (int focal : {100, 128, 200, 4096}) {
+        vdp->write(0xD20154, focal);
+        vdp->write(0xD20134, 65);
+        vdp->render();
+        for (int x = 0; x < 320; x++) {
+            if (vdp->ctx.display[199 * 1280 + x * 2] != (uint32_t)(199 * 320 + x + 1))
+                return fail("Focal adjustment must preserve bottom alignment");
+        }
+        uint32_t sample = vdp->ctx.display[150 * 1280 + 320];
+        if (!sample || sample == previousSample) return fail("Focal adjustment must change perspective depth");
+        previousSample = sample;
+        vdp->write(0xD20134, 0);
+        vdp->render();
+        for (int i = 0; i < 320 * 200; i++) {
+            if (vdp->ctx.display[(i / 320) * 1280 + (i % 320) * 2] != (uint32_t)(i + 1))
+                return fail("Focal length must not affect affine-only rendering");
+        }
+    }
+    vdp->reset();
+    if (vdp->read(0xD20154) != 200) return fail("Focal reset after use");
+    return 0;
+}
+
 int main()
 {
     vgsx.disableBootBios();
 
     if (int rc = test_readme_vdp_register_doc(); rc) return rc;
     if (int rc = test_mode7(); rc) return rc;
+    if (int rc = test_mode7_depth(); rc) return rc;
+    if (int rc = test_mode7_focal_length(); rc) return rc;
+    if (int rc = test_mode7_perspective_horizontal_coverage(); rc) return rc;
+    if (int rc = test_mode7_fractional_translation(); rc) return rc;
     if (int rc = test_random_full_cycle(vgsx); rc) return rc;
     if (int rc = test_random_seed_io(vgsx); rc) return rc;
     if (int rc = test_dma_memset_last_byte(vgsx); rc) return rc;

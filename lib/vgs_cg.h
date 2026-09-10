@@ -165,6 +165,24 @@ typedef struct {
 #define VGS_VREG_M7_TY2 *((volatile int32_t*)0xD2012C)
 #define VGS_VREG_M7_TY3 *((volatile int32_t*)0xD20130)
 
+#define VGS_VREG_M7_DEPTH ((volatile uint32_t*)0xD20134)
+#define VGS_VREG_M7_DEPTH0 *((volatile uint32_t*)0xD20134)
+#define VGS_VREG_M7_DEPTH1 *((volatile uint32_t*)0xD20138)
+#define VGS_VREG_M7_DEPTH2 *((volatile uint32_t*)0xD2013C)
+#define VGS_VREG_M7_DEPTH3 *((volatile uint32_t*)0xD20140)
+
+#define VGS_VREG_M7_FRAC ((volatile uint32_t*)0xD20144)
+#define VGS_VREG_M7_FRAC0 *((volatile uint32_t*)0xD20144)
+#define VGS_VREG_M7_FRAC1 *((volatile uint32_t*)0xD20148)
+#define VGS_VREG_M7_FRAC2 *((volatile uint32_t*)0xD2014C)
+#define VGS_VREG_M7_FRAC3 *((volatile uint32_t*)0xD20150)
+
+#define VGS_VREG_M7_FOCAL ((volatile uint32_t*)0xD20154)
+#define VGS_VREG_M7_FOCAL0 *((volatile uint32_t*)0xD20154)
+#define VGS_VREG_M7_FOCAL1 *((volatile uint32_t*)0xD20158)
+#define VGS_VREG_M7_FOCAL2 *((volatile uint32_t*)0xD2015C)
+#define VGS_VREG_M7_FOCAL3 *((volatile uint32_t*)0xD20160)
+
 // Graphic Draw Function Identifer
 #define VGS_DRAW_PIXEL 0
 #define VGS_DRAW_LINE 1

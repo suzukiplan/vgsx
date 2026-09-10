@@ -601,6 +601,18 @@ _* RAM buffer size = `((size + 1) * 8)²`_
 |0xD20128 | R74 | M7_TY1 | [Mode 7 translation Y of BG1](#0xd200a4-0xd20130-mode-7) |
 |0xD2012C | R75 | M7_TY2 | [Mode 7 translation Y of BG2](#0xd200a4-0xd20130-mode-7) |
 |0xD20130 | R76 | M7_TY3 | [Mode 7 translation Y of BG3](#0xd200a4-0xd20130-mode-7) |
+|0xD20134 | R77 | M7_DEPTH0 | [Mode 7 perspective depth of BG0](#0xd20134-0xd20140-mode-7-perspective-depth) |
+|0xD20138 | R78 | M7_DEPTH1 | [Mode 7 perspective depth of BG1](#0xd20134-0xd20140-mode-7-perspective-depth) |
+|0xD2013C | R79 | M7_DEPTH2 | [Mode 7 perspective depth of BG2](#0xd20134-0xd20140-mode-7-perspective-depth) |
+|0xD20140 | R80 | M7_DEPTH3 | [Mode 7 perspective depth of BG3](#0xd20134-0xd20140-mode-7-perspective-depth) |
+|0xD20144 | R81 | M7_FRAC0 | [Mode 7 fractional translation of BG0](#0xd20144-0xd20150-mode-7-fractional-translation) |
+|0xD20148 | R82 | M7_FRAC1 | [Mode 7 fractional translation of BG1](#0xd20144-0xd20150-mode-7-fractional-translation) |
+|0xD2014C | R83 | M7_FRAC2 | [Mode 7 fractional translation of BG2](#0xd20144-0xd20150-mode-7-fractional-translation) |
+|0xD20150 | R84 | M7_FRAC3 | [Mode 7 fractional translation of BG3](#0xd20144-0xd20150-mode-7-fractional-translation) |
+|0xD20154 | R85 | M7_FOCAL0 | [Mode 7 focal length of BG0](#0xd20154-0xd20160-mode-7-focal-length) |
+|0xD20158 | R86 | M7_FOCAL1 | [Mode 7 focal length of BG1](#0xd20154-0xd20160-mode-7-focal-length) |
+|0xD2015C | R87 | M7_FOCAL2 | [Mode 7 focal length of BG2](#0xd20154-0xd20160-mode-7-focal-length) |
+|0xD20160 | R88 | M7_FOCAL3 | [Mode 7 focal length of BG3](#0xd20154-0xd20160-mode-7-focal-length) |
 
 Please note that access to the VDP register must always be 4-byte aligned.
 
@@ -730,7 +742,7 @@ Remarks:
 
 ### 0xD200A4-0xD20130: Mode 7
 
-R0-R40 retain their existing addresses and behavior. R41-R76 configure Mode 7; R77-R255 remain reserved.
+R0-R40 retain their existing addresses and behavior. R41-R76 configure the affine transform; R77-R80 add optional perspective depth. R81-R84 retain fractional source translations. R85-R88 control perspective focal length. R89-R255 remain reserved.
 
 Mode 7 applies an affine transformation (rotation, scaling, skew, reflection, and translation) independently to each of BG0 through BG3. All four BGs can use different transformations in the same frame. It is an additional rendering option for both Character Pattern Mode and Bitmap Mode, selected by the existing `BMPn` register.
 
@@ -754,13 +766,13 @@ For BG index `n` (0-3), each address below is the BG0 address plus `4 * n`. All 
 
 For matrix registers, bits 31-16 are ignored on write and read as zero. Interpret bits 15-0 as a two's-complement signed 16-bit integer and divide by 256: the range is -128 to 127.99609375, with a step of 1/256. For example, +0.5 is `0x00000080`, +1.0 is `0x00000100`, and -1.0 is `0x0000FF00`. This retains SNES-style coefficient precision while fitting the VGS-X 32-bit register interface. Center and translation registers use all 32 bits in two's-complement representation, without masking or clamping.
 
-Disabling Mode 7 preserves its parameters. Reset disables it on all four BGs and restores the identity matrix and zero centers/translations. Write parameters before enabling the BG, and finish updates before the next [V-SYNC](#0xe00000in---v-sync). Rendering uses one snapshot of the settings for the whole frame at V-SYNC; Mode 7 does not include per-scanline registers, HDMA, or perspective projection.
+Disabling Mode 7 preserves its parameters. Reset disables it on all four BGs and restores the identity matrix and zero centers/translations. Write parameters before enabling the BG, and finish updates before the next [V-SYNC](#0xe00000in---v-sync). Rendering uses one snapshot of the settings for the whole frame at V-SYNC; Mode 7 does not include per-scanline registers or HDMA. Optional perspective is controlled by [M7_DEPTH](#0xd20134-0xd20140-mode-7-perspective-depth).
 
 #### Coordinate transformation
 
 Coordinates use the logical 320x200 screen, with (0, 0) at the top left, X increasing rightward and Y increasing downward. Mode 7 is evaluated before the existing 2x display enlargement. Each integer destination coordinate `(x, y)` is mapped back to a source BG pixel; no half-pixel offset is added.
 
-Let `a`, `b`, `c`, and `d` be the signed integer values in the low 16 bits of `M7_A` through `M7_D` (before division by 256). Let `cx`, `cy`, `tx`, and `ty` be the corresponding center and translation values for this BG.
+Let `fx` and `fy` be the unsigned fractional bytes from [M7_FRAC](#0xd20144-0xd20150-mode-7-fractional-translation), both zero after reset. Let `a`, `b`, `c`, and `d` be the signed integer values in the low 16 bits of `M7_A` through `M7_D` (before division by 256). Let `cx`, `cy`, `tx`, and `ty` be the corresponding center and translation values for this BG.
 
 ```text
 Character Pattern Mode: scroll_x = SXn & 2047, scroll_y = SYn & 2047
@@ -768,8 +780,8 @@ Bitmap Mode:            scroll_x = 0,          scroll_y = 0
 
 u = x - cx
 v = y - cy
-source_x = floor((a * u + b * v) / 256) + cx + tx + scroll_x
-source_y = floor((c * u + d * v) / 256) + cy + ty + scroll_y
+source_x = floor((a * u + b * v + fx) / 256) + cx + tx + scroll_x
+source_y = floor((c * u + d * v + fy) / 256) + cy + ty + scroll_y
 ```
 
 Use signed 64-bit intermediate arithmetic, including coordinate subtraction and final additions; do not allow 32-bit overflow. Sum both products before rounding. `floor` rounds toward negative infinity (for example, -1/256 becomes -1), not toward zero. Sample only the resulting integer pixel, with no interpolation or antialiasing.
@@ -805,7 +817,7 @@ The following values apply to one BG. Set `M7_ENn = 1`, `M7_CXn = 160`, `M7_CYn 
 | 90 degrees clockwise | 0 | 0x00000100 | 0x0000FF00 | 0 |
 | Horizontal skew: displayed X offset = 0.5 * (Y - 100) | 0x00000100 | 0x0000FF80 | 0 | 0x00000100 |
 
-For an arbitrary clockwise displayed rotation `theta` and positive uniform display scale `s`, set `A = cos(theta)/s`, `B = sin(theta)/s`, `C = -sin(theta)/s`, and `D = cos(theta)/s`, quantized to signed 8.8. Values must fit the coefficient range. A single affine matrix provides a constant skew across the BG; a perspective floor with scale varying by scanline would require a separate future extension.
+For an arbitrary clockwise displayed rotation `theta` and positive uniform display scale `s`, set `A = cos(theta)/s`, `B = sin(theta)/s`, `C = -sin(theta)/s`, and `D = cos(theta)/s`, quantized to signed 8.8. Values must fit the coefficient range. A single affine matrix provides a constant skew across the BG; use [M7_DEPTH](#0xd20134-0xd20140-mode-7-perspective-depth) to add perspective with scale varying by scanline.
 
 #### Validation criteria
 
@@ -814,6 +826,50 @@ For an arbitrary clockwise displayed rotation `theta` and positive uniform displ
 - Verify source coordinates -1, 0, width/height - 1, and width/height, including fractional negative results; outside samples must expose lower layers without wrapping.
 - Verify tile flips, palettes, transparent pixels, bitmap destination clipping, and both modes' scroll behavior.
 - Verify register readback, ignored bits, reset defaults, disable/re-enable, frame snapshot timing, and extreme signed center/translation values without arithmetic overflow or out-of-bounds reads.
+
+### 0xD20134-0xD20140: Mode 7 Perspective Depth
+
+`M7_DEPTHn` adds a perspective projection to BG `n` after its affine transform. Each register is an aligned 32-bit unsigned angle in degrees, clamped to 0..75 on write; reads return the clamped value. Reset sets all four values to zero. Zero preserves the original affine rendering exactly. The value is ignored while `M7_ENn` is disabled.
+
+The logical 320x200 viewport defines the reference plane for projection. Rendering extends horizontally beyond that reference plane to fill the display width wherever the transformed source BG is in bounds. Increasing the angle makes the far (top) edge narrower than the near (bottom) edge and foreshortens its height. The near edge fits the display width and lies on logical row 199. Any vertical margin is therefore above the plane and remains transparent. The projected reference rectangle is trapezoidal, but its sloped sides do not clip map rendering. The existing source-BG bounds, transparency, tile attributes, layer ordering, and bitmap destination clipping still apply.
+
+The projection uses focal length `F = M7_FOCALn`, initially 200 logical pixels. Let `s = vgsx_sin[depth] / 256` and `c = vgsx_cos[depth] / 256`, using VGS-X's integer-degree trigonometric tables. For affine viewport coordinates `(X, Y)`:
+
+```text
+v = Y - 100
+near_den = 1 - 99 * s / F
+near_y = 99 * c / near_den
+screen_x = 160 + (X - 160) * near_den / (1 - v * s / F)
+screen_y = 199 - near_y + v * c / (1 - v * s / F)
+```
+
+For rendering, invert this projection at each destination `(x, y)` before applying the original Mode 7 matrix:
+
+```text
+r = y - 199 + near_y
+denom = c + r * s / F
+v = r / denom
+Y = 100 + v
+X = 160 + (x - 160) * (1 - v * s / F) / near_den
+```
+
+Reject `denom <= 0`, `Y < 0`, or `Y >= 200` as transparent. Do not clip `X` to 0..319: continue the inverse projection across the entire destination width, then check the final source coordinates against the source BG bounds. On row 199, use `v = 99` exactly to keep the near edge aligned. Substitute the unrounded `(X, Y)` for `(x, y)` in the affine source-coordinate formula; floor only the final source coordinates. The inverse projection is evaluated in double precision. Perspective acts before sampling and does not resample an intermediate framebuffer.
+
+The affine center `(M7_CXn, M7_CYn)` is specified in the **unprojected** viewport. Its projected screen position is fixed while scrolling or rotating. To center a tracked point within the visible plane, choose `CX = 160` and the nearest integer to `CY = 100 + (19800 * S - F * 256) / (F * 512 + S)`, where `S = vgsx_sin[depth]`. This maps it to the midpoint between the projected top and bottom edges. Translate the source point to that center using `M7_TXn`/`M7_TYn` as usual.
+
+### 0xD20144-0xD20150: Mode 7 Fractional Translation
+
+`M7_FRACn` supplies the fractional parts of the source translation for BG `n`. Bits 7-0 contain X and bits 15-8 contain Y; each is an unsigned value in 0..255 representing 0..255/256 pixels. Bits 31-16 are ignored on write and read as zero. Access is aligned 32-bit. Reset clears all four registers, preserving the previous integer-translation behavior.
+
+Add these fractions **before** the final source-coordinate floor, in both affine and perspective rendering. They are ignored while Mode 7 is disabled and do not modify VRAM. Existing signed integer `M7_TXn`/`M7_TYn` values retain their meaning. Negative translations use a floored integer part and a positive fraction: -0.5px is `TX = -1` and X fraction 128.
+
+For a positive Q8.8 tracked coordinate, write its integer part minus the camera center to `TX`/`TY`, and pack its low eight bits into `M7_FRAC`. Finish all writes before V-SYNC. This avoids independent integer rounding of X and Y, which can make diagonal camera movement wobble sideways. Pixels are still sampled without filtering; the extension retains subpixel positioning rather than blending colors.
+
+### 0xD20154-0xD20160: Mode 7 Focal Length
+
+`M7_FOCALn` controls the focal length of BG `n` in logical pixels. It is an aligned 32-bit unsigned register, clamped to 100..4096 on write; reads return the clamped value. Reset sets each register to 200, preserving the original perspective behavior. It is ignored when `M7_DEPTHn` is zero or Mode 7 is disabled.
+
+A shorter focal length increases the difference in scale between nearby and distant ground. The near edge stays fixed at row 199 and fits the screen width. A longer focal length approaches orthographic projection. Use the same `F` when computing the projected camera anchor. The lower limit keeps the projection denominator positive throughout the reference plane for every supported depth angle.
 
 ## I/O Map
 

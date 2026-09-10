@@ -254,7 +254,10 @@ class VDP
         uint32_t m7_cy[VDP_BG_NUM]; // R65-68: Mode 7 CY
         uint32_t m7_tx[VDP_BG_NUM]; // R69-72: Mode 7 TX
         uint32_t m7_ty[VDP_BG_NUM]; // R73-76: Mode 7 TY
-        uint32_t reserved[179];       // Reserved (Specify 0 to maintain future compatibility.)
+        uint32_t m7_depth[VDP_BG_NUM]; // R77-80: Perspective angle (0..75 degrees)
+        uint32_t m7_frac[VDP_BG_NUM]; // R81-84: Source translation fractions (X: bits 7-0, Y: bits 15-8)
+        uint32_t m7_focal[VDP_BG_NUM]; // R85-88: Perspective focal length (100..4096 pixels)
+        uint32_t reserved[167];       // Reserved (Specify 0 to maintain future compatibility.)
     } Register;
 
     static constexpr uint32_t kVdpRegisterFirstReservedIndex =
@@ -347,6 +350,7 @@ class VDP
         for (int i = 0; i < VDP_BG_NUM; i++) {
             this->ctx.reg.m7_a[i] = 0x100;
             this->ctx.reg.m7_d[i] = 0x100;
+            this->ctx.reg.m7_focal[i] = 200;
             this->ctx.wx1[i] = 0;
             this->ctx.wy1[i] = 0;
             this->ctx.wx2[i] = VDP_WIDTH - 1;
@@ -430,6 +434,15 @@ class VDP
                         value &= 1;
                     } else if (45 <= index && index <= 60) {
                         value &= 0xFFFF;
+                    }
+                    if (85 <= index && index <= 88) {
+                        value = value < 100 ? 100 : (value > 4096 ? 4096 : value);
+                    }
+                    if (81 <= index && index <= 84) {
+                        value &= 0xFFFF;
+                    }
+                    if (77 <= index && index <= 80 && value > 75) {
+                        value = 75;
                     }
                     rawReg[index] = value;
                     switch (index) {
@@ -739,6 +752,8 @@ class VDP
         const bool bitmap = reg.bmp[n] != 0;
         const int64_t originX = cx + (int32_t)reg.m7_tx[n] + (bitmap ? 0 : reg.scrollX[n] & 2047);
         const int64_t originY = cy + (int32_t)reg.m7_ty[n] + (bitmap ? 0 : reg.scrollY[n] & 2047);
+        const int64_t fractionX = reg.m7_frac[n] & 0xFF;
+        const int64_t fractionY = (reg.m7_frac[n] >> 8) & 0xFF;
         const int width = bitmap ? VDP_WIDTH : 2048;
         const int height = bitmap ? VDP_HEIGHT : 2048;
         const int fromX = bitmap ? this->ctx.wx1[n] : 0;
@@ -750,12 +765,40 @@ class VDP
         auto floor256 = [](int64_t value) {
             return value / 256 - (value % 256 < 0 ? 1 : 0);
         };
+        const uint32_t depth = reg.m7_depth[n] > 75 ? 75 : reg.m7_depth[n];
+        // Project the logical viewport about its center, then fit the near edge
+        // to the display width and align it with the last display row.
+        const double depthSin = vgsx_sin[depth] / 256.0;
+        const double depthCos = vgsx_cos[depth] / 256.0;
+        const double focal = reg.m7_focal[n] < 100 ? 100 : (reg.m7_focal[n] > 4096 ? 4096 : reg.m7_focal[n]);
+        const double nearDen = 1.0 - 99.0 * depthSin / focal;
+        const double nearY = 99.0 * depthCos / nearDen;
         for (int y = fromY; y <= toY; y++) {
+            double planeY = y;
+            double step = 1.0;
+            if (depth) {
+                const double relativeY = y - 199.0 + nearY;
+                const double denominator = depthCos + relativeY * depthSin / focal;
+                if (denominator <= 0.0) continue;
+                const double v = y == 199 ? 99.0 : relativeY / denominator;
+                planeY = 100.0 + v;
+                if (planeY < 0.0 || planeY >= 200.0) continue;
+                step = (1.0 - v * depthSin / focal) / nearDen;
+            }
             int64_t sampleX = a * (fromX - cx) + b * (y - cy);
             int64_t sampleY = c * (fromX - cx) + d * (y - cy);
             for (int x = fromX; x <= toX; x++, sampleX += a, sampleY += c) {
-                const int64_t sx = floor256(sampleX) + originX;
-                const int64_t sy = floor256(sampleY) + originY;
+                int64_t sx, sy;
+                if (depth) {
+                    const double planeX = 160.0 + (x - 160.0) * step;
+                    // Extend horizontally beyond the reference viewport; only
+                    // the transformed source BG bounds limit map coverage.
+                    sx = (int64_t)floor((a * (planeX - cx) + b * (planeY - cy) + fractionX) / 256.0) + originX;
+                    sy = (int64_t)floor((c * (planeX - cx) + d * (planeY - cy) + fractionY) / 256.0) + originY;
+                } else {
+                    sx = floor256(sampleX + fractionX) + originX;
+                    sy = floor256(sampleY + fractionY) + originY;
+                }
                 if (sx < 0 || width <= sx || sy < 0 || height <= sy) {
                     continue;
                 }
