@@ -4,6 +4,36 @@
 #include "../program.c"
 #undef main
 
+static void test_mode7_api(void)
+{
+    for (int bg = 0; bg < 4; bg++) {
+        memset(test_regs, 0, sizeof(test_regs));
+        vgs_mode7_abcd(bg, -32768, -1, 256, 32767);
+        vgs_mode7_camera(bg, -123456, 654321);
+        vgs_mode7_translate(bg, -1000, 2000);
+        vgs_mode7_frac(bg, 128, 255);
+        vgs_mode7_depth(bg, 30);
+        vgs_mode7_focal(bg, 128);
+        vgs_mode7_backdrop(bg, 0x00A700);
+        vgs_mode7_enable(bg, ON);
+        assert(test_regs[41 + bg] == 1);
+        assert(test_regs[45 + bg] == 0x8000 && test_regs[49 + bg] == 0xFFFF);
+        assert(test_regs[53 + bg] == 256 && test_regs[57 + bg] == 32767);
+        assert((int32_t)test_regs[61 + bg] == -123456 && test_regs[65 + bg] == 654321);
+        assert((int32_t)test_regs[69 + bg] == -1000 && test_regs[73 + bg] == 2000);
+        assert(test_regs[81 + bg] == 0xFF80);
+        assert(test_regs[77 + bg] == 30 && test_regs[85 + bg] == 128);
+        assert(test_regs[89 + bg] == 0x00A700);
+        for (int other = 0; other < 4; other++) {
+            if (other == bg) continue;
+            for (int reg = 41; reg <= 89; reg += 4) assert(test_regs[reg + other] == 0);
+        }
+        vgs_mode7_enable(bg, 0);
+        assert(test_regs[41 + bg] == 0 && test_regs[45 + bg] == 0x8000);
+    }
+    memset(test_regs, 0, sizeof(test_regs));
+}
+
 static void check_star_bitmap(void)
 {
     static uint32_t expected[65536];
@@ -83,6 +113,7 @@ static void test_sky(void)
 
 int main(void)
 {
+    test_mode7_api();
     int laps = 0;
     int previous_turn = 0;
     int reversals = 0;
@@ -147,7 +178,7 @@ int main(void)
             assert(fabs(anchor - (top + (199 - top) * CAMERA_GROUND_PERCENT / 100.0)) <= 2);
         }
         for (int i = 45; i <= 57; i += 4) {
-            assert((int32_t)test_regs[i] >= -32768 && (int32_t)test_regs[i] <= 32767);
+            assert((test_regs[i] & 0xFFFF0000) == 0);
         }
     }
     assert(laps >= 4);

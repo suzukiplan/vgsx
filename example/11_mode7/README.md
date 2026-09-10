@@ -28,6 +28,8 @@ Set both angles to zero to disable tilt and perspective. The vertical chip count
 
 The defaults approximate `kart.png`: a sky band of about 20% at the top, ground filling the rest of the screen, large nearby features and a compressed distant course. The original map artwork and starting position remain in use. BG0 sets `M7_BACKDROP0` to `0x00A700`, filling samples beyond the full source map with green while preserving the upper sky margin.
 
+Mode 7 settings are applied through the VGS Standard Library `vgs_mode7_*` APIs. Matrix coefficients remain signed 8.8 values; `vgs_mode7_frac(bg, x, y)` accepts two separate 1/256px fractions.
+
 ## Sky and stars
 
 BG1 uses bitmap mode for a vertical sky gradient, blue (`0x0000FF`) at the top and black (`0x000000`) at the bottom. Its height follows the projected course top edge, so it fills only the upper margin. BG2 uses bitmap mode and `vgs_draw_pixel` for stars. Both layers stay transparent over the ground; without an upper margin they are hidden.

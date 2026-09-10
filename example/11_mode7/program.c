@@ -309,21 +309,20 @@ static void update_camera(void)
     /* Inverse mapping: screen right is the player's right; screen up is forward.
      * Tilt compresses the displayed depth axis by cos(MAP_ANGLE). A single
      * affine matrix supplies the tilt; M7_DEPTH adds the perspective warp. */
-    VGS_VREG_M7_A0 = -sine * 100 / (MAP_SCALE * 256);
-    VGS_VREG_M7_B0 = -(long long)cosine * 100 * MAP_VERTICAL_CHIP_NUM * 16 / (200LL * MAP_SCALE * tilt);
-    VGS_VREG_M7_C0 = cosine * 100 / (MAP_SCALE * 256);
-    VGS_VREG_M7_D0 = -(long long)sine * 100 * MAP_VERTICAL_CHIP_NUM * 16 / (200LL * MAP_SCALE * tilt);
-    VGS_VREG_M7_CX0 = CAMERA_X;
-    VGS_VREG_M7_CY0 = camera_y;
+    vgs_mode7_abcd(0,
+                   -sine * 100 / (MAP_SCALE * 256),
+                   -(long long)cosine * 100 * MAP_VERTICAL_CHIP_NUM * 16 / (200LL * MAP_SCALE * tilt),
+                   cosine * 100 / (MAP_SCALE * 256),
+                   -(long long)sine * 100 * MAP_VERTICAL_CHIP_NUM * 16 / (200LL * MAP_SCALE * tilt));
+    vgs_mode7_camera(0, CAMERA_X, camera_y);
     /* Preserve the shared subpixel phase on both axes: rounding X/Y separately
      * makes a diagonal trajectory alternate sideways by a whole source pixel. */
-    VGS_VREG_M7_TX0 = player.x / 256 - CAMERA_X;
-    VGS_VREG_M7_TY0 = player.y / 256 - camera_y;
-    VGS_VREG_M7_FRAC0 = (player.x & 255) | ((player.y & 255) << 8);
-    VGS_VREG_M7_DEPTH0 = MAP_ANGLE_DEPTH;
-    VGS_VREG_M7_FOCAL0 = MAP_FOCAL_LENGTH;
-    VGS_VREG_M7_BACKDROP0 = 0x00A700;
-    VGS_VREG_M7_EN0 = 1;
+    vgs_mode7_translate(0, player.x / 256 - CAMERA_X, player.y / 256 - camera_y);
+    vgs_mode7_frac(0, player.x & 255, player.y & 255);
+    vgs_mode7_depth(0, MAP_ANGLE_DEPTH);
+    vgs_mode7_focal(0, MAP_FOCAL_LENGTH);
+    vgs_mode7_backdrop(0, 0x00A700);
+    vgs_mode7_enable(0, ON);
 }
 
 int main(void)

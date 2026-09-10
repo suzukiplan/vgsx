@@ -1544,6 +1544,14 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | cg:bg | `vgs_print_bg` | Display a string on the [BG](#name-table) in [Character Pattern Mode](#0xd20028-0xd20034-bitmap-mode) |
 | cg:bg | `vgs_cls_bg_all` | [Clear](#0xd20038-0xd20048-clear-screen) all BGs |
 | cg:bg | `vgs_cls_bg` | [Clear](#0xd20038-0xd20048-clear-screen) a specific BG |
+| cg:bg+mode7 | `vgs_mode7_enable` | Enable or disable Mode 7 (`bg, ON/OFF`). |
+| cg:bg+mode7 | `vgs_mode7_abcd` | Set the inverse affine matrix (`bg, a, b, c, d`), signed 8.8 coefficients; 256 = 1.0. |
+| cg:bg+mode7 | `vgs_mode7_camera` | Set the transformation center (`bg, cx, cy`), signed integer logical pixels. |
+| cg:bg+mode7 | `vgs_mode7_translate` | Set source translation (`bg, tx, ty`), signed integer pixels. |
+| cg:bg+mode7 | `vgs_mode7_frac` | Set source translation fractions (`bg, x, y`), each 0..255 in 1/256px units. |
+| cg:bg+mode7 | `vgs_mode7_depth` | Set perspective depth (`bg, degrees`), unsigned angle clamped to 0..75. |
+| cg:bg+mode7 | `vgs_mode7_focal` | Set focal length (`bg, pixels`), unsigned logical pixels clamped to 100..4096. |
+| cg:bg+mode7 | `vgs_mode7_backdrop` | Set outside-source color (`bg, color`), RGB888; zero means transparent. |
 | cg:bmp | `vgs_draw_mode` | [BG Mode](#0xd20028-0xd20034-bitmap-mode) Switching: Bitmap or Character Pattern |
 | cg:bmp | `vgs_draw_window` | Set a [window](#0xd2004c-0xd20068-bitmap-graphic-draw) to display only a specific rectangular area in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode). |
 | cg:bmp | `vgs_read_pixel` | Read a [pixel](#0xd2004c-0xd20068-bitmap-graphic-draw) on the BG in [Bitmap Mode](#0xd20028-0xd20034-bitmap-mode)|

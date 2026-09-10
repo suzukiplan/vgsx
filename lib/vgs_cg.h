@@ -335,6 +335,102 @@ void vgs_cls_bg_all(uint32_t value);
 void vgs_cls_bg(uint8_t n, uint32_t value);
 
 /**
+ * @brief Enable or disable Mode 7 for a BG.
+ * @param bg Number of BG (0 to 3)
+ * @param enabled ON or OFF; disabling preserves the transformation parameters.
+ */
+static inline void vgs_mode7_enable(uint8_t bg, BOOL enabled)
+{
+    VGS_VREG_M7_EN[bg & 3] = enabled ? 1 : 0;
+}
+
+/**
+ * @brief Set the inverse affine matrix (destination to source) for a BG.
+ * @param bg Number of BG (0 to 3)
+ * @param a Signed 8.8 coefficient A (256 = 1.0)
+ * @param b Signed 8.8 coefficient B
+ * @param c Signed 8.8 coefficient C
+ * @param d Signed 8.8 coefficient D (256 = 1.0)
+ */
+static inline void vgs_mode7_abcd(uint8_t bg, int16_t a, int16_t b, int16_t c, int16_t d)
+{
+    bg &= 3;
+    VGS_VREG_M7_A[bg] = (uint16_t)a;
+    VGS_VREG_M7_B[bg] = (uint16_t)b;
+    VGS_VREG_M7_C[bg] = (uint16_t)c;
+    VGS_VREG_M7_D[bg] = (uint16_t)d;
+}
+
+/**
+ * @brief Set the Mode 7 transformation center in logical pixels.
+ * @param bg Number of BG (0 to 3)
+ * @param cx Signed integer center X
+ * @param cy Signed integer center Y
+ */
+static inline void vgs_mode7_camera(uint8_t bg, int32_t cx, int32_t cy)
+{
+    bg &= 3;
+    VGS_VREG_M7_CX[bg] = cx;
+    VGS_VREG_M7_CY[bg] = cy;
+}
+
+/**
+ * @brief Set the integer source translation without modifying VRAM.
+ * @param bg Number of BG (0 to 3)
+ * @param tx Signed integer translation X in pixels
+ * @param ty Signed integer translation Y in pixels
+ */
+static inline void vgs_mode7_translate(uint8_t bg, int32_t tx, int32_t ty)
+{
+    bg &= 3;
+    VGS_VREG_M7_TX[bg] = tx;
+    VGS_VREG_M7_TY[bg] = ty;
+}
+
+/**
+ * @brief Set the fractional source translation, added before source rounding.
+ * @param bg Number of BG (0 to 3)
+ * @param x X fraction in units of 1/256 pixel (0 to 255)
+ * @param y Y fraction in units of 1/256 pixel (0 to 255)
+ * @remark For -0.5px use integer translation -1 and fraction 128.
+ */
+static inline void vgs_mode7_frac(uint8_t bg, uint8_t x, uint8_t y)
+{
+    VGS_VREG_M7_FRAC[bg & 3] = (uint32_t)x | ((uint32_t)y << 8);
+}
+
+/**
+ * @brief Set the perspective depth angle; zero disables perspective.
+ * @param bg Number of BG (0 to 3)
+ * @param degrees Integer angle, clamped by the VDP to 0..75 degrees
+ */
+static inline void vgs_mode7_depth(uint8_t bg, uint32_t degrees)
+{
+    VGS_VREG_M7_DEPTH[bg & 3] = degrees;
+}
+
+/**
+ * @brief Set the perspective focal length.
+ * @param bg Number of BG (0 to 3)
+ * @param pixels Logical pixels, clamped by the VDP to 100..4096 (reset: 200)
+ */
+static inline void vgs_mode7_focal(uint8_t bg, uint32_t pixels)
+{
+    VGS_VREG_M7_FOCAL[bg & 3] = pixels;
+}
+
+/**
+ * @brief Set the color outside the transformed source BG rectangle.
+ * @param bg Number of BG (0 to 3)
+ * @param color RGB888 color; zero preserves transparency (upper 8 bits ignored).
+ * @remark Does not fill transparent source pixels or the perspective sky margin.
+ */
+static inline void vgs_mode7_backdrop(uint8_t bg, uint32_t color)
+{
+    VGS_VREG_M7_BACKDROP[bg & 3] = color;
+}
+
+/**
  * @brief BG Mode Switching: Bitmap or Character Pattern
  * @param n Number of BG (0 to 3)
  * @param isBitmap If TRUE is specified, switch to Bitmap Mode; if FALSE is specified, switch to Character Pattern Mode.

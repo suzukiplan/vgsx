@@ -59,3 +59,20 @@ static inline void vgs_draw_lineH(int bg, int x, int y, int width, uint32_t colo
 {
     for (int i = 0; i < width; i++) vgs_draw_pixel(bg, x + i, y, color);
 }
+
+/* The test build extracts the library inline functions without target typedefs. */
+#define VGS_VREG_M7_EN (&test_regs[41])
+#define VGS_VREG_M7_A (&test_regs[45])
+#define VGS_VREG_M7_B (&test_regs[49])
+#define VGS_VREG_M7_C (&test_regs[53])
+#define VGS_VREG_M7_D (&test_regs[57])
+#define VGS_VREG_M7_CX (&test_regs[61])
+#define VGS_VREG_M7_CY (&test_regs[65])
+#define VGS_VREG_M7_TX (&test_regs[69])
+#define VGS_VREG_M7_TY (&test_regs[73])
+#define VGS_VREG_M7_DEPTH (&test_regs[77])
+#define VGS_VREG_M7_FRAC (&test_regs[81])
+#define VGS_VREG_M7_FOCAL (&test_regs[85])
+#define VGS_VREG_M7_BACKDROP (&test_regs[89])
+#define BOOL int
+#include "mode7_api.h"
