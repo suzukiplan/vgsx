@@ -1,0 +1,5 @@
+.DS_Store
+*.chr
+palette.bin
+program.elf
+program.rom
