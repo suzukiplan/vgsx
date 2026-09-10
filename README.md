@@ -565,6 +565,42 @@ _* RAM buffer size = `((size + 1) * 8)²`_
 |0xD20098 |  R38 | TR_ADDR  | [Transfer Character Pattern (address)](#0xd20098-0xd200a0-transfer-character-pattern) |
 |0xD2009C |  R39 | TR_SIZE  | [Transfer Character Pattern (size)](#0xd20098-0xd200a0-transfer-character-pattern) |
 |0xD200A0 |  R40 | TR_TO  | [Transfer Character Pattern (pattern)](#0xd20098-0xd200a0-transfer-character-pattern) |
+|0xD200A4 | R41 | M7_EN0 | [Mode 7 enable of BG0](#0xd200a4-0xd20130-mode-7) |
+|0xD200A8 | R42 | M7_EN1 | [Mode 7 enable of BG1](#0xd200a4-0xd20130-mode-7) |
+|0xD200AC | R43 | M7_EN2 | [Mode 7 enable of BG2](#0xd200a4-0xd20130-mode-7) |
+|0xD200B0 | R44 | M7_EN3 | [Mode 7 enable of BG3](#0xd200a4-0xd20130-mode-7) |
+|0xD200B4 | R45 | M7_A0 | [Mode 7 matrix A of BG0](#0xd200a4-0xd20130-mode-7) |
+|0xD200B8 | R46 | M7_A1 | [Mode 7 matrix A of BG1](#0xd200a4-0xd20130-mode-7) |
+|0xD200BC | R47 | M7_A2 | [Mode 7 matrix A of BG2](#0xd200a4-0xd20130-mode-7) |
+|0xD200C0 | R48 | M7_A3 | [Mode 7 matrix A of BG3](#0xd200a4-0xd20130-mode-7) |
+|0xD200C4 | R49 | M7_B0 | [Mode 7 matrix B of BG0](#0xd200a4-0xd20130-mode-7) |
+|0xD200C8 | R50 | M7_B1 | [Mode 7 matrix B of BG1](#0xd200a4-0xd20130-mode-7) |
+|0xD200CC | R51 | M7_B2 | [Mode 7 matrix B of BG2](#0xd200a4-0xd20130-mode-7) |
+|0xD200D0 | R52 | M7_B3 | [Mode 7 matrix B of BG3](#0xd200a4-0xd20130-mode-7) |
+|0xD200D4 | R53 | M7_C0 | [Mode 7 matrix C of BG0](#0xd200a4-0xd20130-mode-7) |
+|0xD200D8 | R54 | M7_C1 | [Mode 7 matrix C of BG1](#0xd200a4-0xd20130-mode-7) |
+|0xD200DC | R55 | M7_C2 | [Mode 7 matrix C of BG2](#0xd200a4-0xd20130-mode-7) |
+|0xD200E0 | R56 | M7_C3 | [Mode 7 matrix C of BG3](#0xd200a4-0xd20130-mode-7) |
+|0xD200E4 | R57 | M7_D0 | [Mode 7 matrix D of BG0](#0xd200a4-0xd20130-mode-7) |
+|0xD200E8 | R58 | M7_D1 | [Mode 7 matrix D of BG1](#0xd200a4-0xd20130-mode-7) |
+|0xD200EC | R59 | M7_D2 | [Mode 7 matrix D of BG2](#0xd200a4-0xd20130-mode-7) |
+|0xD200F0 | R60 | M7_D3 | [Mode 7 matrix D of BG3](#0xd200a4-0xd20130-mode-7) |
+|0xD200F4 | R61 | M7_CX0 | [Mode 7 center X of BG0](#0xd200a4-0xd20130-mode-7) |
+|0xD200F8 | R62 | M7_CX1 | [Mode 7 center X of BG1](#0xd200a4-0xd20130-mode-7) |
+|0xD200FC | R63 | M7_CX2 | [Mode 7 center X of BG2](#0xd200a4-0xd20130-mode-7) |
+|0xD20100 | R64 | M7_CX3 | [Mode 7 center X of BG3](#0xd200a4-0xd20130-mode-7) |
+|0xD20104 | R65 | M7_CY0 | [Mode 7 center Y of BG0](#0xd200a4-0xd20130-mode-7) |
+|0xD20108 | R66 | M7_CY1 | [Mode 7 center Y of BG1](#0xd200a4-0xd20130-mode-7) |
+|0xD2010C | R67 | M7_CY2 | [Mode 7 center Y of BG2](#0xd200a4-0xd20130-mode-7) |
+|0xD20110 | R68 | M7_CY3 | [Mode 7 center Y of BG3](#0xd200a4-0xd20130-mode-7) |
+|0xD20114 | R69 | M7_TX0 | [Mode 7 translation X of BG0](#0xd200a4-0xd20130-mode-7) |
+|0xD20118 | R70 | M7_TX1 | [Mode 7 translation X of BG1](#0xd200a4-0xd20130-mode-7) |
+|0xD2011C | R71 | M7_TX2 | [Mode 7 translation X of BG2](#0xd200a4-0xd20130-mode-7) |
+|0xD20120 | R72 | M7_TX3 | [Mode 7 translation X of BG3](#0xd200a4-0xd20130-mode-7) |
+|0xD20124 | R73 | M7_TY0 | [Mode 7 translation Y of BG0](#0xd200a4-0xd20130-mode-7) |
+|0xD20128 | R74 | M7_TY1 | [Mode 7 translation Y of BG1](#0xd200a4-0xd20130-mode-7) |
+|0xD2012C | R75 | M7_TY2 | [Mode 7 translation Y of BG2](#0xd200a4-0xd20130-mode-7) |
+|0xD20130 | R76 | M7_TY3 | [Mode 7 translation Y of BG3](#0xd200a4-0xd20130-mode-7) |
 
 Please note that access to the VDP register must always be 4-byte aligned.
 
@@ -691,6 +727,93 @@ Remarks:
 - The memory address specified in `TR_ADDR` must contain raw character pattern data in the [Character Pattern Table](#character-pattern) format.
 - `TR_SIZE` must be a multiple of 32.
 - The transfer completes immediately when `TR_TO` is written.
+
+### 0xD200A4-0xD20130: Mode 7
+
+R0-R40 retain their existing addresses and behavior. R41-R76 configure Mode 7; R77-R255 remain reserved.
+
+Mode 7 applies an affine transformation (rotation, scaling, skew, reflection, and translation) independently to each of BG0 through BG3. All four BGs can use different transformations in the same frame. It is an additional rendering option for both Character Pattern Mode and Bitmap Mode, selected by the existing `BMPn` register.
+
+The matrix-based scaling approach is inspired by [SNES Mode 7](https://wiki.superfamicom.org/mode-7-scaling). VGS-X Mode 7 uses the existing VRAM formats and layer composition. Any sample outside the source BG is transparent; there is no wrapping, repeated tile, or selectable outside color.
+
+#### Register layout and values
+
+For BG index `n` (0-3), each address below is the BG0 address plus `4 * n`. All accesses are aligned 32-bit reads/writes. These are persistent settings, not drawing commands; reads return the stored value as described below.
+
+| BG0 address | Registers | Format / meaning | Reset value |
+|:-----------:|:----------|:-----------------|:-----------:|
+| 0xD200A4 | M7_EN0-M7_EN3 | Bit 0: 0 = disabled, 1 = enabled; bits 31-1 ignored on write and read as zero | 0 |
+| 0xD200B4 | M7_A0-M7_A3 | Signed 8.8 matrix coefficient A in bits 15-0 | 0x00000100 (+1.0) |
+| 0xD200C4 | M7_B0-M7_B3 | Signed 8.8 matrix coefficient B in bits 15-0 | 0 |
+| 0xD200D4 | M7_C0-M7_C3 | Signed 8.8 matrix coefficient C in bits 15-0 | 0 |
+| 0xD200E4 | M7_D0-M7_D3 | Signed 8.8 matrix coefficient D in bits 15-0 | 0x00000100 (+1.0) |
+| 0xD200F4 | M7_CX0-M7_CX3 | Signed 32-bit integer center X, in pixels | 0 |
+| 0xD20104 | M7_CY0-M7_CY3 | Signed 32-bit integer center Y, in pixels | 0 |
+| 0xD20114 | M7_TX0-M7_TX3 | Signed 32-bit integer source translation X, in pixels | 0 |
+| 0xD20124 | M7_TY0-M7_TY3 | Signed 32-bit integer source translation Y, in pixels | 0 |
+
+For matrix registers, bits 31-16 are ignored on write and read as zero. Interpret bits 15-0 as a two's-complement signed 16-bit integer and divide by 256: the range is -128 to 127.99609375, with a step of 1/256. For example, +0.5 is `0x00000080`, +1.0 is `0x00000100`, and -1.0 is `0x0000FF00`. This retains SNES-style coefficient precision while fitting the VGS-X 32-bit register interface. Center and translation registers use all 32 bits in two's-complement representation, without masking or clamping.
+
+Disabling Mode 7 preserves its parameters. Reset disables it on all four BGs and restores the identity matrix and zero centers/translations. Write parameters before enabling the BG, and finish updates before the next [V-SYNC](#0xe00000in---v-sync). Rendering uses one snapshot of the settings for the whole frame at V-SYNC; Mode 7 does not include per-scanline registers, HDMA, or perspective projection.
+
+#### Coordinate transformation
+
+Coordinates use the logical 320x200 screen, with (0, 0) at the top left, X increasing rightward and Y increasing downward. Mode 7 is evaluated before the existing 2x display enlargement. Each integer destination coordinate `(x, y)` is mapped back to a source BG pixel; no half-pixel offset is added.
+
+Let `a`, `b`, `c`, and `d` be the signed integer values in the low 16 bits of `M7_A` through `M7_D` (before division by 256). Let `cx`, `cy`, `tx`, and `ty` be the corresponding center and translation values for this BG.
+
+```text
+Character Pattern Mode: scroll_x = SXn & 2047, scroll_y = SYn & 2047
+Bitmap Mode:            scroll_x = 0,          scroll_y = 0
+
+u = x - cx
+v = y - cy
+source_x = floor((a * u + b * v) / 256) + cx + tx + scroll_x
+source_y = floor((c * u + d * v) / 256) + cy + ty + scroll_y
+```
+
+Use signed 64-bit intermediate arithmetic, including coordinate subtraction and final additions; do not allow 32-bit overflow. Sum both products before rounding. `floor` rounds toward negative infinity (for example, -1/256 becomes -1), not toward zero. Sample only the resulting integer pixel, with no interpolation or antialiasing.
+
+The matrix maps destination coordinates to source coordinates, so a coefficient of 0.5 produces a displayed enlargement of 2x. The center specifies the common pivot in screen and source coordinates before source translation and scroll are added. Positive `tx`/`ty` move the sampled region toward larger source coordinates; with the identity matrix, the image moves left/up. To position source point `(px, py)` at screen center `(cx, cy)`, set `tx = px - cx - scroll_x` and `ty = py - cy - scroll_y`.
+
+The formula is defined even for a singular matrix: all-zero coefficients sample the single point `(cx + tx + scroll_x, cy + ty + scroll_y)` for every destination pixel. Zero coefficients do not implicitly disable or hide the BG.
+
+#### Source bounds and composition
+
+| Source mode | Valid source coordinates | Sampling and transparency |
+|:------------|:-------------------------|:--------------------------|
+| Character Pattern | `0 <= source_x < 2048`, `0 <= source_y < 2048` | Select the existing 8x8 tile and pixel from the 256x256 name table; apply that tile's H/V flip and palette attributes. Color index 0 remains transparent. |
+| Bitmap | `0 <= source_x < 320`, `0 <= source_y < 200` | Read the existing RGB888 pixel from the name table. Pixel value `0x00000000` remains transparent. |
+
+Here, “outside” means outside the full source BG bounds, not outside the visible 320x200 viewport. Check the calculated coordinates against these bounds before accessing VRAM; never mask or wrap the calculated source coordinates. An out-of-bounds sample leaves the already composed pixel unchanged, exposing lower BGs or sprites (or the normal frame background if no layer has drawn there).
+
+Mode 7 changes only how a BG is sampled for display. BG ordering, `SPOS`, `SKIP`, and `SKIP0`-`SKIP3` retain their behavior. Bitmap drawing, clearing, transfers, and pixel reads continue to operate on untransformed VRAM. The Bitmap Mode Window remains a destination-screen clipping rectangle and is not transformed.
+
+In Character Pattern Mode, the existing scroll origin is added after the matrix transformation, as shown above. With the identity matrix and zero translation, the result matches ordinary scrolling wherever the source coordinate is in bounds; crossing an edge becomes transparent instead of wrapping. In Bitmap Mode, writing `SXn`/`SYn` retains its existing immediate VRAM scroll-and-clear behavior, so the stored values are not added again during Mode 7 rendering. Use `M7_TXn`/`M7_TYn` for translation without modifying bitmap data.
+
+When `M7_ENn` is zero, all Mode 7 parameters are ignored and the existing rendering path, including Character Pattern Mode wrapping, is used.
+
+#### Example settings
+
+The following values apply to one BG. Set `M7_ENn = 1`, `M7_CXn = 160`, `M7_CYn = 100`, and `M7_TXn = M7_TYn = 0`. For Character Pattern Mode, also set `SXn = SYn = 0`. Coefficients below are 32-bit register values.
+
+| Displayed effect around (160, 100) | M7_An | M7_Bn | M7_Cn | M7_Dn |
+|:----------------------------------|:-----:|:-----:|:-----:|:-----:|
+| Identity | 0x00000100 | 0 | 0 | 0x00000100 |
+| 2x enlargement | 0x00000080 | 0 | 0 | 0x00000080 |
+| Half-size | 0x00000200 | 0 | 0 | 0x00000200 |
+| 90 degrees clockwise | 0 | 0x00000100 | 0x0000FF00 | 0 |
+| Horizontal skew: displayed X offset = 0.5 * (Y - 100) | 0x00000100 | 0x0000FF80 | 0 | 0x00000100 |
+
+For an arbitrary clockwise displayed rotation `theta` and positive uniform display scale `s`, set `A = cos(theta)/s`, `B = sin(theta)/s`, `C = -sin(theta)/s`, and `D = cos(theta)/s`, quantized to signed 8.8. Values must fit the coefficient range. A single affine matrix provides a constant skew across the BG; a perspective floor with scale varying by scanline would require a separate future extension.
+
+#### Validation criteria
+
+- Enable different transforms on all four BGs simultaneously, including a mixture of Character Pattern and Bitmap sources; verify layer order and sprite insertion.
+- Verify identity, enlargement, reduction, rotation, skew, negative coefficients, and a singular matrix against the coordinate formula.
+- Verify source coordinates -1, 0, width/height - 1, and width/height, including fractional negative results; outside samples must expose lower layers without wrapping.
+- Verify tile flips, palettes, transparent pixels, bitmap destination clipping, and both modes' scroll behavior.
+- Verify register readback, ignored bits, reset defaults, disable/re-enable, frame snapshot timing, and extreme signed center/translation values without arithmetic overflow or out-of-bounds reads.
 
 ## I/O Map
 
