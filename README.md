@@ -613,6 +613,10 @@ _* RAM buffer size = `((size + 1) * 8)²`_
 |0xD20158 | R86 | M7_FOCAL1 | [Mode 7 focal length of BG1](#0xd20154-0xd20160-mode-7-focal-length) |
 |0xD2015C | R87 | M7_FOCAL2 | [Mode 7 focal length of BG2](#0xd20154-0xd20160-mode-7-focal-length) |
 |0xD20160 | R88 | M7_FOCAL3 | [Mode 7 focal length of BG3](#0xd20154-0xd20160-mode-7-focal-length) |
+|0xD20164 | R89 | M7_BACKDROP0 | [Mode 7 outside-source color of BG0](#0xd20164-0xd20170-mode-7-backdrop) |
+|0xD20168 | R90 | M7_BACKDROP1 | [Mode 7 outside-source color of BG1](#0xd20164-0xd20170-mode-7-backdrop) |
+|0xD2016C | R91 | M7_BACKDROP2 | [Mode 7 outside-source color of BG2](#0xd20164-0xd20170-mode-7-backdrop) |
+|0xD20170 | R92 | M7_BACKDROP3 | [Mode 7 outside-source color of BG3](#0xd20164-0xd20170-mode-7-backdrop) |
 
 Please note that access to the VDP register must always be 4-byte aligned.
 
@@ -746,7 +750,7 @@ R0-R40 retain their existing addresses and behavior. R41-R76 configure the affin
 
 Mode 7 applies an affine transformation (rotation, scaling, skew, reflection, and translation) independently to each of BG0 through BG3. All four BGs can use different transformations in the same frame. It is an additional rendering option for both Character Pattern Mode and Bitmap Mode, selected by the existing `BMPn` register.
 
-The matrix-based scaling approach is inspired by [SNES Mode 7](https://wiki.superfamicom.org/mode-7-scaling). VGS-X Mode 7 uses the existing VRAM formats and layer composition. Any sample outside the source BG is transparent; there is no wrapping, repeated tile, or selectable outside color.
+The matrix-based scaling approach is inspired by [SNES Mode 7](https://wiki.superfamicom.org/mode-7-scaling). VGS-X Mode 7 uses the existing VRAM formats and layer composition. Samples outside the source BG are transparent by default; `M7_BACKDROPn` can fill them with a specified color. There is no wrapping or repeated tile.
 
 #### Register layout and values
 
@@ -797,11 +801,11 @@ The formula is defined even for a singular matrix: all-zero coefficients sample 
 | Character Pattern | `0 <= source_x < 2048`, `0 <= source_y < 2048` | Select the existing 8x8 tile and pixel from the 256x256 name table; apply that tile's H/V flip and palette attributes. Color index 0 remains transparent. |
 | Bitmap | `0 <= source_x < 320`, `0 <= source_y < 200` | Read the existing RGB888 pixel from the name table. Pixel value `0x00000000` remains transparent. |
 
-Here, “outside” means outside the full source BG bounds, not outside the visible 320x200 viewport. Check the calculated coordinates against these bounds before accessing VRAM; never mask or wrap the calculated source coordinates. An out-of-bounds sample leaves the already composed pixel unchanged, exposing lower BGs or sprites (or the normal frame background if no layer has drawn there).
+Here, “outside” means outside the full source BG bounds, not outside the visible 320x200 viewport. Check the calculated coordinates against these bounds before accessing VRAM; never mask or wrap the calculated source coordinates. With `M7_BACKDROPn = 0`, an out-of-bounds sample leaves the already composed pixel unchanged, exposing lower BGs or sprites (or the normal frame background if no layer has drawn there).
 
 Mode 7 changes only how a BG is sampled for display. BG ordering, `SPOS`, `SKIP`, and `SKIP0`-`SKIP3` retain their behavior. Bitmap drawing, clearing, transfers, and pixel reads continue to operate on untransformed VRAM. The Bitmap Mode Window remains a destination-screen clipping rectangle and is not transformed.
 
-In Character Pattern Mode, the existing scroll origin is added after the matrix transformation, as shown above. With the identity matrix and zero translation, the result matches ordinary scrolling wherever the source coordinate is in bounds; crossing an edge becomes transparent instead of wrapping. In Bitmap Mode, writing `SXn`/`SYn` retains its existing immediate VRAM scroll-and-clear behavior, so the stored values are not added again during Mode 7 rendering. Use `M7_TXn`/`M7_TYn` for translation without modifying bitmap data.
+In Character Pattern Mode, the existing scroll origin is added after the matrix transformation, as shown above. With the identity matrix and zero translation, the result matches ordinary scrolling wherever the source coordinate is in bounds; crossing an edge uses `M7_BACKDROPn` (transparent by default) instead of wrapping. In Bitmap Mode, writing `SXn`/`SYn` retains its existing immediate VRAM scroll-and-clear behavior, so the stored values are not added again during Mode 7 rendering. Use `M7_TXn`/`M7_TYn` for translation without modifying bitmap data.
 
 When `M7_ENn` is zero, all Mode 7 parameters are ignored and the existing rendering path, including Character Pattern Mode wrapping, is used.
 
@@ -870,6 +874,12 @@ For a positive Q8.8 tracked coordinate, write its integer part minus the camera 
 `M7_FOCALn` controls the focal length of BG `n` in logical pixels. It is an aligned 32-bit unsigned register, clamped to 100..4096 on write; reads return the clamped value. Reset sets each register to 200, preserving the original perspective behavior. It is ignored when `M7_DEPTHn` is zero or Mode 7 is disabled.
 
 A shorter focal length increases the difference in scale between nearby and distant ground. The near edge stays fixed at row 199 and fits the screen width. A longer focal length approaches orthographic projection. Use the same `F` when computing the projected camera anchor. The lower limit keeps the projection denominator positive throughout the reference plane for every supported depth angle.
+
+### 0xD20164-0xD20170: Mode 7 Backdrop
+
+`M7_BACKDROP0` through `M7_BACKDROP3` specify the RGB888 color used when a transformed sample falls outside that BG's original source rectangle (2048x2048 for character mode, 320x200 for bitmap mode). These aligned 32-bit registers use bits 23-0; upper bits are ignored on write and read as zero. Reset sets all four to zero, preserving transparency. A nonzero value fills these pixels at the BG's normal layer position, including margins produced by rotation, scaling, translation, or perspective sampling.
+
+Transparent pixels inside the source remain transparent. Perspective's upper margin outside the projected ground stays transparent, so a separate sky can occupy it. Bitmap destination windows and BG skipping still apply. The setting is ignored when Mode 7 is disabled.
 
 ## I/O Map
 

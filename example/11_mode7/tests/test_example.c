@@ -134,6 +134,7 @@ int main(void)
         assert(((int32_t)VGS_VREG_M7_TX0 + CAMERA_X) * 256 + (int)(VGS_VREG_M7_FRAC0 & 255) == player.x);
         assert(((int32_t)VGS_VREG_M7_TY0 + (int32_t)VGS_VREG_M7_CY0) * 256 + (int)((VGS_VREG_M7_FRAC0 >> 8) & 255) == player.y);
         assert(VGS_VREG_M7_EN0 == 1);
+        assert(VGS_VREG_M7_BACKDROP0 == 0x00A700);
         assert(VGS_VREG_M7_DEPTH0 == MAP_ANGLE_DEPTH);
         assert(VGS_VREG_M7_FOCAL0 == MAP_FOCAL_LENGTH);
         {

@@ -217,47 +217,48 @@ class VDP
     }
 
     typedef struct {
-        uint32_t skip;                // R0: Skip Render
-        uint32_t spos;                // R1: Sprite Position (0: Between BG0 and BG1 ~ 3)
-        uint32_t scrollX[VDP_BG_NUM]; // R2-5: Scroll BGs X
-        uint32_t scrollY[VDP_BG_NUM]; // R6-9: Scroll BGs Y
-        uint32_t bmp[VDP_BG_NUM];     // R10-13: BGs Bitmap Mode
-        uint32_t cls[VDP_BG_NUM + 1]; // R14-18: Clear Screen
-        uint32_t g_bg;                // R19: Graphic Draw - BG number
-        uint32_t g_x1;                // R20: Graphic Draw - X1
-        uint32_t g_y1;                // R21: Graphic Draw - Y1
-        uint32_t g_x2;                // R22: Graphic Draw - X2
-        uint32_t g_y2;                // R23: Graphic Draw - Y2
-        uint32_t g_col;               // R24: Graphic Draw - Color (RGB888)
-        uint32_t g_opt;               // R25: Graphic Draw - Option
-        uint32_t g_exe;               // R26: Graphic Draw - Execute
-        uint32_t skip0;               // R27: Skip Rendering BG0
-        uint32_t skip1;               // R28: Skip Rendering BG1
-        uint32_t skip2;               // R29: Skip Rendering BG2
-        uint32_t skip3;               // R30: Skip Rendering BG3
-        uint32_t pf_init;             // R31: Profotinaol Font - Initialize
-        uint32_t pf_ptn;              // R32: Profotinaol Font - Pattern
-        uint32_t pf_dx;               // R33: Profotinaol Font - diff X
-        uint32_t pf_dy;               // R34: Profotinaol Font - diff Y
-        uint32_t pf_width;            // R35: Profotinaol Font - width
-        uint32_t cp_fr;               // R36: Copy Character Pattern (From)
-        uint32_t cp_to;               // R37: Copy Character Pattern (To)
-        uint32_t tr_addr;             // R38: Transfer Character Pattern (address)
-        uint32_t tr_size;             // R39: Transfer Character Pattern (size)
-        uint32_t tr_to;               // R40: Transfer Character Pattern (to)
-        uint32_t m7_en[VDP_BG_NUM]; // R41-44: Mode 7 EN
-        uint32_t m7_a[VDP_BG_NUM]; // R45-48: Mode 7 A
-        uint32_t m7_b[VDP_BG_NUM]; // R49-52: Mode 7 B
-        uint32_t m7_c[VDP_BG_NUM]; // R53-56: Mode 7 C
-        uint32_t m7_d[VDP_BG_NUM]; // R57-60: Mode 7 D
-        uint32_t m7_cx[VDP_BG_NUM]; // R61-64: Mode 7 CX
-        uint32_t m7_cy[VDP_BG_NUM]; // R65-68: Mode 7 CY
-        uint32_t m7_tx[VDP_BG_NUM]; // R69-72: Mode 7 TX
-        uint32_t m7_ty[VDP_BG_NUM]; // R73-76: Mode 7 TY
-        uint32_t m7_depth[VDP_BG_NUM]; // R77-80: Perspective angle (0..75 degrees)
-        uint32_t m7_frac[VDP_BG_NUM]; // R81-84: Source translation fractions (X: bits 7-0, Y: bits 15-8)
-        uint32_t m7_focal[VDP_BG_NUM]; // R85-88: Perspective focal length (100..4096 pixels)
-        uint32_t reserved[167];       // Reserved (Specify 0 to maintain future compatibility.)
+        uint32_t skip;                    // R0: Skip Render
+        uint32_t spos;                    // R1: Sprite Position (0: Between BG0 and BG1 ~ 3)
+        uint32_t scrollX[VDP_BG_NUM];     // R2-5: Scroll BGs X
+        uint32_t scrollY[VDP_BG_NUM];     // R6-9: Scroll BGs Y
+        uint32_t bmp[VDP_BG_NUM];         // R10-13: BGs Bitmap Mode
+        uint32_t cls[VDP_BG_NUM + 1];     // R14-18: Clear Screen
+        uint32_t g_bg;                    // R19: Graphic Draw - BG number
+        uint32_t g_x1;                    // R20: Graphic Draw - X1
+        uint32_t g_y1;                    // R21: Graphic Draw - Y1
+        uint32_t g_x2;                    // R22: Graphic Draw - X2
+        uint32_t g_y2;                    // R23: Graphic Draw - Y2
+        uint32_t g_col;                   // R24: Graphic Draw - Color (RGB888)
+        uint32_t g_opt;                   // R25: Graphic Draw - Option
+        uint32_t g_exe;                   // R26: Graphic Draw - Execute
+        uint32_t skip0;                   // R27: Skip Rendering BG0
+        uint32_t skip1;                   // R28: Skip Rendering BG1
+        uint32_t skip2;                   // R29: Skip Rendering BG2
+        uint32_t skip3;                   // R30: Skip Rendering BG3
+        uint32_t pf_init;                 // R31: Profotinaol Font - Initialize
+        uint32_t pf_ptn;                  // R32: Profotinaol Font - Pattern
+        uint32_t pf_dx;                   // R33: Profotinaol Font - diff X
+        uint32_t pf_dy;                   // R34: Profotinaol Font - diff Y
+        uint32_t pf_width;                // R35: Profotinaol Font - width
+        uint32_t cp_fr;                   // R36: Copy Character Pattern (From)
+        uint32_t cp_to;                   // R37: Copy Character Pattern (To)
+        uint32_t tr_addr;                 // R38: Transfer Character Pattern (address)
+        uint32_t tr_size;                 // R39: Transfer Character Pattern (size)
+        uint32_t tr_to;                   // R40: Transfer Character Pattern (to)
+        uint32_t m7_en[VDP_BG_NUM];       // R41-44: Mode 7 EN
+        uint32_t m7_a[VDP_BG_NUM];        // R45-48: Mode 7 A
+        uint32_t m7_b[VDP_BG_NUM];        // R49-52: Mode 7 B
+        uint32_t m7_c[VDP_BG_NUM];        // R53-56: Mode 7 C
+        uint32_t m7_d[VDP_BG_NUM];        // R57-60: Mode 7 D
+        uint32_t m7_cx[VDP_BG_NUM];       // R61-64: Mode 7 CX
+        uint32_t m7_cy[VDP_BG_NUM];       // R65-68: Mode 7 CY
+        uint32_t m7_tx[VDP_BG_NUM];       // R69-72: Mode 7 TX
+        uint32_t m7_ty[VDP_BG_NUM];       // R73-76: Mode 7 TY
+        uint32_t m7_depth[VDP_BG_NUM];    // R77-80: Perspective angle (0..75 degrees)
+        uint32_t m7_frac[VDP_BG_NUM];     // R81-84: Source translation fractions (X: bits 7-0, Y: bits 15-8)
+        uint32_t m7_focal[VDP_BG_NUM];    // R85-88: Perspective focal length (100..4096 pixels)
+        uint32_t m7_backdrop[VDP_BG_NUM]; // R89-92: Outside-source color (RGB888, 0: transparent)
+        uint32_t reserved[163];           // Reserved (Specify 0 to maintain future compatibility.)
     } Register;
 
     static constexpr uint32_t kVdpRegisterFirstReservedIndex =
@@ -300,17 +301,17 @@ class VDP
     } PropotionalInfo;
 
     struct Context {
-        uint32_t display[VDP_DISPLAY_PIXELS]; // Virtual Display (scaled 2x in both axes)
-        uint8_t ptn[65536][32];               // Character Pattern (ROM)
-        uint32_t nametbl[VDP_BG_NUM][65536];  // Name Table
-        OAM oam[1024];                        // OAM
+        uint32_t display[VDP_DISPLAY_PIXELS];                     // Virtual Display (scaled 2x in both axes)
+        uint8_t ptn[65536][32];                                   // Character Pattern (ROM)
+        uint32_t nametbl[VDP_BG_NUM][65536];                      // Name Table
+        OAM oam[1024];                                            // OAM
         uint32_t palette[VDP_PALETTE_NUM][VDP_PALETTE_COLOR_NUM]; // Palette
-        PropotionalInfo pinfo[0x80];          // Propotional Info
-        Register reg;                         // Register
-        int wx1[VDP_BG_NUM];                  // BG Window X1
-        int wy1[VDP_BG_NUM];                  // BG Window Y1
-        int wx2[VDP_BG_NUM];                  // BG Window X2
-        int wy2[VDP_BG_NUM];                  // BG Window Y2
+        PropotionalInfo pinfo[0x80];                              // Propotional Info
+        Register reg;                                             // Register
+        int wx1[VDP_BG_NUM];                                      // BG Window X1
+        int wy1[VDP_BG_NUM];                                      // BG Window Y1
+        int wx2[VDP_BG_NUM];                                      // BG Window X2
+        int wy2[VDP_BG_NUM];                                      // BG Window Y2
     } ctx;
 
     VDP()
@@ -435,6 +436,7 @@ class VDP
                     } else if (45 <= index && index <= 60) {
                         value &= 0xFFFF;
                     }
+                    if (89 <= index && index <= 92) value &= 0xFFFFFF;
                     if (85 <= index && index <= 88) {
                         value = value < 100 ? 100 : (value > 4096 ? 4096 : value);
                     }
@@ -799,11 +801,11 @@ class VDP
                     sx = floor256(sampleX + fractionX) + originX;
                     sy = floor256(sampleY + fractionY) + originY;
                 }
-                if (sx < 0 || width <= sx || sy < 0 || height <= sy) {
-                    continue;
-                }
                 uint32_t color;
-                if (bitmap) {
+                if (sx < 0 || width <= sx || sy < 0 || height <= sy) {
+                    color = reg.m7_backdrop[n] & 0xFFFFFF;
+                    if (!color) continue;
+                } else if (bitmap) {
                     color = this->ctx.nametbl[n][sy * VDP_WIDTH + sx];
                     if (!color) continue;
                 } else {

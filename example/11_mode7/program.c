@@ -322,6 +322,7 @@ static void update_camera(void)
     VGS_VREG_M7_FRAC0 = (player.x & 255) | ((player.y & 255) << 8);
     VGS_VREG_M7_DEPTH0 = MAP_ANGLE_DEPTH;
     VGS_VREG_M7_FOCAL0 = MAP_FOCAL_LENGTH;
+    VGS_VREG_M7_BACKDROP0 = 0x00A700;
     VGS_VREG_M7_EN0 = 1;
 }
 

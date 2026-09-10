@@ -182,6 +182,12 @@ typedef struct {
 #define VGS_VREG_M7_FOCAL1 *((volatile uint32_t*)0xD20158)
 #define VGS_VREG_M7_FOCAL2 *((volatile uint32_t*)0xD2015C)
 #define VGS_VREG_M7_FOCAL3 *((volatile uint32_t*)0xD20160)
+// Outside-source RGB888 color; zero preserves transparency.
+#define VGS_VREG_M7_BACKDROP ((volatile uint32_t*)0xD20164)
+#define VGS_VREG_M7_BACKDROP0 *((volatile uint32_t*)0xD20164)
+#define VGS_VREG_M7_BACKDROP1 *((volatile uint32_t*)0xD20168)
+#define VGS_VREG_M7_BACKDROP2 *((volatile uint32_t*)0xD2016C)
+#define VGS_VREG_M7_BACKDROP3 *((volatile uint32_t*)0xD20170)
 
 // Graphic Draw Function Identifer
 #define VGS_DRAW_PIXEL 0

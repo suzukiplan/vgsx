@@ -26,7 +26,7 @@ Very large vertical spans combined with small scales or steep uniform tilt can e
 
 Set both angles to zero to disable tilt and perspective. The vertical chip count still adjusts the vertical field of view. Scrolling and rotation keep the future player at the configured point in the visible plane. The limits avoid overflowing affine coefficients or approaching the perspective singularity.
 
-The defaults approximate `kart.png`: a sky band of about 20% at the top, ground filling the rest of the screen, large nearby features and a compressed distant course. The original map artwork and starting position remain in use. Pixels beyond the full source map remain transparent.
+The defaults approximate `kart.png`: a sky band of about 20% at the top, ground filling the rest of the screen, large nearby features and a compressed distant course. The original map artwork and starting position remain in use. BG0 sets `M7_BACKDROP0` to `0x00A700`, filling samples beyond the full source map with green while preserving the upper sky margin.
 
 ## Sky and stars
 

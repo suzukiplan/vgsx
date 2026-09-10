@@ -772,6 +772,64 @@ static int test_mode7_fractional_translation()
     return 0;
 }
 
+static int test_mode7_backdrop()
+{
+    auto vdp = std::make_unique<VDP>();
+    for (int bg = 0; bg < 4; bg++) {
+        for (bool bitmap : {false, true}) {
+            vdp->reset();
+            const uint32_t address = 0xD20164 + bg * 4;
+            if (vdp->read(address)) return fail("Backdrop reset");
+            vdp->write(address, 0xFF00A700);
+            if (vdp->read(address) != 0x00A700) return fail("Backdrop RGB mask/readback");
+            for (int n = 0; n < 4; n++) vdp->write(0xD2006C + n * 4, n != bg);
+            vdp->ctx.palette[0][0] = 0x112233;
+            vdp->write(0xD20028 + bg * 4, bitmap);
+            vdp->write(0xD200A4 + bg * 4, 1);
+            // A quarter turn maps (x,y) to (-y,x): only row zero is in bounds.
+            vdp->write(0xD200B4 + bg * 4, 0);
+            vdp->write(0xD200C4 + bg * 4, 0xFF00);
+            vdp->write(0xD200D4 + bg * 4, 256);
+            vdp->write(0xD200E4 + bg * 4, 0);
+            vdp->render();
+            if (vdp->ctx.display[0] != 0x112233)
+                return fail("Backdrop must not fill transparent source pixels");
+            for (int y = 2; y < 400; y++) {
+                for (int x = 0; x < 640; x++) {
+                    if (vdp->ctx.display[y * 640 + x] != 0x00A700)
+                        return fail("Rotated source margin backdrop and display scaling");
+                }
+            }
+            vdp->write(address, 0);
+            vdp->render();
+            if (vdp->ctx.display[1280] != 0x112233) return fail("Zero backdrop preserves transparency");
+            vdp->write(address, 0x00A700);
+            vdp->write(0xD20134 + bg * 4, 30);
+            vdp->render();
+            if (vdp->ctx.display[0] != 0x112233 || vdp->ctx.display[199 * 1280] != 0x00A700)
+                return fail("Perspective backdrop must preserve sky margin");
+            if (bitmap) {
+                vdp->ctx.wx1[bg] = 1;
+                vdp->render();
+                if (vdp->ctx.display[199 * 1280] != 0x112233 || vdp->ctx.display[199 * 1280 + 2] != 0x00A700)
+                    return fail("Backdrop must respect bitmap window");
+            }
+            vdp->write(0xD200A4 + bg * 4, 0);
+            vdp->render();
+            if (vdp->ctx.display[199 * 1280 + 2] != 0x112233)
+                return fail("Backdrop must be ignored without Mode 7");
+            vdp->write(0xD200A4 + bg * 4, 1);
+            vdp->write(0xD2006C + bg * 4, 1);
+            vdp->render();
+            if (vdp->ctx.display[199 * 1280 + 2] != 0x112233)
+                return fail("Backdrop must respect BG skipping");
+            vdp->reset();
+            if (vdp->read(address)) return fail("Backdrop reset after use");
+        }
+    }
+    return 0;
+}
+
 static int test_mode7_focal_length()
 {
     auto vdp = std::make_unique<VDP>();
@@ -819,6 +877,7 @@ int main()
     if (int rc = test_readme_vdp_register_doc(); rc) return rc;
     if (int rc = test_mode7(); rc) return rc;
     if (int rc = test_mode7_depth(); rc) return rc;
+    if (int rc = test_mode7_backdrop(); rc) return rc;
     if (int rc = test_mode7_focal_length(); rc) return rc;
     if (int rc = test_mode7_perspective_horizontal_coverage(); rc) return rc;
     if (int rc = test_mode7_fractional_translation(); rc) return rc;

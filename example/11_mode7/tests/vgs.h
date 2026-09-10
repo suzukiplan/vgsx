@@ -8,7 +8,7 @@
 #define FALSE 0
 #define ON 1
 static uint32_t test_bg[4][65536];
-static uint32_t test_regs[89];
+static uint32_t test_regs[93];
 static uint32_t test_console;
 #define VGS_OUT_CONSOLE test_console
 #define VGS_VREG_SX0 test_regs[2]
@@ -16,6 +16,7 @@ static uint32_t test_console;
 #define VGS_VREG_M7_FOCAL0 test_regs[85]
 #define VGS_VREG_M7_FRAC0 test_regs[81]
 #define VGS_VREG_M7_DEPTH0 test_regs[77]
+#define VGS_VREG_M7_BACKDROP0 test_regs[89]
 #define VGS_VREG_M7_EN0 test_regs[41]
 #define VGS_VREG_M7_A0 test_regs[45]
 #define VGS_VREG_M7_B0 test_regs[49]
