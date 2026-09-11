@@ -746,7 +746,7 @@ Remarks:
 
 ### 0xD200A4-0xD20130: Mode 7
 
-R0-R40 retain their existing addresses and behavior. R41-R76 configure the affine transform; R77-R80 add optional perspective depth. R81-R84 retain fractional source translations. R85-R88 control perspective focal length. R89-R255 remain reserved.
+R0-R40 retain their existing addresses and behavior. R41-R76 configure the affine transform; R77-R80 add optional perspective depth. R81-R84 retain fractional source translations. R85-R88 control perspective focal length. R89-R92 select the outside-source color. R93-R255 remain reserved.
 
 Mode 7 applies an affine transformation (rotation, scaling, skew, reflection, and translation) independently to each of BG0 through BG3. All four BGs can use different transformations in the same frame. It is an additional rendering option for both Character Pattern Mode and Bitmap Mode, selected by the existing `BMPn` register.
 
@@ -827,7 +827,7 @@ For an arbitrary clockwise displayed rotation `theta` and positive uniform displ
 
 - Enable different transforms on all four BGs simultaneously, including a mixture of Character Pattern and Bitmap sources; verify layer order and sprite insertion.
 - Verify identity, enlargement, reduction, rotation, skew, negative coefficients, and a singular matrix against the coordinate formula.
-- Verify source coordinates -1, 0, width/height - 1, and width/height, including fractional negative results; outside samples must expose lower layers without wrapping.
+- Verify source coordinates -1, 0, width/height - 1, and width/height, including fractional negative results; outside samples must expose lower layers without wrapping when the backdrop is zero.
 - Verify tile flips, palettes, transparent pixels, bitmap destination clipping, and both modes' scroll behavior.
 - Verify register readback, ignored bits, reset defaults, disable/re-enable, frame snapshot timing, and extreme signed center/translation values without arithmetic overflow or out-of-bounds reads.
 
