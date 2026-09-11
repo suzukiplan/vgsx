@@ -36,7 +36,7 @@ Mode 7 settings are applied through the VGS Standard Library `vgs_mode7_*` APIs.
 
 BG1 uses bitmap mode for a vertical sky gradient, blue (`0x0000FF`) at the top and black (`0x000000`) at the bottom. Its height follows the projected course top edge, so it fills only the upper margin. BG2 uses bitmap mode and `vgs_draw_pixel` for stars. Both layers stay transparent over the ground; without an upper margin they are hidden.
 
-`STAR_COUNT` defaults to 1024 and accepts 0..1024. Stars start at random integer X coordinates in -320..639 and random Y coordinates within the sky. Their yellow brightness also determines their horizontal speed: brighter, nearer stars move faster (approximately 0.25..2 pixels per degree). Camera rotation moves them in the opposite direction, with fractional positions and wrapping over the 960px range. Only about one third of the stars are visible at once. Forward travel without rotation leaves the stars stationary.
+`STAR_COUNT` defaults to 200 and accepts 0..1024. Stars start at random integer X coordinates in -320..639 and random Y coordinates within the sky. Their yellow brightness also determines their horizontal speed: brighter, nearer stars move faster (approximately 0.25..2 pixels per degree). Camera rotation moves them in the opposite direction, with fractional positions and wrapping over the 960px range. Only about one third of the stars are visible at once. Forward travel without rotation leaves the stars stationary.
 
 ## Build and run
 
