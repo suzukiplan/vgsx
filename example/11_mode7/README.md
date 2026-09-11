@@ -1,5 +1,7 @@
 # Mode 7 course tour
 
+![screen](./screen.png)
+
 This example loads the 128x128 course from `map.c` into BG0 and follows a closed lane automatically. Each map chip is 16x16 pixels, so the full course occupies the 2048x2048 BG. No player sprite is drawn.
 
 The initial player top-left is chip **(114, 91)**, or world pixel (1824, 1456). The center of its future 16x16 sprite is (1832, 1464). The camera anchor is 80% down the visible ground, leaving more of the course ahead in view. With the default settings it is near logical screen pixel (160, 167). No sprite is drawn; a future unscaled 16px sprite would use the anchor minus (8, 8).
