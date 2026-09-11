@@ -119,6 +119,76 @@ typedef struct {
 #define VGS_VREG_TR_SIZE *((volatile int32_t*)0xD2009C)
 #define VGS_VREG_TR_TO *((volatile int32_t*)0xD200A0)
 
+#define VGS_VREG_M7_EN ((volatile uint32_t*)0xD200A4)
+#define VGS_VREG_M7_EN0 *((volatile uint32_t*)0xD200A4)
+#define VGS_VREG_M7_EN1 *((volatile uint32_t*)0xD200A8)
+#define VGS_VREG_M7_EN2 *((volatile uint32_t*)0xD200AC)
+#define VGS_VREG_M7_EN3 *((volatile uint32_t*)0xD200B0)
+#define VGS_VREG_M7_A ((volatile uint32_t*)0xD200B4)
+#define VGS_VREG_M7_A0 *((volatile uint32_t*)0xD200B4)
+#define VGS_VREG_M7_A1 *((volatile uint32_t*)0xD200B8)
+#define VGS_VREG_M7_A2 *((volatile uint32_t*)0xD200BC)
+#define VGS_VREG_M7_A3 *((volatile uint32_t*)0xD200C0)
+#define VGS_VREG_M7_B ((volatile uint32_t*)0xD200C4)
+#define VGS_VREG_M7_B0 *((volatile uint32_t*)0xD200C4)
+#define VGS_VREG_M7_B1 *((volatile uint32_t*)0xD200C8)
+#define VGS_VREG_M7_B2 *((volatile uint32_t*)0xD200CC)
+#define VGS_VREG_M7_B3 *((volatile uint32_t*)0xD200D0)
+#define VGS_VREG_M7_C ((volatile uint32_t*)0xD200D4)
+#define VGS_VREG_M7_C0 *((volatile uint32_t*)0xD200D4)
+#define VGS_VREG_M7_C1 *((volatile uint32_t*)0xD200D8)
+#define VGS_VREG_M7_C2 *((volatile uint32_t*)0xD200DC)
+#define VGS_VREG_M7_C3 *((volatile uint32_t*)0xD200E0)
+#define VGS_VREG_M7_D ((volatile uint32_t*)0xD200E4)
+#define VGS_VREG_M7_D0 *((volatile uint32_t*)0xD200E4)
+#define VGS_VREG_M7_D1 *((volatile uint32_t*)0xD200E8)
+#define VGS_VREG_M7_D2 *((volatile uint32_t*)0xD200EC)
+#define VGS_VREG_M7_D3 *((volatile uint32_t*)0xD200F0)
+#define VGS_VREG_M7_CX ((volatile int32_t*)0xD200F4)
+#define VGS_VREG_M7_CX0 *((volatile int32_t*)0xD200F4)
+#define VGS_VREG_M7_CX1 *((volatile int32_t*)0xD200F8)
+#define VGS_VREG_M7_CX2 *((volatile int32_t*)0xD200FC)
+#define VGS_VREG_M7_CX3 *((volatile int32_t*)0xD20100)
+#define VGS_VREG_M7_CY ((volatile int32_t*)0xD20104)
+#define VGS_VREG_M7_CY0 *((volatile int32_t*)0xD20104)
+#define VGS_VREG_M7_CY1 *((volatile int32_t*)0xD20108)
+#define VGS_VREG_M7_CY2 *((volatile int32_t*)0xD2010C)
+#define VGS_VREG_M7_CY3 *((volatile int32_t*)0xD20110)
+#define VGS_VREG_M7_TX ((volatile int32_t*)0xD20114)
+#define VGS_VREG_M7_TX0 *((volatile int32_t*)0xD20114)
+#define VGS_VREG_M7_TX1 *((volatile int32_t*)0xD20118)
+#define VGS_VREG_M7_TX2 *((volatile int32_t*)0xD2011C)
+#define VGS_VREG_M7_TX3 *((volatile int32_t*)0xD20120)
+#define VGS_VREG_M7_TY ((volatile int32_t*)0xD20124)
+#define VGS_VREG_M7_TY0 *((volatile int32_t*)0xD20124)
+#define VGS_VREG_M7_TY1 *((volatile int32_t*)0xD20128)
+#define VGS_VREG_M7_TY2 *((volatile int32_t*)0xD2012C)
+#define VGS_VREG_M7_TY3 *((volatile int32_t*)0xD20130)
+
+#define VGS_VREG_M7_DEPTH ((volatile uint32_t*)0xD20134)
+#define VGS_VREG_M7_DEPTH0 *((volatile uint32_t*)0xD20134)
+#define VGS_VREG_M7_DEPTH1 *((volatile uint32_t*)0xD20138)
+#define VGS_VREG_M7_DEPTH2 *((volatile uint32_t*)0xD2013C)
+#define VGS_VREG_M7_DEPTH3 *((volatile uint32_t*)0xD20140)
+
+#define VGS_VREG_M7_FRAC ((volatile uint32_t*)0xD20144)
+#define VGS_VREG_M7_FRAC0 *((volatile uint32_t*)0xD20144)
+#define VGS_VREG_M7_FRAC1 *((volatile uint32_t*)0xD20148)
+#define VGS_VREG_M7_FRAC2 *((volatile uint32_t*)0xD2014C)
+#define VGS_VREG_M7_FRAC3 *((volatile uint32_t*)0xD20150)
+
+#define VGS_VREG_M7_FOCAL ((volatile uint32_t*)0xD20154)
+#define VGS_VREG_M7_FOCAL0 *((volatile uint32_t*)0xD20154)
+#define VGS_VREG_M7_FOCAL1 *((volatile uint32_t*)0xD20158)
+#define VGS_VREG_M7_FOCAL2 *((volatile uint32_t*)0xD2015C)
+#define VGS_VREG_M7_FOCAL3 *((volatile uint32_t*)0xD20160)
+// Outside-source RGB888 color; zero preserves transparency.
+#define VGS_VREG_M7_BACKDROP ((volatile uint32_t*)0xD20164)
+#define VGS_VREG_M7_BACKDROP0 *((volatile uint32_t*)0xD20164)
+#define VGS_VREG_M7_BACKDROP1 *((volatile uint32_t*)0xD20168)
+#define VGS_VREG_M7_BACKDROP2 *((volatile uint32_t*)0xD2016C)
+#define VGS_VREG_M7_BACKDROP3 *((volatile uint32_t*)0xD20170)
+
 // Graphic Draw Function Identifer
 #define VGS_DRAW_PIXEL 0
 #define VGS_DRAW_LINE 1
@@ -263,6 +333,102 @@ void vgs_cls_bg_all(uint32_t value);
  * @remark If the value is 0, a fast clear is performed.
  */
 void vgs_cls_bg(uint8_t n, uint32_t value);
+
+/**
+ * @brief Enable or disable Mode 7 for a BG.
+ * @param bg Number of BG (0 to 3)
+ * @param enabled ON or OFF; disabling preserves the transformation parameters.
+ */
+static inline void vgs_mode7_enable(uint8_t bg, BOOL enabled)
+{
+    VGS_VREG_M7_EN[bg & 3] = enabled ? 1 : 0;
+}
+
+/**
+ * @brief Set the inverse affine matrix (destination to source) for a BG.
+ * @param bg Number of BG (0 to 3)
+ * @param a Signed 8.8 coefficient A (256 = 1.0)
+ * @param b Signed 8.8 coefficient B
+ * @param c Signed 8.8 coefficient C
+ * @param d Signed 8.8 coefficient D (256 = 1.0)
+ */
+static inline void vgs_mode7_abcd(uint8_t bg, int16_t a, int16_t b, int16_t c, int16_t d)
+{
+    bg &= 3;
+    VGS_VREG_M7_A[bg] = (uint16_t)a;
+    VGS_VREG_M7_B[bg] = (uint16_t)b;
+    VGS_VREG_M7_C[bg] = (uint16_t)c;
+    VGS_VREG_M7_D[bg] = (uint16_t)d;
+}
+
+/**
+ * @brief Set the Mode 7 transformation center in logical pixels.
+ * @param bg Number of BG (0 to 3)
+ * @param cx Signed integer center X
+ * @param cy Signed integer center Y
+ */
+static inline void vgs_mode7_camera(uint8_t bg, int32_t cx, int32_t cy)
+{
+    bg &= 3;
+    VGS_VREG_M7_CX[bg] = cx;
+    VGS_VREG_M7_CY[bg] = cy;
+}
+
+/**
+ * @brief Set the integer source translation without modifying VRAM.
+ * @param bg Number of BG (0 to 3)
+ * @param tx Signed integer translation X in pixels
+ * @param ty Signed integer translation Y in pixels
+ */
+static inline void vgs_mode7_translate(uint8_t bg, int32_t tx, int32_t ty)
+{
+    bg &= 3;
+    VGS_VREG_M7_TX[bg] = tx;
+    VGS_VREG_M7_TY[bg] = ty;
+}
+
+/**
+ * @brief Set the fractional source translation, added before source rounding.
+ * @param bg Number of BG (0 to 3)
+ * @param x X fraction in units of 1/256 pixel (0 to 255)
+ * @param y Y fraction in units of 1/256 pixel (0 to 255)
+ * @remark For -0.5px use integer translation -1 and fraction 128.
+ */
+static inline void vgs_mode7_frac(uint8_t bg, uint8_t x, uint8_t y)
+{
+    VGS_VREG_M7_FRAC[bg & 3] = (uint32_t)x | ((uint32_t)y << 8);
+}
+
+/**
+ * @brief Set the perspective depth angle; zero disables perspective.
+ * @param bg Number of BG (0 to 3)
+ * @param degrees Integer angle, clamped by the VDP to 0..75 degrees
+ */
+static inline void vgs_mode7_depth(uint8_t bg, uint32_t degrees)
+{
+    VGS_VREG_M7_DEPTH[bg & 3] = degrees;
+}
+
+/**
+ * @brief Set the perspective focal length.
+ * @param bg Number of BG (0 to 3)
+ * @param pixels Logical pixels, clamped by the VDP to 100..4096 (reset: 200)
+ */
+static inline void vgs_mode7_focal(uint8_t bg, uint32_t pixels)
+{
+    VGS_VREG_M7_FOCAL[bg & 3] = pixels;
+}
+
+/**
+ * @brief Set the color outside the transformed source BG rectangle.
+ * @param bg Number of BG (0 to 3)
+ * @param color RGB888 color; zero preserves transparency (upper 8 bits ignored).
+ * @remark Does not fill transparent source pixels or the perspective sky margin.
+ */
+static inline void vgs_mode7_backdrop(uint8_t bg, uint32_t color)
+{
+    VGS_VREG_M7_BACKDROP[bg & 3] = color;
+}
 
 /**
  * @brief BG Mode Switching: Bitmap or Character Pattern

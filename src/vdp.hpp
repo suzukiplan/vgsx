@@ -100,6 +100,8 @@ class VDP
 
     void resetPattern()
     {
+        // Patterns not supplied by ROM must not depend on prior heap contents.
+        memset(this->ctx.ptn, 0, sizeof(this->ctx.ptn));
         for (auto ptn : this->rom.ptn) {
             int index = ptn->index;
             const uint8_t* ptr = ptn->ptn;
@@ -215,35 +217,48 @@ class VDP
     }
 
     typedef struct {
-        uint32_t skip;                // R0: Skip Render
-        uint32_t spos;                // R1: Sprite Position (0: Between BG0 and BG1 ~ 3)
-        uint32_t scrollX[VDP_BG_NUM]; // R2-5: Scroll BGs X
-        uint32_t scrollY[VDP_BG_NUM]; // R6-9: Scroll BGs Y
-        uint32_t bmp[VDP_BG_NUM];     // R10-13: BGs Bitmap Mode
-        uint32_t cls[VDP_BG_NUM + 1]; // R14-18: Clear Screen
-        uint32_t g_bg;                // R19: Graphic Draw - BG number
-        uint32_t g_x1;                // R20: Graphic Draw - X1
-        uint32_t g_y1;                // R21: Graphic Draw - Y1
-        uint32_t g_x2;                // R22: Graphic Draw - X2
-        uint32_t g_y2;                // R23: Graphic Draw - Y2
-        uint32_t g_col;               // R24: Graphic Draw - Color (RGB888)
-        uint32_t g_opt;               // R25: Graphic Draw - Option
-        uint32_t g_exe;               // R26: Graphic Draw - Execute
-        uint32_t skip0;               // R27: Skip Rendering BG0
-        uint32_t skip1;               // R28: Skip Rendering BG1
-        uint32_t skip2;               // R29: Skip Rendering BG2
-        uint32_t skip3;               // R30: Skip Rendering BG3
-        uint32_t pf_init;             // R31: Profotinaol Font - Initialize
-        uint32_t pf_ptn;              // R32: Profotinaol Font - Pattern
-        uint32_t pf_dx;               // R33: Profotinaol Font - diff X
-        uint32_t pf_dy;               // R34: Profotinaol Font - diff Y
-        uint32_t pf_width;            // R35: Profotinaol Font - width
-        uint32_t cp_fr;               // R36: Copy Character Pattern (From)
-        uint32_t cp_to;               // R37: Copy Character Pattern (To)
-        uint32_t tr_addr;             // R38: Transfer Character Pattern (address)
-        uint32_t tr_size;             // R39: Transfer Character Pattern (size)
-        uint32_t tr_to;               // R40: Transfer Character Pattern (to)
-        uint32_t reserved[215];       // Reserved (Specify 0 to maintain future compatibility.)
+        uint32_t skip;                    // R0: Skip Render
+        uint32_t spos;                    // R1: Sprite Position (0: Between BG0 and BG1 ~ 3)
+        uint32_t scrollX[VDP_BG_NUM];     // R2-5: Scroll BGs X
+        uint32_t scrollY[VDP_BG_NUM];     // R6-9: Scroll BGs Y
+        uint32_t bmp[VDP_BG_NUM];         // R10-13: BGs Bitmap Mode
+        uint32_t cls[VDP_BG_NUM + 1];     // R14-18: Clear Screen
+        uint32_t g_bg;                    // R19: Graphic Draw - BG number
+        uint32_t g_x1;                    // R20: Graphic Draw - X1
+        uint32_t g_y1;                    // R21: Graphic Draw - Y1
+        uint32_t g_x2;                    // R22: Graphic Draw - X2
+        uint32_t g_y2;                    // R23: Graphic Draw - Y2
+        uint32_t g_col;                   // R24: Graphic Draw - Color (RGB888)
+        uint32_t g_opt;                   // R25: Graphic Draw - Option
+        uint32_t g_exe;                   // R26: Graphic Draw - Execute
+        uint32_t skip0;                   // R27: Skip Rendering BG0
+        uint32_t skip1;                   // R28: Skip Rendering BG1
+        uint32_t skip2;                   // R29: Skip Rendering BG2
+        uint32_t skip3;                   // R30: Skip Rendering BG3
+        uint32_t pf_init;                 // R31: Profotinaol Font - Initialize
+        uint32_t pf_ptn;                  // R32: Profotinaol Font - Pattern
+        uint32_t pf_dx;                   // R33: Profotinaol Font - diff X
+        uint32_t pf_dy;                   // R34: Profotinaol Font - diff Y
+        uint32_t pf_width;                // R35: Profotinaol Font - width
+        uint32_t cp_fr;                   // R36: Copy Character Pattern (From)
+        uint32_t cp_to;                   // R37: Copy Character Pattern (To)
+        uint32_t tr_addr;                 // R38: Transfer Character Pattern (address)
+        uint32_t tr_size;                 // R39: Transfer Character Pattern (size)
+        uint32_t tr_to;                   // R40: Transfer Character Pattern (to)
+        uint32_t m7_en[VDP_BG_NUM];       // R41-44: Mode 7 EN
+        uint32_t m7_a[VDP_BG_NUM];        // R45-48: Mode 7 A
+        uint32_t m7_b[VDP_BG_NUM];        // R49-52: Mode 7 B
+        uint32_t m7_c[VDP_BG_NUM];        // R53-56: Mode 7 C
+        uint32_t m7_d[VDP_BG_NUM];        // R57-60: Mode 7 D
+        uint32_t m7_cx[VDP_BG_NUM];       // R61-64: Mode 7 CX
+        uint32_t m7_cy[VDP_BG_NUM];       // R65-68: Mode 7 CY
+        uint32_t m7_tx[VDP_BG_NUM];       // R69-72: Mode 7 TX
+        uint32_t m7_ty[VDP_BG_NUM];       // R73-76: Mode 7 TY
+        uint32_t m7_depth[VDP_BG_NUM];    // R77-80: Perspective angle (0..75 degrees)
+        uint32_t m7_frac[VDP_BG_NUM];     // R81-84: Source translation fractions (X: bits 7-0, Y: bits 15-8)
+        uint32_t m7_focal[VDP_BG_NUM];    // R85-88: Perspective focal length (100..4096 pixels)
+        uint32_t m7_backdrop[VDP_BG_NUM]; // R89-92: Outside-source color (RGB888, 0: transparent)
+        uint32_t reserved[163];           // Reserved (Specify 0 to maintain future compatibility.)
     } Register;
 
     static constexpr uint32_t kVdpRegisterFirstReservedIndex =
@@ -286,17 +301,17 @@ class VDP
     } PropotionalInfo;
 
     struct Context {
-        uint32_t display[VDP_DISPLAY_PIXELS]; // Virtual Display (scaled 2x in both axes)
-        uint8_t ptn[65536][32];               // Character Pattern (ROM)
-        uint32_t nametbl[VDP_BG_NUM][65536];  // Name Table
-        OAM oam[1024];                        // OAM
+        uint32_t display[VDP_DISPLAY_PIXELS];                     // Virtual Display (scaled 2x in both axes)
+        uint8_t ptn[65536][32];                                   // Character Pattern (ROM)
+        uint32_t nametbl[VDP_BG_NUM][65536];                      // Name Table
+        OAM oam[1024];                                            // OAM
         uint32_t palette[VDP_PALETTE_NUM][VDP_PALETTE_COLOR_NUM]; // Palette
-        PropotionalInfo pinfo[0x80];          // Propotional Info
-        Register reg;                         // Register
-        int wx1[VDP_BG_NUM];                  // BG Window X1
-        int wy1[VDP_BG_NUM];                  // BG Window Y1
-        int wx2[VDP_BG_NUM];                  // BG Window X2
-        int wy2[VDP_BG_NUM];                  // BG Window Y2
+        PropotionalInfo pinfo[0x80];                              // Propotional Info
+        Register reg;                                             // Register
+        int wx1[VDP_BG_NUM];                                      // BG Window X1
+        int wy1[VDP_BG_NUM];                                      // BG Window Y1
+        int wx2[VDP_BG_NUM];                                      // BG Window X2
+        int wy2[VDP_BG_NUM];                                      // BG Window Y2
     } ctx;
 
     VDP()
@@ -334,6 +349,9 @@ class VDP
         memset(this->ctx.oam, 0, sizeof(this->ctx.oam));
         memset(&this->ctx.reg, 0, sizeof(Register));
         for (int i = 0; i < VDP_BG_NUM; i++) {
+            this->ctx.reg.m7_a[i] = 0x100;
+            this->ctx.reg.m7_d[i] = 0x100;
+            this->ctx.reg.m7_focal[i] = 200;
             this->ctx.wx1[i] = 0;
             this->ctx.wy1[i] = 0;
             this->ctx.wx2[i] = VDP_WIDTH - 1;
@@ -413,6 +431,21 @@ class VDP
                 case 0xD20000: {
                     uint8_t index = (address & 0x3FC) >> 2;
                     uint32_t* rawReg = (uint32_t*)&this->ctx.reg;
+                    if (41 <= index && index <= 44) {
+                        value &= 1;
+                    } else if (45 <= index && index <= 60) {
+                        value &= 0xFFFF;
+                    }
+                    if (89 <= index && index <= 92) value &= 0xFFFFFF;
+                    if (85 <= index && index <= 88) {
+                        value = value < 100 ? 100 : (value > 4096 ? 4096 : value);
+                    }
+                    if (81 <= index && index <= 84) {
+                        value &= 0xFFFF;
+                    }
+                    if (77 <= index && index <= 80 && value > 75) {
+                        value = 75;
+                    }
                     rawReg[index] = value;
                     switch (index) {
                         case 2: this->bitmapScrollX(0, (int)value); break;
@@ -707,8 +740,97 @@ class VDP
         return (attr & kAttributePaletteMask) >> kAttributePaletteShift;
     }
 
+    inline void renderMode7(int n)
+    {
+        // CPU execution pauses during frame rendering, so these parameters remain
+        // fixed until the next V-SYNC. Promote before subtracting or multiplying.
+        const Register& reg = this->ctx.reg;
+        const int64_t a = (int16_t)reg.m7_a[n];
+        const int64_t b = (int16_t)reg.m7_b[n];
+        const int64_t c = (int16_t)reg.m7_c[n];
+        const int64_t d = (int16_t)reg.m7_d[n];
+        const int64_t cx = (int32_t)reg.m7_cx[n];
+        const int64_t cy = (int32_t)reg.m7_cy[n];
+        const bool bitmap = reg.bmp[n] != 0;
+        const int64_t originX = cx + (int32_t)reg.m7_tx[n] + (bitmap ? 0 : reg.scrollX[n] & 2047);
+        const int64_t originY = cy + (int32_t)reg.m7_ty[n] + (bitmap ? 0 : reg.scrollY[n] & 2047);
+        const int64_t fractionX = reg.m7_frac[n] & 0xFF;
+        const int64_t fractionY = (reg.m7_frac[n] >> 8) & 0xFF;
+        const int width = bitmap ? VDP_WIDTH : 2048;
+        const int height = bitmap ? VDP_HEIGHT : 2048;
+        const int fromX = bitmap ? this->ctx.wx1[n] : 0;
+        const int fromY = bitmap ? this->ctx.wy1[n] : 0;
+        const int toX = bitmap ? this->ctx.wx2[n] : VDP_WIDTH - 1;
+        const int toY = bitmap ? this->ctx.wy2[n] : VDP_HEIGHT - 1;
+        // C++ division truncates toward zero; negative fractional samples must
+        // stay outside the left/top edge instead of leaking into pixel zero.
+        auto floor256 = [](int64_t value) {
+            return value / 256 - (value % 256 < 0 ? 1 : 0);
+        };
+        const uint32_t depth = reg.m7_depth[n] > 75 ? 75 : reg.m7_depth[n];
+        // Project the logical viewport about its center, then fit the near edge
+        // to the display width and align it with the last display row.
+        const double depthSin = vgsx_sin[depth] / 256.0;
+        const double depthCos = vgsx_cos[depth] / 256.0;
+        const double focal = reg.m7_focal[n] < 100 ? 100 : (reg.m7_focal[n] > 4096 ? 4096 : reg.m7_focal[n]);
+        const double nearDen = 1.0 - 99.0 * depthSin / focal;
+        const double nearY = 99.0 * depthCos / nearDen;
+        for (int y = fromY; y <= toY; y++) {
+            double planeY = y;
+            double step = 1.0;
+            if (depth) {
+                const double relativeY = y - 199.0 + nearY;
+                const double denominator = depthCos + relativeY * depthSin / focal;
+                if (denominator <= 0.0) continue;
+                const double v = y == 199 ? 99.0 : relativeY / denominator;
+                planeY = 100.0 + v;
+                if (planeY < 0.0 || planeY >= 200.0) continue;
+                step = (1.0 - v * depthSin / focal) / nearDen;
+            }
+            int64_t sampleX = a * (fromX - cx) + b * (y - cy);
+            int64_t sampleY = c * (fromX - cx) + d * (y - cy);
+            for (int x = fromX; x <= toX; x++, sampleX += a, sampleY += c) {
+                int64_t sx, sy;
+                if (depth) {
+                    const double planeX = 160.0 + (x - 160.0) * step;
+                    // Extend horizontally beyond the reference viewport; only
+                    // the transformed source BG bounds limit map coverage.
+                    sx = (int64_t)floor((a * (planeX - cx) + b * (planeY - cy) + fractionX) / 256.0) + originX;
+                    sy = (int64_t)floor((c * (planeX - cx) + d * (planeY - cy) + fractionY) / 256.0) + originY;
+                } else {
+                    sx = floor256(sampleX + fractionX) + originX;
+                    sy = floor256(sampleY + fractionY) + originY;
+                }
+                uint32_t color;
+                if (sx < 0 || width <= sx || sy < 0 || height <= sy) {
+                    color = reg.m7_backdrop[n] & 0xFFFFFF;
+                    if (!color) continue;
+                } else if (bitmap) {
+                    color = this->ctx.nametbl[n][sy * VDP_WIDTH + sx];
+                    if (!color) continue;
+                } else {
+                    const uint32_t attr = this->ctx.nametbl[n][(sy >> 3) * 256 + (sx >> 3)];
+                    const int px = (attr & 0x80000000) ? 7 - (sx & 7) : sx & 7;
+                    const int py = (attr & 0x40000000) ? 7 - (sy & 7) : sy & 7;
+                    const uint8_t index = readPatternPixel(attr & 0xFFFF, px, py);
+                    if (!index) continue;
+                    color = this->ctx.palette[readPaletteNumber(attr)][index];
+                }
+                const int dest = y * VDP_DISPLAY_SCALE * VDP_DISPLAY_WIDTH + x * VDP_DISPLAY_SCALE;
+                this->ctx.display[dest] = color;
+                this->ctx.display[dest + 1] = color;
+                this->ctx.display[dest + VDP_DISPLAY_WIDTH] = color;
+                this->ctx.display[dest + VDP_DISPLAY_WIDTH + 1] = color;
+            }
+        }
+    }
+
     inline void renderBG(int n)
     {
+        if (this->ctx.reg.m7_en[n] & 1) {
+            this->renderMode7(n);
+            return;
+        }
         uint32_t* display = this->ctx.display;
         const int scaledWidth = VDP_DISPLAY_WIDTH;
         if (this->ctx.reg.bmp[n]) {
@@ -783,21 +905,18 @@ class VDP
         int pal = readPaletteNumber(oam->attr);
         bool flipH = (oam->attr & 0x80000000) ? true : false;
         bool flipV = (oam->attr & 0x40000000) ? true : false;
-        int32_t angle = 90 - oam->rotate;
+        int angle = (int)((90LL - (int64_t)oam->rotate) % 360);
         const int coordScale = VDP_DISPLAY_SCALE;
         const int displayWidth = VDP_DISPLAY_WIDTH;
         const int displayHeight = VDP_DISPLAY_HEIGHT;
-        int scale = oam->scale;
         const uint32_t alpha = oam->alpha & 0xFFFFFF;
-        if (scale == 0 || alpha == 0) {
+        if (oam->scale == 0 || alpha == 0) {
             return;
         }
-        scale *= coordScale;
-        const int maxScale = kSpriteScaleMaxPercent * coordScale;
-        if (scale > maxScale) {
-            scale = maxScale;
-        }
-        angle %= 360;
+        const uint32_t scalePercent = oam->scale > (uint32_t)kSpriteScaleMaxPercent
+                                          ? (uint32_t)kSpriteScaleMaxPercent
+                                          : oam->scale;
+        const int scale = (int)scalePercent * coordScale;
         if (angle < 0) {
             angle += 360;
         }
@@ -813,10 +932,8 @@ class VDP
         int offsetY = ((size * 2 - scaledSizeY) / 2);
         int halfSizeX = scaledSizeX / 2;
         int halfSizeY = scaledSizeY / 2;
-        int scaledX = oam->x * coordScale;
-        int scaledY = oam->y * coordScale;
-        const int originX = scaledX + offsetX;
-        const int originY = scaledY + offsetY;
+        const int64_t originX = (int64_t)oam->x * coordScale + offsetX;
+        const int64_t originY = (int64_t)oam->y * coordScale + offsetY;
         const int sinValue = vgsx_sin[angle];
         const int cosValue = vgsx_cos[angle];
         const uint32_t ar = (alpha >> 16) & 0xFF;
@@ -848,14 +965,21 @@ class VDP
 
         if (angle == 90) {
             // Common no-rotation path: clipped nearest-neighbour scaling.
-            const int fromX = originX < 0 ? 0 : originX;
-            const int fromY = originY < 0 ? 0 : originY;
-            const int toX = originX + scaledSizeX < displayWidth ? originX + scaledSizeX : displayWidth;
-            const int toY = originY + scaledSizeY < displayHeight ? originY + scaledSizeY : displayHeight;
-            int sourceX[VDP_DISPLAY_WIDTH];
+            auto clipCoordinate = [](int64_t value, int limit) {
+                if (value <= 0) return 0;
+                if (limit <= value) return limit;
+                return (int)value;
+            };
+            const int fromX = clipCoordinate(originX, displayWidth);
+            const int fromY = clipCoordinate(originY, displayHeight);
+            const int64_t endX = originX + scaledSizeX;
+            const int64_t endY = originY + scaledSizeY;
+            const int toX = clipCoordinate(endX, displayWidth);
+            const int toY = clipCoordinate(endY, displayHeight);
+            uint16_t sourceX[VDP_DISPLAY_WIDTH];
             for (int dx = fromX; dx < toX; dx++) {
-                int wx = (int)((int64_t)(dx - originX) * size / scaledSizeX);
-                sourceX[dx] = flipH ? size - wx - 1 : wx;
+                int wx = (int)(((int64_t)dx - originX) * size / scaledSizeX);
+                sourceX[dx - fromX] = (uint16_t)(flipH ? size - wx - 1 : wx);
             }
             for (int dy = fromY; dy < toY; dy++) {
                 int wy = (int)((int64_t)(dy - originY) * size / scaledSizeY);
@@ -864,48 +988,55 @@ class VDP
                 }
                 int displayAddress = dy * displayWidth + fromX;
                 for (int dx = fromX; dx < toX; dx++, displayAddress++) {
-                    draw(displayAddress, sourceX[dx], wy);
+                    draw(displayAddress, sourceX[dx - fromX], wy);
                 }
             }
             return;
         }
 
-        int minX = displayWidth;
-        int minY = displayHeight;
-        int maxX = -1;
-        int maxY = -1;
+        int64_t minX = displayWidth;
+        int64_t minY = displayHeight;
+        int64_t maxX = -1;
+        int64_t maxY = -1;
         const int cornersX[4] = {0, scaledSizeX - 1, 0, scaledSizeX - 1};
         const int cornersY[4] = {0, 0, scaledSizeY - 1, scaledSizeY - 1};
         for (int i = 0; i < 4; i++) {
             const int bx = cornersX[i];
             const int by = cornersY[i];
-            const int dx = ((bx - halfSizeX) * sinValue - (by - halfSizeY) * cosValue) / 256 +
-                           halfSizeX + originX;
-            const int dy = ((by - halfSizeY) * sinValue + (bx - halfSizeX) * cosValue) / 256 +
-                           halfSizeY + originY;
+            const int64_t dx = ((int64_t)(bx - halfSizeX) * sinValue -
+                                (int64_t)(by - halfSizeY) * cosValue) /
+                                   256 +
+                               halfSizeX + originX;
+            const int64_t dy = ((int64_t)(by - halfSizeY) * sinValue +
+                                (int64_t)(bx - halfSizeX) * cosValue) /
+                                   256 +
+                               halfSizeY + originY;
             if (dx < minX) minX = dx;
             if (maxX < dx) maxX = dx;
             if (dy < minY) minY = dy;
             if (maxY < dy) maxY = dy;
+        }
+        if (maxX < 0 || maxY < 0 || displayWidth <= minX || displayHeight <= minY) {
+            return;
         }
         if (minX < 0) minX = 0;
         if (minY < 0) minY = 0;
         if (displayWidth <= maxX) maxX = displayWidth - 1;
         if (displayHeight <= maxY) maxY = displayHeight - 1;
 
-        const int centerX = originX + halfSizeX;
-        const int centerY = originY + halfSizeY;
-        for (int dy = minY; dy <= maxY; dy++) {
-            for (int dx = minX; dx <= maxX; dx++) {
-                const int relativeX = dx - centerX;
-                const int relativeY = dy - centerY;
-                const int bx = (relativeX * sinValue + relativeY * cosValue) / 256 + halfSizeX;
-                const int by = (-relativeX * cosValue + relativeY * sinValue) / 256 + halfSizeY;
+        const int64_t centerX = originX + halfSizeX;
+        const int64_t centerY = originY + halfSizeY;
+        for (int dy = (int)minY; dy <= (int)maxY; dy++) {
+            for (int dx = (int)minX; dx <= (int)maxX; dx++) {
+                const int64_t relativeX = (int64_t)dx - centerX;
+                const int64_t relativeY = (int64_t)dy - centerY;
+                const int64_t bx = (relativeX * sinValue + relativeY * cosValue) / 256 + halfSizeX;
+                const int64_t by = (-relativeX * cosValue + relativeY * sinValue) / 256 + halfSizeY;
                 if (bx < 0 || scaledSizeX <= bx || by < 0 || scaledSizeY <= by) {
                     continue;
                 }
-                int wx = (int)((int64_t)bx * size / scaledSizeX);
-                int wy = (int)((int64_t)by * size / scaledSizeY);
+                int wx = (int)(bx * size / scaledSizeX);
+                int wy = (int)(by * size / scaledSizeY);
                 if (flipH) wx = size - wx - 1;
                 if (flipV) wy = size - wy - 1;
                 draw(dy * displayWidth + dx, wx, wy);

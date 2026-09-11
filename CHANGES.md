@@ -1,5 +1,9 @@
 # Changes
 
+## Version 1.10.0
+
+- Support Mode 7
+
 ## Version 1.9.0
 
 - Core: Added the input-only `VGS_IN_RANDOM_SEED` I/O for retrieving the current random seed.
