@@ -752,6 +752,8 @@ Mode 7 applies an affine transformation (rotation, scaling, skew, reflection, an
 
 The matrix-based scaling approach is inspired by [SNES Mode 7](https://wiki.superfamicom.org/mode-7-scaling). VGS-X Mode 7 uses the existing VRAM formats and layer composition. Samples outside the source BG are transparent by default; `M7_BACKDROPn` can fill them with a specified color. There is no wrapping or repeated tile.
 
+![mode7.png](mode7.png)
+
 #### Register layout and values
 
 For BG index `n` (0-3), each address below is the BG0 address plus `4 * n`. All accesses are aligned 32-bit reads/writes. These are persistent settings, not drawing commands; reads return the stored value as described below.
