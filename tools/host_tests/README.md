@@ -25,3 +25,7 @@ pivot scaling and Mode 7 independently and together.
 
 Frame pacing tests simulate 60/120 Hz presentation, timer overshoot, and stall
 recovery without sleeping or depending on machine speed.
+
+Save I/O tests use isolated temporary directories to cover implicit saves on
+exit, destruction and reset, requested sizes for short or missing files,
+legacy loads, explicit saves while enabled, disabling, and invalid requests.

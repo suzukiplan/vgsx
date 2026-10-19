@@ -30,6 +30,13 @@ extern "C" {
 #endif
 
 /**
+ * @brief Save the latest save/load RAM region on normal application exit.
+ * @param on Nonzero enables implicit saving; zero disables it (default).
+ * @note Unexpected runtime termination may lose changes. Explicit saves remain available.
+ */
+void vgs_save_implicit(int on);
+
+/**
  * @brief Write save.dat from RAM.
  * @param addr RAM address
  * @param size Save size
@@ -42,6 +49,15 @@ void vgs_save(void* addr, uint32_t size);
  * @return Loaded save data size
  */
 uint32_t vgs_load(void* addr);
+
+/**
+ * @brief Load at most size bytes and remember the requested region for implicit saving.
+ * @param addr RAM address
+ * @param size Requested size (1 to 0x100000); zero uses the file size, like vgs_load.
+ * @return Actual loaded size, or zero on failure.
+ * @note A valid requested region is remembered even if save.dat does not exist.
+ */
+uint32_t vgs_load_sized(void* addr, uint32_t size);
 
 /**
  * @brief Check save.dat size without to read.

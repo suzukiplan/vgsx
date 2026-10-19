@@ -530,6 +530,8 @@ static int illegal_instruction_logger(int opcode)
 
 VGSX::VGSX()
 {
+    this->implicitSave = {};
+    this->implicitSaveEnabled = false;
     strcpy(this->saveDataDir, "./");
     this->vgmdrv = new VgmDriver(44100, 2);
     ((VgmDriver*)this->vgmdrv)->subscribeLog([&](bool isError, const char* msg) {
@@ -560,7 +562,44 @@ VGSX::VGSX()
 
 VGSX::~VGSX()
 {
+    this->saveImplicit();
     delete (VgmDriver*)this->vgmdrv;
+}
+
+bool VGSX::validSaveRegion(uint32_t address, uint32_t size)
+{
+    if (address < 0xF00000 || size < 1 || size > sizeof(this->ctx.ram) ||
+        static_cast<uint64_t>(address) + size > 0x1000000ULL) {
+        putlog(LogLevel::W, "ignored an invalid save/load request (addr=0x%X, size=%u)", address, size);
+        return false;
+    }
+    return true;
+}
+
+bool VGSX::writeSaveData(uint32_t address, uint32_t size)
+{
+    std::string path = this->saveDataDir;
+    path += "save.dat";
+    FILE* fp = fopen(path.c_str(), "wb");
+    if (!fp) {
+        putlog(LogLevel::E, "save.dat open failed!");
+        return false;
+    }
+    const bool written = size == fwrite(&this->ctx.ram[address & 0xFFFFF], 1, size, fp);
+    const bool closed = fclose(fp) == 0;
+    if (!written || !closed) {
+        putlog(LogLevel::E, "save.dat write failed!");
+        return false;
+    }
+    putlog(LogLevel::N, "save.dat wrote (%u bytes)", size);
+    return true;
+}
+
+void VGSX::saveImplicit()
+{
+    if (this->implicitSaveEnabled && this->implicitSave.size) {
+        this->writeSaveData(this->implicitSave.address, this->implicitSave.size);
+    }
 }
 
 void VGSX::setYm2612AnalogEnabled(bool enabled)
@@ -906,6 +945,10 @@ void VGSX::reset(void)
     if (this->ignoreReset) {
         return;
     }
+    this->saveImplicit();
+    this->implicitSave = {};
+    this->implicitSaveEnabled = false;
+    this->ctx.save = {};
     constexpr uint32_t RAM_BASE = 0xF00000;
     const uint32_t ramSize = static_cast<uint32_t>(sizeof(this->ctx.ram));
     const uint64_t ramLimit = static_cast<uint64_t>(RAM_BASE) + ramSize;
@@ -1144,6 +1187,14 @@ uint32_t VGSX::inPort(uint32_t address)
                 putlog(LogLevel::W, "ignored an invalid load request (addr=0x%X)", this->ctx.save.address);
                 return 0;
             }
+            const uint32_t requestedSize = this->ctx.save.size;
+            if (requestedSize) {
+                if (!this->validSaveRegion(this->ctx.save.address, requestedSize)) {
+                    return 0;
+                }
+                // Remember the full initialized region, including bytes absent from older files.
+                this->implicitSave = {this->ctx.save.address, requestedSize};
+            }
             std::string path = saveDataDir;
             path += "save.dat";
             FILE* fp = fopen(path.c_str(), "rb");
@@ -1162,6 +1213,9 @@ uint32_t VGSX::inPort(uint32_t address)
                 fclose(fp);
                 return 0;
             }
+            if (requestedSize && requestedSize < static_cast<uint32_t>(size)) {
+                size = requestedSize;
+            }
             const uint64_t end = static_cast<uint64_t>(this->ctx.save.address) + static_cast<uint64_t>(size);
             if (0x1000000ULL < end) {
                 putlog(LogLevel::E, "failed load request (Overflow: %X+%d)", this->ctx.save.address, size);
@@ -1179,6 +1233,9 @@ uint32_t VGSX::inPort(uint32_t address)
                 return 0;
             }
             fclose(fp);
+            if (!requestedSize) {
+                this->implicitSave = {this->ctx.save.address, static_cast<uint32_t>(size)};
+            }
             putlog(LogLevel::N, "save.dat read (%u bytes)", size);
             return size;
         }
@@ -1390,27 +1447,16 @@ void VGSX::outPort(uint32_t address, uint32_t value)
             return;
         case VGS_ADDR_SAVE_EXECUTE: // Execute Save
             this->ctx.save.address &= 0x00FFFFFF;
-            if (this->ctx.save.address < 0xF00000) {
-                putlog(LogLevel::W, "ignored an invalid save request (addr=0x%X)", this->ctx.save.address);
-            } else if (0x100000 < value || value < 1) {
-                putlog(LogLevel::W, "ignored an invalid save request (size=%u)", value);
-            } else if (0x1000000ULL < static_cast<uint64_t>(this->ctx.save.address) + static_cast<uint64_t>(value)) {
-                putlog(LogLevel::W, "ignored an invalid save request (addr=0x%X+%u)", this->ctx.save.address, value);
-            } else {
-                std::string path = saveDataDir;
-                path += "save.dat";
-                FILE* fp = fopen(path.c_str(), "wb");
-                if (!fp) {
-                    putlog(LogLevel::E, "save.dat open failed!");
-                } else {
-                    if (value != fwrite(&this->ctx.ram[this->ctx.save.address & 0xFFFFF], 1, value, fp)) {
-                        putlog(LogLevel::E, "save.dat write failed!");
-                    } else {
-                        putlog(LogLevel::N, "save.dat wrote (%u bytes)", value);
-                    }
-                    fclose(fp);
-                }
+            if (this->validSaveRegion(this->ctx.save.address, value)) {
+                this->implicitSave = {this->ctx.save.address, value};
+                this->writeSaveData(this->ctx.save.address, value);
             }
+            return;
+        case VGS_ADDR_SAVE_LOAD_SIZE:
+            this->ctx.save.size = value;
+            return;
+        case VGS_ADDR_SAVE_IMPLICIT:
+            this->implicitSaveEnabled = value != 0;
             return;
 
         case VGS_ADDR_SEQ_OPEN_W: // Sequencial Open for Write
@@ -1521,6 +1567,7 @@ void VGSX::outPort(uint32_t address, uint32_t value)
             return;
 
         case VGS_ADDR_EXIT:
+            this->saveImplicit();
             this->exitFlag = true;
             this->exitCode = (int32_t)value;
             return;

@@ -945,6 +945,8 @@ Note that all addresses and values for I/O instructions must be specified as 32-
 | 0xE03000 |  o  |  -  | [SaveData: Address](#0xe030xxio---savedata) |
 | 0xE03004 |  o  |  o  | [SaveData: Execute Save(out) or Load(in)](#0xe030xxio---savedata) |
 | 0xE03008 |  -  |  o  | [SaveData: Check Size](#0xe030xxio---savedata) |
+| 0xE0300C |  o  |  -  | [SaveData: Implicit Save](#0xe030xxio---savedata) |
+| 0xE03010 |  o  |  -  | [SaveData: Load Request Size](#0xe030xxio---savedata) |
 | 0xE03100 |  o  |  -  | [Sequencial: Open for Write](#0xe031xxio---large-sequencial-file-io) |
 | 0xE03104 |  o  |  -  | [Sequencial: Write a Byte](#0xe031xxio---large-sequencial-file-io) |
 | 0xE03108 |  o  |  -  | [Sequencial: Commit](#0xe031xxio---large-sequencial-file-io) |
@@ -1279,6 +1281,27 @@ uint32_t size = VGS_IO_SAVE_EXECUTE;      // Load: read save.dat → RAM
 * For load operations, if `save.dat` does not exist, has an invalid size, or cannot be read successfully, the load result will be **0**.
 * The returned value from a load operation represents the number of bytes loaded into RAM.
 * This interface does not perform integrity verification of the save data contents; only file existence, size validity, and read success are checked.
+
+#### Implicit saving
+
+Call `vgs_save_implicit(int on)` or write a nonzero value to `VGS_OUT_SAVE_IMPLICIT` (`0xE0300C`) to save the latest RAM contents of the last save/load region to `save.dat` on normal exit. It is disabled by default; writing zero disables it. Explicit `vgs_save` calls remain available while enabled.
+
+```c
+static struct {
+    uint32_t score;
+    uint32_t stage;
+} data;
+vgs_load_sized(&data, sizeof(data));
+vgs_save_implicit(1);
+// Subsequent changes to data are saved on normal exit.
+```
+
+* The new `vgs_load_sized(void* addr, uint32_t size)` sets `VGS_OUT_SAVE_LOAD_SIZE` (`0xE03010`) before loading. Specify a valid RAM region of 1 to 0x100000 bytes. It reads the smaller of the file size and requested size, returns the actual number of bytes read, and leaves unread RAM unchanged.
+* Implicit saving remembers the requested size, even when the file is shorter. A valid sized load remembers its region even if the file is missing or reading fails, allowing initialized defaults to be saved on first exit.
+* The existing `vgs_load(void* addr)` remains compatible: it clears the requested size to zero and loads the entire file, remembering the file size after a successful load. For direct I/O users, the requested size persists until rewritten and defaults to zero.
+* A valid explicit save or load request replaces the remembered address and size. Merely setting the address/size registers or issuing a request with an invalid RAM range or size does not change the remembered region. No implicit save occurs before a region has been selected.
+* Saving occurs on `vgs_exit`, normal SDL window closure, and runtime destruction. Reset also saves before reinitializing RAM, then clears the implicit setting and region. This lets a selected WRAM region behave like SRAM.
+* Changes may be lost if the runtime crashes, receives SIGKILL, or the PC loses power unexpectedly. Use explicit saves as needed.
 
 ### 0xE031xx[io] - Large Sequencial File I/O
 
@@ -1640,6 +1663,8 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | mouse | `vgs_mouse_right_clicked` | Check for a right click and optionally get the click coordinates. |
 | save | `vgs_save` | Save [save data](#0xe030xxio---savedata). |
 | save | `vgs_load` | Load [save data](#0xe030xxio---savedata).　|
+| save | `vgs_load_sized` | Load save data with a requested size limit. |
+| save | `vgs_save_implicit` | Enable or disable implicit saving on normal exit. |
 | save | `vgs_save_check` | Check the size of [save data](#0xe030xxio---savedata).　|
 | save | `vgs_seq_open_w` | Open a [Large Sequencial File](#0xe031xxio---large-sequencial-file-io) for write. |
 | save | `vgs_seq_write` | Write a byte data to a [Large Sequencial File](#0xe031xxio---large-sequencial-file-io). |

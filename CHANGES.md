@@ -1,5 +1,10 @@
 # Changes
 
+## Version 1.12.0
+
+- Core+Standard Library: Added implicit saving on normal exit via `0xE0300C` and `vgs_save_implicit(int on)`.
+- Core+Standard Library: Added `0xE03010` and `vgs_load_sized` to preserve the requested save region even when loading a shorter or missing file; kept `vgs_load` compatible.
+
 ## Version 1.11.1
 
 - SDL2: Upload unfiltered frames at native resolution, reducing texture transfer size by 75%; allocate the expanded CRT texture only on first use.
