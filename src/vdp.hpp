@@ -285,8 +285,11 @@ class VDP
         uint32_t slx;         // Scale Lock (X)
         uint32_t pri;         // High Priority Flag
         uint32_t ram_ptr;     // Bitmap Sprite Buffer (RGB888)
-        uint32_t reserved[3]; // Reserved (Specify 0 to maintain future compatibility.)
+        int32_t pivot_x;      // Source pivot (16.16 pixels)
+        int32_t pivot_y;      // Source pivot (16.16 pixels)
+        uint32_t pivot_enabled; // 1: x/y are destination pivot coordinates in 16.16 pixels (rotate = 0 only)
     } OAM;
+    static_assert(sizeof(OAM) == 64, "OAM must remain 64 bytes");
 
     static constexpr int kSpriteScaleMaxPercent = 3200;
     static constexpr uint32_t kPaletteMask = VDP_PALETTE_NUM - 1;
@@ -932,8 +935,9 @@ class VDP
         int offsetY = ((size * 2 - scaledSizeY) / 2);
         int halfSizeX = scaledSizeX / 2;
         int halfSizeY = scaledSizeY / 2;
-        const int64_t originX = (int64_t)oam->x * coordScale + offsetX;
-        const int64_t originY = (int64_t)oam->y * coordScale + offsetY;
+        const bool pivotEnabled = oam->pivot_enabled == 1 && angle == 90;
+        const int64_t originX = (pivotEnabled ? 0 : (int64_t)oam->x * coordScale) + offsetX;
+        const int64_t originY = (pivotEnabled ? 0 : (int64_t)oam->y * coordScale) + offsetY;
         const int sinValue = vgsx_sin[angle];
         const int cosValue = vgsx_cos[angle];
         const uint32_t ar = (alpha >> 16) & 0xFF;
@@ -963,13 +967,66 @@ class VDP
             this->renderSpritePixel(displayAddress, color, alpha, oam->mask, ar, ag, ab, iar, iag, iab);
         };
 
+        auto clipCoordinate = [](int64_t value, int limit) {
+            if (value <= 0) return 0;
+            if (limit <= value) return limit;
+            return (int)value;
+        };
+
+        if (pivotEnabled) {
+            struct Bounds {
+                int from, to;
+            };
+            auto bounds = [&](int32_t destination, int32_t pivot, int axisScale, bool flip, int limit) {
+                constexpr int64_t step = 65536 * 100;
+                auto floorPixel = [](int64_t value) {
+                    return value >= 0 ? value / step : (value - step + 1) / step;
+                };
+                const int64_t displacement = (32768 - (int64_t)destination * coordScale) * 100;
+                const int64_t base = (int64_t)pivot * axisScale + (flip ? -displacement : displacement);
+                const int64_t extent = (int64_t)size * axisScale * 65536;
+                // Solve 0 <= base +/- pixel * step < extent exactly. Flipping
+                // swaps the inclusive/exclusive edges; floor division also
+                // preserves those edges for negative and fractional positions.
+                const int64_t from = flip ? floorPixel(base - extent) + 1 : -floorPixel(base);
+                const int64_t to = flip ? floorPixel(base) + 1 : -floorPixel(base - extent);
+                return Bounds{clipCoordinate(from, limit), clipCoordinate(to, limit)};
+            };
+            const int axisScaleX = oam->slx ? 200 : scale;
+            const int axisScaleY = oam->sly ? 200 : scale;
+            const Bounds xBounds = bounds(oam->x, oam->pivot_x, axisScaleX, flipH, displayWidth);
+            const Bounds yBounds = bounds(oam->y, oam->pivot_y, axisScaleY, flipV, displayHeight);
+            if (xBounds.from >= xBounds.to || yBounds.from >= yBounds.to) return;
+
+            // Inverse-map around the exact pivot. Rounding an expanded sprite's
+            // origin first would move the focal point as its scale changes.
+            auto source = [&](int pixel, int32_t destination, int32_t pivot, int axisScale, bool flip) {
+                const int64_t denominator = (int64_t)axisScale * 65536;
+                const int64_t displacement =
+                    ((int64_t)pixel * 65536 + 32768 - (int64_t)destination * coordScale) * 100;
+                // The pivot is in pre-flip source coordinates, so reflect only
+                // the displacement to keep that source point anchored.
+                const int64_t numerator = (int64_t)pivot * axisScale + (flip ? -displacement : displacement);
+                if (numerator < 0) return -1;
+                if (numerator >= (int64_t)size * denominator) return size;
+                return (int)(numerator / denominator);
+            };
+            int sourceX[VDP_DISPLAY_WIDTH];
+            for (int dx = xBounds.from; dx < xBounds.to; dx++) {
+                sourceX[dx - xBounds.from] = source(dx, oam->x, oam->pivot_x, axisScaleX, flipH);
+            }
+            for (int dy = yBounds.from; dy < yBounds.to; dy++) {
+                int wy = source(dy, oam->y, oam->pivot_y, axisScaleY, flipV);
+                int displayAddress = dy * displayWidth + xBounds.from;
+                for (int dx = xBounds.from; dx < xBounds.to; dx++, displayAddress++) {
+                    draw(displayAddress, sourceX[dx - xBounds.from], wy);
+                }
+            }
+            return;
+        }
+
         if (angle == 90) {
             // Common no-rotation path: clipped nearest-neighbour scaling.
-            auto clipCoordinate = [](int64_t value, int limit) {
-                if (value <= 0) return 0;
-                if (limit <= value) return limit;
-                return (int)value;
-            };
             const int fromX = clipCoordinate(originX, displayWidth);
             const int fromY = clipCoordinate(originY, displayHeight);
             const int64_t endX = originX + scaledSizeX;

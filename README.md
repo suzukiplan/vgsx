@@ -431,7 +431,9 @@ typedef struct {
     uint32_t slx;         // Scale Lock (X)
     uint32_t pri;         // High Priority Flag
     uint32_t ram_ptr;     // Bitmap Sprite Buffer (RGB888)
-    uint32_t reserved[3]; // Reserved (Specify 0 to maintain future compatibility.)
+    int32_t pivot_x;      // Source pivot (16.16 pixels)
+    int32_t pivot_y;      // Source pivot (16.16 pixels)
+    uint32_t pivot_enabled; // 1: enable pivot scaling (rotate = 0 only)
 } ObjectAttributeMemory;
 ```
 
@@ -452,7 +454,8 @@ The specifications for each attribute are shown in the table below.
 | slx     | 0 or 1         | Lock [Scale](#scale-of-sprite) (X) |
 | pri     | 0 or 1         | [High Priority Flag](#high-priority-flag) |
 | ram_ptr | 0 or RAM addr  | [Bitmap Sprite](#bitmap-sprite) Buffer (RGB888) |
-| reserved| -              | Do not set a value other than zero. |
+| pivot_x / pivot_y | signed 16.16 | Source image pivot coordinates, before flipping. |
+| pivot_enabled | 0 or 1 | With 1 and `rotate = 0`, `x` and `y` specify the destination pivot in signed 16.16 pixels. |
 
 ### (Size of Sprite)
 
@@ -493,6 +496,16 @@ The Sprite rotation feature is useful when combined with the [Angle](#0xe00100-0
 
 - You can specify the magnification rate as a percentage on the `scale` within the range of 0 to 3200.
 - Setting either `slx` or `sly` to a value other than zero will prevent scaling of either the X or Y axis.
+
+### (Pivot Scaling)
+
+![Pivot scaling: source pivot stays anchored while scaling and flipping](./pivot_scaling.png)
+
+- Pivot scaling samples the image directly around the specified source and destination pivots, preserving fractional coordinates throughout the transformation.
+- This avoids zoom jitter caused by rounding the sprite origin.
+- Scale locks, flips, alpha and masks also apply.
+- `vgs_sprite` clears the pivot fields, selecting the default rendering mode.
+- These fields occupy the three formerly reserved words; the OAM layout remains 64 bytes.
 
 ### (Alpha Blend of Sprite)
 

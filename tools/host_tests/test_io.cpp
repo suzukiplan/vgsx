@@ -178,6 +178,234 @@ static int test_sprite_large_scale_is_clipped_to_display()
     return 0;
 }
 
+static int test_sprite_pivot_zoom_does_not_move_focus()
+{
+    auto ownedVdp = std::make_unique<VDP>();
+    VDP& vdp = *ownedVdp;
+    std::vector<uint8_t> ram(1024 * 1024, 0);
+    constexpr int focusX = 286;
+    constexpr int focusY = 125;
+    constexpr uint32_t color = 0x123456;
+    int address = (focusY * 320 + focusX) * 4;
+    ram[address + 1] = 0x12;
+    ram[address + 2] = 0x34;
+    ram[address + 3] = 0x56;
+    vdp.setCpuRam(ram.data());
+    vdp.reset();
+    vdp.ctx.reg.skip0 = 1;
+    vdp.ctx.reg.skip1 = 1;
+    vdp.ctx.reg.skip2 = 1;
+    vdp.ctx.reg.skip3 = 1;
+    auto& sprite = vdp.ctx.oam[0];
+    sprite.visible = 1;
+    sprite.size = 39;
+    sprite.alpha = 0xFFFFFF;
+    sprite.ram_ptr = 1;
+    sprite.pivot_enabled = 1;
+    sprite.pivot_x = focusX * 65536 + 32768;
+    sprite.pivot_y = focusY * 65536 + 32768;
+    sprite.x = 160 * 65536;
+    sprite.y = 100 * 65536;
+    int previousLeft = 320;
+    int previousRight = 319;
+    int previousTop = 200;
+    int previousBottom = 199;
+    for (int scale = 100; scale <= 800; scale++) {
+        sprite.scale = scale;
+        vdp.render();
+        int left = 640, right = -1, top = 400, bottom = -1;
+        for (int x = 300; x < 340; x++) {
+            if (vdp.ctx.display[199 * VDP_DISPLAY_WIDTH + x] == color) {
+                if (left == 640) left = x;
+                right = x;
+            }
+        }
+        for (int y = 180; y < 220; y++) {
+            if (vdp.ctx.display[y * VDP_DISPLAY_WIDTH + 319] == color) {
+                if (top == 400) top = y;
+                bottom = y;
+            }
+        }
+        // An odd raster width can put its center half a display pixel from the
+        // pivot. Its edges must still only expand, never oscillate with scale.
+        if (left + right < 638 || left + right > 640 || top + bottom < 398 || top + bottom > 400) {
+            std::fprintf(stderr, "scale=%d bounds=(%d,%d)-(%d,%d)\n", scale, left, top, right, bottom);
+            return fail("zoom moved the rasterized focus away from its pivot");
+        }
+        if (left > previousLeft || right < previousRight || top > previousTop || bottom < previousBottom)
+            return fail("zoom made a focus edge move backwards");
+        previousLeft = left;
+        previousRight = right;
+        previousTop = top;
+        previousBottom = bottom;
+    }
+    sprite.scale = 0;
+    vdp.render();
+    if (vdp.ctx.display[199 * VDP_DISPLAY_WIDTH + 319] == color)
+        return fail("zero-scale pivot sprite was drawn");
+    sprite.scale = 800;
+    sprite.alpha = 0;
+    vdp.render();
+    if (vdp.ctx.display[199 * VDP_DISPLAY_WIDTH + 319] == color)
+        return fail("transparent pivot sprite was drawn");
+
+    // Both features must compose in the same frame after the merge.
+    vdp.ctx.reg.skip0 = 0;
+    vdp.ctx.reg.m7_en[0] = 1;
+    vdp.ctx.reg.m7_a[0] = vdp.ctx.reg.m7_d[0] = 0;
+    vdp.ctx.reg.m7_b[0] = 0xFF00;
+    vdp.ctx.reg.m7_c[0] = 0x100;
+    vdp.ctx.reg.m7_tx[0] = vdp.ctx.reg.m7_ty[0] = 1024;
+    std::memset(vdp.ctx.ptn[0], 0x11, 32);
+    vdp.ctx.palette[0][1] = 0x00A700;
+    sprite.alpha = 0xFFFFFF;
+    vdp.render();
+    if (vdp.ctx.display[0] != 0x00A700 ||
+        vdp.ctx.display[199 * VDP_DISPLAY_WIDTH + 319] != color)
+        return fail("Mode 7 BG and pivot-scaled sprite must compose together");
+    return 0;
+}
+
+static int test_sprite_pivot_flip_keeps_source_anchor()
+{
+    auto vdp = std::make_unique<VDP>();
+    std::vector<uint8_t> ram(1024 * 1024, 0);
+    for (int y = 0; y < 8; y++) {
+        for (int x = 0; x < 8; x++) {
+            int address = (y * 8 + x) * 4;
+            ram[address + 1] = x + 1;
+            ram[address + 2] = y + 1;
+            ram[address + 3] = 0x56;
+        }
+    }
+    vdp->setCpuRam(ram.data());
+    vdp->reset();
+    vdp->ctx.reg.skip0 = vdp->ctx.reg.skip1 = 1;
+    vdp->ctx.reg.skip2 = vdp->ctx.reg.skip3 = 1;
+    auto& sprite = vdp->ctx.oam[0];
+    sprite.visible = 1;
+    sprite.alpha = 0xFFFFFF;
+    sprite.ram_ptr = 1;
+    sprite.pivot_enabled = 1;
+    sprite.pivot_x = 1 * 65536 + 16384;
+    sprite.pivot_y = 5 * 65536 + 49152;
+    // Place the destination pivot exactly at a display pixel center so its
+    // source sample is invariant under both flipping and scaling.
+    sprite.x = 80 * 65536 + 16384;
+    sprite.y = 60 * 65536 + 16384;
+    constexpr int anchorX = 160;
+    constexpr int anchorY = 120;
+    constexpr uint32_t anchorColor = 0x020656;
+    const int scales[] = {50, 100, 175, 400};
+    for (int scale : scales) {
+        sprite.scale = scale;
+        for (int locks = 0; locks < 4; locks++) {
+            sprite.slx = locks & 1;
+            sprite.sly = (locks >> 1) & 1;
+            sprite.attr = 0;
+            vdp->render();
+            std::vector<uint32_t> original(vdp->ctx.display,
+                vdp->ctx.display + VDP_DISPLAY_WIDTH * VDP_DISPLAY_HEIGHT);
+            for (uint32_t flips = 0; flips < 4; flips++) {
+                sprite.attr = flips << 30;
+                vdp->render();
+                if (vdp->ctx.display[anchorY * VDP_DISPLAY_WIDTH + anchorX] != anchorColor)
+                    return fail("flipped pivot sprite moved the specified source anchor");
+                for (int y = 0; y < VDP_DISPLAY_HEIGHT; y++) {
+                    for (int x = 0; x < VDP_DISPLAY_WIDTH; x++) {
+                        int originalX = (flips & 2) ? 2 * anchorX - x : x;
+                        int originalY = (flips & 1) ? 2 * anchorY - y : y;
+                        uint32_t expected = 0;
+                        if (0 <= originalX && originalX < VDP_DISPLAY_WIDTH &&
+                            0 <= originalY && originalY < VDP_DISPLAY_HEIGHT)
+                            expected = original[originalY * VDP_DISPLAY_WIDTH + originalX];
+                        if (vdp->ctx.display[y * VDP_DISPLAY_WIDTH + x] != expected)
+                            return fail("pivot flip did not reflect the sprite around its destination anchor");
+                    }
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+static int test_sprite_pivot_clipping_matches_full_frame_sampling()
+{
+    auto vdp = std::make_unique<VDP>();
+    std::vector<uint8_t> ram(1024 * 1024, 0);
+    for (int y = 0; y < 8; y++) {
+        for (int x = 0; x < 8; x++) {
+            int address = (y * 8 + x) * 4;
+            ram[address + 1] = x + 1;
+            ram[address + 2] = y + 1;
+            ram[address + 3] = 0x56;
+        }
+    }
+    vdp->setCpuRam(ram.data());
+    vdp->reset();
+    vdp->ctx.reg.skip0 = vdp->ctx.reg.skip1 = 1;
+    vdp->ctx.reg.skip2 = vdp->ctx.reg.skip3 = 1;
+    auto& sprite = vdp->ctx.oam[0];
+    sprite.visible = 1;
+    sprite.alpha = 0xFFFFFF;
+    sprite.ram_ptr = 1;
+    sprite.pivot_enabled = 1;
+    struct TestCase {
+        int32_t x, y, pivotX, pivotY;
+    } cases[] = {
+        {16384, 16384, 0, 8 * 65536},
+        {-32768, -16384, 81920, 376832},
+        {319 * 65536 + 49152, 199 * 65536 + 16384, 376832, 81920},
+        {80 * 65536 + 16384, 60 * 65536 + 49152, -32768, 9 * 65536},
+        {-1000 * 65536, 100 * 65536, 81920, 376832},
+        {100 * 65536, 1000 * 65536, 81920, 376832},
+        {std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::max(),
+         std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::min()},
+        {std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::min(),
+         std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::max()},
+    };
+    const uint32_t scales[] = {7, 50, 175, 3200, std::numeric_limits<uint32_t>::max()};
+    for (const auto& test : cases) {
+        sprite.x = test.x;
+        sprite.y = test.y;
+        sprite.pivot_x = test.pivotX;
+        sprite.pivot_y = test.pivotY;
+        for (uint32_t scale : scales) {
+            sprite.scale = scale;
+            for (uint32_t flags = 0; flags < 16; flags++) {
+                sprite.attr = (flags & 3) << 30;
+                sprite.slx = (flags >> 2) & 1;
+                sprite.sly = (flags >> 3) & 1;
+                vdp->render();
+                // Reference the unbounded inverse mapping, independently of
+                // how the renderer selects its destination scan rectangle.
+                auto sample = [&](int pixel, int32_t destination, int32_t pivot, bool lock, bool flip) {
+                    int axisScale = lock ? 200 : (int)(scale > 3200 ? 3200 : scale) * VDP_DISPLAY_SCALE;
+                    int64_t displacement = ((int64_t)pixel * 65536 + 32768 -
+                        (int64_t)destination * VDP_DISPLAY_SCALE) * 100;
+                    int64_t numerator = (int64_t)pivot * axisScale + (flip ? -displacement : displacement);
+                    int64_t denominator = (int64_t)axisScale * 65536;
+                    return numerator < 0 || numerator >= 8 * denominator ? -1 : (int)(numerator / denominator);
+                };
+                int sourceX[VDP_DISPLAY_WIDTH];
+                for (int x = 0; x < VDP_DISPLAY_WIDTH; x++)
+                    sourceX[x] = sample(x, sprite.x, sprite.pivot_x, sprite.slx, flags & 2);
+                for (int y = 0; y < VDP_DISPLAY_HEIGHT; y++) {
+                    int sy = sample(y, sprite.y, sprite.pivot_y, sprite.sly, flags & 1);
+                    for (int x = 0; x < VDP_DISPLAY_WIDTH; x++) {
+                        int sx = sourceX[x];
+                        uint32_t expected = sx < 0 || sy < 0 ? 0 :
+                            (uint32_t)((sx + 1) << 16 | (sy + 1) << 8 | 0x56);
+                        if (vdp->ctx.display[y * VDP_DISPLAY_WIDTH + x] != expected)
+                            return fail("clipped pivot sprite differs from full-frame sampling");
+                    }
+                }
+            }
+        }
+    }
+    return 0;
+}
+
 static int test_sprite_vertical_flip_and_bitmap_origin()
 {
     constexpr uint32_t kColor = 0x123456;
@@ -887,6 +1115,9 @@ int main()
     if (int rc = test_seq_write_clamps_to_1mb(vgsx); rc) return rc;
     if (int rc = test_sprite_size_63_renders_512_pixels(); rc) return rc;
     if (int rc = test_sprite_large_scale_is_clipped_to_display(); rc) return rc;
+    if (int rc = test_sprite_pivot_zoom_does_not_move_focus(); rc) return rc;
+    if (int rc = test_sprite_pivot_flip_keeps_source_anchor(); rc) return rc;
+    if (int rc = test_sprite_pivot_clipping_matches_full_frame_sampling(); rc) return rc;
     if (int rc = test_sprite_vertical_flip_and_bitmap_origin(); rc) return rc;
     if (int rc = test_sprite_alpha_uses_low_24_bits(); rc) return rc;
     if (int rc = test_sprite_battle_hanafuda_title_oam(); rc) return rc;

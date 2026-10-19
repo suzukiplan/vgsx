@@ -409,7 +409,9 @@ typedef struct {
     uint32_t slx;         // Scale Lock (X)
     uint32_t pri;         // High Priority Flag
     uint32_t ram_ptr;     // Bitmap Sprite Buffer (RGB888)
-    uint32_t reserved[3]; // Reserved
+    int32_t pivot_x;      // Source pivot (16.16 pixels)
+    int32_t pivot_y;      // Source pivot (16.16 pixels)
+    uint32_t pivot_enabled; // 1: enable pivot scaling (rotate = 0 only)
 } ObjectAttributeMemory;
 ```
 
@@ -430,7 +432,8 @@ typedef struct {
 | slx  | 0 or 1 | Lock [Scale](#scale-of-sprite) (X) |
 | pri  | 0 or 1 | [High Priority Flag]() |
 | ram_ptr | 0 or RAM addr  | [Bitmap Sprite](#bitmap-sprite) Buffer (RGB888) |
-| reserved | - | 0 以外を設定しないでください |
+| pivot_x / pivot_y | signed 16.16 | 元画像の拡大基準点（反転前）の座標。 |
+| pivot_enabled | 0 or 1 | 1 かつ `rotate = 0` の場合、`x` と `y` は画面上の基準点を signed 16.16 ピクセルで指定。 |
 
 ### (Size of Sprite)
 
@@ -471,6 +474,16 @@ Size 3 Pattern Number Layout
 
 - `scale` に 0〜3200 の範囲で拡大率（パーセンテージ）を指定できます。
 - `slx` または `sly` のいずれかを 0 以外の値に設定すると、X 軸または Y 軸のいずれかのスケーリングが防止されます。
+
+### (Pivot Scaling)
+
+![Pivot Scaling: 拡大・反転しても元画像の基準点を画面上の指定位置に固定](./pivot_scaling.png)
+
+- 基準点を指定した拡大では、元画像と画面上の基準点から直接サンプリングします。
+- 変換途中で原点を整数化しないため、ズーム時の位置の揺れを防げます。
+- 拡大率ロック、反転、アルファ、マスクも適用されます。
+- `vgs_sprite` は基準点の各フィールドをクリアし、通常の描画方式に戻します。
+- 従来の予約領域3ワードを使用し、OAM は引き続き64バイトです。
 
 ### (Alpha Blend of Sprite)
 

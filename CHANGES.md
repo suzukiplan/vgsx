@@ -1,5 +1,12 @@
 # Changes
 
+## Version 1.11.0
+
+- Restored Mode 7 rendering, registers, standard library APIs, documentation and regression tests alongside sprite pivot scaling. Restored sprite boundary safeguards and indexed PNG palette extraction for 1/2/4-bit images.
+
+- Core: Added sprite pivot scaling with 16.16 fixed-point coordinates to prevent zoom jitter (`rotate = 0` only).
+- Core+Standard Library: Replaced the three reserved OAM words with `pivot_x`, `pivot_y`, and `pivot_enabled`, preserving the 64-byte layout. `vgs_sprite` resets these fields to disable pivot scaling.
+
 ## Version 1.10.0
 
 - Support Mode 7

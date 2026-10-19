@@ -62,7 +62,9 @@ typedef struct {
     uint32_t slx;         // Scale Lock (X)
     uint32_t pri;         // High Priority Flag
     uint32_t ram_ptr;     // Bitmap Sprite Buffer (RGB888)
-    uint32_t reserved[3]; // Reserved (Specify 0 to maintain future compatibility.)
+    int32_t pivot_x;      // Source pivot (16.16 pixels, when pivot_enabled = 1)
+    int32_t pivot_y;      // Source pivot (16.16 pixels, when pivot_enabled = 1)
+    uint32_t pivot_enabled; // 1: x/y are destination pivot coordinates in 16.16 pixels (rotate = 0 only)
 } ObjectAttributeMemory;
 
 #define OAM_MAX 1024

@@ -512,7 +512,7 @@ call vgs_abort with exit code: 59
 [error] #0: 0x001ADE <main+0x12EC>
 [error] #1: 0x001C40 <crt0+0xA>
 Update the peak CPU clock rate: 382972Hz per frame.
-warning: Frame rate is lagging (19657us per frame)
+warning: Frame rate is lagging (21697us per frame)
 
 [RAM DUMP]
 F00000 00 00 00 00 FF FF FF FF - 00 00 00 00 FF FF FF FF  ................
