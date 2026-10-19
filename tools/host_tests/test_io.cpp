@@ -329,6 +329,83 @@ static int test_sprite_pivot_flip_keeps_source_anchor()
     return 0;
 }
 
+static int test_sprite_pivot_clipping_matches_full_frame_sampling()
+{
+    auto vdp = std::make_unique<VDP>();
+    std::vector<uint8_t> ram(1024 * 1024, 0);
+    for (int y = 0; y < 8; y++) {
+        for (int x = 0; x < 8; x++) {
+            int address = (y * 8 + x) * 4;
+            ram[address + 1] = x + 1;
+            ram[address + 2] = y + 1;
+            ram[address + 3] = 0x56;
+        }
+    }
+    vdp->setCpuRam(ram.data());
+    vdp->reset();
+    vdp->ctx.reg.skip0 = vdp->ctx.reg.skip1 = 1;
+    vdp->ctx.reg.skip2 = vdp->ctx.reg.skip3 = 1;
+    auto& sprite = vdp->ctx.oam[0];
+    sprite.visible = 1;
+    sprite.alpha = 0xFFFFFF;
+    sprite.ram_ptr = 1;
+    sprite.pivot_enabled = 1;
+    struct TestCase {
+        int32_t x, y, pivotX, pivotY;
+    } cases[] = {
+        {16384, 16384, 0, 8 * 65536},
+        {-32768, -16384, 81920, 376832},
+        {319 * 65536 + 49152, 199 * 65536 + 16384, 376832, 81920},
+        {80 * 65536 + 16384, 60 * 65536 + 49152, -32768, 9 * 65536},
+        {-1000 * 65536, 100 * 65536, 81920, 376832},
+        {100 * 65536, 1000 * 65536, 81920, 376832},
+        {std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::max(),
+         std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::min()},
+        {std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::min(),
+         std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::max()},
+    };
+    const uint32_t scales[] = {7, 50, 175, 3200, std::numeric_limits<uint32_t>::max()};
+    for (const auto& test : cases) {
+        sprite.x = test.x;
+        sprite.y = test.y;
+        sprite.pivot_x = test.pivotX;
+        sprite.pivot_y = test.pivotY;
+        for (uint32_t scale : scales) {
+            sprite.scale = scale;
+            for (uint32_t flags = 0; flags < 16; flags++) {
+                sprite.attr = (flags & 3) << 30;
+                sprite.slx = (flags >> 2) & 1;
+                sprite.sly = (flags >> 3) & 1;
+                vdp->render();
+                // Reference the unbounded inverse mapping, independently of
+                // how the renderer selects its destination scan rectangle.
+                auto sample = [&](int pixel, int32_t destination, int32_t pivot, bool lock, bool flip) {
+                    int axisScale = lock ? 200 : (int)(scale > 3200 ? 3200 : scale) * VDP_DISPLAY_SCALE;
+                    int64_t displacement = ((int64_t)pixel * 65536 + 32768 -
+                        (int64_t)destination * VDP_DISPLAY_SCALE) * 100;
+                    int64_t numerator = (int64_t)pivot * axisScale + (flip ? -displacement : displacement);
+                    int64_t denominator = (int64_t)axisScale * 65536;
+                    return numerator < 0 || numerator >= 8 * denominator ? -1 : (int)(numerator / denominator);
+                };
+                int sourceX[VDP_DISPLAY_WIDTH];
+                for (int x = 0; x < VDP_DISPLAY_WIDTH; x++)
+                    sourceX[x] = sample(x, sprite.x, sprite.pivot_x, sprite.slx, flags & 2);
+                for (int y = 0; y < VDP_DISPLAY_HEIGHT; y++) {
+                    int sy = sample(y, sprite.y, sprite.pivot_y, sprite.sly, flags & 1);
+                    for (int x = 0; x < VDP_DISPLAY_WIDTH; x++) {
+                        int sx = sourceX[x];
+                        uint32_t expected = sx < 0 || sy < 0 ? 0 :
+                            (uint32_t)((sx + 1) << 16 | (sy + 1) << 8 | 0x56);
+                        if (vdp->ctx.display[y * VDP_DISPLAY_WIDTH + x] != expected)
+                            return fail("clipped pivot sprite differs from full-frame sampling");
+                    }
+                }
+            }
+        }
+    }
+    return 0;
+}
+
 static int test_sprite_vertical_flip_and_bitmap_origin()
 {
     constexpr uint32_t kColor = 0x123456;
@@ -1040,6 +1117,7 @@ int main()
     if (int rc = test_sprite_large_scale_is_clipped_to_display(); rc) return rc;
     if (int rc = test_sprite_pivot_zoom_does_not_move_focus(); rc) return rc;
     if (int rc = test_sprite_pivot_flip_keeps_source_anchor(); rc) return rc;
+    if (int rc = test_sprite_pivot_clipping_matches_full_frame_sampling(); rc) return rc;
     if (int rc = test_sprite_vertical_flip_and_bitmap_origin(); rc) return rc;
     if (int rc = test_sprite_alpha_uses_low_24_bits(); rc) return rc;
     if (int rc = test_sprite_battle_hanafuda_title_oam(); rc) return rc;

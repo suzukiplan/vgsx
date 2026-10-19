@@ -967,7 +967,37 @@ class VDP
             this->renderSpritePixel(displayAddress, color, alpha, oam->mask, ar, ag, ab, iar, iag, iab);
         };
 
+        auto clipCoordinate = [](int64_t value, int limit) {
+            if (value <= 0) return 0;
+            if (limit <= value) return limit;
+            return (int)value;
+        };
+
         if (pivotEnabled) {
+            struct Bounds {
+                int from, to;
+            };
+            auto bounds = [&](int32_t destination, int32_t pivot, int axisScale, bool flip, int limit) {
+                constexpr int64_t step = 65536 * 100;
+                auto floorPixel = [](int64_t value) {
+                    return value >= 0 ? value / step : (value - step + 1) / step;
+                };
+                const int64_t displacement = (32768 - (int64_t)destination * coordScale) * 100;
+                const int64_t base = (int64_t)pivot * axisScale + (flip ? -displacement : displacement);
+                const int64_t extent = (int64_t)size * axisScale * 65536;
+                // Solve 0 <= base +/- pixel * step < extent exactly. Flipping
+                // swaps the inclusive/exclusive edges; floor division also
+                // preserves those edges for negative and fractional positions.
+                const int64_t from = flip ? floorPixel(base - extent) + 1 : -floorPixel(base);
+                const int64_t to = flip ? floorPixel(base) + 1 : -floorPixel(base - extent);
+                return Bounds{clipCoordinate(from, limit), clipCoordinate(to, limit)};
+            };
+            const int axisScaleX = oam->slx ? 200 : scale;
+            const int axisScaleY = oam->sly ? 200 : scale;
+            const Bounds xBounds = bounds(oam->x, oam->pivot_x, axisScaleX, flipH, displayWidth);
+            const Bounds yBounds = bounds(oam->y, oam->pivot_y, axisScaleY, flipV, displayHeight);
+            if (xBounds.from >= xBounds.to || yBounds.from >= yBounds.to) return;
+
             // Inverse-map around the exact pivot. Rounding an expanded sprite's
             // origin first would move the focal point as its scale changes.
             auto source = [&](int pixel, int32_t destination, int32_t pivot, int axisScale, bool flip) {
@@ -982,16 +1012,14 @@ class VDP
                 return (int)(numerator / denominator);
             };
             int sourceX[VDP_DISPLAY_WIDTH];
-            for (int dx = 0; dx < displayWidth; dx++) {
-                sourceX[dx] = source(dx, oam->x, oam->pivot_x, oam->slx ? 200 : scale, flipH);
+            for (int dx = xBounds.from; dx < xBounds.to; dx++) {
+                sourceX[dx - xBounds.from] = source(dx, oam->x, oam->pivot_x, axisScaleX, flipH);
             }
-            for (int dy = 0; dy < displayHeight; dy++) {
-                int wy = source(dy, oam->y, oam->pivot_y, oam->sly ? 200 : scale, flipV);
-                if (wy < 0 || size <= wy) continue;
-                int displayAddress = dy * displayWidth;
-                for (int dx = 0; dx < displayWidth; dx++, displayAddress++) {
-                    int wx = sourceX[dx];
-                    if (0 <= wx && wx < size) draw(displayAddress, wx, wy);
+            for (int dy = yBounds.from; dy < yBounds.to; dy++) {
+                int wy = source(dy, oam->y, oam->pivot_y, axisScaleY, flipV);
+                int displayAddress = dy * displayWidth + xBounds.from;
+                for (int dx = xBounds.from; dx < xBounds.to; dx++, displayAddress++) {
+                    draw(displayAddress, sourceX[dx - xBounds.from], wy);
                 }
             }
             return;
@@ -999,11 +1027,6 @@ class VDP
 
         if (angle == 90) {
             // Common no-rotation path: clipped nearest-neighbour scaling.
-            auto clipCoordinate = [](int64_t value, int limit) {
-                if (value <= 0) return 0;
-                if (limit <= value) return limit;
-                return (int)value;
-            };
             const int fromX = clipCoordinate(originX, displayWidth);
             const int fromY = clipCoordinate(originY, displayHeight);
             const int64_t endX = originX + scaledSizeX;
