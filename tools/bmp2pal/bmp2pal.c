@@ -161,10 +161,11 @@ int main(int argc, char* argv[])
                 fprintf(stderr, "ERROR: Indexed PNG has no palette: %s\n", argv[1]);
                 goto ENDPROC;
             }
-            if (bit_depth != 8) {
-                fprintf(stderr, "ERROR: Indexed PNG must be 8bit: %s\n", argv[1]);
+            if (bit_depth != 1 && bit_depth != 2 && bit_depth != 4 && bit_depth != 8) {
+                fprintf(stderr, "ERROR: Indexed PNG must be 1, 2, 4 or 8bit: %s\n", argv[1]);
                 goto ENDPROC;
             }
+            /* PLTE entries are always RGB bytes, independent of pixel depth. */
             dh.bits = 8;
             dh.ctype = 0;
             dh.cnum = palette_size;
