@@ -18,7 +18,7 @@ OBJS := \
 	$(BUILD_DIR)/k8x12_jisx0201.o \
 	$(BUILD_DIR)/k8x12_jisx0208.o
 
-DEPS := $(OBJS:.o=.d)
+DEPS := $(OBJS:.o=.d) $(BUILD_DIR)/benchmark_sprites.d
 
 all: test_io
 	./test_io
@@ -55,7 +55,16 @@ test_io: $(OBJS)
 
 -include $(DEPS)
 
-clean:
-	rm -rf $(BUILD_DIR) test_io
+benchmark: benchmark_sprites
+	./benchmark_sprites
 
-.PHONY: all clean
+$(BUILD_DIR)/benchmark_sprites.o: benchmark_sprites.cpp | $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) $(DEPFLAGS) -c $< -o $@
+
+benchmark_sprites: $(BUILD_DIR)/benchmark_sprites.o $(BUILD_DIR)/vgs0math.o
+	$(CXX) $(CXXFLAGS) $^ -o $@
+
+clean:
+	rm -rf $(BUILD_DIR) test_io benchmark_sprites
+
+.PHONY: all clean benchmark

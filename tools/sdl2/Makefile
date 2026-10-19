@@ -17,6 +17,7 @@ OBJECTS += musashi.o
 HEADER_FILES = ${CORE_PATH}/*.h
 HEADER_FILES += ${CORE_PATH}/*.hpp
 HEADER_FILES += ../common/*.h
+HEADER_FILES += ../common/*.hpp
 
 all: vgsx
 

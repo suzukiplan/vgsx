@@ -1,5 +1,11 @@
 # Changes
 
+## Version 1.11.1
+
+- SDL2: Upload unfiltered frames at native resolution, reducing texture transfer size by 75%; allocate the expanded CRT texture only on first use.
+- SDL2: Use monotonic 60 Hz frame deadlines so V-SYNC waits and sleep overshoot do not accumulate additional delays. Added `--no-vsync` and `--profile` frame phase timings for diagnostics.
+- Core: Reduced sprite rendering cost by reusing sampled scanline colors and precomputing source coordinates for small rotated sprites.
+
 ## Version 1.11.0
 
 - Core: Added sprite pivot scaling with 16.16 fixed-point coordinates to prevent zoom jitter (`rotate = 0` only).

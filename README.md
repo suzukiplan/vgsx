@@ -1760,6 +1760,8 @@ usage: vgsx [-i]
             [-b /path/to/bgm.vgm]
             [-s /path/to/sfx.wav]
             [-x expected_exit_code]
+            [--profile]
+            [--no-vsync]
             { /path/to/program.elf | /path/to/program.rom }
 ```
 
@@ -1768,6 +1770,16 @@ usage: vgsx [-i]
 - The `-g`, `-b`, and `-s` options can be specified multiple times.
 - Program file (`.elf`) or ROM file (`rom`) are automatically identified based on the header information in the file header.
 - The `-x` option is intended for use in testing environments such as CI. If the exit code specified by the user program matches the expected value, the process exits with 0; otherwise, it exits with -1. When this option is specified, SDL video and audio output is skipped.
+
+With `--profile`, the emulator prints frame phase timings in microseconds every 120 frames and on slow frames (limited to one report per 30 frames): event handling, audio lock wait, mouse input, CPU/VDP execution, scaling/CRT filtering, texture upload, and presentation. `present` includes V-SYNC waiting; `total` excludes the frame limiter's sleep. For example:
+
+```sh
+vgsx --profile --ym-analog=real -m game.rom
+```
+
+Unfiltered display frames are uploaded at their native resolution. The expanded texture and buffer are allocated only when the CRT filter is first enabled.
+
+The frame limiter uses monotonic 60 Hz deadlines so sleep overshoot does not accumulate an additional delay. Renderer V-SYNC remains enabled by default; use `--no-vsync` to disable it when comparing display wait times. Presentation waits count toward the same frame deadline. `--profile` also prints the renderer name and V-SYNC state. Lag warnings allow 1 ms of scheduling jitter beyond the 16.67 ms frame budget.
 
 ## bin2var
 
