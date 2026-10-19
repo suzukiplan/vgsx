@@ -499,6 +499,8 @@ The Sprite rotation feature is useful when combined with the [Angle](#0xe00100-0
 
 ### (Pivot Scaling)
 
+![Pivot scaling: source pivot stays anchored while scaling and flipping](./pivot_scaling.png)
+
 - Pivot scaling samples the image directly around the specified source and destination pivots, preserving fractional coordinates throughout the transformation.
 - This avoids zoom jitter caused by rounding the sprite origin.
 - Scale locks, flips, alpha and masks also apply.
