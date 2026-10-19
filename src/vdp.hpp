@@ -947,24 +947,22 @@ class VDP
         const uint32_t iag = 255 - ag;
         const uint32_t iab = 255 - ab;
 
-        auto draw = [&](int displayAddress, int wx, int wy) {
-            uint32_t color;
+        auto sampleColor = [&](int wx, int wy, uint32_t& color) {
             if (oam->ram_ptr) {
                 const int address = (oam->ram_ptr + (wx + wy * size) * 4) & 0xFFFFC;
                 color = ((uint32_t)cpu_ram[address + 1] << 16) |
                         ((uint32_t)cpu_ram[address + 2] << 8) |
                         cpu_ram[address + 3];
-                if (!color) {
-                    return;
-                }
-            } else {
-                const uint8_t col = readSpritePixel(ptn, psize, wx, wy);
-                if (!col) {
-                    return;
-                }
-                color = this->ctx.palette[pal][col];
+                return color != 0;
             }
-            this->renderSpritePixel(displayAddress, color, alpha, oam->mask, ar, ag, ab, iar, iag, iab);
+            const uint8_t col = readSpritePixel(ptn, psize, wx, wy);
+            color = this->ctx.palette[pal][col];
+            return col != 0;
+        };
+        auto draw = [&](int displayAddress, int wx, int wy) {
+            uint32_t color;
+            if (sampleColor(wx, wy, color))
+                this->renderSpritePixel(displayAddress, color, alpha, oam->mask, ar, ag, ab, iar, iag, iab);
         };
 
         auto clipCoordinate = [](int64_t value, int limit) {
@@ -1033,19 +1031,32 @@ class VDP
             const int64_t endY = originY + scaledSizeY;
             const int toX = clipCoordinate(endX, displayWidth);
             const int toY = clipCoordinate(endY, displayHeight);
+            if (fromX >= toX || fromY >= toY) return;
             uint16_t sourceX[VDP_DISPLAY_WIDTH];
             for (int dx = fromX; dx < toX; dx++) {
                 int wx = (int)(((int64_t)dx - originX) * size / scaledSizeX);
                 sourceX[dx - fromX] = (uint16_t)(flipH ? size - wx - 1 : wx);
             }
+            // Enlarged scanlines often sample the same source row. Cache the
+            // colors and transparency, but blend against each destination pixel.
+            uint32_t rowColors[VDP_DISPLAY_WIDTH];
+            bool rowVisible[VDP_DISPLAY_WIDTH];
+            int previousY = -1;
             for (int dy = fromY; dy < toY; dy++) {
                 int wy = (int)((int64_t)(dy - originY) * size / scaledSizeY);
-                if (flipV) {
-                    wy = size - wy - 1;
+                if (flipV) wy = size - wy - 1;
+                if (wy != previousY) {
+                    for (int dx = fromX; dx < toX; dx++) {
+                        const int index = dx - fromX;
+                        rowVisible[index] = sampleColor(sourceX[index], wy, rowColors[index]);
+                    }
+                    previousY = wy;
                 }
                 int displayAddress = dy * displayWidth + fromX;
                 for (int dx = fromX; dx < toX; dx++, displayAddress++) {
-                    draw(displayAddress, sourceX[dx - fromX], wy);
+                    const int index = dx - fromX;
+                    if (rowVisible[index])
+                        this->renderSpritePixel(displayAddress, rowColors[index], alpha, oam->mask, ar, ag, ab, iar, iag, iab);
                 }
             }
             return;
@@ -1081,21 +1092,42 @@ class VDP
         if (displayWidth <= maxX) maxX = displayWidth - 1;
         if (displayHeight <= maxY) maxY = displayHeight - 1;
 
+        // Small rotated sprites reuse source coordinates across many pixels.
+        // Keep large sprites on the clipped path without a scale-sized table.
+        const bool useSourceLookup = scaledSizeX <= displayWidth && scaledSizeY <= displayHeight;
+        uint16_t sourceX[VDP_DISPLAY_WIDTH];
+        uint16_t sourceY[VDP_DISPLAY_HEIGHT];
+        if (useSourceLookup) {
+            for (int bx = 0; bx < scaledSizeX; bx++) {
+                int wx = bx * size / scaledSizeX;
+                sourceX[bx] = (uint16_t)(flipH ? size - wx - 1 : wx);
+            }
+            for (int by = 0; by < scaledSizeY; by++) {
+                int wy = by * size / scaledSizeY;
+                sourceY[by] = (uint16_t)(flipV ? size - wy - 1 : wy);
+            }
+        }
         const int64_t centerX = originX + halfSizeX;
         const int64_t centerY = originY + halfSizeY;
         for (int dy = (int)minY; dy <= (int)maxY; dy++) {
-            for (int dx = (int)minX; dx <= (int)maxX; dx++) {
-                const int64_t relativeX = (int64_t)dx - centerX;
-                const int64_t relativeY = (int64_t)dy - centerY;
-                const int64_t bx = (relativeX * sinValue + relativeY * cosValue) / 256 + halfSizeX;
-                const int64_t by = (-relativeX * cosValue + relativeY * sinValue) / 256 + halfSizeY;
+            int64_t rotatedX = (minX - centerX) * sinValue + ((int64_t)dy - centerY) * cosValue;
+            int64_t rotatedY = -(minX - centerX) * cosValue + ((int64_t)dy - centerY) * sinValue;
+            for (int dx = (int)minX; dx <= (int)maxX; dx++, rotatedX += sinValue, rotatedY -= cosValue) {
+                const int64_t bx = rotatedX / 256 + halfSizeX;
+                const int64_t by = rotatedY / 256 + halfSizeY;
                 if (bx < 0 || scaledSizeX <= bx || by < 0 || scaledSizeY <= by) {
                     continue;
                 }
-                int wx = (int)(bx * size / scaledSizeX);
-                int wy = (int)(by * size / scaledSizeY);
-                if (flipH) wx = size - wx - 1;
-                if (flipV) wy = size - wy - 1;
+                int wx, wy;
+                if (useSourceLookup) {
+                    wx = sourceX[bx];
+                    wy = sourceY[by];
+                } else {
+                    wx = (int)(bx * size / scaledSizeX);
+                    wy = (int)(by * size / scaledSizeY);
+                    if (flipH) wx = size - wx - 1;
+                    if (flipV) wy = size - wy - 1;
+                }
                 draw(dy * displayWidth + dx, wx, wy);
             }
         }

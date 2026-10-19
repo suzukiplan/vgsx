@@ -18,17 +18,26 @@ static int fail(const char* msg)
 
 static int test_readme_vdp_register_doc()
 {
-    const char* candidates[] = {"README.md", "../../README.md"};
+    const struct {
+        const char* readme;
+        const char* vdpHeader;
+    } candidates[] = {
+        {"README.md", "src/vdp.hpp"},
+        {"../../README.md", "../../src/vdp.hpp"},
+    };
     const char* readmePath = nullptr;
-    for (const char* candidate : candidates) {
-        if (FILE* fp = std::fopen(candidate, "rb")) {
+    for (const auto& candidate : candidates) {
+        // Identify the repository root so the host-test README is never
+        // mistaken for the register specification. A missing root README
+        // must still fail validation rather than falling back to another file.
+        if (FILE* fp = std::fopen(candidate.vdpHeader, "rb")) {
             std::fclose(fp);
-            readmePath = candidate;
+            readmePath = candidate.readme;
             break;
         }
     }
     if (!readmePath) {
-        return fail("README.md not found (tried README.md and ../../README.md)");
+        return fail("repository root not found (tried . and ../..)");
     }
 
     char msg[512];
@@ -535,6 +544,119 @@ static int test_sprite_battle_hanafuda_title_oam()
         for (uint8_t byte : vdp->ctx.ptn[i]) {
             if (byte != 0x11) {
                 return fail("sprite rendering wrote past the display into pattern memory");
+            }
+        }
+    }
+    return 0;
+}
+
+static int test_sprite_sampling_matches_reference()
+{
+    auto vdp = std::make_unique<VDP>();
+    setup_sprite_only_vdp(*vdp);
+    constexpr int size = 40;
+    constexpr uint32_t background = 0x204060;
+    const uint32_t colors[] = {0, 0, 0xABCDEF, 0x123456};
+    std::vector<uint8_t> ram(1024 * 1024, 0);
+    vdp->setCpuRam(ram.data());
+    vdp->ctx.palette[0][0] = background;
+    vdp->ctx.reg.skip0 = 0;
+    vdp->ctx.reg.bmp[0] = 1;
+    for (int y = 0; y < VDP_HEIGHT; y++) {
+        for (int x = 0; x < VDP_WIDTH; x++)
+            vdp->ctx.nametbl[0][y * VDP_WIDTH + x] = background + (x + y) % 16;
+    }
+    for (int i = 0; i < 4; i++) vdp->ctx.palette[1][i] = colors[i];
+    std::memset(vdp->ctx.ptn, 0, 25 * 32);
+    for (int y = 0; y < size; y++) {
+        for (int x = 0; x < size; x++) {
+            int col = (x * 3 + y * 5) % 4;
+            int tile = (y / 8) * 5 + x / 8;
+            vdp->ctx.ptn[tile][(y % 8) * 4 + (x % 8) / 2] |= col << (x % 2 ? 0 : 4);
+            int address = (y * size + x) * 4;
+            ram[address + 1] = colors[col] >> 16;
+            ram[address + 2] = colors[col] >> 8;
+            ram[address + 3] = colors[col];
+        }
+    }
+    struct TestCase {
+        int x, y, rotate, scale, slx, sly;
+    } cases[] = {
+        {13, 27, 0, 7, 0, 1},
+        {-20, -10, 0, 175, 0, 0},
+        {300, 190, 0, 399, 1, 0},
+        {30, 40, 37, 99, 0, 1},
+        {-15, -10, -47, 175, 1, 0},
+        {310, 190, 211, 399, 0, 0},
+        {0, 0, 90, 100, 0, 0},
+        {0, 0, 37, 3200, 0, 0},
+    };
+    auto& sprite = vdp->ctx.oam[0];
+    sprite.visible = 1;
+    sprite.size = 4;
+    for (const auto& test : cases) {
+        sprite.x = test.x;
+        sprite.y = test.y;
+        sprite.rotate = test.rotate;
+        sprite.scale = test.scale;
+        sprite.slx = test.slx;
+        sprite.sly = test.sly;
+        int width = size * (test.slx ? 200 : test.scale * 2) / 100;
+        int height = size * (test.sly ? 200 : test.scale * 2) / 100;
+        int ox = test.x * 2 + (size * 2 - width) / 2;
+        int oy = test.y * 2 + (size * 2 - height) / 2;
+        int angle = ((90 - test.rotate) % 360 + 360) % 360;
+        int sine = vgsx_sin[angle], cosine = vgsx_cos[angle];
+        int cx = ox + width / 2, cy = oy + height / 2;
+        int left = VDP_DISPLAY_WIDTH, right = -1, top = VDP_DISPLAY_HEIGHT, bottom = -1;
+        for (int by : {0, height - 1}) {
+            for (int bx : {0, width - 1}) {
+                int x = ((bx - width / 2) * sine - (by - height / 2) * cosine) / 256 + cx;
+                int y = ((by - height / 2) * sine + (bx - width / 2) * cosine) / 256 + cy;
+                if (x < left) left = x;
+                if (x > right) right = x;
+                if (y < top) top = y;
+                if (y > bottom) bottom = y;
+            }
+        }
+        for (int flags = 0; flags < 32; flags++) {
+            sprite.attr = 0x10000 | ((uint32_t)(flags & 3) << 30);
+            sprite.ram_ptr = flags & 4 ? 1 : 0;
+            sprite.alpha = flags & 8 ? 0xD08040 : 0xFFFFFFFF;
+            sprite.mask = flags & 16 ? 0xF09030 : 0;
+            vdp->render();
+            for (int y = 0; y < VDP_DISPLAY_HEIGHT; y++) {
+                for (int x = 0; x < VDP_DISPLAY_WIDTH; x++) {
+                    const uint32_t backdrop = background + (x / 2 + y / 2) % 16;
+                    uint32_t expected = backdrop;
+                    // Direct per-pixel inverse mapping is independent of row
+                    // caching and incremental rotation in the renderer.
+                    int bx = ((x - cx) * sine + (y - cy) * cosine) / 256 + width / 2;
+                    int by = (-(x - cx) * cosine + (y - cy) * sine) / 256 + height / 2;
+                    if (left <= x && x <= right && top <= y && y <= bottom &&
+                        0 <= bx && bx < width && 0 <= by && by < height) {
+                        int sx = bx * size / width;
+                        int sy = by * size / height;
+                        if (flags & 2) sx = size - sx - 1;
+                        if (flags & 1) sy = size - sy - 1;
+                        int col = (sx * 3 + sy * 5) % 4;
+                        // Palette index 1 is opaque black; RAM black is transparent.
+                        bool visible = sprite.ram_ptr ? colors[col] != 0 : col != 0;
+                        if (visible) {
+                            uint32_t color = sprite.mask ? sprite.mask : colors[col];
+                            expected = 0;
+                            for (int shift : {0, 8, 16}) {
+                                uint32_t alpha = (sprite.alpha >> shift) & 255;
+                                uint32_t value = (((color >> shift) & 255) * alpha +
+                                    ((backdrop >> shift) & 255) * (255 - alpha)) >> 8;
+                                if (sprite.alpha == 0xFFFFFFFF) value = (color >> shift) & 255;
+                                expected |= value << shift;
+                            }
+                        }
+                    }
+                    if (vdp->ctx.display[y * VDP_DISPLAY_WIDTH + x] != expected)
+                        return fail("sprite sampling changed with scaling, rotation, flips, alpha or masks");
+                }
             }
         }
     }
@@ -1121,6 +1243,7 @@ int main()
     if (int rc = test_sprite_vertical_flip_and_bitmap_origin(); rc) return rc;
     if (int rc = test_sprite_alpha_uses_low_24_bits(); rc) return rc;
     if (int rc = test_sprite_battle_hanafuda_title_oam(); rc) return rc;
+    if (int rc = test_sprite_sampling_matches_reference(); rc) return rc;
     if (int rc = test_sprite_boundaries_and_extreme_oam_values(); rc) return rc;
     if (int rc = test_sprite_ram_flip_scale_rotate_and_alpha(); rc) return rc;
     if (int rc = test_palette_1024_addressing_and_rendering(vgsx); rc) return rc;

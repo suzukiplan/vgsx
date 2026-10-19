@@ -1,5 +1,9 @@
 # Changes
 
+## Version 1.11.1
+
+- Core: Reduced sprite rendering cost by reusing sampled scanline colors and precomputing source coordinates for small rotated sprites.
+
 ## Version 1.11.0
 
 - Core: Added sprite pivot scaling with 16.16 fixed-point coordinates to prevent zoom jitter (`rotate = 0` only).
