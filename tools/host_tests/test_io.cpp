@@ -266,6 +266,69 @@ static int test_sprite_pivot_zoom_does_not_move_focus()
     return 0;
 }
 
+static int test_sprite_pivot_flip_keeps_source_anchor()
+{
+    auto vdp = std::make_unique<VDP>();
+    std::vector<uint8_t> ram(1024 * 1024, 0);
+    for (int y = 0; y < 8; y++) {
+        for (int x = 0; x < 8; x++) {
+            int address = (y * 8 + x) * 4;
+            ram[address + 1] = x + 1;
+            ram[address + 2] = y + 1;
+            ram[address + 3] = 0x56;
+        }
+    }
+    vdp->setCpuRam(ram.data());
+    vdp->reset();
+    vdp->ctx.reg.skip0 = vdp->ctx.reg.skip1 = 1;
+    vdp->ctx.reg.skip2 = vdp->ctx.reg.skip3 = 1;
+    auto& sprite = vdp->ctx.oam[0];
+    sprite.visible = 1;
+    sprite.alpha = 0xFFFFFF;
+    sprite.ram_ptr = 1;
+    sprite.pivot_enabled = 1;
+    sprite.pivot_x = 1 * 65536 + 16384;
+    sprite.pivot_y = 5 * 65536 + 49152;
+    // Place the destination pivot exactly at a display pixel center so its
+    // source sample is invariant under both flipping and scaling.
+    sprite.x = 80 * 65536 + 16384;
+    sprite.y = 60 * 65536 + 16384;
+    constexpr int anchorX = 160;
+    constexpr int anchorY = 120;
+    constexpr uint32_t anchorColor = 0x020656;
+    const int scales[] = {50, 100, 175, 400};
+    for (int scale : scales) {
+        sprite.scale = scale;
+        for (int locks = 0; locks < 4; locks++) {
+            sprite.slx = locks & 1;
+            sprite.sly = (locks >> 1) & 1;
+            sprite.attr = 0;
+            vdp->render();
+            std::vector<uint32_t> original(vdp->ctx.display,
+                vdp->ctx.display + VDP_DISPLAY_WIDTH * VDP_DISPLAY_HEIGHT);
+            for (uint32_t flips = 0; flips < 4; flips++) {
+                sprite.attr = flips << 30;
+                vdp->render();
+                if (vdp->ctx.display[anchorY * VDP_DISPLAY_WIDTH + anchorX] != anchorColor)
+                    return fail("flipped pivot sprite moved the specified source anchor");
+                for (int y = 0; y < VDP_DISPLAY_HEIGHT; y++) {
+                    for (int x = 0; x < VDP_DISPLAY_WIDTH; x++) {
+                        int originalX = (flips & 2) ? 2 * anchorX - x : x;
+                        int originalY = (flips & 1) ? 2 * anchorY - y : y;
+                        uint32_t expected = 0;
+                        if (0 <= originalX && originalX < VDP_DISPLAY_WIDTH &&
+                            0 <= originalY && originalY < VDP_DISPLAY_HEIGHT)
+                            expected = original[originalY * VDP_DISPLAY_WIDTH + originalX];
+                        if (vdp->ctx.display[y * VDP_DISPLAY_WIDTH + x] != expected)
+                            return fail("pivot flip did not reflect the sprite around its destination anchor");
+                    }
+                }
+            }
+        }
+    }
+    return 0;
+}
+
 static int test_sprite_vertical_flip_and_bitmap_origin()
 {
     constexpr uint32_t kColor = 0x123456;
@@ -976,6 +1039,7 @@ int main()
     if (int rc = test_sprite_size_63_renders_512_pixels(); rc) return rc;
     if (int rc = test_sprite_large_scale_is_clipped_to_display(); rc) return rc;
     if (int rc = test_sprite_pivot_zoom_does_not_move_focus(); rc) return rc;
+    if (int rc = test_sprite_pivot_flip_keeps_source_anchor(); rc) return rc;
     if (int rc = test_sprite_vertical_flip_and_bitmap_origin(); rc) return rc;
     if (int rc = test_sprite_alpha_uses_low_24_bits(); rc) return rc;
     if (int rc = test_sprite_battle_hanafuda_title_oam(); rc) return rc;

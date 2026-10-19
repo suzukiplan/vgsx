@@ -970,23 +970,24 @@ class VDP
         if (pivotEnabled) {
             // Inverse-map around the exact pivot. Rounding an expanded sprite's
             // origin first would move the focal point as its scale changes.
-            auto source = [&](int pixel, int32_t destination, int32_t pivot, int axisScale) {
+            auto source = [&](int pixel, int32_t destination, int32_t pivot, int axisScale, bool flip) {
                 const int64_t denominator = (int64_t)axisScale * 65536;
-                const int64_t numerator = (int64_t)pivot * axisScale
-                    + ((int64_t)pixel * 65536 + 32768 - (int64_t)destination * coordScale) * 100;
+                const int64_t displacement =
+                    ((int64_t)pixel * 65536 + 32768 - (int64_t)destination * coordScale) * 100;
+                // The pivot is in pre-flip source coordinates, so reflect only
+                // the displacement to keep that source point anchored.
+                const int64_t numerator = (int64_t)pivot * axisScale + (flip ? -displacement : displacement);
                 if (numerator < 0) return -1;
                 if (numerator >= (int64_t)size * denominator) return size;
                 return (int)(numerator / denominator);
             };
             int sourceX[VDP_DISPLAY_WIDTH];
             for (int dx = 0; dx < displayWidth; dx++) {
-                int wx = source(dx, oam->x, oam->pivot_x, oam->slx ? 200 : scale);
-                sourceX[dx] = flipH ? size - wx - 1 : wx;
+                sourceX[dx] = source(dx, oam->x, oam->pivot_x, oam->slx ? 200 : scale, flipH);
             }
             for (int dy = 0; dy < displayHeight; dy++) {
-                int wy = source(dy, oam->y, oam->pivot_y, oam->sly ? 200 : scale);
+                int wy = source(dy, oam->y, oam->pivot_y, oam->sly ? 200 : scale, flipV);
                 if (wy < 0 || size <= wy) continue;
-                if (flipV) wy = size - wy - 1;
                 int displayAddress = dy * displayWidth;
                 for (int dx = 0; dx < displayWidth; dx++, displayAddress++) {
                     int wx = sourceX[dx];
