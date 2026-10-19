@@ -902,6 +902,8 @@ I/O instructions in VGS-X can be executed by performing input/output operations 
 
 Note that all addresses and values for I/O instructions must be specified as 32-bit values.
 
+In means a read by the program; Out means a write. `o` indicates a supported operation; `-` indicates an unsupported operation.
+
 | Address  | In  | Out | Description |
 |:--------:|:---:|:---:|:------------|
 | 0xE00000 |  o  |  -  | [V-SYNC](#0xe00000in---v-sync) |
@@ -942,16 +944,16 @@ Note that all addresses and values for I/O instructions must be specified as 32-
 | 0xE02114 |  o  |  -  | [Gamepad: Get Button ID of Start button](#0xe021xxio---gamepad-types) |
 | 0xE02118 |  -  |  o  | [Gamepad: Get Button Name String (Button ID)](#0xe021xxio---gamepad-types) |
 | 0xE0211C |  -  |  o  | [Gamepad: Get Button Name String (RAM address)](#0xe021xxio---gamepad-types) |
-| 0xE03000 |  o  |  -  | [SaveData: Address](#0xe030xxio---savedata) |
+| 0xE03000 |  -  |  o  | [SaveData: Address](#0xe030xxio---savedata) |
 | 0xE03004 |  o  |  o  | [SaveData: Execute Save(out) or Load(in)](#0xe030xxio---savedata) |
-| 0xE03008 |  -  |  o  | [SaveData: Check Size](#0xe030xxio---savedata) |
-| 0xE0300C |  o  |  -  | [SaveData: Implicit Save](#0xe030xxio---savedata) |
-| 0xE03010 |  o  |  -  | [SaveData: Load Request Size](#0xe030xxio---savedata) |
-| 0xE03100 |  o  |  -  | [Sequencial: Open for Write](#0xe031xxio---large-sequencial-file-io) |
-| 0xE03104 |  o  |  -  | [Sequencial: Write a Byte](#0xe031xxio---large-sequencial-file-io) |
-| 0xE03108 |  o  |  -  | [Sequencial: Commit](#0xe031xxio---large-sequencial-file-io) |
-| 0xE03110 |  o  |  -  | [Sequencial: Open for Read](#0xe031xxio---large-sequencial-file-io) |
-| 0xE03114 |  -  |  o  | [Sequencial: Read a Byte](#0xe031xxio---large-sequencial-file-io) |
+| 0xE03008 |  o  |  -  | [SaveData: Check Size](#0xe030xxio---savedata) |
+| 0xE0300C |  -  |  o  | [SaveData: Implicit Save](#0xe030xxio---savedata) |
+| 0xE03010 |  -  |  o  | [SaveData: Load Request Size](#0xe030xxio---savedata) |
+| 0xE03100 |  -  |  o  | [Sequencial: Open for Write](#0xe031xxio---large-sequencial-file-io) |
+| 0xE03104 |  -  |  o  | [Sequencial: Write a Byte](#0xe031xxio---large-sequencial-file-io) |
+| 0xE03108 |  -  |  o  | [Sequencial: Commit](#0xe031xxio---large-sequencial-file-io) |
+| 0xE03110 |  -  |  o  | [Sequencial: Open for Read](#0xe031xxio---large-sequencial-file-io) |
+| 0xE03114 |  o  |  -  | [Sequencial: Read a Byte](#0xe031xxio---large-sequencial-file-io) |
 | 0xE04000 |  o  |  -  | [UTC: Year](#0xe040xxin---calendar)|
 | 0xE04004 |  o  |  -  | [UTC: Month](#0xe040xxin---calendar)|
 | 0xE04008 |  o  |  -  | [UTC: Day of Month](#0xe040xxin---calendar)|
@@ -964,6 +966,7 @@ Note that all addresses and values for I/O instructions must be specified as 32-
 | 0xE0402C |  o  |  -  | [Local: Hour](#0xe040xxin---calendar)|
 | 0xE04030 |  o  |  -  | [Local: Minute](#0xe040xxin---calendar)|
 | 0xE04034 |  o  |  -  | [Local: Second](#0xe040xxin---calendar)|
+| 0xE05000 |  o  |  -  | [Mouse: Enabled](#0xe050xxio---mouse) |
 | 0xE05004 |  o  |  o  | [Mouse: Hidden](#0xe050xxio---mouse) |
 | 0xE05008 |  o  |  -  | [Mouse: Moving](#0xe050xxio---mouse) |
 | 0xE0500C |  o  |  -  | [Mouse: X](#0xe050xxio---mouse) |
@@ -1008,7 +1011,7 @@ Note that all addresses and values for I/O instructions must be specified as 32-
 | 0xE0701C |  o  |  -  | [Debug Switch](#0xe070xx---debug-switch) |
 | 0xE07020 |  o  |  -  | [Debug Switch](#0xe070xx---debug-switch) |
 | 0xE07024 |  o  |  -  | [Debug Switch](#0xe070xx---debug-switch) |
-| 0xE7FFF4 |  o  |  -  | [Abort](#0xe7fff4out---abort) |
+| 0xE7FFF4 |  -  |  o  | [Abort](#0xe7fff4out---abort) |
 | 0xE7FFF8 |  -  |  o  | [Reset](#0xe7fff8out---reset) |
 | 0xE7FFFC |  -  |  o  | [Exit](#0xe7fffcout---exit) |
 | 0xE80000 ~ 0xE8FFFC | o | o | [User-Defined I/O](#0xe8xxxxio---user-defined-io) |
@@ -1430,7 +1433,7 @@ The mouse interface exposes the current pointer state in screen coordinates (`32
 
 | Address | In | Out | Description |
 |:-------:|:--:|:---:|:------------|
-| 0xE05000 | Enabled | Enabled | Mouse input enabled flag (`0`: disabled, non-zero: enabled) |
+| 0xE05000 | Enabled | - | Mouse input enabled flag (`0`: disabled, non-zero: enabled) |
 | 0xE05004 | Hidden | Hidden | VGS-X cursor hidden flag (`0`: show, non-zero: hide) |
 | 0xE05008 | Moving | - | Whether the mouse moved during the current frame |
 | 0xE0500C | X | - | Current mouse X coordinate |
@@ -1460,7 +1463,9 @@ Example:
 
 ```c
 vgs_mouse_setup(128, 0);
-vgs_mouse_enabled(ON);
+if (!vgs_mouse_enabled()) {
+    return;
+}
 vgs_mouse_hidden(OFF);
 
 if (vgs_mouse_left_clicked(&x, &y)) {
@@ -1652,7 +1657,7 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | gamepad | `vgs_button_id_start` | Get the [Button ID](#0xe021xxio---gamepad-types) for the Start button on the connected gamepad. |
 | gamepad | `vgs_button_name` | Get the [Name String](#0xe021xxio---gamepad-types) of the button identifier. |
 | mouse | `vgs_mouse_setup` | Set the mouse cursor [pattern](#0xe050xxio---mouse) and palette. |
-| mouse | `vgs_mouse_enabled` | Enable or disable the [mouse](#0xe050xxio---mouse). |
+| mouse | `vgs_mouse_enabled` | Check whether the [mouse](#0xe050xxio---mouse) is enabled. |
 | mouse | `vgs_mouse_hidden` | Show or hide the VGS-X [mouse cursor](#0xe050xxio---mouse). |
 | mouse | `vgs_mouse_moving` | Check whether the [mouse](#0xe050xxio---mouse) moved in the current frame. |
 | mouse | `vgs_mouse_x` | Get the current mouse X coordinate. |

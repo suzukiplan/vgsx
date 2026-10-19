@@ -836,6 +836,8 @@ X = 160 + (x - 160) * (1 - v * s / F) / near_den
 
 VGS-X における I/O は 0xE00000～0xEFFFFF のメモリ領域に 32 ビット値でアクセスすることで実行します。
 
+In はプログラムからの読み出し、Out は書き込みを表します。`o` は対応あり、`-` は対応なしを意味します。
+
 | Address  | In  | Out | Description |
 |:--------:|:---:|:---:|:------------|
 | 0xE00000 |  o  |  -  | [V-SYNC](#0xe00000in---v-sync) |
@@ -876,16 +878,16 @@ VGS-X における I/O は 0xE00000～0xEFFFFF のメモリ領域に 32 ビッ�
 | 0xE02114 |  o  |  -  | [Gamepad: Button ID (Start)](#0xe021xxio---gamepad-types) |
 | 0xE02118 |  -  |  o  | [Gamepad: Button Name (ID)](#0xe021xxio---gamepad-types) |
 | 0xE0211C |  -  |  o  | [Gamepad: Button Name (Address)](#0xe021xxio---gamepad-types) |
-| 0xE03000 |  o  |  -  | [SaveData: Address](#0xe030xxio---savedata) |
+| 0xE03000 |  -  |  o  | [SaveData: Address](#0xe030xxio---savedata) |
 | 0xE03004 |  o  |  o  | [SaveData: Execute](#0xe030xxio---savedata) |
-| 0xE03008 |  -  |  o  | [SaveData: Size](#0xe030xxio---savedata) |
-| 0xE0300C |  o  |  -  | [SaveData: Implicit Save](#0xe030xxio---savedata) |
-| 0xE03010 |  o  |  -  | [SaveData: Load Request Size](#0xe030xxio---savedata) |
-| 0xE03100 |  o  |  -  | [Sequential: Open Write](#0xe031xxio---large-sequencial-file-io) |
-| 0xE03104 |  o  |  -  | [Sequential: Write Byte](#0xe031xxio---large-sequencial-file-io) |
-| 0xE03108 |  o  |  -  | [Sequential: Commit](#0xe031xxio---large-sequencial-file-io) |
-| 0xE03110 |  o  |  -  | [Sequential: Open Read](#0xe031xxio---large-sequencial-file-io) |
-| 0xE03114 |  -  |  o  | [Sequential: Read Byte](#0xe031xxio---large-sequencial-file-io) |
+| 0xE03008 |  o  |  -  | [SaveData: Size](#0xe030xxio---savedata) |
+| 0xE0300C |  -  |  o  | [SaveData: Implicit Save](#0xe030xxio---savedata) |
+| 0xE03010 |  -  |  o  | [SaveData: Load Request Size](#0xe030xxio---savedata) |
+| 0xE03100 |  -  |  o  | [Sequential: Open Write](#0xe031xxio---large-sequencial-file-io) |
+| 0xE03104 |  -  |  o  | [Sequential: Write Byte](#0xe031xxio---large-sequencial-file-io) |
+| 0xE03108 |  -  |  o  | [Sequential: Commit](#0xe031xxio---large-sequencial-file-io) |
+| 0xE03110 |  -  |  o  | [Sequential: Open Read](#0xe031xxio---large-sequencial-file-io) |
+| 0xE03114 |  o  |  -  | [Sequential: Read Byte](#0xe031xxio---large-sequencial-file-io) |
 | 0xE04000 |  o  |  -  | [UTC: Year](#0xe040xxin---calendar)|
 | 0xE04004 |  o  |  -  | [UTC: Month](#0xe040xxin---calendar)|
 | 0xE04008 |  o  |  -  | [UTC: Day of Month](#0xe040xxin---calendar)|
@@ -898,6 +900,7 @@ VGS-X における I/O は 0xE00000～0xEFFFFF のメモリ領域に 32 ビッ�
 | 0xE0402C |  o  |  -  | [Local: Hour](#0xe040xxin---calendar)|
 | 0xE04030 |  o  |  -  | [Local: Minute](#0xe040xxin---calendar)|
 | 0xE04034 |  o  |  -  | [Local: Second](#0xe040xxin---calendar)|
+| 0xE05000 |  o  |  -  | [Mouse: Enabled](#0xe050xxio---mouse) |
 | 0xE05004 |  o  |  o  | [Mouse: Hidden](#0xe050xxio---mouse) |
 | 0xE05008 |  o  |  -  | [Mouse: Moving](#0xe050xxio---mouse) |
 | 0xE0500C |  o  |  -  | [Mouse: X](#0xe050xxio---mouse) |
@@ -942,7 +945,7 @@ VGS-X における I/O は 0xE00000～0xEFFFFF のメモリ領域に 32 ビッ�
 | 0xE0701C |  o  |  -  | [Debug Switch](#0xe070xx---debug-switch) |
 | 0xE07020 |  o  |  -  | [Debug Switch](#0xe070xx---debug-switch) |
 | 0xE07024 |  o  |  -  | [Debug Switch](#0xe070xx---debug-switch) |
-| 0xE7FFF4 |  o  |  -  | [Abort](#0xe7fff4out---abort) |
+| 0xE7FFF4 |  -  |  o  | [Abort](#0xe7fff4out---abort) |
 | 0xE7FFF8 |  -  |  o  | [Reset](#0xe7fff8out---reset) |
 | 0xE7FFFC |  -  |  o  | [Exit](#0xe7fffcout---exit) |
 | 0xE80000 ~ 0xE8FFFC |  o  |  o  | [User-Defined I/O](#0xe8xxxxio---user-defined-io) |
@@ -1287,7 +1290,7 @@ uint32_t value = VGS_IO_SEQ_READ; // 次の 1 byte を読み出し
 
 | Address | In | Out | 説明 |
 |:-------:|:--:|:---:|:-----|
-| 0xE05000 | Enabled | Enabled | マウス入力の有効フラグ（`0`: 無効、非 0: 有効） |
+| 0xE05000 | Enabled | - | マウス入力の有効フラグ（`0`: 無効、非 0: 有効） |
 | 0xE05004 | Hidden | Hidden | VGS-X カーソルの非表示フラグ（`0`: 表示、非 0: 非表示） |
 | 0xE05008 | Moving | - | 現フレームでマウスが移動したか |
 | 0xE0500C | X | - | 現在のマウス X 座標 |
@@ -1317,7 +1320,9 @@ uint32_t value = VGS_IO_SEQ_READ; // 次の 1 byte を読み出し
 
 ```c
 vgs_mouse_setup(128, 0);
-vgs_mouse_enabled(ON);
+if (!vgs_mouse_enabled()) {
+    return;
+}
 vgs_mouse_hidden(OFF);
 
 if (vgs_mouse_left_clicked(&x, &y)) {
@@ -1504,7 +1509,7 @@ VGS Standard Library（Video Game System Standard Library）は、VGS-X と将�
 | gamepad | `vgs_button_id_start` | 接続中パッドの Start ボタンの [Button ID](#0xe021xxio---gamepad-types) を取得する |
 | gamepad | `vgs_button_name` | ボタン識別子に対応する名称文字列を取得する |
 | mouse | `vgs_mouse_setup` | マウスカーソルの [pattern](#0xe050xxio---mouse) と palette を設定する |
-| mouse | `vgs_mouse_enabled` | [mouse](#0xe050xxio---mouse) を有効または無効にする |
+| mouse | `vgs_mouse_enabled` | [mouse](#0xe050xxio---mouse) が有効か確認する |
 | mouse | `vgs_mouse_hidden` | VGS-X の [mouse cursor](#0xe050xxio---mouse) を表示または非表示にする |
 | mouse | `vgs_mouse_moving` | 現フレームで [mouse](#0xe050xxio---mouse) が移動したか確認する |
 | mouse | `vgs_mouse_x` | 現在のマウス X 座標を取得する |
