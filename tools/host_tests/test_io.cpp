@@ -9,6 +9,8 @@
 #include "vdp.hpp"
 #include "vgsx.h"
 #include "vgs_io.h"
+#include "../common/frame_pacer.hpp"
+#include "../common/display_upload.hpp"
 
 static int fail(const char* msg)
 {
@@ -43,6 +45,70 @@ static int test_readme_vdp_register_doc()
     char msg[512];
     if (!VDP::checkReadmeVdpRegisterSectionComplete(readmePath, msg, sizeof(msg))) {
         return fail(msg[0] ? msg : "VDP register doc check failed");
+    }
+    return 0;
+}
+
+static int test_frame_pacer()
+{
+    using Pacer = frame_timing::FramePacer;
+    using namespace std::chrono;
+    const Pacer::TimePoint origin{};
+    Pacer pacer(origin);
+    if (pacer.nextFrame(origin + milliseconds(4)) != origin + Pacer::period)
+        return fail("frame pacing did not wait for the first deadline");
+    if (pacer.nextFrame(origin + Pacer::period + milliseconds(4)) != origin + 2 * Pacer::period)
+        return fail("frame pacing accumulated processing or sleep time");
+
+    Pacer synchronized(origin);
+    if (synchronized.nextFrame(origin + Pacer::period) != origin + Pacer::period)
+        return fail("frame pacing added a delay after V-SYNC");
+    const auto stalled = origin + milliseconds(80);
+    if (synchronized.nextFrame(stalled) != stalled ||
+        synchronized.nextFrame(stalled + milliseconds(4)) != stalled + Pacer::period)
+        return fail("frame pacing did not recover from a stall without catch-up frames");
+    if (Pacer::isLate(microseconds(16891)) || !Pacer::isLate(milliseconds(20)) ||
+        !Pacer::isLate(milliseconds(80)))
+        return fail("lag detection confused scheduling jitter with an overrun");
+
+    // Simulate 60/120 Hz presentation and 100us sleep overshoot without using
+    // real timers. An absolute schedule must not drift into missed V-SYNCs.
+    for (int refreshMultiple : {1, 2}) {
+        auto now = origin + milliseconds(2);
+        Pacer displayPacer(now);
+        const auto refresh = Pacer::period / refreshMultiple;
+        for (int frame = 0; frame < 600; frame++) {
+            const auto ready = now + milliseconds(8);
+            const auto elapsed = ready - origin;
+            const auto refreshCount = elapsed / refresh + (elapsed % refresh != Pacer::Clock::duration::zero());
+            const auto presented = origin + refresh * refreshCount;
+            const auto expected = origin + Pacer::period * (frame + 1);
+            if (presented < expected - microseconds(10) || presented > expected + microseconds(10))
+                return fail("frame pacing drifted and missed a display refresh");
+            now = displayPacer.nextFrame(presented);
+            if (now > presented) now += microseconds(100);
+        }
+    }
+    return 0;
+}
+
+static int test_native_display_upload()
+{
+    constexpr int width = 17, height = 3, pitch = 24;
+    constexpr uint32_t sentinel = 0x11223344;
+    uint32_t source[width * height];
+    uint32_t destination[pitch * height];
+    for (int i = 0; i < width * height; i++) source[i] = i * 0x10203;
+    for (auto& pixel : destination) pixel = sentinel;
+    display_upload::copyOpaque(source, destination, width, height, pitch);
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < pitch; x++) {
+            // A nearest-neighbour 2x copy shrunk back to the window gives
+            // exactly these colors. Row padding must remain untouched.
+            uint32_t expected = x < width ? 0xFF000000u | source[y * width + x] : sentinel;
+            if (destination[y * pitch + x] != expected)
+                return fail("native display upload changed colors, opacity or row padding");
+        }
     }
     return 0;
 }
@@ -1225,6 +1291,8 @@ int main()
     vgsx.disableBootBios();
 
     if (int rc = test_readme_vdp_register_doc(); rc) return rc;
+    if (int rc = test_frame_pacer(); rc) return rc;
+    if (int rc = test_native_display_upload(); rc) return rc;
     if (int rc = test_mode7(); rc) return rc;
     if (int rc = test_mode7_depth(); rc) return rc;
     if (int rc = test_mode7_backdrop(); rc) return rc;

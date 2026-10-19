@@ -22,3 +22,6 @@ The regression tests compare sprite output against direct inverse sampling,
 including clipping, flips, scale locks, transparent pixels, opaque palette
 black, RAM bitmaps, alpha, and masks over a varying background. They also cover
 pivot scaling and Mode 7 independently and together.
+
+Frame pacing tests simulate 60/120 Hz presentation, timer overshoot, and stall
+recovery without sleeping or depending on machine speed.

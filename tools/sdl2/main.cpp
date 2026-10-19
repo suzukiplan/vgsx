@@ -6,6 +6,9 @@
 #include <iostream>
 #include <fstream>
 #include <chrono>
+#include <thread>
+#include "../common/frame_pacer.hpp"
+#include "../common/display_upload.hpp"
 #include <cstring>
 #include <vector>
 #include "vgsx.h"
@@ -47,22 +50,20 @@ static int getSwitchIndexFromKeycode(SDL_Keycode keycode)
     return -1;
 }
 
-static void scaleDisplay2x(const uint32_t* src, uint32_t* dst, int width, int height)
+static SDL_Texture* createDisplayTexture(SDL_Renderer* renderer, int width, int height)
 {
-    const int dstWidth = width * kDisplayScale2x;
-    for (int y = 0; y < height; y++) {
-        const int srcRow = y * width;
-        const int dstRowTop = (y * kDisplayScale2x) * dstWidth;
-        const int dstRowBottom = dstRowTop + dstWidth;
-        for (int x = 0; x < width; x++) {
-            const uint32_t pixel = 0xFF000000u | src[srcRow + x];
-            const int dstX = x * kDisplayScale2x;
-            dst[dstRowTop + dstX] = pixel;
-            dst[dstRowTop + dstX + 1] = pixel;
-            dst[dstRowBottom + dstX] = pixel;
-            dst[dstRowBottom + dstX + 1] = pixel;
-        }
+    SDL_Texture* texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
+                                            SDL_TEXTUREACCESS_STREAMING, width, height);
+    if (!texture) {
+        printf("SDL_CreateTexture failed: %s\n", SDL_GetError());
+        return nullptr;
     }
+    if (SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_NONE)) {
+        printf("SDL_SetTextureBlendMode failed: %s\n", SDL_GetError());
+        SDL_DestroyTexture(texture);
+        return nullptr;
+    }
+    return texture;
 }
 
 static int clampMouseScroll(int value)
@@ -130,6 +131,8 @@ static void put_usage()
     puts("            [-b /path/to/bgm.vgm]");
     puts("            [-s /path/to/sfx.wav]");
     puts("            [-x expected_exit_code]");
+    puts("            [--profile] (print frame phase timings)");
+    puts("            [--no-vsync] (disable display vertical sync)");
     puts("            { /path/to/program.elf | /path/to/program.rom }");
 }
 
@@ -258,9 +261,21 @@ int main(int argc, char* argv[])
     bool print_dump = false;
     bool enableMouse = false;
     YmAnalogOption ymAnalogOption = YmAnalogOption::Real;
+    bool profileFrames = false;
+    bool enableVsync = true;
     vgsx.disableBootBios();
     for (int i = 1; i < argc; i++) {
         if ('-' == argv[i][0]) {
+            if (0 == strcmp(argv[i], "--no-vsync")) {
+                enableVsync = false;
+                isFirstOption = false;
+                continue;
+            }
+            if (0 == strcmp(argv[i], "--profile")) {
+                profileFrames = true;
+                isFirstOption = false;
+                continue;
+            }
             if (0 == strncmp(argv[i], "--ym-analog=", 12)) {
                 const char* value = argv[i] + 12;
                 if (0 == strcmp(value, "off")) {
@@ -447,6 +462,7 @@ int main(int argc, char* argv[])
     SDL_Window* window = nullptr;
     SDL_Renderer* renderer = nullptr;
     SDL_Texture* displayTexture = nullptr;
+    SDL_Texture* crtTexture = nullptr;
     std::vector<uint32_t> scaledDisplay;
 
     if (!consoleMode) {
@@ -488,30 +504,34 @@ int main(int argc, char* argv[])
             printf("SDL_CreateWindow failed: %s\n", SDL_GetError());
             exit(-1);
         }
-        renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+        // Preserve synchronized presentation by default. The frame pacer
+        // counts this wait toward the same 60 Hz deadline.
+        const Uint32 rendererFlags = SDL_RENDERER_ACCELERATED |
+            (enableVsync ? SDL_RENDERER_PRESENTVSYNC : 0);
+        renderer = SDL_CreateRenderer(window, -1, rendererFlags);
         if (!renderer) {
             printf("SDL_CreateRenderer failed: %s\n", SDL_GetError());
             exit(-1);
         }
-        displayTexture = SDL_CreateTexture(
-            renderer,
-            SDL_PIXELFORMAT_ARGB8888,
-            SDL_TEXTUREACCESS_STREAMING,
-            vgsx.getDisplayWidth() * kDisplayScale2x,
-            vgsx.getDisplayHeight() * kDisplayScale2x);
-        if (!displayTexture) {
-            printf("SDL_CreateTexture failed: %s\n", SDL_GetError());
-            exit(-1);
+        if (profileFrames) {
+            SDL_RendererInfo info;
+            if (0 == SDL_GetRendererInfo(renderer, &info)) {
+                printf("Frame profile renderer: %s vsync=%s\n", info.name,
+                       info.flags & SDL_RENDERER_PRESENTVSYNC ? "on" : "off");
+            } else {
+                printf("SDL_GetRendererInfo failed: %s\n", SDL_GetError());
+            }
         }
-        SDL_SetTextureBlendMode(displayTexture, SDL_BLENDMODE_NONE);
-        scaledDisplay.resize((size_t)vgsx.getDisplayWidth() * kDisplayScale2x * vgsx.getDisplayHeight() * kDisplayScale2x);
+        displayTexture = createDisplayTexture(renderer, vgsx.getDisplayWidth(), vgsx.getDisplayHeight());
+        if (!displayTexture) exit(-1);
     }
 
     printf("Start main loop.\n");
     SDL_Event event;
     unsigned int loopCount = 0;
-    const int waitFps60[3] = {17000, 17000, 16000};
+    unsigned int lastProfileFrame = 0;
     bool quit = false;
+    bool renderFailed = false;
     bool stabled = true;
     bool swPressed[10];
     double totalClocks = 0.0;
@@ -522,9 +542,15 @@ int main(int argc, char* argv[])
     }
     vgsx.reset();
     applyMouseOption(enableMouse);
+    using FramePacer = frame_timing::FramePacer;
+    using FrameClock = FramePacer::Clock;
+    FramePacer framePacer(FrameClock::now());
     while (!quit && !vgsx.isExit()) {
         loopCount++;
-        auto start = std::chrono::system_clock::now();
+        const auto start = FrameClock::now();
+        auto eventsEnd = start, audioLockEnd = start, inputEnd = start, tickEnd = start;
+        auto scaleEnd = start, uploadEnd = start, presentEnd = start;
+        auto checkpoint = [&]() { return profileFrames ? FrameClock::now() : start; };
         memset(vgsx.key.sw_push, 0, sizeof(vgsx.key.sw_push));
         while (!consoleMode && SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
@@ -585,10 +611,14 @@ int main(int argc, char* argv[])
             }
         }
         if (!quit) {
+            eventsEnd = checkpoint();
             pthread_mutex_lock(&soundMutex);
+            audioLockEnd = checkpoint();
             updateMouse(window, enableMouse);
+            inputEnd = checkpoint();
             vgsx.tick();
             pthread_mutex_unlock(&soundMutex);
+            tickEnd = checkpoint();
             totalClocks += vgsx.ctx.frameClocks;
             if (maxClocks < vgsx.ctx.frameClocks) {
                 maxClocks = vgsx.ctx.frameClocks;
@@ -600,41 +630,76 @@ int main(int argc, char* argv[])
                 const uint32_t* display = vgsx.getDisplay();
                 uint32_t* texturePixels = nullptr;
                 int texturePitchBytes = 0;
+                // Only the CRT filter needs the expanded image. Uploading an
+                // unfiltered 2x copy costs four times the texture data without
+                // changing the picture in the display-sized window.
                 if (enableCrtFilter) {
+                    if (!crtTexture) {
+                        crtTexture = createDisplayTexture(renderer, displayWidth * kDisplayScale2x,
+                                                           displayHeight * kDisplayScale2x);
+                        if (!crtTexture) {
+                            renderFailed = true;
+                            quit = true;
+                            continue;
+                        }
+                        scaledDisplay.resize((size_t)displayWidth * kDisplayScale2x * displayHeight * kDisplayScale2x);
+                    }
                     crtFilter.apply2x(display, scaledDisplay.data(), displayWidth, displayHeight);
-                } else {
-                    scaleDisplay2x(display, scaledDisplay.data(), displayWidth, displayHeight);
                 }
-                if (SDL_LockTexture(displayTexture, nullptr, (void**)&texturePixels, &texturePitchBytes)) {
+                SDL_Texture* activeTexture = enableCrtFilter ? crtTexture : displayTexture;
+                scaleEnd = checkpoint();
+                uploadEnd = presentEnd = scaleEnd;
+                if (SDL_LockTexture(activeTexture, nullptr, (void**)&texturePixels, &texturePitchBytes)) {
                     printf("SDL_LockTexture failed: %s\n", SDL_GetError());
+                    renderFailed = true;
                     quit = true;
                 } else {
-                    const int textureWidth = displayWidth * kDisplayScale2x;
-                    const int textureHeight = displayHeight * kDisplayScale2x;
+                    const int textureWidth = displayWidth * (enableCrtFilter ? kDisplayScale2x : 1);
+                    const int textureHeight = displayHeight * (enableCrtFilter ? kDisplayScale2x : 1);
                     const int texturePitchPixels = texturePitchBytes / (int)sizeof(uint32_t);
-                    for (int y = 0; y < textureHeight; y++) {
-                        memcpy(&texturePixels[y * texturePitchPixels], &scaledDisplay[(size_t)y * textureWidth], (size_t)textureWidth * sizeof(uint32_t));
+                    if (enableCrtFilter) {
+                        for (int y = 0; y < textureHeight; y++) {
+                            memcpy(&texturePixels[y * texturePitchPixels], &scaledDisplay[(size_t)y * textureWidth], (size_t)textureWidth * sizeof(uint32_t));
+                        }
+                    } else {
+                        display_upload::copyOpaque(display, texturePixels, displayWidth, displayHeight, texturePitchPixels);
                     }
-                    SDL_UnlockTexture(displayTexture);
-                    SDL_RenderClear(renderer);
-                    SDL_RenderCopy(renderer, displayTexture, nullptr, nullptr);
+                    SDL_UnlockTexture(activeTexture);
+                    if (SDL_RenderClear(renderer) || SDL_RenderCopy(renderer, activeTexture, nullptr, nullptr)) {
+                        printf("SDL rendering failed: %s\n", SDL_GetError());
+                        renderFailed = true;
+                        quit = true;
+                        continue;
+                    }
+                    uploadEnd = checkpoint();
                     SDL_RenderPresent(renderer);
+                    presentEnd = checkpoint();
                 }
             }
-            // sync 60fps
-            std::chrono::duration<double> diff = std::chrono::system_clock::now() - start;
-            int us = (int)(diff.count() * 1000000);
-            int wait = waitFps60[loopCount % 3];
-            if (us < wait) {
-                usleep(wait - us);
-                if (!stabled) {
-                    stabled = true;
-                    printf("Frame rate stabilized at 60 fps (%dus per frame)\n", us);
-                }
-            } else if (stabled) {
+            const auto finished = FrameClock::now();
+            const auto elapsed = finished - start;
+            const bool late = FramePacer::isLate(elapsed);
+            auto micros = [](auto duration) {
+                return (long long)std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
+            };
+            if (profileFrames && (loopCount == 1 || loopCount % 120 == 0 ||
+                                  (late && loopCount - lastProfileFrame >= 30))) {
+                lastProfileFrame = loopCount;
+                if (consoleMode) scaleEnd = uploadEnd = presentEnd = tickEnd;
+                printf("Frame profile: frame=%u crt=%s events=%lldus audio_wait=%lldus input=%lldus cpu_vdp=%lldus "
+                       "scale=%lldus upload=%lldus present=%lldus total=%lldus\n",
+                       loopCount, enableCrtFilter ? "on" : "off", micros(eventsEnd - start), micros(audioLockEnd - eventsEnd),
+                       micros(inputEnd - audioLockEnd), micros(tickEnd - inputEnd), micros(scaleEnd - tickEnd),
+                       micros(uploadEnd - scaleEnd), micros(presentEnd - uploadEnd), micros(elapsed));
+            }
+            if (late && stabled) {
                 stabled = false;
-                printf("warning: Frame rate is lagging (%dus per frame)\n", us);
+                printf("warning: Frame rate is lagging (%lldus per frame)\n", micros(elapsed));
+            } else if (!late && !stabled) {
+                stabled = true;
+                printf("Frame rate stabilized at 60 fps (%lldus per frame)\n", micros(elapsed));
             }
+            std::this_thread::sleep_until(framePacer.nextFrame(finished));
         }
     }
 
@@ -698,6 +763,9 @@ int main(int argc, char* argv[])
     } else {
         printf("Maximum MC68030 Clocks: %.1fMHz per second.\n", max / 1000000);
     }
+    if (crtTexture) {
+        SDL_DestroyTexture(crtTexture);
+    }
     if (displayTexture) {
         SDL_DestroyTexture(displayTexture);
     }
@@ -705,6 +773,7 @@ int main(int argc, char* argv[])
         SDL_DestroyRenderer(renderer);
     }
     SDL_Quit();
+    if (renderFailed) return 1;
 
     if (vgsx.isExit()) {
         auto exitCode = vgsx.getExitCode();
