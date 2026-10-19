@@ -457,8 +457,6 @@ The specifications for each attribute are shown in the table below.
 | pivot_x / pivot_y | signed 16.16 | Source image pivot coordinates, before flipping. |
 | pivot_enabled | 0 or 1 | With 1 and `rotate = 0`, `x` and `y` specify the destination pivot in signed 16.16 pixels. |
 
-Pivot scaling samples the image directly around the specified source and destination pivots, preserving fractional coordinates throughout the transformation. This avoids zoom jitter caused by rounding the sprite origin. Scale locks, flips, alpha and masks also apply. `vgs_sprite` clears the pivot fields, selecting the default rendering mode. These fields occupy the three formerly reserved words; the OAM layout remains 64 bytes. Programs using pivot scaling require an emulator with pivot support.
-
 ### (Size of Sprite)
 
 Sprites are displayed as squares measuring `(size + 1) * 8` pixels.
@@ -498,6 +496,14 @@ The Sprite rotation feature is useful when combined with the [Angle](#0xe00100-0
 
 - You can specify the magnification rate as a percentage on the `scale` within the range of 0 to 3200.
 - Setting either `slx` or `sly` to a value other than zero will prevent scaling of either the X or Y axis.
+
+### (Pivot Scaling)
+
+- Pivot scaling samples the image directly around the specified source and destination pivots, preserving fractional coordinates throughout the transformation.
+- This avoids zoom jitter caused by rounding the sprite origin.
+- Scale locks, flips, alpha and masks also apply.
+- `vgs_sprite` clears the pivot fields, selecting the default rendering mode.
+- These fields occupy the three formerly reserved words; the OAM layout remains 64 bytes.
 
 ### (Alpha Blend of Sprite)
 
