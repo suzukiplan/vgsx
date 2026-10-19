@@ -5,6 +5,9 @@
 #include <limits>
 #include <memory>
 #include <vector>
+#include <cstdlib>
+#include <string>
+#include <unistd.h>
 
 #include "vdp.hpp"
 #include "vgsx.h"
@@ -1286,6 +1289,115 @@ static int test_mode7_focal_length()
     return 0;
 }
 
+static int test_implicit_save()
+{
+    struct SaveDirectory {
+        char path[64] = "/tmp/vgsx-save-XXXXXX";
+        std::string file;
+        ~SaveDirectory()
+        {
+            if (!file.empty()) {
+                std::remove(file.c_str());
+                rmdir(path);
+            }
+        }
+    } directory;
+    if (!mkdtemp(directory.path)) return fail("create save test directory");
+    directory.file = std::string(directory.path) + "/save.dat";
+    auto vgs = std::make_unique<VGSX>();
+    vgs->setSaveDataDirectory(directory.path);
+    auto select = [&](uint32_t address, uint32_t size) {
+        vgs->outPort(VGS_ADDR_SAVE_ADDRESS, address);
+        vgs->outPort(VGS_ADDR_SAVE_LOAD_SIZE, size);
+    };
+    auto expectFile = [&](std::initializer_list<uint8_t> expected) {
+        FILE* fp = std::fopen(directory.file.c_str(), "rb");
+        if (!fp) return false;
+        bool matches = true;
+        for (auto byte : expected) {
+            if (std::fgetc(fp) != byte) matches = false;
+        }
+        if (std::fgetc(fp) != EOF) matches = false;
+        std::fclose(fp);
+        return matches;
+    };
+    select(0xF00010, 4);
+    if (vgs->inPort(VGS_ADDR_SAVE_EXECUTE) != 0) return fail("missing save should return zero");
+    std::memcpy(vgs->ctx.ram + 0x10, "ABCD", 4);
+    vgs->saveImplicit();
+    if (FILE* fp = std::fopen(directory.file.c_str(), "rb")) {
+        std::fclose(fp);
+        return fail("implicit save must default to off");
+    }
+    vgs->outPort(VGS_ADDR_SAVE_IMPLICIT, 2);
+    vgs->outPort(VGS_ADDR_EXIT, 0);
+    if (!expectFile({'A', 'B', 'C', 'D'})) return fail("exit should save full missing-file load request");
+
+    vgs->reset();
+    select(0xF00020, 6);
+    std::memset(vgs->ctx.ram + 0x20, 'Z', 6);
+    if (vgs->inPort(VGS_ADDR_SAVE_EXECUTE) != 4) return fail("short load should return actual size");
+    vgs->ctx.ram[0x20] = 'X';
+    vgs->outPort(VGS_ADDR_SAVE_IMPLICIT, 1);
+    // Merely changing the address and size registers must not replace the last request.
+    select(0xF00040, 2);
+    vgs->saveImplicit();
+    if (!expectFile({'X', 'B', 'C', 'D', 'Z', 'Z'})) return fail("short load should remember requested size and address");
+
+    select(0xF00030, 2);
+    if (vgs->inPort(VGS_ADDR_SAVE_EXECUTE) != 2) return fail("sized load should cap a larger file");
+    vgs->ctx.ram[0x30] = 'Y';
+    vgs->saveImplicit();
+    if (!expectFile({'Y', 'B'})) return fail("latest load must replace save region");
+
+    std::memcpy(vgs->ctx.ram + 0x40, "123", 3);
+    vgs->outPort(VGS_ADDR_SAVE_ADDRESS, 0xF00040);
+    vgs->outPort(VGS_ADDR_SAVE_EXECUTE, 3);
+    if (!expectFile({'1', '2', '3'})) return fail("explicit save must work with implicit save enabled");
+    vgs->ctx.ram[0x40] = '4';
+    select(0xEFFFFF, 2);
+    if (vgs->inPort(VGS_ADDR_SAVE_EXECUTE)) return fail("reject load outside WRAM");
+    select(0xFFFFFF, 2);
+    if (vgs->inPort(VGS_ADDR_SAVE_EXECUTE)) return fail("reject load extending beyond WRAM");
+    vgs->outPort(VGS_ADDR_SAVE_EXECUTE, 2);
+    select(0xF00000, 0xFFFFFFFF);
+    if (vgs->inPort(VGS_ADDR_SAVE_EXECUTE)) return fail("reject oversized load");
+    vgs->outPort(VGS_ADDR_SAVE_EXECUTE, 0);
+    vgs->saveImplicit();
+    if (!expectFile({'4', '2', '3'})) return fail("invalid requests must preserve last valid save region");
+    vgs->outPort(VGS_ADDR_SAVE_IMPLICIT, 0);
+    vgs->ctx.ram[0x40] = '5';
+    vgs->saveImplicit();
+    if (!expectFile({'4', '2', '3'})) return fail("disabling implicit save should suppress writes");
+    vgs->outPort(VGS_ADDR_SAVE_IMPLICIT, 0xFFFFFFFF);
+    vgs.reset();
+    if (!expectFile({'5', '2', '3'})) return fail("runtime destruction should save latest RAM");
+
+    vgs = std::make_unique<VGSX>();
+    vgs->setSaveDataDirectory(directory.path);
+    select(0xFFFFFF, 1);
+    if (vgs->inPort(VGS_ADDR_SAVE_EXECUTE) != 1) return fail("load last WRAM byte");
+    vgs->ctx.ram[0xFFFFF] = '6';
+    vgs->outPort(VGS_ADDR_SAVE_IMPLICIT, 1);
+    vgs->reset();
+    if (!expectFile({'6'})) return fail("reset should save before discarding region");
+    vgs->ctx.ram[0xFFFFF] = '7';
+    vgs->saveImplicit();
+    if (!expectFile({'6'})) return fail("reset should disable implicit saving");
+    select(0xF00050, 0);
+    if (vgs->inPort(VGS_ADDR_SAVE_EXECUTE) != 1) return fail("legacy load should use file size");
+    vgs->ctx.ram[0x50] = '8';
+    vgs->outPort(VGS_ADDR_SAVE_IMPLICIT, 1);
+    vgs->saveImplicit();
+    if (!expectFile({'8'})) return fail("legacy load should remember actual file size");
+    vgs->outPort(VGS_ADDR_SAVE_IMPLICIT, 0);
+    vgs->setSaveDataDirectory((directory.file + "/missing").c_str());
+    select(0xF00000, 1);
+    vgs->outPort(VGS_ADDR_SAVE_EXECUTE, 1);
+    if (vgs->inPort(VGS_ADDR_SAVE_EXECUTE)) return fail("failed file access should return zero");
+    return 0;
+}
+
 int main()
 {
     vgsx.disableBootBios();
@@ -1315,6 +1427,8 @@ int main()
     if (int rc = test_sprite_boundaries_and_extreme_oam_values(); rc) return rc;
     if (int rc = test_sprite_ram_flip_scale_rotate_and_alpha(); rc) return rc;
     if (int rc = test_palette_1024_addressing_and_rendering(vgsx); rc) return rc;
+
+    if (int rc = test_implicit_save(); rc) return rc;
 
     std::fprintf(stderr, "OK\n");
     return 0;

@@ -703,6 +703,8 @@ int main(int argc, char* argv[])
         }
     }
 
+    vgsx.saveImplicit();
+
     if (print_dump) {
         printf("\n[RAM DUMP]\n");
         uint8_t prevbin[16];

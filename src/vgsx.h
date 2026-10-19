@@ -183,6 +183,7 @@ class VGSX
     bool loadWav(uint8_t index, const void* data, size_t size);
     const char* getLastError() { return this->lastError; }
     void reset();
+    void saveImplicit();
     void tick();
     void tickSound(int16_t* buf, int samples);
     inline uint32_t* getDisplay() { return this->vdp.ctx.display; }
@@ -249,6 +250,10 @@ class VGSX
         return localtime(&now);
     }
 
+    SaveData implicitSave;
+    bool implicitSaveEnabled;
+    bool writeSaveData(uint32_t address, uint32_t size);
+    bool validSaveRegion(uint32_t address, uint32_t size);
     char saveDataDir[1024];
     bool subscribedInput;
     bool subscribedOutput;

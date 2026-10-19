@@ -836,6 +836,8 @@ X = 160 + (x - 160) * (1 - v * s / F) / near_den
 
 VGS-X における I/O は 0xE00000～0xEFFFFF のメモリ領域に 32 ビット値でアクセスすることで実行します。
 
+In はプログラムからの読み出し、Out は書き込みを表します。`o` は対応あり、`-` は対応なしを意味します。
+
 | Address  | In  | Out | Description |
 |:--------:|:---:|:---:|:------------|
 | 0xE00000 |  o  |  -  | [V-SYNC](#0xe00000in---v-sync) |
@@ -876,14 +878,16 @@ VGS-X における I/O は 0xE00000～0xEFFFFF のメモリ領域に 32 ビッ�
 | 0xE02114 |  o  |  -  | [Gamepad: Button ID (Start)](#0xe021xxio---gamepad-types) |
 | 0xE02118 |  -  |  o  | [Gamepad: Button Name (ID)](#0xe021xxio---gamepad-types) |
 | 0xE0211C |  -  |  o  | [Gamepad: Button Name (Address)](#0xe021xxio---gamepad-types) |
-| 0xE03000 |  o  |  -  | [SaveData: Address](#0xe030xxio---savedata) |
+| 0xE03000 |  -  |  o  | [SaveData: Address](#0xe030xxio---savedata) |
 | 0xE03004 |  o  |  o  | [SaveData: Execute](#0xe030xxio---savedata) |
-| 0xE03008 |  -  |  o  | [SaveData: Size](#0xe030xxio---savedata) |
-| 0xE03100 |  o  |  -  | [Sequential: Open Write](#0xe031xxio---large-sequencial-file-io) |
-| 0xE03104 |  o  |  -  | [Sequential: Write Byte](#0xe031xxio---large-sequencial-file-io) |
-| 0xE03108 |  o  |  -  | [Sequential: Commit](#0xe031xxio---large-sequencial-file-io) |
-| 0xE03110 |  o  |  -  | [Sequential: Open Read](#0xe031xxio---large-sequencial-file-io) |
-| 0xE03114 |  -  |  o  | [Sequential: Read Byte](#0xe031xxio---large-sequencial-file-io) |
+| 0xE03008 |  o  |  -  | [SaveData: Size](#0xe030xxio---savedata) |
+| 0xE0300C |  -  |  o  | [SaveData: Implicit Save](#0xe030xxio---savedata) |
+| 0xE03010 |  -  |  o  | [SaveData: Load Request Size](#0xe030xxio---savedata) |
+| 0xE03100 |  -  |  o  | [Sequential: Open Write](#0xe031xxio---large-sequencial-file-io) |
+| 0xE03104 |  -  |  o  | [Sequential: Write Byte](#0xe031xxio---large-sequencial-file-io) |
+| 0xE03108 |  -  |  o  | [Sequential: Commit](#0xe031xxio---large-sequencial-file-io) |
+| 0xE03110 |  -  |  o  | [Sequential: Open Read](#0xe031xxio---large-sequencial-file-io) |
+| 0xE03114 |  o  |  -  | [Sequential: Read Byte](#0xe031xxio---large-sequencial-file-io) |
 | 0xE04000 |  o  |  -  | [UTC: Year](#0xe040xxin---calendar)|
 | 0xE04004 |  o  |  -  | [UTC: Month](#0xe040xxin---calendar)|
 | 0xE04008 |  o  |  -  | [UTC: Day of Month](#0xe040xxin---calendar)|
@@ -896,6 +900,7 @@ VGS-X における I/O は 0xE00000～0xEFFFFF のメモリ領域に 32 ビッ�
 | 0xE0402C |  o  |  -  | [Local: Hour](#0xe040xxin---calendar)|
 | 0xE04030 |  o  |  -  | [Local: Minute](#0xe040xxin---calendar)|
 | 0xE04034 |  o  |  -  | [Local: Second](#0xe040xxin---calendar)|
+| 0xE05000 |  o  |  -  | [Mouse: Enabled](#0xe050xxio---mouse) |
 | 0xE05004 |  o  |  o  | [Mouse: Hidden](#0xe050xxio---mouse) |
 | 0xE05008 |  o  |  -  | [Mouse: Moving](#0xe050xxio---mouse) |
 | 0xE0500C |  o  |  -  | [Mouse: X](#0xe050xxio---mouse) |
@@ -940,7 +945,7 @@ VGS-X における I/O は 0xE00000～0xEFFFFF のメモリ領域に 32 ビッ�
 | 0xE0701C |  o  |  -  | [Debug Switch](#0xe070xx---debug-switch) |
 | 0xE07020 |  o  |  -  | [Debug Switch](#0xe070xx---debug-switch) |
 | 0xE07024 |  o  |  -  | [Debug Switch](#0xe070xx---debug-switch) |
-| 0xE7FFF4 |  o  |  -  | [Abort](#0xe7fff4out---abort) |
+| 0xE7FFF4 |  -  |  o  | [Abort](#0xe7fff4out---abort) |
 | 0xE7FFF8 |  -  |  o  | [Reset](#0xe7fff8out---reset) |
 | 0xE7FFFC |  -  |  o  | [Exit](#0xe7fffcout---exit) |
 | 0xE80000 ~ 0xE8FFFC |  o  |  o  | [User-Defined I/O](#0xe8xxxxio---user-defined-io) |
@@ -1178,6 +1183,27 @@ uint32_t size = VGS_IO_SAVE_EXECUTE;      // 読み込み: save.dat → RAM へ�
 - 読み込み操作が返す値は、RAM に読み込まれたバイト数を表します。
 - このインタフェースはセーブデータ内容の整合性検証（ハッシュ等）は行いません。確認するのはファイルの存在、サイズの妥当性、および読み込み成功可否のみです。
 
+#### 暗黙セーブ
+
+`vgs_save_implicit(int on)` または `VGS_OUT_SAVE_IMPLICIT` (`0xE0300C`) に 0 以外を設定すると、通常終了時に最後のセーブ／ロード対象領域の最新の RAM 内容を `save.dat` に保存します。初期状態は無効で、0 を設定すると無効になります。有効中も `vgs_save` による明示セーブを利用できます。
+
+```c
+static struct {
+    uint32_t score;
+    uint32_t stage;
+} data;
+vgs_load_sized(&data, sizeof(data));
+vgs_save_implicit(1);
+// 以降の data への変更は通常終了時に保存されます。
+```
+
+- `vgs_load_sized(void* addr, uint32_t size)` を新設しました。`VGS_OUT_SAVE_LOAD_SIZE` (`0xE03010`) に要求サイズを設定してからロードします。1〜0x100000 bytes の有効な RAM 領域を指定してください。読込量はファイルサイズと要求サイズの小さい方で、戻り値は実読込量です。未読込部分の RAM は変更しません。
+- 暗黙セーブは実読込量ではなく要求サイズを記憶します。有効なサイズ指定ロードでは、ファイル未作成や読み込み失敗でも対象領域を記憶するため、初回起動時の初期値も終了時に保存できます。
+- 既存の `vgs_load(void* addr)` は互換性を維持し、要求サイズを 0 に戻してファイル全体をロードします。この場合はロード成功時のファイルサイズを記憶します。I/O を直接操作する場合、要求サイズは次に書き換えるまで保持されます（初期値 0）。
+- 有効な明示セーブ要求またはロード要求で、保存対象アドレスとサイズを更新します。アドレス／サイズ I/O の設定だけや、RAM 範囲外・サイズ不正の要求では対象を変更しません。対象未指定では暗黙セーブしません。
+- `vgs_exit`、SDL ウィンドウの通常終了、ランタイム破棄時に保存します。リセット時も RAM の再初期化前に保存し、暗黙セーブ設定と対象領域をクリアします。これにより WRAM の特定領域を SRAM のように利用できます。
+- ランタイムのクラッシュ、SIGKILL、PC の強制電源断など、ランタイムプロセスが意図せず停止した場合は保存されないリスクがあります。必要に応じて明示セーブを併用してください。
+
 ### 0xE031xx[io] - Large Sequencial File I/O
 
 このインタフェースは、**バイト単位のシーケンシャルファイル I/O** を提供します。
@@ -1264,7 +1290,7 @@ uint32_t value = VGS_IO_SEQ_READ; // 次の 1 byte を読み出し
 
 | Address | In | Out | 説明 |
 |:-------:|:--:|:---:|:-----|
-| 0xE05000 | Enabled | Enabled | マウス入力の有効フラグ（`0`: 無効、非 0: 有効） |
+| 0xE05000 | Enabled | - | マウス入力の有効フラグ（`0`: 無効、非 0: 有効） |
 | 0xE05004 | Hidden | Hidden | VGS-X カーソルの非表示フラグ（`0`: 表示、非 0: 非表示） |
 | 0xE05008 | Moving | - | 現フレームでマウスが移動したか |
 | 0xE0500C | X | - | 現在のマウス X 座標 |
@@ -1294,7 +1320,9 @@ uint32_t value = VGS_IO_SEQ_READ; // 次の 1 byte を読み出し
 
 ```c
 vgs_mouse_setup(128, 0);
-vgs_mouse_enabled(ON);
+if (!vgs_mouse_enabled()) {
+    return;
+}
 vgs_mouse_hidden(OFF);
 
 if (vgs_mouse_left_clicked(&x, &y)) {
@@ -1481,7 +1509,7 @@ VGS Standard Library（Video Game System Standard Library）は、VGS-X と将�
 | gamepad | `vgs_button_id_start` | 接続中パッドの Start ボタンの [Button ID](#0xe021xxio---gamepad-types) を取得する |
 | gamepad | `vgs_button_name` | ボタン識別子に対応する名称文字列を取得する |
 | mouse | `vgs_mouse_setup` | マウスカーソルの [pattern](#0xe050xxio---mouse) と palette を設定する |
-| mouse | `vgs_mouse_enabled` | [mouse](#0xe050xxio---mouse) を有効または無効にする |
+| mouse | `vgs_mouse_enabled` | [mouse](#0xe050xxio---mouse) が有効か確認する |
 | mouse | `vgs_mouse_hidden` | VGS-X の [mouse cursor](#0xe050xxio---mouse) を表示または非表示にする |
 | mouse | `vgs_mouse_moving` | 現フレームで [mouse](#0xe050xxio---mouse) が移動したか確認する |
 | mouse | `vgs_mouse_x` | 現在のマウス X 座標を取得する |
@@ -1492,6 +1520,8 @@ VGS Standard Library（Video Game System Standard Library）は、VGS-X と将�
 | mouse | `vgs_mouse_right_clicked` | 右クリック発生の確認とクリック座標の取得を行う |
 | save | `vgs_save` | [SaveData](#0xe030xxio---savedata) を保存する |
 | save | `vgs_load` | [SaveData](#0xe030xxio---savedata) を読み込む |
+| save | `vgs_load_sized` | サイズを指定してセーブデータを読み込む |
+| save | `vgs_save_implicit` | 通常終了時の暗黙セーブを有効／無効にする |
 | save | `vgs_save_check` | [SaveData](#0xe030xxio---savedata) のサイズを確認する |
 | save | `vgs_seq_open_w` | [Large Sequencial File](#0xe031xxio---large-sequencial-file-io) を書き込み用に開く |
 | save | `vgs_seq_write` | [Large Sequencial File](#0xe031xxio---large-sequencial-file-io) に 1 バイト書き込む |

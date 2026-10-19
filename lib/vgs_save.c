@@ -24,14 +24,27 @@
  */
 #include <vgs.h>
 
+void vgs_save_implicit(int on)
+{
+    VGS_OUT_SAVE_IMPLICIT = on;
+}
+
 void vgs_save(void* addr, uint32_t size)
 {
     VGS_OUT_SAVE_ADDRESS = (uint32_t)addr;
     VGS_IO_SAVE_EXECUTE = size;
 }
 
+uint32_t vgs_load_sized(void* addr, uint32_t size)
+{
+    VGS_OUT_SAVE_ADDRESS = (uint32_t)addr;
+    VGS_OUT_SAVE_LOAD_SIZE = size;
+    return VGS_IO_SAVE_EXECUTE;
+}
+
 uint32_t vgs_load(void* addr)
 {
+    VGS_OUT_SAVE_LOAD_SIZE = 0;
     VGS_OUT_SAVE_ADDRESS = (uint32_t)addr;
     return VGS_IO_SAVE_EXECUTE;
 }
