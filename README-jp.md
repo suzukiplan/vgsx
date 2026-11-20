@@ -858,6 +858,7 @@ In はプログラムからの読み出し、Out は書き込みを表します�
 | 0xE01000 |  -  |  o  | [Play BGM](#0xe010xxo---background-music-bgm) |
 | 0xE01004 |  -  |  o  | [BGM Control](#0xe010xxo---background-music-bgm) |
 | 0xE01008 |  o  |  o  | [BGM Master Volume](#0xe010xxo---background-music-bgm) |
+| 0xE0100C |  o  |  -  | [BGM 再生位置](#0xe010xxo---background-music-bgm) |
 | 0xE01100 |  -  |  o  | [Play SFX](#0xe011xxo---sound-effect-sfx) |
 | 0xE01104 |  -  |  o  | [Stop SFX](#0xe011xxo---sound-effect-sfx) |
 | 0xE01108 |  o  |  o  | [SFX Master Volume](#0xe011xxo---sound-effect-sfx) |
@@ -1064,6 +1065,43 @@ int32_t c = VGS_IN_ANGLE_COS;
 - 0xE01008 で BGM マスターボリュームを設定・取得できます（0=0%、255=100%、既定値 255）。
 
 VGS-X は YM2612(OPN2) と互換性のある VGM データを再生できます。データ作成には [Furnace Tracker](https://github.com/tildearrow/furnace) の利用を推奨します。
+
+- 0xE01004 に 3 を書くと BGM を停止し、再生位置を0に戻します。
+- 0xE0100C（入力専用・32ビット）で、曲先頭を0とする現在の曲内位置を44,100Hz基準の整数サンプル数として取得できます。
+
+ライブラリ API は `uint32_t vgs_bgm_position_samples(void)` と `double vgs_bgm_position_seconds(void)` です。秒数は `サンプル数 / 44100.0` で、小数部を保持します。MC68030 向けの既定ビルドは68881命令を生成し、同梱の Musashi が FPU をエミュレートします。`double` は32ビット整数の全範囲を正確に変換でき、`float` の長時間再生時の精度低下を避けます。変換・除算の実行コストを避けたい場合は、サンプル数と整数の時刻テーブルを比較してください。
+
+位置は、音声生成処理が実際に消費した VGM wait の時間です。先読みした wait の終点、ホスト実時間、描画フレーム数、音源レジスタの書き込み回数からは計算しません。ホストの出力レートではなく、常に VGM の44,100Hz単位で返します。VGS-X 本体は44,100Hz固定で音声を生成します。生成済みオーディオバッファの位置なので、スピーカーから実際に聞こえる位置より先行する場合があります。
+
+- 再生開始、同じ曲の再スタート、曲変更、システムリセット、停止（`vgs_bgm_stop()`）で0になります。未再生時も0です。未登録番号への再生命令は従来どおり無視します。
+- 一時停止中は保持し、再開すると続きから進みます。停止後の再開では再生せず、再生命令が必要です。
+- ループなしの自然終了では曲末を保持し、その後のバッファ残りや無音生成では増加しません。
+- ループ時は曲先頭から見たループ開始位置へ戻ります。ループ回数を含む累積経過時間ではありません。巻き戻りは既存の VGM コマンド処理がループ命令を処理する時点で発生します。
+- ミュートやマスターボリューム0でも再生処理中は進みます。フェードアウト中も再生中は進み、完了による停止で0になります。一時停止中のフェードアウトは位置を進めず、完了すると0になります。
+- 範囲は0～4,294,967,295サンプル（約27時間3分11.549秒）。上限を超えると最大値を保持し、桁あふれで0には戻りません。ループによる巻き戻りと再生命令によるクリアは引き続き有効です。
+
+取得は単一の32ビット MMIO 読み取りで、音声側の atomic な公開値を読みます。並行更新中も値は壊れません。複数回の API 呼び出しはそれぞれ独立したスナップショットです。再生制御と音声生成の排他は、従来どおりホスト側で行います。現在シーク API はありません。
+
+アプリ側の時刻テーブルと比較して演出を切り替える例です。曲内位置から毎回選び直すため、ループによる巻き戻りにも追従します。
+
+```c
+#include <vgs.h>
+
+/* Timeline entries are positions from the beginning of the song. */
+static const uint32_t cue_samples[] = {0, 22050, 88200};
+
+void update_music_effect(void)
+{
+    uint32_t position = vgs_bgm_position_samples();
+    unsigned int cue = 0;
+    while (cue + 1 < sizeof(cue_samples) / sizeof(cue_samples[0]) &&
+           cue_samples[cue + 1] <= position) {
+        cue++;
+    }
+    set_effect(cue); /* Application function; recompute so loops rewind too. */
+    /* double seconds = vgs_bgm_position_seconds(); */
+}
+```
 
 ### 0xE011xx[o] - Sound Effect (SFX)
 
@@ -1479,6 +1517,9 @@ VGS Standard Library（Video Game System Standard Library）は、VGS-X と将�
 | bgm | `vgs_bgm_pause` | [BGM](#0xe010xxo---background-music-bgm) を一時停止する |
 | bgm | `vgs_bgm_resume` | [BGM](#0xe010xxo---background-music-bgm) を再開する |
 | bgm | `vgs_bgm_fadeout` | [BGM](#0xe010xxo---background-music-bgm) をフェードアウトする |
+| bgm | `vgs_bgm_stop` | BGM を停止し位置を0に戻す |
+| bgm | `vgs_bgm_position_samples` | 曲先頭からの現在位置（44,100Hz基準の整数サンプル数）を取得する |
+| bgm | `vgs_bgm_position_seconds` | 曲先頭からの現在位置を小数秒（double）で取得する |
 | sfx | `vgs_sfx_master_volume` | [SFX](#0xe011xxo---sound-effect-sfx) のマスターボリュームを設定する |
 | sfx | `vgs_sfx_master_volume_get` | [SFX](#0xe011xxo---sound-effect-sfx) のマスターボリュームを取得する |
 | sfx | `vgs_sfx_play` | [SFX](#0xe011xxo---sound-effect-sfx) を再生する |

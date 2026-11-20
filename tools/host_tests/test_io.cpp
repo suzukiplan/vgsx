@@ -12,6 +12,7 @@
 #include "vdp.hpp"
 #include "vgsx.h"
 #include "vgs_io.h"
+#include "vgm_fixture.hpp"
 #include "../common/frame_pacer.hpp"
 #include "../common/display_upload.hpp"
 
@@ -1398,7 +1399,111 @@ static int test_implicit_save()
     return 0;
 }
 
-int main()
+static int test_bgm(const char* apiElf)
+{
+    auto first = makeVgm({0x61, 0x10, 0x27, 0x66}); // 10,000 samples
+    auto second = makeVgm({0x61, 100, 0, 0x62, 0x63, 0x66}, 3);
+    auto position = []() { return vgsx.inPort(VGS_ADDR_VGM_POSITION); };
+    auto generate = [](int frames) {
+        std::vector<int16_t> pcm(frames * 2);
+        vgsx.tickSound(pcm.data(), pcm.size());
+    };
+    vgsx.reset();
+    if (position() != 0) return fail("BGM reset position");
+    if (!vgsx.loadVgm(0, first.data(), first.size()) ||
+        !vgsx.loadVgm(1, second.data(), second.size())) return fail("BGM fixture load");
+    vgsx.outPort(VGS_ADDR_VGM_PLAY, 0);
+    if (position() != 0) return fail("BGM start position");
+    generate(1234);
+    if (position() != 1234) return fail("BGM MMIO samples");
+    vgsx.outPort(VGS_ADDR_VGM_PLAY_OPT, VGS_VGM_OPT_PAUSE);
+    generate(80);
+    if (position() != 1234) return fail("BGM pause position");
+    vgsx.outPort(VGS_ADDR_VGM_PLAY_OPT, VGS_VGM_OPT_RESUME);
+    generate(1);
+    if (position() != 1235) return fail("BGM resume position");
+    vgsx.outPort(VGS_ADDR_VGM_MASTER, 0);
+    generate(10);
+    if (position() != 1245) return fail("BGM zero volume position");
+    vgsx.outPort(VGS_ADDR_VGM_PLAY_OPT, VGS_VGM_OPT_STOP);
+    generate(20);
+    if (position() != 0) return fail("BGM stop position");
+    vgsx.outPort(VGS_ADDR_VGM_PLAY_OPT, VGS_VGM_OPT_RESUME);
+    generate(20);
+    if (position() != 0) return fail("BGM stopped resume position");
+    vgsx.outPort(VGS_ADDR_VGM_PLAY, 0);
+    generate(100);
+    vgsx.outPort(VGS_ADDR_VGM_PLAY, 0);
+    if (position() != 0) return fail("BGM restart position");
+    generate(10001);
+    if (position() != 10000) return fail("BGM natural end position");
+    generate(999);
+    if (position() != 10000) return fail("BGM natural end buffer tail");
+    vgsx.outPort(VGS_ADDR_VGM_PLAY, 1);
+    if (position() != 0) return fail("BGM change position");
+    generate(1718);
+    if (position() != 101) return fail("BGM loop MMIO position");
+    vgsx.outPort(VGS_ADDR_VGM_PLAY_OPT, VGS_VGM_OPT_FADEOUT);
+    generate(1);
+    if (position() != 102) return fail("BGM fadeout advances");
+    for (int i = 0; i < 98; i++) generate(1);
+    if (position() != 0) return fail("BGM fadeout completion stops");
+    generate(10);
+    if (position() != 0) return fail("BGM fadeout stopped position");
+
+    vgsx.outPort(VGS_ADDR_VGM_PLAY, 0);
+    generate(50);
+    vgsx.outPort(VGS_ADDR_VGM_PLAY_OPT, VGS_VGM_OPT_PAUSE);
+    vgsx.outPort(VGS_ADDR_VGM_PLAY_OPT, VGS_VGM_OPT_FADEOUT);
+    generate(10);
+    if (position() != 50) return fail("BGM paused fadeout holds position");
+    for (int i = 0; i < 98; i++) generate(1);
+    if (position() != 0) return fail("BGM paused fadeout stops");
+    vgsx.outPort(VGS_ADDR_VGM_PLAY, 0);
+    generate(50);
+    vgsx.reset();
+    if (position() != 0) return fail("BGM reset during playback");
+
+    if (apiElf) {
+        FILE* fp = std::fopen(apiElf, "rb");
+        if (!fp) return fail("open MC68030 BGM API fixture");
+        std::fseek(fp, 0, SEEK_END);
+        std::vector<uint8_t> elf(std::ftell(fp));
+        std::rewind(fp);
+        const auto read = std::fread(elf.data(), 1, elf.size(), fp);
+        std::fclose(fp);
+        if (read != elf.size() || !vgsx.loadProgram(elf.data(), elf.size())) return fail("load MC68030 BGM API fixture");
+        auto ram32 = [](int offset) {
+            const uint8_t* p = &vgsx.ctx.ram[offset];
+            return (uint32_t(p[0]) << 24) | (uint32_t(p[1]) << 16) | (uint32_t(p[2]) << 8) | p[3];
+        };
+        vgsx.outPort(VGS_ADDR_VGM_PLAY, 0);
+        generate(1234);
+        vgsx.tick();
+        if (ram32(0x1000) != 1234 || ram32(0x1004) != 27) return fail("MC68030 API MMIO and fractional seconds");
+        uint64_t bits = (uint64_t(ram32(0x1008)) << 32) | ram32(0x100c);
+        double seconds;
+        std::memcpy(&seconds, &bits, sizeof(seconds));
+        if (std::abs(seconds - 1234 / 44100.0) > 1e-15) return fail("MC68030 double seconds conversion");
+        vgsx.ctx.ram[0x1023] = 2;
+        vgsx.tick();
+        generate(100);
+        if (position() != 1234) return fail("MC68030 pause API");
+        vgsx.ctx.ram[0x1023] = 3;
+        vgsx.tick();
+        generate(100);
+        if (position() != 1334) return fail("MC68030 resume API");
+        // Request stop through the library, then observe it through MMIO.
+        vgsx.ctx.ram[0x1023] = 1;
+        vgsx.tick();
+        if (position() != 0) return fail("MC68030 stop API");
+    }
+    vgsx.reset();
+    if (position() != 0) return fail("BGM system reset position");
+    return 0;
+}
+
+int main(int argc, char** argv)
 {
     vgsx.disableBootBios();
 
@@ -1429,6 +1534,7 @@ int main()
     if (int rc = test_palette_1024_addressing_and_rendering(vgsx); rc) return rc;
 
     if (int rc = test_implicit_save(); rc) return rc;
+    if (int rc = test_bgm(argc > 1 ? argv[1] : nullptr); rc) return rc;
 
     std::fprintf(stderr, "OK\n");
     return 0;

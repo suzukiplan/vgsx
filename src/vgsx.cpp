@@ -1159,6 +1159,7 @@ uint32_t VGSX::inPort(uint32_t address)
         case VGS_ADDR_ANGLE_COS: return vgsx_cos[this->ctx.angle.degree];
 
         case VGS_ADDR_VGM_MASTER: return this->ctx.vgmMasterVolume;
+        case VGS_ADDR_VGM_POSITION: return ((VgmDriver*)this->vgmdrv)->getPositionSamples();
         case VGS_ADDR_SFX_MASTER: return this->ctx.sfxMasterVolume;
 
         case VGS_ADDR_KEY_UP: return this->key.up;
@@ -1405,6 +1406,10 @@ void VGSX::outPort(uint32_t address, uint32_t value)
 
         case VGS_ADDR_VGM_PLAY_OPT:
             switch (value) {
+                case VGS_VGM_OPT_STOP:
+                    ((VgmDriver*)this->vgmdrv)->setEnded();
+                    this->ctx.vgmFadeout = 0;
+                    break;
                 case VGS_VGM_OPT_PAUSE: this->ctx.vgmPause = true; break;
                 case VGS_VGM_OPT_RESUME: this->ctx.vgmPause = false; break;
                 case VGS_VGM_OPT_FADEOUT:

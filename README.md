@@ -924,6 +924,7 @@ In means a read by the program; Out means a write. `o` indicates a supported ope
 | 0xE01000 |  -  |  o  | [Play BGM](#0xe010xxo---background-music-bgm) |
 | 0xE01004 |  -  |  o  | [BGM Playback Options](#0xe010xxo---background-music-bgm) |
 | 0xE01008 |  o  |  o  | Set/Get the [BGM Master Volume](#0xe010xxo---background-music-bgm) |
+| 0xE0100C |  o  |  -  | [BGM position in 44,100Hz samples](#0xe010xxo---background-music-bgm) |
 | 0xE01100 |  -  |  o  | [Play SFX](#0xe011xxo---sound-effect-sfx) |
 | 0xE01104 |  -  |  o  | [Stop SFX](#0xe011xxo---sound-effect-sfx) |
 | 0xE01108 |  o  |  o  | Set/Get the [SFX Master Volume](#0xe011xxo---sound-effect-sfx) |
@@ -1152,6 +1153,43 @@ For a concrete example, please refer to the implementation in [./example/03_rota
 VGS-X can play VGM data compatible with the YM2612 (OPN2).
 
 We recommend using [Furnace Tracker](https://github.com/tildearrow/furnace) to create VGM data compatible with a YM2612(OPN2) FM sound chip.
+
+- Set 3 to 0xE01004 to stop BGM and clear its position.
+- Read 0xE0100C (input only, 32-bit) for the current song position from the beginning, in integer 44,100Hz VGM samples.
+
+The library exposes `uint32_t vgs_bgm_position_samples(void)` and `double vgs_bgm_position_seconds(void)`. Seconds are `samples / 44100.0`, preserving the fractional part. The default MC68030 build generates 68881 instructions supported by the bundled Musashi FPU emulation. `double` represents the full 32-bit sample range exactly before division and avoids the loss of precision of `float` during long songs. Compare integer sample timestamps to avoid the conversion and floating-point division cost.
+
+The position counts VGM wait time actually consumed by audio generation. It is not the end of a wait read ahead, host wall time, drawing frames, or register writes. Its units are always 44,100Hz VGM samples, independent of the host output rate. The VGS-X core generates audio at a fixed 44,100Hz. This API describes the generated audio buffer position, which can be ahead of what is audible at the speakers.
+
+- Play, restart, song change, system reset, and explicit stop (`vgs_bgm_stop()`) clear the position to zero. It is also zero before playback. Requests for unregistered song indexes remain ignored.
+- Pause holds the position; resume continues it. Resume after stop does not restart playback; issue play instead.
+- Natural end without a loop holds the final song position. The remaining buffer and subsequent silence do not advance it.
+- A loop rewinds to its start position measured from the beginning of the song, rather than accumulating elapsed time across loops. Rewind happens when the existing VGM command processing executes the loop.
+- Mute and zero master volume still advance while playback runs. Fadeout advances while playing and clears the position when it completes and stops. A fadeout while paused holds the position until completion clears it.
+- Range: 0..4,294,967,295 samples (about 27h 3m 11.549s). Overflow saturates at the maximum instead of wrapping to zero; loop rewinds and playback resets still apply.
+
+One 32-bit MMIO read loads an atomic audio-side snapshot, so concurrent updates cannot tear the value. Separate API calls take independent snapshots. Playback controls and audio generation retain the existing host serialization requirement. There is currently no seek API.
+
+Compare the song position against an application timestamp table to select an effect. Recomputing the cue from the current position also handles loop rewinds:
+
+```c
+#include <vgs.h>
+
+/* Timeline entries are positions from the beginning of the song. */
+static const uint32_t cue_samples[] = {0, 22050, 88200};
+
+void update_music_effect(void)
+{
+    uint32_t position = vgs_bgm_position_samples();
+    unsigned int cue = 0;
+    while (cue + 1 < sizeof(cue_samples) / sizeof(cue_samples[0]) &&
+           cue_samples[cue + 1] <= position) {
+        cue++;
+    }
+    set_effect(cue); /* Application function; recompute so loops rewind too. */
+    /* double seconds = vgs_bgm_position_seconds(); */
+}
+```
 
 ### 0xE011xx[o] - Sound Effect (SFX)
 
@@ -1627,6 +1665,9 @@ Basic Functions can be classified into [Video Game Functions](#video-game-functi
 | bgm | `vgs_bgm_pause` | Pause [background music](#0xe010xxo---background-music-bgm) |
 | bgm | `vgs_bgm_resume` | Resume [background music](#0xe010xxo---background-music-bgm) |
 | bgm | `vgs_bgm_fadeout` | Fadeout [background music](#0xe010xxo---background-music-bgm) |
+| bgm | `vgs_bgm_stop` | Stop BGM and clear its position |
+| bgm | `vgs_bgm_position_samples` | Get current song position in integer 44,100Hz samples |
+| bgm | `vgs_bgm_position_seconds` | Get current song position in fractional seconds (double) |
 | sfx | `vgs_sfx_master_volume` | Set master volume of [sound effect](#0xe011xxo---sound-effect-sfx) |
 | sfx | `vgs_sfx_master_volume_get` | Get master volume of [sound effect](#0xe011xxo---sound-effect-sfx) |
 | sfx | `vgs_sfx_play` | Play [sound effect](#0xe011xxo---sound-effect-sfx) |
