@@ -33,6 +33,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <atomic>
 #include <string.h>
 #include <stdbool.h>
 #include <string>
@@ -115,7 +116,7 @@ class VgmDriver : public ymfm::ymfm_interface
     std::array<uint8_t, YM2612ChannelCount> ym2612_frequency_low;
     std::array<uint8_t, YM2612ChannelCount> ym2612_frequency_high;
     std::array<bool, YM2612ChannelCount> ym2612_mute;
-    bool subscribedLog;
+    bool subscribedLog = false;
     std::function<void(bool isError, const char* msg)> logCallback;
 
     struct Context {
@@ -126,6 +127,9 @@ class VgmDriver : public ymfm::ymfm_interface
         int32_t loopOffset;
         int32_t wait;
         uint32_t loopCount;
+        uint32_t positionSamples;
+        uint32_t loopPositionSamples;
+        bool loopPositionKnown;
         bool end;
         emulated_time output_start;
         emulated_time pos;
@@ -149,6 +153,10 @@ class VgmDriver : public ymfm::ymfm_interface
         }
     } ym2612ResampleState;
 
+    // Only this snapshot is read concurrently; playback controls retain the
+    // host's existing serialization with render(). A single MMIO long read
+    // cannot tear, including at loop boundaries.
+    std::atomic<uint32_t> positionSamples{0};
     emulated_time output_step;
     std::map<ChipType, uint32_t> clocks;
     int channels;
@@ -417,6 +425,7 @@ class VgmDriver : public ymfm::ymfm_interface
     void reset()
     {
         memset(&this->vgm, 0, sizeof(this->vgm));
+        this->positionSamples.store(0, std::memory_order_relaxed);
         this->clocks.clear();
         this->ym2612.reset();
         this->ym2612_queue.clear();
@@ -506,6 +515,14 @@ class VgmDriver : public ymfm::ymfm_interface
             if (vgm.wait < 1) {
                 this->execute();
             }
+            // Count consumed VGM wait units, never the wait read ahead by execute().
+            // Keep the existing wait and synthesis scheduling unchanged.
+            if (!vgm.end && vgm.wait > 0) {
+                if (vgm.positionSamples != UINT32_MAX) {
+                    vgm.positionSamples++;
+                }
+                this->positionSamples.store(vgm.positionSamples, std::memory_order_relaxed);
+            }
             vgm.wait--;
             int32_t mixed[2] = {0, 0};
             for (auto it = this->clocks.begin(); it != this->clocks.end(); it++) {
@@ -555,7 +572,14 @@ class VgmDriver : public ymfm::ymfm_interface
 
     inline uint32_t getLoopCount() { return this->vgm.loopCount; }
     inline bool isEnded() { return this->vgm.end; }
-    inline void setEnded() { this->vgm.end = true; }
+    // Explicit stop (including completed fadeout), unlike natural VGM end.
+    inline void setEnded()
+    {
+        this->vgm.end = true;
+        this->vgm.positionSamples = 0;
+        this->positionSamples.store(0, std::memory_order_relaxed);
+    }
+    uint32_t getPositionSamples() const { return this->positionSamples.load(std::memory_order_relaxed); }
 
     int getFrequency(ChipType type, int ch)
     {
@@ -794,6 +818,10 @@ class VgmDriver : public ymfm::ymfm_interface
         }
         static uint32_t seq;
         while (vgm.wait < 1) {
+            if (!vgm.loopPositionKnown && vgm.loopOffset && vgm.cursor == vgm.loopOffset) {
+                vgm.loopPositionSamples = vgm.positionSamples;
+                vgm.loopPositionKnown = true;
+            }
             uint8_t cmd = vgm.data[vgm.cursor++];
             switch (cmd) {
                 case 0x52:
@@ -826,6 +854,8 @@ class VgmDriver : public ymfm::ymfm_interface
                 case 0x66: {
                     // End of sound data
                     if (vgm.loopOffset) {
+                        vgm.positionSamples = vgm.loopPositionSamples;
+                        this->positionSamples.store(vgm.positionSamples, std::memory_order_relaxed);
                         vgm.cursor = vgm.loopOffset;
                         vgm.loopCount++;
                         break;

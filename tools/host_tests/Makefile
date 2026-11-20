@@ -18,10 +18,11 @@ OBJS := \
 	$(BUILD_DIR)/k8x12_jisx0201.o \
 	$(BUILD_DIR)/k8x12_jisx0208.o
 
-DEPS := $(OBJS:.o=.d) $(BUILD_DIR)/benchmark_sprites.d
+DEPS := $(BUILD_DIR)/test_vgm.d $(OBJS:.o=.d) $(BUILD_DIR)/benchmark_sprites.d
 
-all: test_io
+all: test_io $(BUILD_DIR)/test_vgm
 	./test_io
+	./$(BUILD_DIR)/test_vgm
 
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
@@ -68,3 +69,18 @@ clean:
 	rm -rf $(BUILD_DIR) test_io benchmark_sprites
 
 .PHONY: all clean benchmark
+
+$(BUILD_DIR)/test_vgm.o: test_vgm.cpp | $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) $(DEPFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/test_vgm: $(BUILD_DIR)/test_vgm.o
+	$(CXX) $(CXXFLAGS) -pthread $^ -o $@
+
+# Optional cross-toolchain check, separate from host-only regression tests.
+build/bgm_api.elf: bgm_api.c ../../lib/vgs_bgm.h ../../lib/vgs_io.h | $(BUILD_DIR)
+	m68k-elf-gcc -m68030 -O2 -nostdlib -I../../lib -T../../lib/linker.ld -Wl,-etest_entry $< -o $@
+
+check-m68k: test_io build/bgm_api.elf
+	./test_io build/bgm_api.elf
+
+.PHONY: check-m68k

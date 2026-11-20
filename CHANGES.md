@@ -2,6 +2,7 @@
 
 ## Version 1.12.0
 
+- Core+Standard Library: Added atomic BGM song position at `0xE0100C`, `vgs_bgm_position_samples()` (44,100Hz units), and `vgs_bgm_position_seconds()` (double); position follows consumed waits and loop rewinds, and holds at natural end. Added explicit stop (`0xE01004 = 3`, `vgs_bgm_stop()`).
 - Core+Standard Library: Added implicit saving on normal exit via `0xE0300C` and `vgs_save_implicit(int on)`.
 - Core+Standard Library: Added `0xE03010` and `vgs_load_sized` to preserve the requested save region even when loading a shorter or missing file; kept `vgs_load` compatible.
 

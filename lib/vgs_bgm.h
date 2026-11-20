@@ -49,6 +49,24 @@ static inline uint32_t vgs_bgm_master_volume_get(void) { return VGS_IO_VGM_MASTE
 static inline void vgs_bgm_play(uint16_t n) { VGS_OUT_VGM_PLAY = n; }
 
 /**
+ * @brief Current song position in 44,100Hz VGM samples (generated audio).
+ * @return 0..0xFFFFFFFF, saturating; rewinds at loops, holds at natural end.
+ * One 32-bit MMIO read gives a coherent snapshot. Play/reset/stop clear it.
+ */
+static inline uint32_t vgs_bgm_position_samples(void) { return VGS_IN_VGM_POSITION; }
+
+/**
+ * @brief Current song position in fractional seconds.
+ * Uses the emulated FPU; compare integer samples for lower-cost synchronization.
+ */
+static inline double vgs_bgm_position_seconds(void) { return (double)vgs_bgm_position_samples() / 44100.0; }
+
+/**
+ * @brief Stop background music and clear its position.
+ */
+static inline void vgs_bgm_stop(void) { VGS_OUT_VGM_PLAY_OPT = VGS_VGM_OPT_STOP; }
+
+/**
  * @brief Pause background music
  */
 static inline void vgs_bgm_pause(void) { VGS_OUT_VGM_PLAY_OPT = VGS_VGM_OPT_PAUSE; }
